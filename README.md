@@ -1,4 +1,4 @@
-# mujoco_playground
+# MuJoCo Playground
 
 MuJoCo Playground contains a suite of classic control and robotic environments built on top of the MuJoCo physics engine. Environments contain recipes for training classic control, locomotion, and manipulation behaviors via RL.
 
