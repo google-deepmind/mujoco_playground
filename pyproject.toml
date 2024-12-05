@@ -55,37 +55,6 @@ all = [
 [tool.flit.module]
 name = "mujoco_playground"
 
-[tool.ruff]
-lint.select = [
-    "E",  # pycodestyle errors.
-    "F",  # Pyflakes rules.
-    "PLC",  # Pylint convention warnings.
-    "PLE",  # Pylint errors.
-    "PLR",  # Pylint refactor recommendations.
-    "PLW",  # Pylint warnings.
-    "I"  # Import sorting.
-]
-lint.ignore = [
-    "E741", # Ambiguous variable name. (l, O, or I)
-    "E501",  # Line too long.
-    "PLR2004",  # Magic value used in comparison.
-    "PLR0915",  # Too many statements.
-    "PLR0913",  # Too many arguments.
-    "PLC0414",  # Import alias does not rename variable. (this is used for exporting names)
-    "PLC1901",  # Use falsey strings.
-    "PLR5501",  # Use `elif` instead of `else if`.
-    "PLR0911",  # Too many return statements.
-    "PLR0912",  # Too many branches.
-    "PLW0603",  # Global statement updates are discouraged.
-    "PLW2901"  # For loop variable overwritten.
-]
-exclude = [
-    "mujoco_menagerie/",
-]
-
-[tool.black]
-extend-exclude = "mujoco_menagerie/"
-
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
@@ -96,6 +65,10 @@ exclude = ["scripts/", "mujoco_menagerie/"]
 addopts = [
     "--ignore=mujoco_menagerie",
 ]
-testpaths = [
-    "tests",
-]
+
+[tool.pyink]
+line-length = 80
+unstable = true
+pyink-indentation = 2
+pyink-use-majority-quotes = true
+extend-exclude = "mujoco_menagerie/"
