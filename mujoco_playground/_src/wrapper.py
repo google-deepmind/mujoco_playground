@@ -14,93 +14,150 @@
 # ==============================================================================
 """Wrappers for MuJoCo Playground environments."""
 
-from typing import Any, List
+from typing import Any, Callable, Optional, Tuple
 
-from brax import base as brax_base
-from brax.envs import base as brax_env
-from brax.mjx import base as brax_mjx_base
+from brax.envs.wrappers import training as brax_training
 import jax
+from jax import numpy as jp
+
+import mujoco
+from mujoco import mjx
 from mujoco_playground._src import mjx_env
 
 
-class BraxEnvWrapper(brax_env.Env):
-  """Wraps a MuJoCo Playground environment as a Brax environment."""
+class Wrapper(mjx_env.MjxEnv):
+  """Wraps an environment to allow modular transformations."""
 
-  def __init__(self, env: mjx_env.MjxEnv):
-    self._env = env
-    self.sys = env.mjx_model
+  def __init__(self, env: Any):  # pylint: disable=super-init-not-called
+    self.env = env
 
-  def reset(self, rng: jax.Array) -> brax_env.State:
-    """Resets the environment to an initial state."""
-    state = self._env.reset(rng)
-    x = brax_base.Transform(pos=state.data.xpos[1:], rot=state.data.xquat[1:])
-    # pytype: disable=wrong-arg-types
-    return brax_env.State(
-        pipeline_state=brax_mjx_base.State(
-            **state.data.__dict__, x=x, xd=None, q=None, qd=None),
-        obs=state.obs,
-        reward=state.reward,
-        done=state.done,
-        metrics=state.metrics,
-        info=state.info,
-    )
-    # pytype: enable=wrong-arg-types
+  def reset(self, rng: jax.Array) -> mjx_env.State:
+    return self.env.reset(rng)
 
-  def step(self, state: brax_env.State, action: jax.Array) -> brax_env.State:
-    """Run one timestep of the environment's dynamics."""
-    # pytype: disable=wrong-arg-types
-    state_ = mjx_env.State(
-        data=state.pipeline_state,
-        obs=state.obs,
-        reward=state.reward,
-        done=state.done,
-        metrics=state.metrics,
-        info=state.info,
-    )
-    state_ = self._env.step(state_, action)
-    x = brax_base.Transform(pos=state_.data.xpos[1:], rot=state_.data.xquat[1:])
-    return brax_env.State(
-        pipeline_state=state_.data.replace(x=x),
-        obs=state_.obs,
-        reward=state_.reward,
-        done=state_.done,
-        metrics=state_.metrics,
-        info=state_.info,
-    )
-    # pytype: enable=wrong-arg-types
+  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+    return self.env.step(state, action)
 
   @property
-  def observation_size(self) -> int:
-    """The size of the observation vector returned in step and reset."""
-    return self._env.observation_size
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return self.env.observation_size
 
   @property
   def action_size(self) -> int:
-    """The size of the action vector expected by step."""
-    return self._env.action_size
+    return self.env.action_size
 
   @property
-  def backend(self) -> str:
-    """The physics backend that this env was instantiated with."""
-    return "mjx"
+  def unwrapped(self) -> Any:
+    return self.env.unwrapped
+
+  def __getattr__(self, name):
+    if name == '__setstate__':
+      raise AttributeError(name)
+    return getattr(self.env, name)
 
   @property
-  def dt(self) -> float:
-    """The env timestep."""
-    return self._env.dt
+  def mj_model(self) -> mujoco.MjModel:
+    return self.env.mj_model
 
-  def render(self, trajectory: List[brax_env.State], *args, **kwargs) -> Any:
-    """Renders the env."""
-    new_traj = []
-    for t in trajectory:
-      new_traj.append(
-          mjx_env.State(
-              data=t.pipeline_state,
-              obs=t.obs,
-              reward=t.reward,
-              done=t.done,
-              metrics=t.metrics,
-              info=t.info,
-          )  # pytype: disable=wrong-arg-types
-      )
-    return self._env.render(new_traj, *args, **kwargs)
+  @property
+  def mjx_model(self) -> mjx.Model:
+    return self.env.mjx_model
+
+  @property
+  def xml_path(self) -> str:
+    return self.env.xml_path
+
+
+def wrap_for_brax_training(
+    env: mjx_env.MjxEnv,
+    episode_length: int = 1000,
+    action_repeat: int = 1,
+    randomization_fn: Optional[
+        Callable[[mjx.Model], Tuple[mjx.Model, mjx.Model]]
+    ] = None,
+) -> Wrapper:
+  """Common wrapper pattern for all brax training agents.
+
+  Args:
+    env: environment to be wrapped
+    episode_length: length of episode
+    action_repeat: how many repeated actions to take per step
+    randomization_fn: randomization function that produces a vectorized model
+      and in_axes to vmap over
+
+  Returns:
+    An environment that is wrapped with Episode and AutoReset wrappers.  If the
+    environment did not already have batch dimensions, it is additional Vmap
+    wrapped.
+  """
+  if randomization_fn is None:
+    env = brax_training.VmapWrapper(env)  # pytype: disable=wrong-arg-types
+  else:
+    env = BraxDomainRandomizationVmapWrapper(env, randomization_fn)
+  env = brax_training.EpisodeWrapper(env, episode_length, action_repeat)
+  env = BraxAutoResetWrapper(env)
+  return env
+
+
+class BraxAutoResetWrapper(Wrapper):
+  """Automatically resets Brax envs that are done."""
+
+  def reset(self, rng: jax.Array) -> mjx_env.State:
+    state = self.env.reset(rng)
+    state.info['first_state'] = state.data
+    state.info['first_obs'] = state.obs
+    return state
+
+  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+    if 'steps' in state.info:
+      steps = state.info['steps']
+      steps = jp.where(state.done, jp.zeros_like(steps), steps)
+      state.info.update(steps=steps)
+    state = state.replace(done=jp.zeros_like(state.done))
+    state = self.env.step(state, action)
+
+    def where_done(x, y):
+      done = state.done
+      if done.shape:
+        done = jp.reshape(done, [x.shape[0]] + [1] * (len(x.shape) - 1))  # type: ignore
+      return jp.where(done, x, y)
+
+    data = jax.tree.map(
+        where_done, state.info['first_state'], state.data
+    )
+    obs = jax.tree.map(where_done, state.info['first_obs'], state.obs)
+    return state.replace(data=data, obs=obs)
+
+
+class BraxDomainRandomizationVmapWrapper(Wrapper):
+  """Brax wrapper for domain randomization."""
+
+  def __init__(
+      self,
+      env: mjx_env.MjxEnv,
+      randomization_fn: Callable[[mjx.Model], Tuple[mjx.Model, mjx.Model]],
+  ):
+    super().__init__(env)
+    self._mjx_model_v, self._in_axes = randomization_fn(self.mjx_model)
+
+  def _env_fn(self, mjx_model: mjx.Model) -> mjx_env.MjxEnv:
+    env = self.env
+    env.unwrapped._mjx_model = mjx_model  # pylint: disable=protected-access
+    return env
+
+  def reset(self, rng: jax.Array) -> mjx_env.State:
+    def reset(mjx_model, rng):
+      env = self._env_fn(mjx_model=mjx_model)
+      return env.reset(rng)
+
+    state = jax.vmap(reset, in_axes=[self._in_axes, 0])(self._mjx_model_v, rng)
+    return state
+
+  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+    def step(mjx_model, s, a):
+      env = self._env_fn(mjx_model=mjx_model)
+      return env.step(s, a)
+
+    res = jax.vmap(step, in_axes=[self._in_axes, 0, 0])(
+        self._mjx_model_v, state, action
+    )
+    return res

@@ -15,7 +15,7 @@
 """Core classes for MuJoCo Playground."""
 
 import abc
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from etils import epath
 from flax import struct
@@ -31,6 +31,9 @@ ROOT_PATH = epath.Path(__file__).parent
 # the menagerie path is used to load robot assets.
 # resource paths do not have glob implemented, so we use a bare epath.Path.
 MENAGERIE_PATH = epath.Path(__file__).parent / "../.." / "mujoco_menagerie"
+
+Observation = Union[jax.Array, Mapping[str, jax.Array]]
+ObservationSize = Union[int, Mapping[str, Union[Tuple[int, ...], int]]]
 
 
 def init(
@@ -79,7 +82,7 @@ class State:
   """Environment state for training and inference."""
 
   data: mjx.Data
-  obs: jax.Array
+  obs: Observation
   reward: jax.Array
   done: jax.Array
   metrics: Dict[str, jax.Array]
@@ -216,10 +219,13 @@ class MjxEnv(abc.ABC):
     return int(round(self.dt / self.sim_dt))
 
   @property
-  def observation_size(self) -> int:
+  def observation_size(self) -> ObservationSize:
     rng = jax.random.PRNGKey(0)
     reset_state = self.unwrapped.reset(rng)
-    return reset_state.obs.shape[-1]
+    obs = reset_state.obs
+    if isinstance(obs, jax.Array):
+      return obs.shape[-1]
+    return jax.tree_util.tree_map(lambda x: x.shape, obs)
 
   def render(
       self,
