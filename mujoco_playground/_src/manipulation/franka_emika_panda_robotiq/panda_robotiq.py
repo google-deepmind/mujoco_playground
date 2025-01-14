@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ from etils import epath
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils
-from mujoco_playground._src import mjx_env
 import numpy as np
 
+from mujoco_playground._src import mjx_env
 
 ARM_JOINTS = [
     "joint1",
@@ -52,12 +51,12 @@ _ENV_DIR = mjx_env.ROOT_PATH / "manipulation/franka_emika_panda_robotiq"
 def get_assets() -> Dict[str, bytes]:
   assets = {}
   path = mjx_env.MENAGERIE_PATH / _MENAGERIE_FRANKA_DIR
-  mj_utils.update_assets(assets, path, "*.xml")
-  mj_utils.update_assets(assets, path / "assets")
+  mjx_env.update_assets(assets, path, "*.xml")
+  mjx_env.update_assets(assets, path / "assets")
   path = mjx_env.MENAGERIE_PATH / _MENAGERIE_GRIPPER_DIR
-  mj_utils.update_assets(assets, path / "assets")
-  mj_utils.update_assets(assets, _ENV_DIR / "xmls", "*.xml")
-  mj_utils.update_assets(assets, _ENV_DIR / "assets", "*")
+  mjx_env.update_assets(assets, path / "assets")
+  mjx_env.update_assets(assets, _ENV_DIR / "xmls", "*.xml")
+  mjx_env.update_assets(assets, _ENV_DIR / "assets", "*")
   return assets
 
 

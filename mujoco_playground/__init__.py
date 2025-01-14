@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 """MuJoCo Playground."""
-
-from etils import epath
-
 from mujoco_playground._src import dm_control_suite
 from mujoco_playground._src import locomotion
 from mujoco_playground._src import manipulation
+from mujoco_playground._src import registry
 from mujoco_playground._src import wrapper
+from mujoco_playground._src import wrapper_torch
 # pylint: disable=g-importing-member
 from mujoco_playground._src.mjx_env import init
 from mujoco_playground._src.mjx_env import MjxEnv
@@ -34,8 +33,10 @@ __all__ = [
     "locomotion",
     "manipulation",
     "MjxEnv",
+    "registry",
     "render_array",
     "State",
     "step",
     "wrapper",
+    "wrapper_torch",
 ]

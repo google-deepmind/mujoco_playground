@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mjx_env
-from mujoco_playground._src import rewards
-from mujoco_playground._src.dm_control_suite import common
 import numpy as np
+
+from mujoco_playground._src import mjx_env
+from mujoco_playground._src import reward
+from mujoco_playground._src.dm_control_suite import common
 
 _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "fish.xml"
 _JOINTS = [
@@ -44,6 +45,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
+      vision=False,
   )
 
 
@@ -56,6 +58,10 @@ class Swim(mjx_env.MjxEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)
+    if self._config.vision:
+      raise NotImplementedError(
+          f"Vision not implemented for {self.__class__.__name__}."
+      )
 
     self._xml_path = _XML_PATH.as_posix()
     self._mj_model = mujoco.MjModel.from_xml_string(
@@ -113,13 +119,13 @@ class Swim(mjx_env.MjxEnv):
     }
     info = {"rng": rng}
 
-    reward, done = jp.zeros(2)
+    reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, info)
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     data = mjx_env.step(self.mjx_model, state.data, action, self.n_substeps)
-    reward = self._get_reward(data, action, state.info, state.metrics)
+    reward = self._get_reward(data, action, state.info, state.metrics)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, state.info)
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
@@ -160,7 +166,7 @@ class Swim(mjx_env.MjxEnv):
         mouth_to_target_global @ data.geom_xmat[self._mouth_geom_id]
     )
 
-    in_target = rewards.tolerance(
+    in_target = reward.tolerance(
         jp.linalg.norm(mouth_to_target_local),
         bounds=(0, self._radii),
         margin=2 * self._radii,
@@ -180,6 +186,10 @@ class Swim(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 24
 
   @property
   def mj_model(self) -> mujoco.MjModel:

@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ from lxml import etree
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mjx_env
-from mujoco_playground._src import rewards
-from mujoco_playground._src.dm_control_suite import common
 
+from mujoco_playground._src import mjx_env
+from mujoco_playground._src import reward
+from mujoco_playground._src.dm_control_suite import common
 
 _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "swimmer.xml"
 _FILENAMES = [
@@ -40,7 +40,7 @@ _FILENAMES = [
 def _make_model(xml_path: str, n_bodies: int):
   """Generates an xml string defining a swimmer with `n_bodies` bodies."""
   if n_bodies < 3:
-    raise ValueError("At least 3 bodies required. Received {}".format(n_bodies))
+    raise ValueError(f"At least 3 bodies required. Received {n_bodies}")
   if n_bodies > 6:
     warnings.warn(
         "Globally setting jax_default_matmul_precision  to 'highest'. "
@@ -55,22 +55,22 @@ def _make_model(xml_path: str, n_bodies: int):
 
   parent = head_body
   for body_index in range(n_bodies - 1):
-    site_name = "site_{}".format(body_index)
+    site_name = f"site_{body_index}"
     child = _make_body(body_index=body_index)
     child.append(etree.Element("site", name=site_name))
-    joint_name = "joint_{}".format(body_index)
+    joint_name = f"joint_{body_index}"
     joint_limit = 360.0 / n_bodies
-    joint_range = "{} {}".format(-joint_limit, joint_limit)
+    joint_range = f"{-joint_limit} {joint_limit}"
     child.append(
         etree.Element("joint", {"name": joint_name, "range": joint_range})
     )
-    motor_name = "motor_{}".format(body_index)
+    motor_name = f"motor_{body_index}"
     actuator.append(etree.Element("motor", name=motor_name, joint=joint_name))
-    velocimeter_name = "velocimeter_{}".format(body_index)
+    velocimeter_name = f"velocimeter_{body_index}"
     sensor.append(
         etree.Element("velocimeter", name=velocimeter_name, site=site_name)
     )
-    gyro_name = "gyro_{}".format(body_index)
+    gyro_name = f"gyro_{body_index}"
     sensor.append(etree.Element("gyro", name=gyro_name, site=site_name))
     parent.append(child)
     parent = child
@@ -89,9 +89,9 @@ def _make_model(xml_path: str, n_bodies: int):
 
 def _make_body(body_index):
   """Generates an xml string defining a single physical body."""
-  body_name = "segment_{}".format(body_index)
-  visual_name = "visual_{}".format(body_index)
-  inertial_name = "inertial_{}".format(body_index)
+  body_name = f"segment_{body_index}"
+  visual_name = f"visual_{body_index}"
+  inertial_name = f"inertial_{body_index}"
   body = etree.Element("body", name=body_name)
   body.set("pos", "0 .1 0")
   etree.SubElement(body, "geom", {"class": "visual", "name": visual_name})
@@ -105,6 +105,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.003,
       episode_length=1000,
       action_repeat=1,
+      vision=False,
   )
 
 
@@ -118,6 +119,11 @@ class Swim(mjx_env.MjxEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)
+    if self._config.vision:
+      raise NotImplementedError(
+          f"Vision not implemented for {self.__class__.__name__}."
+      )
+
     self._xml_path = _XML_PATH.as_posix()
     self._mj_model = mujoco.MjModel.from_xml_string(
         _make_model(self.xml_path, n_links), common.get_assets()
@@ -164,13 +170,13 @@ class Swim(mjx_env.MjxEnv):
     metrics = {}
     info = {"rng": rng}
 
-    reward, done = jp.zeros(2)
+    reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, info)
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     data = mjx_env.step(self.mjx_model, state.data, action, self.n_substeps)
-    reward = self._get_reward(data, action, state.info, state.metrics)
+    reward = self._get_reward(data, action, state.info, state.metrics)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, state.info)
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
@@ -192,7 +198,7 @@ class Swim(mjx_env.MjxEnv):
       metrics: dict[str, Any],
   ) -> jax.Array:
     del action, info, metrics  # Unused.
-    return rewards.tolerance(
+    return reward.tolerance(
         self._nose_to_target_dist(data),
         bounds=(0, self._target_size),
         margin=5 * self._target_size,
@@ -226,6 +232,10 @@ class Swim(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 25
 
   @property
   def mj_model(self) -> mujoco.MjModel:

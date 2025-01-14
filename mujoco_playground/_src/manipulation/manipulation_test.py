@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Tests for the manipulation environments."""
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
 import jax.numpy as jp
+
 from mujoco_playground._src import manipulation
 
 _ALL_ENVS = manipulation.ALL
@@ -32,6 +34,9 @@ class TestSuite(parameterized.TestCase):
     state = jax.jit(env.reset)(jax.random.PRNGKey(42))
     state = jax.jit(env.step)(state, jp.zeros(env.action_size))
     self.assertIsNotNone(state)
+    obs_shape = jax.tree_util.tree_map(lambda x: x.shape, state.obs)
+    obs_shape = obs_shape[0] if isinstance(obs_shape, tuple) else obs_shape
+    self.assertEqual(obs_shape, env.observation_size)
     self.assertFalse(jp.isnan(state.data.qpos).any())
 
 

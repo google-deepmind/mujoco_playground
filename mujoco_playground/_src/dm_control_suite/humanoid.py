@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils as utils
+
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src import rewards
+from mujoco_playground._src import reward
 from mujoco_playground._src.dm_control_suite import common
 
 _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "humanoid.xml"
@@ -41,6 +41,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.005,  # 0.0025 in DM Control
       episode_length=1000,
       action_repeat=1,
+      vision=False,
   )
 
 
@@ -54,6 +55,11 @@ class Humanoid(mjx_env.MjxEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)
+    if self._config.vision:
+      raise NotImplementedError(
+          f"Vision not implemented for {self.__class__.__name__}."
+      )
+
     self._move_speed = move_speed
     if self._move_speed == 0.0:
       self._stand_or_move_reward = self._stand_reward
@@ -92,13 +98,13 @@ class Humanoid(mjx_env.MjxEnv):
     }
     info = {"rng": rng}
 
-    reward, done = jp.zeros(2)
+    reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, info)
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     data = mjx_env.step(self.mjx_model, state.data, action, self.n_substeps)
-    reward = self._get_reward(data, action, state.info, state.metrics)
+    reward = self._get_reward(data, action, state.info, state.metrics)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, state.info)
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
@@ -124,14 +130,14 @@ class Humanoid(mjx_env.MjxEnv):
   ) -> jax.Array:
     del info  # Unused.
 
-    standing = rewards.tolerance(
+    standing = reward.tolerance(
         self._head_height(data),
         bounds=(_STAND_HEIGHT, float("inf")),
         margin=_STAND_HEIGHT / 4,
     )
     metrics["reward/standing"] = standing
 
-    upright = rewards.tolerance(
+    upright = reward.tolerance(
         self._torso_upright(data),
         bounds=(0.9, float("inf")),
         sigmoid="linear",
@@ -143,7 +149,7 @@ class Humanoid(mjx_env.MjxEnv):
     stand_reward = standing * upright
     metrics["reward/stand"] = stand_reward
 
-    small_control = rewards.tolerance(
+    small_control = reward.tolerance(
         action, margin=1, value_at_margin=0, sigmoid="quadratic"
     ).mean()
     small_control = (4 + small_control) / 5
@@ -156,11 +162,11 @@ class Humanoid(mjx_env.MjxEnv):
 
   def _stand_reward(self, data: mjx.Data) -> jax.Array:
     horizontal_velocity = self._center_of_mass_velocity(data)[:2]
-    dont_move = rewards.tolerance(horizontal_velocity, margin=2).mean()
+    dont_move = reward.tolerance(horizontal_velocity, margin=2).mean()
     return dont_move
 
   def _move_reward(self, data: mjx.Data) -> jax.Array:
-    move = rewards.tolerance(
+    move = reward.tolerance(
         jp.linalg.norm(self._center_of_mass_velocity(data)[:2]),
         bounds=(self._move_speed, float("inf")),
         margin=self._move_speed,
@@ -180,7 +186,7 @@ class Humanoid(mjx_env.MjxEnv):
 
   def _center_of_mass_velocity(self, data: mjx.Data) -> jax.Array:
     """Returns the velocity of the center of mass in global coordinates."""
-    return utils.get_sensor_data(self.mj_model, data, "torso_subtreelinvel")
+    return mjx_env.get_sensor_data(self.mj_model, data, "torso_subtreelinvel")
 
   def _center_of_mass_position(self, data: mjx.Data) -> jax.Array:
     """Returns the position of the center of mass in global coordinates."""
@@ -208,6 +214,10 @@ class Humanoid(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 67
 
   @property
   def mj_model(self) -> mujoco.MjModel:

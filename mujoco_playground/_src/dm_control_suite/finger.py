@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ Changes from the dm_control implementation:
 
 - Changed integrator to implicitfast.
 - Reduced the timestep to 0.005 (from 0.01).
-- Removed touch sensors (not yet available in MJX).
 """
 
 from typing import Any, Dict, Optional, Union
@@ -29,10 +28,9 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils as utils
+
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.dm_control_suite import common
-
 
 _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "finger.xml"
 # For TURN tasks, the 'tip' geom needs to enter a spherical target of sizes:
@@ -49,6 +47,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.005,
       episode_length=1000,
       action_repeat=1,
+      vision=False,
   )
 
 
@@ -85,6 +84,10 @@ class Spin(mjx_env.MjxEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)
+    if self._config.vision:
+      raise NotImplementedError(
+          f"Vision not implemented for {self.__class__.__name__}."
+      )
 
     self._xml_path = _XML_PATH.as_posix()
     self._mj_model = _make_spin_model(_XML_PATH)
@@ -125,7 +128,7 @@ class Spin(mjx_env.MjxEnv):
     return jp.concatenate([
         self._bounded_position(data),
         data.qvel,
-        # self._touch(data),
+        self._touch(data),
     ])
 
   def _get_reward(
@@ -140,12 +143,12 @@ class Spin(mjx_env.MjxEnv):
     return reward.astype(float)
 
   def _hinge_velocity(self, data: mjx.Data) -> jax.Array:
-    return utils.get_sensor_data(self.mj_model, data, "hinge_velocity")[0]
+    return mjx_env.get_sensor_data(self.mj_model, data, "hinge_velocity")[0]
 
   def _bounded_position(self, data: mjx.Data) -> jax.Array:
     """Returns the (x,z) position of the tip relative to the hinge."""
-    proximal_pos = utils.get_sensor_data(self.mj_model, data, "proximal")
-    distal_pos = utils.get_sensor_data(self.mj_model, data, "distal")
+    proximal_pos = mjx_env.get_sensor_data(self.mj_model, data, "proximal")
+    distal_pos = mjx_env.get_sensor_data(self.mj_model, data, "distal")
     return jp.concatenate([
         proximal_pos,
         distal_pos,
@@ -154,16 +157,18 @@ class Spin(mjx_env.MjxEnv):
 
   def _tip_position(self, data: mjx.Data) -> jax.Array:
     """Returns the (x,z) position of the tip relative to the hinge."""
-    tip_xz = utils.get_sensor_data(self.mj_model, data, "tip")[jp.array([0, 2])]
-    spinner_xz = utils.get_sensor_data(self.mj_model, data, "spinner")[
+    tip_xz = mjx_env.get_sensor_data(self.mj_model, data, "tip")[
+        jp.array([0, 2])
+    ]
+    spinner_xz = mjx_env.get_sensor_data(self.mj_model, data, "spinner")[
         jp.array([0, 2])
     ]
     return tip_xz - spinner_xz
 
   def _touch(self, data: mjx.Data) -> jax.Array:
     """Returns logarithmically scaled signals from the two touch sensors."""
-    top = utils.get_sensor_data(self.mj_model, data, "touchtop")
-    bottom = utils.get_sensor_data(self.mj_model, data, "touchbottom")
+    top = mjx_env.get_sensor_data(self.mj_model, data, "touchtop")
+    bottom = mjx_env.get_sensor_data(self.mj_model, data, "touchbottom")
     touch = jp.hstack([top, bottom])
     return jp.log1p(touch)
 
@@ -184,6 +189,10 @@ class Spin(mjx_env.MjxEnv):
     return self.mjx_model.nu
 
   @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 9
+
+  @property
   def mj_model(self) -> mujoco.MjModel:
     return self._mj_model
 
@@ -198,10 +207,15 @@ class Turn(mjx_env.MjxEnv):
   def __init__(
       self,
       target_radius: float,
+      vision: bool = False,
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)
+    if vision:
+      raise NotImplementedError(
+          f"Vision not implemented for {self.__class__.__name__}."
+      )
 
     self._xml_path = _XML_PATH.as_posix()
     self._mj_model = _make_turn_model(_XML_PATH, target_radius)
@@ -258,7 +272,7 @@ class Turn(mjx_env.MjxEnv):
     return jp.concatenate([
         self._bounded_position(data),
         data.qvel,
-        # self._touch(data),
+        self._touch(data),
         self._target_position(data),
         self._dist_to_target(data).reshape(1),
     ])
@@ -275,12 +289,12 @@ class Turn(mjx_env.MjxEnv):
     return reward.astype(float)
 
   def _hinge_velocity(self, data: mjx.Data) -> jax.Array:
-    return utils.get_sensor_data(self.mj_model, data, "hinge_velocity")[0]
+    return mjx_env.get_sensor_data(self.mj_model, data, "hinge_velocity")[0]
 
   def _bounded_position(self, data: mjx.Data) -> jax.Array:
     """Returns the (x,z) position of the tip relative to the hinge."""
-    proximal_pos = utils.get_sensor_data(self.mj_model, data, "proximal")
-    distal_pos = utils.get_sensor_data(self.mj_model, data, "distal")
+    proximal_pos = mjx_env.get_sensor_data(self.mj_model, data, "proximal")
+    distal_pos = mjx_env.get_sensor_data(self.mj_model, data, "distal")
     return jp.concatenate([
         proximal_pos,
         distal_pos,
@@ -289,25 +303,27 @@ class Turn(mjx_env.MjxEnv):
 
   def _tip_position(self, data: mjx.Data) -> jax.Array:
     """Returns the (x,z) position of the tip relative to the hinge."""
-    tip_xz = utils.get_sensor_data(self.mj_model, data, "tip")[jp.array([0, 2])]
-    spinner_xz = utils.get_sensor_data(self.mj_model, data, "spinner")[
+    tip_xz = mjx_env.get_sensor_data(self.mj_model, data, "tip")[
+        jp.array([0, 2])
+    ]
+    spinner_xz = mjx_env.get_sensor_data(self.mj_model, data, "spinner")[
         jp.array([0, 2])
     ]
     return tip_xz - spinner_xz
 
   def _touch(self, data: mjx.Data) -> jax.Array:
     """Returns logarithmically scaled signals from the two touch sensors."""
-    top = utils.get_sensor_data(self.mj_model, data, "touchtop")
-    bottom = utils.get_sensor_data(self.mj_model, data, "touchbottom")
+    top = mjx_env.get_sensor_data(self.mj_model, data, "touchtop")
+    bottom = mjx_env.get_sensor_data(self.mj_model, data, "touchbottom")
     touch = jp.hstack([top, bottom])
     return jp.log1p(touch)
 
   def _target_position(self, data: mjx.Data) -> jax.Array:
     """Returns the (x,z) position of the target relative to the hinge."""
-    target_pos = utils.get_sensor_data(self.mj_model, data, "target")[
+    target_pos = mjx_env.get_sensor_data(self.mj_model, data, "target")[
         jp.array([0, 2])
     ]
-    spinner_pos = utils.get_sensor_data(self.mj_model, data, "spinner")[
+    spinner_pos = mjx_env.get_sensor_data(self.mj_model, data, "spinner")[
         jp.array([0, 2])
     ]
     return target_pos - spinner_pos
@@ -327,6 +343,10 @@ class Turn(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 12
 
   @property
   def mj_model(self) -> mujoco.MjModel:

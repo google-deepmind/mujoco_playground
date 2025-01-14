@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,60 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Joystick environment for H1."""
+"""Joystick for H1."""
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
-from etils import epath
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils
-from mujoco_playground._src import mjx_env
 import numpy as np
 
-_XML_PATH = mjx_env.ROOT_PATH / "locomotion" / "h1" / "xmls" / "scene_mjx.xml"
-_FEET_SITES = [
-    "left_foot",
-    "right_foot",
-]
-
-_LEFT_FEET_GEOMS = [
-    "left_foot1",
-    "left_foot2",
-    "left_foot3",
-]
-_RIGHT_FEET_GEOMS = [
-    "right_foot1",
-    "right_foot2",
-    "right_foot3",
-]
-
-
-def get_assets() -> Dict[str, bytes]:
-  assets = {}
-  path = mjx_env.MENAGERIE_PATH / "unitree_h1" / "assets"
-  mj_utils.update_assets(assets, path)
-  mj_utils.update_assets(assets, epath.Path(__file__).parent / "xmls", "*.xml")
-  return assets
-
-
-def _get_collision_info(
-    contact: Any, geom1: int, geom2: int
-) -> Tuple[jax.Array, jax.Array]:
-  if geom1 > geom2:
-    geom1, geom2 = geom2, geom1
-  mask = (jp.array([geom1, geom2]) == contact.geom).all(axis=1)
-  idx = jp.where(mask, contact.dist, 1e4).argmin()
-  dist = contact.dist[idx] * mask[idx]
-  normal = (dist < 0) * contact.frame[idx, 0, :3]
-  return dist, normal
-
-
-def _geoms_colliding(data: mjx.Data, geom1: int, geom2: int) -> jax.Array:
-  return _get_collision_info(data.contact, geom1, geom2)[0] < 0
+from mujoco_playground._src import collision
+from mujoco_playground._src import mjx_env
+from mujoco_playground._src.locomotion.h1 import base as h1_base
+from mujoco_playground._src.locomotion.h1 import h1_constants
 
 
 def default_config() -> config_dict.ConfigDict:
@@ -99,21 +60,19 @@ def default_config() -> config_dict.ConfigDict:
   )
 
 
-class Joystick(mjx_env.MjxEnv):
-  """Joystick environment for H1."""
+class Joystick(h1_base.H1Env):
+  """
+  A class representing a joystick environment for locomotion control.
+  """
 
   def __init__(
       self,
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
-    super().__init__(config, config_overrides)
-    self._xml_path = _XML_PATH.as_posix()
-    self._mj_model = mujoco.MjModel.from_xml_string(
-        _XML_PATH.read_text(), assets=get_assets()
+    super().__init__(
+        h1_constants.FEET_ONLY_XML.as_posix(), config, config_overrides
     )
-    self._mj_model.opt.timestep = config.sim_dt
-    self._mjx_model = mjx.put_model(self._mj_model)
     self._post_init()
 
   def _post_init(self) -> None:
@@ -123,18 +82,18 @@ class Joystick(mjx_env.MjxEnv):
     self._uppers = self._mj_model.jnt_range[1:, 1]
     self._torso_body_id = self._mj_model.body("torso_link").id
     self._feet_site_id = np.array(
-        [self._mj_model.site(name).id for name in _FEET_SITES]
+        [self._mj_model.site(name).id for name in h1_constants.FEET_SITES]
     )
     self._floor_geom_id = self._mj_model.geom("floor").id
     self._left_feet_geom_id = np.array(
-        [self._mj_model.geom(name).id for name in _LEFT_FEET_GEOMS]
+        [self._mj_model.geom(name).id for name in h1_constants.LEFT_FEET_GEOMS]
     )
     self._right_feet_geom_id = np.array(
-        [self._mj_model.geom(name).id for name in _RIGHT_FEET_GEOMS]
+        [self._mj_model.geom(name).id for name in h1_constants.RIGHT_FEET_GEOMS]
     )
     self._torso_mass = self._mj_model.body_mass[self._torso_body_id]
     foot_linvel_sensor_adr = []
-    for site in _FEET_SITES:
+    for site in h1_constants.FEET_SITES:
       sensor_id = self._mj_model.sensor(f"{site}_global_linvel").id
       sensor_adr = self._mj_model.sensor_adr[sensor_id]
       sensor_dim = self._mj_model.sensor_dim[sensor_id]
@@ -190,7 +149,7 @@ class Joystick(mjx_env.MjxEnv):
     motor_targets = self._default_pose + action * self._config.action_scale
     motor_targets = jp.clip(motor_targets, self._lowers, self._uppers)
     data = mjx_env.step(
-        self.mjx_model, state.data, motor_targets, self.n_substeps
+        self.mjx_model, state.data, motor_targets, self._n_frames
     )
 
     obs = self._get_obs(data, state.info, state.obs, noise_rng)
@@ -364,11 +323,11 @@ class Joystick(mjx_env.MjxEnv):
     vel_xy = feet_vel[..., :2]
     vel_xy_norm_sq = jp.sum(jp.square(vel_xy), axis=-1)
     left_feet_contact = jp.array([
-        _geoms_colliding(data, geom_id, self._floor_geom_id)
+        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
         for geom_id in self._left_feet_geom_id
     ])
     right_feet_contact = jp.array([
-        _geoms_colliding(data, geom_id, self._floor_geom_id)
+        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
         for geom_id in self._right_feet_geom_id
     ])
     feet_contact = jp.hstack(
@@ -387,7 +346,7 @@ class Joystick(mjx_env.MjxEnv):
 
   @property
   def xml_path(self) -> str:
-    return self._xml_path
+    raise NotImplementedError()
 
   @property
   def action_size(self) -> int:

@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils as utils
+
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src import rewards
+from mujoco_playground._src import reward
 from mujoco_playground._src.dm_control_suite import common
 
 _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "hopper.xml"
@@ -40,6 +40,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.005,
       episode_length=1000,
       action_repeat=1,
+      vision=False,
   )
 
 
@@ -53,6 +54,11 @@ class Hopper(mjx_env.MjxEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)
+    if self._config.vision:
+      raise NotImplementedError(
+          f"Vision not implemented for {self.__class__.__name__}."
+      )
+
     if hopping:
       self._get_reward = self._hop_reward
       self._metric_keys = [
@@ -101,13 +107,13 @@ class Hopper(mjx_env.MjxEnv):
     metrics = {k: jp.zeros(()) for k in self._metric_keys}
     info = {"rng": rng}
 
-    reward, done = jp.zeros(2)
+    reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, info)
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     data = mjx_env.step(self.mjx_model, state.data, action, self.n_substeps)
-    reward = self._get_reward(data, action, state.info, state.metrics)
+    reward = self._get_reward(data, action, state.info, state.metrics)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, state.info)
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
@@ -130,10 +136,10 @@ class Hopper(mjx_env.MjxEnv):
   ) -> jax.Array:
     del action, info  # Unused.
 
-    standing = rewards.tolerance(self._height(data), (_STAND_HEIGHT, 2))
+    standing = reward.tolerance(self._height(data), (_STAND_HEIGHT, 2))
     metrics["reward/standing"] = standing
 
-    hopping = rewards.tolerance(
+    hopping = reward.tolerance(
         self._speed(data),
         bounds=(_HOP_SPEED, float("inf")),
         margin=_HOP_SPEED / 2,
@@ -153,10 +159,10 @@ class Hopper(mjx_env.MjxEnv):
   ) -> jax.Array:
     del info  # Unused.
 
-    standing = rewards.tolerance(self._height(data), (_STAND_HEIGHT, 2))
+    standing = reward.tolerance(self._height(data), (_STAND_HEIGHT, 2))
     metrics["reward/standing"] = standing
 
-    small_control = rewards.tolerance(
+    small_control = reward.tolerance(
         action, margin=1, value_at_margin=0, sigmoid="quadratic"
     ).mean()
     small_control = (small_control + 4) / 5
@@ -170,13 +176,13 @@ class Hopper(mjx_env.MjxEnv):
     return torso_z - foot_z
 
   def _speed(self, data: mjx.Data) -> jax.Array:
-    return utils.get_sensor_data(self.mj_model, data, "torso_subtreelinvel")[
+    return mjx_env.get_sensor_data(self.mj_model, data, "torso_subtreelinvel")[
         0
     ]  # x component.
 
   def _touch(self, data: mjx.Data) -> jax.Array:
-    toe = utils.get_sensor_data(self.mj_model, data, "touch_toe")
-    heel = utils.get_sensor_data(self.mj_model, data, "touch_heel")
+    toe = mjx_env.get_sensor_data(self.mj_model, data, "touch_toe")
+    heel = mjx_env.get_sensor_data(self.mj_model, data, "touch_heel")
     touch = jp.hstack([toe, heel])
     return jp.log1p(touch)
 
@@ -187,6 +193,10 @@ class Hopper(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 15
 
   @property
   def mj_model(self) -> mujoco.MjModel:

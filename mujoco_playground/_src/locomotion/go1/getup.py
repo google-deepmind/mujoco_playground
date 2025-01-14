@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,45 +12,87 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Fall recovery task for the Go1."""
+
 from typing import Any, Dict, Optional, Union
 
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
+import numpy as np
+
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.go1 import base as go1_base
 from mujoco_playground._src.locomotion.go1 import go1_constants as consts
-import numpy as np
 
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.02,
-      sim_dt=0.001,
-      Kp=50.0,
-      Kd=1.0,
+      sim_dt=0.004,
+      Kp=35.0,
+      Kd=0.5,
       episode_length=300,
       drop_from_height_prob=0.6,
       settle_time=0.5,
       action_repeat=1,
-      action_scale=0.6,
-      obs_noise=0.05,
-      obs_history_size=15,
+      action_scale=0.5,
+      soft_joint_pos_limit_factor=0.95,
+      energy_termination_threshold=np.inf,
+      noise_config=config_dict.create(
+          level=1.0,
+          scales=config_dict.create(
+              joint_pos=0.03,
+              joint_vel=1.5,
+              gyro=0.2,
+              gravity=0.05,
+          ),
+      ),
       reward_config=config_dict.create(
           scales=config_dict.create(
               orientation=1.0,
               torso_height=1.0,
-              torques=-0.0002,
+              posture=1.0,
+              stand_still=1.0,
               action_rate=-0.001,
-              energy=0.0,
+              dof_pos_limits=-0.1,
+              torques=-1e-5,
+              dof_acc=-2.5e-7,
+              dof_vel=-0.1,
           ),
       ),
   )
 
 
 class Getup(go1_base.Go1Env):
-  """Recover from a fall and stand up."""
+  """Recover from a fall and stand up.
+
+  Observation space:
+      - Gyroscope readings (3)
+      - Gravity vector (3)
+      - Joint angles (12)
+      - Last action (12)
+
+  Action space: Joint angles (12) scaled by a factor and added to the current
+  joint angles. We tried using the same action space used in the joystick task
+  where the output of the policy is added to the nominal "home" pose but it
+  didn't work as well as adding to the current joint configuration. I suspect
+  this is because the latter gives the policy a wider initial range of motion.
+
+  Reward function:
+      - Orientation: The torso should be upright.
+      - Torso height: The torso should be at a desired height. This is to
+          prevent the robot from flipping over and just lying on the ground.
+      - Posture: The robot should be in the neural pose. This reward is only
+          given when the robot is upright and at the desired height.
+      - Stand still: Policy outputs should be zero once the robot is upright
+          and at the desired height. This minimizes jittering.
+      The next two rewards aren't really needed but promote better sim2real
+          transfer (in theory):
+      - Torques: Minimize joint torques.
+      - Action rate: Minimize the first and second derivative of actions.
+  """
 
   def __init__(
       self,
@@ -58,63 +100,73 @@ class Getup(go1_base.Go1Env):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(
-        xml_path=str(consts.FULL_XML),
-        Kp=config.Kp,
-        Kd=config.Kd,
+        xml_path=consts.FULL_COLLISIONS_FLAT_TERRAIN_XML.as_posix(),
         config=config,
         config_overrides=config_overrides,
     )
-    self._config = config
     self._post_init()
 
   def _post_init(self) -> None:
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
-    self._default_pose = self._mj_model.keyframe("home").qpos[7:]
-    self._lowers = self._mj_model.actuator_ctrlrange[:, 0]
-    self._uppers = self._mj_model.actuator_ctrlrange[:, 1]
-    self._settle_steps = np.round(
-        self._config.settle_time / self.sim_dt
-    ).astype(np.int32)
-    self._z_des = 0.25
-    self._up_vec = jp.array([0.0, 0.0, 1.0])
+    self._default_pose = jp.array(self._mj_model.keyframe("home").qpos[7:])
+
+    self._lowers, self._uppers = self.mj_model.jnt_range[1:].T
+    c = (self._lowers + self._uppers) / 2
+    r = self._uppers - self._lowers
+    self._soft_lowers = c - 0.5 * r * self._config.soft_joint_pos_limit_factor
+    self._soft_uppers = c + 0.5 * r * self._config.soft_joint_pos_limit_factor
+
+    self._settle_steps = int(self._config.settle_time / self.sim_dt)
+    self._z_des = 0.275
+    self._up_vec = jp.array([0.0, 0.0, -1.0])
+    self._imu_site_id = self._mj_model.site("imu").id
 
   def _get_random_qpos(self, rng: jax.Array) -> jax.Array:
-    rng, height_rng, orientation_rng, qpos_rng = jax.random.split(rng, 4)
+    """Generate an initial configuration where the robot is at a height of 0.5m
+    with a random orientation and joint angles.
+
+    Note(kevin): We could also randomize the root height but experiments on
+    real hardware show that this works just fine.
+    """
+    rng, orientation_rng, qpos_rng = jax.random.split(rng, 3)
 
     qpos = jp.zeros(self.mjx_model.nq)
 
     # Initialize height and orientation of the root body.
-    height = jax.random.uniform(height_rng, minval=0.6, maxval=0.7)
+    height = 0.5
     qpos = qpos.at[2].set(height)
     quat = jax.random.normal(orientation_rng, (4,))
     quat /= jp.linalg.norm(quat) + 1e-6
     qpos = qpos.at[3:7].set(quat)
 
-    # Randomize the joint angles.
-    # TODO(kevin): Switch to sampling a non-colliding pose within the full
-    # joint range.
-    noise = jax.random.uniform(qpos_rng, (12,), minval=-0.5, maxval=0.5)
+    # Randomize joint angles.
     qpos = qpos.at[7:].set(
-        jp.clip(self._default_pose + noise, self._lowers, self._uppers)
+        jax.random.uniform(
+            qpos_rng, (12,), minval=self._lowers, maxval=self._uppers
+        )
     )
 
     return qpos
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
-    rng, noise_rng, reset_rng1, reset_rng2 = jax.random.split(rng, 4)
-
-    # Randomly drop from height or initialize at default pose.
+    # Sample a random initial configuration with some probability.
+    rng, key1, key2 = jax.random.split(rng, 3)
     qpos = jp.where(
-        jax.random.bernoulli(reset_rng1, self._config.drop_from_height_prob),
-        self._get_random_qpos(reset_rng2),
+        jax.random.bernoulli(key1, self._config.drop_from_height_prob),
+        self._get_random_qpos(key2),
         self._init_q,
     )
 
-    data = mjx_env.init(
-        self.mjx_model, qpos=qpos, qvel=jp.zeros(self.mjx_model.nv)
+    # Sample a random root velocity.
+    rng, key = jax.random.split(rng)
+    qvel = jp.zeros(self.mjx_model.nv)
+    qvel = qvel.at[0:6].set(
+        jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-    # Settle the robot.
+    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
+
+    # Let the robot settle for a few steps.
     data = mjx_env.step(self.mjx_model, data, qpos[7:], self._settle_steps)
     data = data.replace(time=0.0)
 
@@ -128,25 +180,18 @@ class Getup(go1_base.Go1Env):
     for k in self._config.reward_config.scales.keys():
       metrics[f"reward/{k}"] = jp.zeros(())
 
-    obs_history = jp.zeros(self._config.obs_history_size * 33)
-    obs = self._get_obs(data, info, obs_history, noise_rng)
+    obs = self._get_obs(data, info)
     reward, done = jp.zeros(2)
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    rng, noise_rng = jax.random.split(state.info["rng"], 2)
-
-    motor_targets = self._default_pose + action * self._config.action_scale
-    motor_targets = jp.clip(motor_targets, self._lowers, self._uppers)
+    motor_targets = state.data.qpos[7:] + action * self._config.action_scale
     data = mjx_env.step(
         self.mjx_model, state.data, motor_targets, self.n_substeps
     )
 
-    obs = self._get_obs(data, state.info, state.obs, noise_rng)
-
-    joint_angles = data.qpos[7:]
-    done = jp.any(joint_angles < self._lowers)
-    done |= jp.any(joint_angles > self._uppers)
+    obs = self._get_obs(data, state.info)
+    done = self._get_termination(data)
 
     rewards = self._get_reward(data, action, state.info, state.metrics, done)
     rewards = {
@@ -157,7 +202,6 @@ class Getup(go1_base.Go1Env):
     # Bookkeeping.
     state.info["last_last_act"] = state.info["last_act"]
     state.info["last_act"] = action
-    state.info["rng"] = rng
     for k, v in rewards.items():
       state.metrics[f"reward/{k}"] = v
 
@@ -165,27 +209,79 @@ class Getup(go1_base.Go1Env):
     state = state.replace(data=data, obs=obs, reward=reward, done=done)
     return state
 
+  def _get_termination(self, data: mjx.Data) -> jax.Array:
+    energy = jp.sum(jp.abs(data.actuator_force * data.qvel[6:]))
+    energy_termination = energy > self._config.energy_termination_threshold
+    return energy_termination
+
   def _get_obs(
-      self,
-      data: mjx.Data,
-      info: dict[str, Any],
-      obs_history: jax.Array,
-      rng: jax.Array,
-  ) -> jax.Array:
-    obs = jp.concatenate([
-        self.get_gyro(data),  # 3
-        self.get_accelerometer(data),  # 3
-        self.get_gravity(data),  # 3
-        data.qpos[7:] - self._default_pose,  # 12
+      self, data: mjx.Data, info: dict[str, Any]
+  ) -> Dict[str, jax.Array]:
+    gyro = self.get_gyro(data)
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    noisy_gyro = (
+        gyro
+        + (2 * jax.random.uniform(noise_rng, shape=gyro.shape) - 1)
+        * self._config.noise_config.level
+        * self._config.noise_config.scales.gyro
+    )
+
+    gravity = self.get_gravity(data)
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    noisy_gravity = (
+        gravity
+        + (2 * jax.random.uniform(noise_rng, shape=gravity.shape) - 1)
+        * self._config.noise_config.level
+        * self._config.noise_config.scales.gravity
+    )
+
+    joint_angles = data.qpos[7:]
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    noisy_joint_angles = (
+        joint_angles
+        + (2 * jax.random.uniform(noise_rng, shape=joint_angles.shape) - 1)
+        * self._config.noise_config.level
+        * self._config.noise_config.scales.joint_pos
+    )
+
+    joint_vel = data.qvel[6:]
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    noisy_joint_vel = (
+        joint_vel
+        + (2 * jax.random.uniform(noise_rng, shape=joint_vel.shape) - 1)
+        * self._config.noise_config.level
+        * self._config.noise_config.scales.joint_vel
+    )
+
+    state = jp.concatenate([
+        noisy_gyro,  # 3
+        noisy_gravity,  # 3
+        noisy_joint_angles - self._default_pose,  # 12
+        noisy_joint_vel,  # 12
         info["last_act"],  # 12
-    ])  # total = 33
-    if self._config.obs_noise >= 0.0:
-      noise = self._config.obs_noise * jax.random.uniform(
-          rng, obs.shape, minval=-1.0, maxval=1.0
-      )
-      obs = jp.clip(obs, -100.0, 100.0) + noise
-    obs = jp.roll(obs_history, obs.size).at[: obs.size].set(obs)
-    return obs
+    ])
+
+    accelerometer = self.get_accelerometer(data)
+    linvel = self.get_local_linvel(data)
+    angvel = self.get_global_angvel(data)
+    torso_height = data.site_xpos[self._imu_site_id][2]
+
+    privileged_state = jp.hstack([
+        state,
+        gyro,
+        accelerometer,
+        linvel,
+        angvel,
+        joint_angles,
+        joint_vel,
+        data.actuator_force,
+        torso_height,
+    ])
+
+    return {
+        "state": state,
+        "privileged_state": privileged_state,
+    }
 
   def _get_reward(
       self,
@@ -196,39 +292,85 @@ class Getup(go1_base.Go1Env):
       done: jax.Array,
   ) -> dict[str, jax.Array]:
     del done, metrics  # Unused.
+
+    torso_height = data.site_xpos[self._imu_site_id][2]
+    joint_angles = data.qpos[7:]
+    joint_torques = data.actuator_force
+
+    gravity = self.get_gravity(data)
+    is_upright = self._is_upright(gravity)
+    is_at_desired_height = self._is_at_desired_height(torso_height)
+    gate = is_upright * is_at_desired_height
+
     return {
-        "orientation": self._reward_orientation(self.get_gravity(data)),
-        "torso_height": self._reward_torso_height(data.qpos[2]),
-        "action_rate": self._cost_action_rate(
-            action, info["last_act"], info["last_last_act"]
-        ),
-        "torques": self._cost_torques(data.actuator_force),
-        "energy": self._cost_energy(data.qvel[6:], data.actuator_force),
+        "orientation": self._reward_orientation(gravity),
+        "torso_height": self._reward_height(torso_height),
+        "posture": self._reward_posture(joint_angles, is_upright),
+        "stand_still": self._reward_stand_still(action, gate),
+        "action_rate": self._cost_action_rate(action, info),
+        "torques": self._cost_torques(joint_torques),
+        "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:]),
+        "dof_acc": self._cost_dof_acc(data.qacc[6:]),
+        "dof_vel": self._cost_dof_vel(data.qvel[6:]),
     }
 
-  def _reward_orientation(self, torso_zaxis: jax.Array) -> jax.Array:
-    # Reward for being upright.
-    return (0.5 * torso_zaxis[2] + 0.5) ** 2
+  def _is_upright(self, gravity: jax.Array, ori_tol: float = 0.01) -> jax.Array:
+    ori_error = jp.sum(jp.square(self._up_vec - gravity))
+    return ori_error < ori_tol
 
-  def _reward_torso_height(self, torso_height: jax.Array) -> jax.Array:
-    # Reward for torso beight at desired height.
-    error = jp.clip((self._z_des - torso_height) / self._z_des, 0.0, 1.0)
-    return 1.0 - error
+  def _is_at_desired_height(
+      self, torso_height: jax.Array, pos_tol: float = 0.005
+  ) -> jax.Array:
+    height = jp.min(jp.array([torso_height, self._z_des]))
+    height_error = self._z_des - height
+    return height_error < pos_tol
+
+  def _reward_orientation(self, up_vec: jax.Array) -> jax.Array:
+    error = jp.sum(jp.square(self._up_vec - up_vec))
+    return jp.exp(-2.0 * error)
+
+  def _reward_height(self, torso_height: jax.Array) -> jax.Array:
+    height = jp.min(jp.array([torso_height, self._z_des]))
+    return jp.exp(height) - 1.0
+
+  def _reward_posture(
+      self, joint_angles: jax.Array, gate: jax.Array
+  ) -> jax.Array:
+    cost = jp.sum(jp.square(joint_angles - self._default_pose))
+    rew = jp.exp(-0.5 * cost)
+    return gate * rew
+
+  def _reward_stand_still(self, act: jax.Array, gate: jax.Array) -> jax.Array:
+    cost = jp.sum(jp.square(act))
+    rew = jp.exp(-0.5 * cost)
+    return gate * rew
 
   def _cost_torques(self, torques: jax.Array) -> jax.Array:
-    # Penalize torques.
     return jp.sqrt(jp.sum(jp.square(torques))) + jp.sum(jp.abs(torques))
 
-  def _cost_energy(
-      self, qvel: jax.Array, qfrc_actuator: jax.Array
-  ) -> jax.Array:
-    # Penalize energy consumption.
-    return jp.sum(jp.abs(qvel) * jp.abs(qfrc_actuator))
-
   def _cost_action_rate(
-      self, act: jax.Array, last_act: jax.Array, last_last_act: jax.Array
+      self, act: jax.Array, info: dict[str, Any]
   ) -> jax.Array:
-    # Penalize first and second derivative of actions.
-    c1 = jp.sum(jp.square(act - last_act))
-    c2 = jp.sum(jp.square(act - 2 * last_act + last_last_act))
+    c1 = jp.sum(jp.square(act - info["last_act"]))
+    c2 = jp.sum(jp.square(act - 2 * info["last_act"] + info["last_last_act"]))
     return c1 + c2
+
+  def _cost_joint_pos_limits(self, qpos: jax.Array) -> jax.Array:
+    out_of_limits = -jp.clip(qpos - self._soft_lowers, None, 0.0)
+    out_of_limits += jp.clip(qpos - self._soft_uppers, 0.0, None)
+    return jp.sum(out_of_limits)
+
+  def _cost_dof_vel(self, qvel: jax.Array) -> jax.Array:
+    max_velocity = 2.0 * jp.pi  # rad/s
+    cost = jp.maximum(jp.abs(qvel) - max_velocity, 0.0)
+    return jp.sum(jp.square(cost))
+
+  def _cost_dof_acc(self, qacc: jax.Array) -> jax.Array:
+    return jp.sum(jp.square(qacc))
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return {
+        "state": (42,),
+        "privileged_state": (91,),
+    }

@@ -12,10 +12,12 @@
   <statistic center="0 -0.1 0.2" extent="0.6" meansize="0.05"/>
 
   <visual>
-    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
-    <rgba haze="0.15 0.25 0.35 1"/>
-    <global azimuth="90" elevation="-20"/>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
+    <rgba force="1 0 0 1"/>
+    <global azimuth="-40" elevation="-30"/>
+    <map force="0.01"/>
     <quality shadowsize="8192"/>
+    <scale contactwidth="0.075" contactheight="0.025" forcewidth="0.05" com="0.05" framewidth="0.01" framelength="0.2"/>
   </visual>
 
   <asset>
@@ -35,11 +37,11 @@
     <mesh file="tablelegs.obj"/>
     <mesh file="tabletop.obj"/>
 
-    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
-    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
-      markrgb="0.8 0.8 0.8" width="300" height="300"/>
     <texture type="2d" file="small_meta_table_diffuse.png"/>
-    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1" markrgb="0 0 0"
+      width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
     <material name="table" texture="small_meta_table_diffuse"/>
     <material name="metal" rgba="0.517 0.529 0.537 1"/>
   </asset>
@@ -51,8 +53,8 @@
   </default>
 
   <worldbody>
-    <light pos="0 0.1 2.5"/>
-    <geom name="floor" size="2 2 0.05" type="plane" material="groundplane" pos="0 0 -.75" contype="0" conaffinity="0"/>
+    <light pos="0 0 3" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" pos="0 0 -.75" contype="0" conaffinity="0"/>
     <site name="worldref" pos="0 0 -0.75"/>
     <geom mesh="tabletop" material="table" class="visual" pos="0 0 -0.75" quat="1 0 0 1"/>
     <geom mesh="tablelegs" material="table" class="visual" pos="0 0 -0.75" quat="1 0 0 1"/>

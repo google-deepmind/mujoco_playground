@@ -1,39 +1,28 @@
-# Don't commit binaries
-*.a
-*.asm
-*.dll
-*.dylib
-*.exe
-*.lib
-*.out
-*.o
-*.so
-*.so.*
-
-# Exclude editor config
-.vscode/
-.vs/
-
-# Exclude temporary folders
-*.egg-info/
-build/
-build_cmake/
-python/dist/
-doc/_build
-
-# Exclude macOS folder attributes
 .DS_Store
-
-# Exclude macOS Info.framework.plist
-Info.framework.plist
-
-# Python byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# MuJoCo's default log file
+__pycache__
+*.egg-info
+checkpoints/
+dog_assets/
+videos/
+.vscode
+*.msh
+*.pt
+*.pkl
+*.mp4
+*.gif
+*.zip
+learning/*.png
+# Other.
+dog.py
+curriculum.ipynb
+**runs**/
+learning/wandb
 MUJOCO_LOG.TXT
-
-# Clang cache
-.cache/
+learning/*.png
+*.tar.gz
+**/logs/**
+**/wandb/**
+**/runs/**
+*.onnx
+!mujoco_playground/experimental/sim2sim/onnx/*.onnx
+**/.ipynb_checkpoints/

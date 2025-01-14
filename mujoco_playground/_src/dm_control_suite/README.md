@@ -5,8 +5,7 @@ A re-implementation of the [DeepMind Control Suite](https://arxiv.org/abs/1801.0
 ## Contents
 
 * ✅: Implemented
-* 🟧: Implemented with minor modifications (e.g. joint randomization differs)
-* ❌: Impossible to implement at the moment
+* ❌: Not implemented
 
 | Env                       | Implemented   |
 | ------------------------- | ------------- |
@@ -18,31 +17,31 @@ A re-implementation of the [DeepMind Control Suite](https://arxiv.org/abs/1801.0
 | cartpole-swingup          | ✅            |
 | cartpole-swingup_sparse   | ✅            |
 | cheetah-run               | ✅            |
-| dog-stand                 | ❌            |
-| dog-walk                  | ❌            |
-| dog-trot                  | ❌            |
-| dog-run                   | ❌            |
-| dog-fetch                 | ❌            |
-| finger-spin               | 🟧 (no touch) |
-| finger_turn_easy          | 🟧 (no touch) |
-| finger_turn_hard          | 🟧 (no touch) |
-| fish-upright              | ❌            |
+| finger-spin               | ✅            |
+| finger_turn_easy          | ✅            |
+| finger_turn_hard          | ✅            |
+| fish-upright              | ✅            |
 | fish-swim                 | ✅            |
 | hopper-stand              | ✅            |
 | hopper-hop                | ✅            |
 | humanoid-stand            | ✅            |
 | humanoid-walk             | ✅            |
 | humanoid-run              | ✅            |
-| manipulator-bring_ball    | ❌            |
-| manipulator-bring_peg     | ❌            |
-| manipulator-insert_ball   | ❌            |
-| manipulator-insert_peg    | ❌            |
 | pendulum-swingup          | ✅            |
 | point_mass-easy           | ✅            |
 | reacher-easy              | ✅            |
 | reacher-hard              | ✅            |
 | swimmer-swimmer6          | ✅            |
-| swimmer-swimmer15         | ❌            |
+| swimmer-swimmer15         | ✅            |
 | walker-stand              | ✅            |
 | walker-walk               | ✅            |
 | walker-run                | ✅            |
+| manipulator-bring_ball    | ❌            |
+| manipulator-bring_peg     | ❌            |
+| manipulator-insert_ball   | ❌            |
+| manipulator-insert_peg    | ❌            |
+| dog-stand                 | ❌            |
+| dog-walk                  | ❌            |
+| dog-trot                  | ❌            |
+| dog-run                   | ❌            |
+| dog-fetch                 | ❌            |

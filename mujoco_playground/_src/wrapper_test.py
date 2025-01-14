@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Tests for the wrapper module."""
 import functools
-from absl.testing import absltest
 
+from absl.testing import absltest
 import jax
 import jax.numpy as jp
+import numpy as np
+
 from mujoco_playground._src import dm_control_suite
 from mujoco_playground._src import wrapper
-import numpy as np
 
 
 class WrapperTest(absltest.TestCase):
 
   def test_auto_reset_wrapper(self):
     class DoneEnv:
+
       def __init__(self, env):
         self._env = env
 
@@ -38,7 +41,8 @@ class WrapperTest(absltest.TestCase):
         return state
 
     env = wrapper.BraxAutoResetWrapper(
-        DoneEnv(dm_control_suite.load('CartpoleBalance')))
+        DoneEnv(dm_control_suite.load('CartpoleBalance'))
+    )
 
     jit_reset = jax.jit(env.reset)
     jit_step = jax.jit(env.step)
@@ -84,5 +88,5 @@ class WrapperTest(absltest.TestCase):
     self.assertEqual(np.unique(state.data.qpos[:, 0]).shape[0], 256)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   absltest.main()

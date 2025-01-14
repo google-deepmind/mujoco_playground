@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,61 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Environment for training aloha to insert a peg into a socket."""
+"""Peg insertion task for ALOHA."""
 
 from typing import Any, Dict, Optional, Union
 
 import jax
 from jax import numpy as jp
 from ml_collections import config_dict
-import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils
+
+from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src import rewards as reward_util
-from mujoco_playground._src.mjx_env import State  # pylint: disable=g-importing-member
-
-_XML_PATH = (
-    mjx_env.ROOT_PATH
-    / "manipulation"
-    / "aloha"
-    / "xmls"
-    / "mjx_single_peg_insertion.xml"
-)
-
-_ARM_JOINTS = [
-    "left/waist",
-    "left/shoulder",
-    "left/elbow",
-    "left/forearm_roll",
-    "left/wrist_angle",
-    "left/wrist_rotate",
-    "right/waist",
-    "right/shoulder",
-    "right/elbow",
-    "right/forearm_roll",
-    "right/wrist_angle",
-    "right/wrist_rotate",
-]
-_FINGER_GEOMS = [
-    "left/left_finger_top",
-    "left/left_finger_bottom",
-    "left/right_finger_top",
-    "left/right_finger_bottom",
-    "right/left_finger_top",
-    "right/left_finger_bottom",
-    "right/right_finger_top",
-    "right/right_finger_bottom",
-]
+from mujoco_playground._src import reward as reward_util
+from mujoco_playground._src.manipulation.aloha import aloha_constants as consts
+from mujoco_playground._src.manipulation.aloha import base as aloha_base
 
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      ctrl_dt=0.02,
-      sim_dt=0.005,
-      episode_length=300,
-      action_repeat=1,
-      action_scale=0.01,
+      ctrl_dt=0.0025,
+      sim_dt=0.0025,
+      episode_length=1000,
+      action_repeat=2,
+      action_scale=0.005,
       reward_config=config_dict.create(
           scales=config_dict.create(
               left_reward=1,
@@ -74,8 +42,8 @@ def default_config() -> config_dict.ConfigDict:
               left_target_qpos=0.3,
               right_target_qpos=0.3,
               no_table_collision=0.3,
-              socket_z_up=2,
-              peg_z_up=2,
+              socket_z_up=0.5,
+              peg_z_up=0.5,
               socket_entrance_reward=4,
               peg_end2_reward=4,
               peg_insertion_reward=8,
@@ -84,36 +52,19 @@ def default_config() -> config_dict.ConfigDict:
   )
 
 
-def get_assets() -> Dict[str, bytes]:
-  """Returns a dictionary of all assets used by the environment."""
-  assets = {}
-  path = mjx_env.MENAGERIE_PATH / "aloha"
-  mj_utils.update_assets(assets, path, "*.xml")
-  mj_utils.update_assets(assets, path / "assets")
-  path = mjx_env.ROOT_PATH / "manipulation" / "aloha" / "xmls"
-  mj_utils.update_assets(assets, path, "*.xml")
-  mj_utils.update_assets(assets, path / "assets")
-  return assets
-
-
-class SinglePegInsertion(mjx_env.MjxEnv):
-  """Environment for training aloha to bring an object to target."""
+class SinglePegInsertion(aloha_base.AlohaEnv):
+  """Single peg insertion task for ALOHA."""
 
   def __init__(
       self,
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
-    super().__init__(config, config_overrides)
-    self._xml_path = _XML_PATH.as_posix()
-    mj_model = mujoco.MjModel.from_xml_string(
-        _XML_PATH.read_text(), get_assets()
+    super().__init__(
+        xml_path=consts.XML_PATH.as_posix(),
+        config=config,
+        config_overrides=config_overrides,
     )
-    mj_model.opt.timestep = self.sim_dt
-
-    self._mj_model = mj_model
-    self._mjx_model = mjx.put_model(mj_model)
-    self._action_scale = config.action_scale
     self._post_init()
 
   def _post_init(self):
@@ -126,7 +77,7 @@ class SinglePegInsertion(mjx_env.MjxEnv):
     self._peg_body = self._mj_model.body("peg").id
     self._table_geom = self._mj_model.geom("table").id
     self._finger_geoms = [
-        self._mj_model.geom(geom_id).id for geom_id in _FINGER_GEOMS
+        self._mj_model.geom(geom_id).id for geom_id in consts.FINGER_GEOMS
     ]
     self._socket_qadr = self._mj_model.jnt_qposadr[
         self._mj_model.body_jntadr[self._socket_body]
@@ -134,20 +85,19 @@ class SinglePegInsertion(mjx_env.MjxEnv):
     self._peg_qadr = self._mj_model.jnt_qposadr[
         self._mj_model.body_jntadr[self._peg_body]
     ]
-    arm_joint_ids = [self._mj_model.joint(j).id for j in _ARM_JOINTS]
+    arm_joint_ids = [self._mj_model.joint(j).id for j in consts.ARM_JOINTS]
     self._arm_qadr = jp.array(
         [self._mj_model.jnt_qposadr[joint_id] for joint_id in arm_joint_ids]
     )
     self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
     self._init_ctrl = jp.array(self._mj_model.keyframe("home").ctrl)
-    self.lowers = self._mj_model.actuator_ctrlrange[:, 0]
-    self.uppers = self._mj_model.actuator_ctrlrange[:, 1]
+    self._lowers, self._uppers = self.mj_model.actuator_ctrlrange.T
 
-    # lift goal: both in the air
+    # Lift goal: both in the air.
     self._socket_entrance_goal_pos = jp.array([-0.05, 0, 0.15])
     self._peg_end2_goal_pos = jp.array([0.05, 0, 0.15])
 
-  def reset(self, rng: jax.Array) -> State:
+  def reset(self, rng: jax.Array) -> mjx_env.State:
     rng, rng_peg, rng_socket = jax.random.split(rng, 3)
 
     peg_xy = jax.random.uniform(rng_peg, (2,), minval=-0.1, maxval=0.1)
@@ -170,22 +120,21 @@ class SinglePegInsertion(mjx_env.MjxEnv):
         "peg_end2_dist_to_line": jp.array(0.0, dtype=float),
         **{k: 0.0 for k in self._config.reward_config.scales.keys()},
     }
-    state = State(data, obs, reward, done, metrics, info)
 
-    return state
+    return mjx_env.State(data, obs, reward, done, metrics, info)
 
-  def step(self, state: State, action: jax.Array) -> State:
-    delta = action * self._action_scale
+  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+    delta = action * self._config.action_scale
     ctrl = state.data.ctrl + delta
-    ctrl = jp.clip(ctrl, self.lowers, self.uppers)
+    ctrl = jp.clip(ctrl, self._lowers, self._uppers)
 
     data = mjx_env.step(self._mjx_model, state.data, ctrl, self.n_substeps)
 
     socket_entrance_pos = data.site_xpos[self._socket_entrance_site]
     socket_rear_pos = data.site_xpos[self._socket_rear_site]
     peg_end2_pos = data.site_xpos[self._peg_end2_site]
-    # insertion reward: if peg end2 is aligned with hole entrance, then reward
-    # distance from peg end to socket interior
+    # Insertion reward: if peg end2 is aligned with hole entrance, then reward
+    # distance from peg end to socket interior.
     socket_ab = socket_entrance_pos - socket_rear_pos
     socket_t = jp.dot(peg_end2_pos - socket_rear_pos, socket_ab)
     socket_t /= jp.dot(socket_ab, socket_ab) + 1e-6
@@ -211,12 +160,10 @@ class SinglePegInsertion(mjx_env.MjxEnv):
     state.metrics.update(
         **rewards,
         peg_end2_dist_to_line=peg_end2_dist_to_line,
-        out_of_bounds=out_of_bounds.astype(float)
+        out_of_bounds=out_of_bounds.astype(float),
     )
     obs = self._get_obs(data)
-    state = State(data, obs, reward, done, state.metrics, state.info)
-
-    return state
+    return mjx_env.State(data, obs, reward, done, state.metrics, state.info)
 
   def _get_obs(self, data: mjx.Data) -> jax.Array:
     left_gripper_pos = data.site_xpos[self._left_gripper_site]
@@ -273,17 +220,15 @@ class SinglePegInsertion(mjx_env.MjxEnv):
     )
 
     peg_dist = jp.linalg.norm(
-        # self._peg_end2_goal_pos[2] - data.site_xpos[self._peg_end2_site][2]
-        self._peg_end2_goal_pos
-        - data.xpos[self._peg_body]
+        self._peg_end2_goal_pos - data.xpos[self._peg_body]
     )
     peg_lift = reward_util.tolerance(
         peg_dist, (0, 0.01), margin=0.15, sigmoid="linear"
     )
 
-    # Check for collisions with the floor
+    # Check for collisions with the floor.
     hand_table_collisions = [
-        mj_utils.geoms_colliding(data, self._table_geom, g)
+        collision.geoms_colliding(data, self._table_geom, g)
         for g in self._finger_geoms
     ]
     table_collision = (sum(hand_table_collisions) > 0).astype(float)
@@ -326,17 +271,5 @@ class SinglePegInsertion(mjx_env.MjxEnv):
     }
 
   @property
-  def xml_path(self) -> str:
-    return self._xml_path
-
-  @property
-  def action_size(self) -> int:
-    return self._mjx_model.nu
-
-  @property
-  def mj_model(self) -> mujoco.MjModel:
-    return self._mj_model
-
-  @property
-  def mjx_model(self) -> mjx.Model:
-    return self._mjx_model
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 82

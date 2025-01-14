@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from functools import partial  # pylint: disable=g-importing-member
 from typing import Any, Callable, Dict, Optional, Type, Union
 
 from ml_collections import config_dict
+
+from mujoco_playground._src import mjx_env
 from mujoco_playground._src.dm_control_suite import acrobot
 from mujoco_playground._src.dm_control_suite import ball_in_cup
 from mujoco_playground._src.dm_control_suite import cartpole
@@ -31,8 +33,6 @@ from mujoco_playground._src.dm_control_suite import point_mass
 from mujoco_playground._src.dm_control_suite import reacher
 from mujoco_playground._src.dm_control_suite import swimmer
 from mujoco_playground._src.dm_control_suite import walker
-from mujoco_playground._src.mjx_env import MjxEnv  # pylint: disable=g-importing-member
-
 
 _envs = {
     "AcrobotSwingup": partial(acrobot.Balance, sparse=False),
@@ -100,12 +100,13 @@ _cfgs = {
     # go/keep-sorted end
 }
 
+
 ALL = list(_envs.keys())
 
 
 def register_environment(
     env_name: str,
-    env_class: Type[MjxEnv],
+    env_class: Type[mjx_env.MjxEnv],
     cfg_class: Callable[[], config_dict.ConfigDict],
 ) -> None:
   """Register a new environment.
@@ -122,7 +123,10 @@ def register_environment(
 def get_default_config(env_name: str) -> config_dict.ConfigDict:
   """Get the default configuration for an environment."""
   if env_name not in _cfgs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL}")
+    raise ValueError(
+        f"Env '{env_name}' not found in default configs. Available configs:"
+        f" {list(_cfgs.keys())}"
+    )
   return _cfgs[env_name]()
 
 
@@ -130,17 +134,17 @@ def load(
     env_name: str,
     config: Optional[config_dict.ConfigDict] = None,
     config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
-) -> MjxEnv:
+) -> mjx_env.MjxEnv:
   """Get an environment instance with the given configuration.
 
   Args:
       env_name: The name of the environment.
       config: The configuration to use. If not provided, the default
         configuration is used.
-      cofig_overrides: A dictionary of overrides for the configuration.
+      config_overrides: A dictionary of overrides for the configuration.
 
   Returns:
-      An instance of the environment
+      An instance of the environment.
   """
   if env_name not in _envs:
     raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL}")

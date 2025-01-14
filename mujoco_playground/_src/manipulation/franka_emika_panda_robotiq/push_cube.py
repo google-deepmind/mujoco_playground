@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import jax.numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
 from mujoco.mjx._src import math
-from mujoco_playground._src import mj_utils
-from mujoco_playground._src import mjx_env
-from mujoco_playground._src import rewards as reward_util
-from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import panda_robotiq
 import numpy as np
 
+from mujoco_playground._src import collision
+from mujoco_playground._src import mjx_env
+from mujoco_playground._src import reward as reward_util
+from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import panda_robotiq
 
 WORKSPACE_MIN = (0.3, -0.5, 0.0)
 WORKSPACE_MAX = (0.75, 0.7, 0.5)
@@ -45,17 +45,11 @@ def default_config():
       action_scale=0.1,
       action_history_len=5,
       obs_history_len=30,
-      # `obs_use_history` determines whether to use obs history in the final
-      # observation. Every `action_repeat` steps are taken from the history.
-      obs_use_history=False,
-      obs_remove_z_position=False,  # remove z from target/obj position
-      obs_use_obj_theta_only=False,  # use theta rather than the full quat
       noise_config=config_dict.create(
           action_min_delay=1,  # env steps
           action_max_delay=3,  # env steps
           obs_min_delay=6,  # env steps
-          # obs_max_delay=12,  # env steps
-          obs_max_delay=26,  # env steps
+          obs_max_delay=12,  # env steps
           noise_scales=config_dict.create(
               obj_pos=0.015,  # meters
               obj_angle=7.5,  # degrees
@@ -110,7 +104,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
       self,
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
-      sample_orientation: bool = False,
+      sample_orientation: bool = False,  # pylint: disable=unused-argument
   ):
     super().__init__(
         config,
@@ -200,10 +194,6 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
     obs = self._get_single_obs(data, info)
     info["obs_history"] = jp.zeros(self._config.obs_history_len * obs.shape[0])
 
-    if self._config.obs_use_history:
-      obs = info["obs_history"].reshape(
-          (-1, obs.shape[0]))[:: self._config.action_repeat].ravel()
-
     reward, done = jp.zeros(2)
     state = mjx_env.State(data, obs, reward, done, metrics, info)
     return state
@@ -218,7 +208,8 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
         key,
         (1,),
         minval=self._config.noise_config.action_min_delay,
-        maxval=self._config.noise_config.action_max_delay)
+        maxval=self._config.noise_config.action_max_delay,
+    )
     action_w_delay = action_history.reshape((-1, 7))[action_idx[0]]
 
     # get the ctrl
@@ -296,7 +287,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
         gripper_pos[1] < WORKSPACE_MIN[1]
     )
     hand_wall_collision = [
-        mj_utils.geoms_colliding(data, self._wall_geom, g)
+        collision.geoms_colliding(data, self._wall_geom, g)
         for g in [
             self._left_finger_geom,
             self._right_finger_geom,
@@ -313,7 +304,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
         )
     )
     hand_floor_collision = [
-        mj_utils.geoms_colliding(data, self._floor_geom, g)
+        collision.geoms_colliding(data, self._floor_geom, g)
         for g in [
             self._left_finger_geom,
             self._right_finger_geom,
@@ -427,7 +418,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
     )
 
     hand_box_collision_info = [
-        mj_utils.get_collision_info(data.contact, g1, self._obj_geom)
+        collision.get_collision_info(data.contact, g1, self._obj_geom)
         for g1 in self._gripper_geoms
     ]
     hand_box_normal = jp.mean(
@@ -489,17 +480,9 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
 
     # fill the buffer
     obs_history = (
-        jp.roll(state.info["obs_history"], obs_size)
-        .at[: obs_size]
-        .set(obs)
+        jp.roll(state.info["obs_history"], obs_size).at[:obs_size].set(obs)
     )
     state.info["obs_history"] = obs_history
-
-    if self._config.obs_use_history:
-      # this codepath ignores observation delay
-      obs = state.info["obs_history"].reshape(
-          (-1, obs_size))[:: self._config.action_repeat].ravel()
-      return obs
 
     # add observation delay
     state.info["rng"], key = jax.random.split(state.info["rng"])
@@ -562,19 +545,8 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
     rand_mat = math.quat_to_mat(rand_quat)
     gripper_mat_w_noise = rand_mat @ gripper_mat
 
-    if self._config.obs_remove_z_position:
-      target_pos = target_pos[:2]
-      obj_pos_w_noise = obj_pos_w_noise[:2]
-
     target_orientation = target_mat.ravel()[3:]
     obj_orientation_w_noise = math.quat_to_mat(obj_quat_w_noise).ravel()[3:]
-    if self._config.obs_use_obj_theta_only:
-      axis, angle = math.quat_to_axis_angle(target_quat)
-      target_orientation = angle * axis.dot(jp.array([0.0, 0.0, 1.0]))[None]
-      axis, angle = math.quat_to_axis_angle(obj_quat_w_noise)
-      obj_orientation_w_noise = (
-          angle * axis.dot(jp.array([0.0, 0.0, 1.0]))[None]
-      )
 
     obs = jp.concatenate([
         target_pos,
@@ -596,69 +568,6 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
   def action_size(self):
     return 7
 
-
-def domain_randomize(
-    model: mjx.Model, rng: jax.Array
-) -> tuple[mjx.Model, dict[str, Any]]:
-  """Randomize the model parameters."""
-  env = PandaRobotiqPushCube()
-  joint_dof_adr = np.array(
-      [env.mj_model.joint(j).dofadr for j in panda_robotiq.ARM_JOINTS]
-  )
-  joint_dof_adr = joint_dof_adr.squeeze()
-
-  @jax.vmap
-  def rand(rng):
-    keys = jax.random.split(rng, 5)
-
-    # Geom friction: U(0.4, 0.7).
-    geom_friction = model.geom_friction.at[:, 0].set(
-        jax.random.uniform(keys[0], (1,), minval=0.4, maxval=0.7)
-    )
-
-    # Geom size.
-    geom_size = model.geom_size.at[env._obj_geom, :].set(
-        model.geom_size[env._obj_geom] +
-        jax.random.uniform(keys[1], (3,), minval=-0.005, maxval=0.005)
-    )
-
-    # Gear: gear + U(-0.1 * gear, 0.1 * gear)
-    ngear = len(panda_robotiq.GEAR)
-    actuator_gear = model.actuator_gear.at[:ngear, 0].set(
-        model.actuator_gear[:ngear, 0]
-        + jax.random.uniform(
-            keys[2],
-            (ngear,),
-            minval=-0.1 * panda_robotiq.GEAR,
-            maxval=0.1 * panda_robotiq.GEAR,
-        )
-    )
-
-    # Dof damping: damping + U(-0.05, 0.05)
-    dof_damping = model.dof_damping.at[joint_dof_adr].set(
-        model.dof_damping[joint_dof_adr]
-        + jax.random.uniform(
-            keys[3], (len(joint_dof_adr),), minval=-0.05, maxval=0.05
-        )
-    )
-
-    return geom_friction, geom_size, actuator_gear, dof_damping
-
-  friction, geom_size, gear, damping = rand(rng)
-
-  in_axes = jax.tree_util.tree_map(lambda x: None, model)
-  in_axes = in_axes.tree_replace({
-      "geom_friction": 0,
-      "geom_size": 0,
-      "actuator_gear": 0,
-      "dof_damping": 0,
-  })
-
-  model = model.tree_replace({
-      "geom_friction": friction,
-      "geom_size": geom_size,
-      "actuator_gear": gear,
-      "dof_damping": damping,
-  })
-
-  return model, in_axes
+  @property
+  def observation_size(self):
+    return 48

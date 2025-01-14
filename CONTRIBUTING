@@ -23,3 +23,28 @@ information on using pull requests.
 
 This project follows [Google's Open Source Community
 Guidelines](https://opensource.google/conduct/).
+
+
+## Linting and Code Health
+
+Before submitting a PR, please run:
+
+```shell
+pip install -e ".[dev]"
+pre-commit install
+pre-commit run --all-files
+```
+
+or you can run manually
+
+```shell
+pyink .
+
+isort .
+
+pylint . --rcfile=pylintrc
+
+pytype .
+```
+
+And resolve any issues that pop up.

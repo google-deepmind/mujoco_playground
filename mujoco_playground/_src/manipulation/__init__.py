@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,29 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, Callable, Dict, Optional, Type, Union
+"""Module for manipulation environments."""
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
 
+import jax
 from ml_collections import config_dict
+from mujoco import mjx
+
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.aloha import single_peg_insertion as aloha_peg
-from mujoco_playground._src.manipulation.franka_emika_panda import bring_to_target
-from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import push_cube
-
+from mujoco_playground._src.manipulation.franka_emika_panda import open_cabinet as panda_open_cabinet
+from mujoco_playground._src.manipulation.franka_emika_panda import pick as panda_pick
+from mujoco_playground._src.manipulation.franka_emika_panda import pick_cartesian as panda_pick_cartesian
+from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import push_cube as robotiq_push_cube
+from mujoco_playground._src.manipulation.leap_hand import reorient as leap_cube_reorient
+from mujoco_playground._src.manipulation.leap_hand import rotate_z as leap_rotate_z
 
 _envs = {
-    "AlohaSinglePeg": aloha_peg.SinglePegInsertion,
-    "PandaBringToTarget": bring_to_target.PandaBringToTarget,
-    "PandaBringToTargetOrientation": (
-        bring_to_target.PandaBringToTargetOrientation
-    ),
-    "PandaRobotiqPushCube": push_cube.PandaRobotiqPushCube,
+    "AlohaSinglePegInsertion": aloha_peg.SinglePegInsertion,
+    "PandaPickCube": panda_pick.PandaPickCube,
+    "PandaPickCubeOrientation": panda_pick.PandaPickCubeOrientation,
+    "PandaPickCubeCartesian": panda_pick_cartesian.PandaPickCubeCartesian,
+    "PandaOpenCabinet": panda_open_cabinet.PandaOpenCabinet,
+    "PandaRobotiqPushCube": robotiq_push_cube.PandaRobotiqPushCube,
+    "LeapCubeReorient": leap_cube_reorient.CubeReorient,
+    "LeapCubeRotateZAxis": leap_rotate_z.CubeRotateZAxis,
 }
 
 _cfgs = {
-    "AlohaSinglePeg": aloha_peg.default_config,
-    "PandaBringToTarget": bring_to_target.default_config,
-    "PandaBringToTargetOrientation": bring_to_target.default_config,
-    "PandaRobotiqPushCube": push_cube.default_config,
+    "AlohaSinglePegInsertion": aloha_peg.default_config,
+    "PandaPickCube": panda_pick.default_config,
+    "PandaPickCubeOrientation": panda_pick.default_config,
+    "PandaPickCubeCartesian": panda_pick_cartesian.default_config,
+    "PandaOpenCabinet": panda_open_cabinet.default_config,
+    "PandaRobotiqPushCube": robotiq_push_cube.default_config,
+    "LeapCubeReorient": leap_cube_reorient.default_config,
+    "LeapCubeRotateZAxis": leap_rotate_z.default_config,
+}
+
+_randomizer = {
+    "LeapCubeRotateZAxis": leap_rotate_z.domain_randomize,
+    "LeapCubeReorient": leap_cube_reorient.domain_randomize,
 }
 
 ALL = list(_envs.keys())
@@ -59,7 +77,10 @@ def register_environment(
 def get_default_config(env_name: str) -> config_dict.ConfigDict:
   """Get the default configuration for an environment."""
   if env_name not in _cfgs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL}")
+    raise ValueError(
+        f"Env '{env_name}' not found in default configs. Available configs:"
+        f" {list(_cfgs.keys())}"
+    )
   return _cfgs[env_name]()
 
 
@@ -83,3 +104,16 @@ def load(
     raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL}")
   config = config or get_default_config(env_name)
   return _envs[env_name](config=config, config_overrides=config_overrides)
+
+
+def get_domain_randomizer(
+    env_name: str,
+) -> Optional[Callable[[mjx.Model, jax.Array], Tuple[mjx.Model, mjx.Model]]]:
+  """Get the default domain randomizer for an environment."""
+  if env_name not in _randomizer:
+    print(
+        f"Env '{env_name}' does not have a domain randomizer in the"
+        " manipulation registry."
+    )
+    return None
+  return _randomizer[env_name]

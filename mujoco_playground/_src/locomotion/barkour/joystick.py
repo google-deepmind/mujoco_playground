@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
 """Joystick environment for Barkour."""
 
 from typing import Any, Dict, Optional, Union
+
 from etils import epath
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils
-from mujoco_playground._src import mjx_env
 import numpy as np
 
+from mujoco_playground._src import collision
+from mujoco_playground._src import mjx_env
 
 _FEET_SITES = [
     "foot_front_left",
@@ -43,8 +44,8 @@ _FEET_GEOMS = [
 def get_assets() -> Dict[str, bytes]:
   assets = {}
   path = mjx_env.MENAGERIE_PATH / "google_barkour_vb"
-  mj_utils.update_assets(assets, path, "*.xml")
-  mj_utils.update_assets(assets, path / "assets")
+  mjx_env.update_assets(assets, path, "*.xml")
+  mjx_env.update_assets(assets, path / "assets")
   return assets
 
 
@@ -228,7 +229,7 @@ class Joystick(mjx_env.MjxEnv):
     torso_z = data.xpos[self._torso_body_id, -1]
 
     contact = jp.array([
-        mj_utils.geoms_colliding(data, geom_id, self._floor_geom_id)
+        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
         for geom_id in self._feet_geom_id
     ])
     contact_filt = contact | state.info["last_contact"]
@@ -414,7 +415,6 @@ class Joystick(mjx_env.MjxEnv):
   def _maybe_apply_perturbation(
       self, state: mjx_env.State, rng: jax.Array
   ) -> mjx_env.State:
-
     def gen_dir(rng: jax.Array) -> jax.Array:
       angle = jax.random.uniform(rng, minval=0.0, maxval=jp.pi * 2)
       return jp.array([jp.cos(angle), jp.sin(angle), 0.0])
@@ -456,6 +456,10 @@ class Joystick(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 465
 
   @property
   def mj_model(self) -> mujoco.MjModel:

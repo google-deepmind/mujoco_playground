@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
+
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.dm_control_suite import common
 
@@ -33,6 +34,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.002,
       episode_length=1000,
       action_repeat=1,
+      vision=False,
   )
 
 
@@ -45,6 +47,11 @@ class BallInCup(mjx_env.MjxEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)
+    if self._config.vision:
+      raise NotImplementedError(
+          f"Vision not implemented for {self.__class__.__name__}."
+      )
+
     self._xml_path = _XML_PATH.as_posix()
     self._mj_model = mujoco.MjModel.from_xml_string(
         _XML_PATH.read_text(), common.get_assets()
@@ -108,6 +115,10 @@ class BallInCup(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
+
+  @property
+  def observation_size(self) -> mjx_env.ObservationSize:
+    return 8
 
   @property
   def mj_model(self) -> mujoco.MjModel:

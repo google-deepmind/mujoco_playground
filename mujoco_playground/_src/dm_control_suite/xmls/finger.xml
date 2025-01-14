@@ -74,8 +74,8 @@
     <framepos name="tip" objtype="site" objname="tip"/>
     <framepos name="target" objtype="site" objname="target"/>
     <framepos name="spinner" objtype="xbody" objname="spinner"/>
-    <!-- <touch name="touchtop" site="touchtop"/> -->
-    <!-- <touch name="touchbottom" site="touchbottom"/> -->
+    <touch name="touchtop" site="touchtop"/>
+    <touch name="touchbottom" site="touchbottom"/>
     <framepos name="touchtop_pos" objtype="site" objname="touchtop"/>
     <framepos name="touchbottom_pos" objtype="site" objname="touchbottom"/>
   </sensor>

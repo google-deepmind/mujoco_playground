@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,22 @@ ROOT_PATH = epath.Path(__file__).parent
 # resource paths do not have glob implemented, so we use a bare epath.Path.
 MENAGERIE_PATH = epath.Path(__file__).parent / "../.." / "mujoco_menagerie"
 
+
 Observation = Union[jax.Array, Mapping[str, jax.Array]]
 ObservationSize = Union[int, Mapping[str, Union[Tuple[int, ...], int]]]
+
+
+def update_assets(
+    assets: Dict[str, Any],
+    path: Union[str, epath.Path],
+    glob: str = "*",
+    recursive: bool = False,
+):
+  for f in epath.Path(path).glob(glob):
+    if f.is_file():
+      assets[f.name] = f.read_bytes()
+    elif f.is_dir() and recursive:
+      update_assets(assets, f, glob, recursive)
 
 
 def init(
@@ -56,9 +70,9 @@ def init(
   if act is not None:
     data = data.replace(act=act)
   if mocap_pos is not None:
-    data = data.replace(mocap_pos=mocap_pos)
+    data = data.replace(mocap_pos=mocap_pos.reshape(1, -1))
   if mocap_quat is not None:
-    data = data.replace(mocap_quat=mocap_quat)
+    data = data.replace(mocap_quat=mocap_quat.reshape(1, -1))
   data = mjx.forward(model, data)
   return data
 
@@ -116,48 +130,6 @@ def _tree_replace(
   return base.replace(
       **{attr[0]: _tree_replace(getattr(base, attr[0]), attr[1:], val)}
   )
-
-
-def render_array(
-    mj_model: mujoco.MjModel,
-    trajectory: Union[List[State], State],
-    height: int = 480,
-    width: int = 640,
-    camera: Optional[str] = None,
-    scene_option: Optional[mujoco.MjvOption] = None,
-    modify_scene_fns: Optional[
-        Sequence[Callable[[mujoco.MjvScene], None]]
-    ] = None,
-):
-  """Renders a trajectory as an array of images."""
-  renderer = mujoco.Renderer(mj_model, height=height, width=width)
-  camera = camera or -1
-
-  def get_image(state, modify_scn_fn=None) -> np.ndarray:
-    mj_model.stat.meansize = 0.05
-    d = mujoco.MjData(mj_model)
-    d.qpos, d.qvel = state.data.qpos, state.data.qvel
-    d.mocap_pos, d.mocap_quat = state.data.mocap_pos, state.data.mocap_quat
-    d.xfrc_applied = state.data.xfrc_applied
-    mujoco.mj_forward(mj_model, d)
-    renderer.update_scene(d, camera=camera, scene_option=scene_option)
-    if modify_scn_fn is not None:
-      modify_scn_fn(renderer.scene)
-    return renderer.render()
-
-  if isinstance(trajectory, list):
-    out = []
-    for i, state in enumerate(tqdm.tqdm(trajectory)):
-      if modify_scene_fns is not None:
-        modify_scene_fn = modify_scene_fns[i]
-      else:
-        modify_scene_fn = None
-      out.append(get_image(state, modify_scene_fn))
-  else:
-    out = get_image(trajectory)
-
-  renderer.close()
-  return out
 
 
 class MjxEnv(abc.ABC):
@@ -251,3 +223,99 @@ class MjxEnv(abc.ABC):
   @property
   def unwrapped(self) -> "MjxEnv":
     return self
+
+
+def render_array(
+    mj_model: mujoco.MjModel,
+    trajectory: Union[List[State], State],
+    height: int = 480,
+    width: int = 640,
+    camera: Optional[str] = None,
+    scene_option: Optional[mujoco.MjvOption] = None,
+    modify_scene_fns: Optional[
+        Sequence[Callable[[mujoco.MjvScene], None]]
+    ] = None,
+    hfield_data: Optional[jax.Array] = None,
+):
+  """Renders a trajectory as an array of images."""
+  renderer = mujoco.Renderer(mj_model, height=height, width=width)
+  camera = camera or -1
+
+  if hfield_data is not None:
+    mj_model.hfield_data = hfield_data.reshape(mj_model.hfield_data.shape)
+    mujoco.mjr_uploadHField(mj_model, renderer._mjr_context, 0)
+
+  def get_image(state, modify_scn_fn=None) -> np.ndarray:
+    d = mujoco.MjData(mj_model)
+    d.qpos, d.qvel = state.data.qpos, state.data.qvel
+    d.mocap_pos, d.mocap_quat = state.data.mocap_pos, state.data.mocap_quat
+    d.xfrc_applied = state.data.xfrc_applied
+    mujoco.mj_forward(mj_model, d)
+    renderer.update_scene(d, camera=camera, scene_option=scene_option)
+    if modify_scn_fn is not None:
+      modify_scn_fn(renderer.scene)
+    return renderer.render()
+
+  if isinstance(trajectory, list):
+    out = []
+    for i, state in enumerate(tqdm.tqdm(trajectory)):
+      if modify_scene_fns is not None:
+        modify_scene_fn = modify_scene_fns[i]
+      else:
+        modify_scene_fn = None
+      out.append(get_image(state, modify_scene_fn))
+  else:
+    out = get_image(trajectory)
+
+  renderer.close()
+  return out
+
+
+def get_sensor_data(
+    model: mujoco.MjModel, data: mjx.Data, sensor_name: str
+) -> jax.Array:
+  """Gets sensor data given sensor name."""
+  sensor_id = model.sensor(sensor_name).id
+  sensor_adr = model.sensor_adr[sensor_id]
+  sensor_dim = model.sensor_dim[sensor_id]
+  return data.sensordata[sensor_adr : sensor_adr + sensor_dim]
+
+
+def dof_width(joint_type: Union[int, mujoco.mjtJoint]) -> int:
+  """Get the dimensionality of the joint in qvel."""
+  if isinstance(joint_type, mujoco.mjtJoint):
+    joint_type = joint_type.value
+  return {0: 6, 1: 3, 2: 1, 3: 1}[joint_type]
+
+
+def qpos_width(joint_type: Union[int, mujoco.mjtJoint]) -> int:
+  """Get the dimensionality of the joint in qpos."""
+  if isinstance(joint_type, mujoco.mjtJoint):
+    joint_type = joint_type.value
+  return {0: 7, 1: 4, 2: 1, 3: 1}[joint_type]
+
+
+def get_qpos_ids(
+    model: mujoco.MjModel, joint_names: Sequence[str]
+) -> np.ndarray:
+  index_list: list[int] = []
+  for jnt_name in joint_names:
+    jnt = model.joint(jnt_name).id
+    jnt_type = model.jnt_type[jnt]
+    qadr = model.jnt_dofadr[jnt]
+    qdim = qpos_width(jnt_type)
+    index_list.extend(range(qadr, qadr + qdim))
+  return np.array(index_list)
+
+
+def get_qvel_ids(
+    model: mujoco.MjModel, joint_names: Sequence[str]
+) -> np.ndarray:
+  index_list: list[int] = []
+  for jnt_name in joint_names:
+    jnt = model.joint(jnt_name).id
+    jnt_type = model.jnt_type[jnt]
+    vadr = model.jnt_dofadr[jnt]
+    vdim = dof_width(jnt_type)
+    index_list.extend(range(vadr, vadr + vdim))
+  return np.array(index_list)

@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,10 +21,9 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mj_utils
-from mujoco_playground._src import mjx_env
 import numpy as np
 
+from mujoco_playground._src import mjx_env
 
 _ARM_JOINTS = [
     "joint1",
@@ -41,9 +40,11 @@ _MENAGERIE_FRANKA_DIR = "franka_emika_panda"
 
 def get_assets() -> Dict[str, bytes]:
   assets = {}
+  path = mjx_env.ROOT_PATH / "manipulation" / "franka_emika_panda" / "xmls"
+  mjx_env.update_assets(assets, path, "*.xml")
   path = mjx_env.MENAGERIE_PATH / _MENAGERIE_FRANKA_DIR
-  mj_utils.update_assets(assets, path, "*.xml")
-  mj_utils.update_assets(assets, path / "assets")
+  mjx_env.update_assets(assets, path, "*.xml")
+  mjx_env.update_assets(assets, path / "assets")
   return assets
 
 
@@ -62,8 +63,8 @@ class PandaBase(mjx_env.MjxEnv):
 
   def __init__(
       self,
-      config: config_dict.ConfigDict,
       xml_path: epath.Path,
+      config: config_dict.ConfigDict,
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides)

@@ -1,4 +1,4 @@
-# Copyright 2024 DeepMind Technologies Limited
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Tests for the DM Control Suite."""
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
 from jax import numpy as jp
+
 from mujoco_playground._src import dm_control_suite
 
 
 class TestSuite(parameterized.TestCase):
+  """Tests for the DM Control Suite."""
 
   @parameterized.named_parameters(
       {"testcase_name": f"test_can_create_{env_name}", "env_name": env_name}
@@ -30,6 +33,7 @@ class TestSuite(parameterized.TestCase):
     state = jax.jit(env.reset)(jax.random.PRNGKey(42))
     state = jax.jit(env.step)(state, jp.zeros(env.action_size))
     self.assertIsNotNone(state)
+    self.assertEqual(state.obs.shape[0], env.observation_size)
     self.assertFalse(jp.isnan(state.data.qpos).any())
 
 

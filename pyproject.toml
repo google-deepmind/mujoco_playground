@@ -42,18 +42,55 @@ test = [
     "pytest",
     "dm_control",
 ]
+notebooks = [
+    "matplotlib",
+    "mediapy",
+]
 dev = [
-    "black",
     "mujoco_playground[test]",
     "mypy",
+    "pyink",
+    "pytype",
     "ruff",
+    "pre-commit",
+    "pylint",
+    "pytest-xdist",
 ]
 all = [
     "mujoco_playground[dev]",
+    "mujoco_playground[notebooks]",
 ]
 
 [tool.flit.module]
 name = "mujoco_playground"
+
+[tool.ruff]
+lint.select = [
+    "E",  # pycodestyle errors.
+    "F",  # Pyflakes rules.
+    "PLC",  # Pylint convention warnings.
+    "PLE",  # Pylint errors.
+    "PLR",  # Pylint refactor recommendations.
+    "PLW",  # Pylint warnings.
+    "I"  # Import sorting.
+]
+lint.ignore = [
+    "E741", # Ambiguous variable name. (l, O, or I)
+    "E501",  # Line too long.
+    "PLR2004",  # Magic value used in comparison.
+    "PLR0915",  # Too many statements.
+    "PLR0913",  # Too many arguments.
+    "PLC0414",  # Import alias does not rename variable. (this is used for exporting names)
+    "PLC1901",  # Use falsey strings.
+    "PLR5501",  # Use `elif` instead of `else if`.
+    "PLR0911",  # Too many return statements.
+    "PLR0912",  # Too many branches.
+    "PLW0603",  # Global statement updates are discouraged.
+    "PLW2901"  # For loop variable overwritten.
+]
+exclude = [
+    "mujoco_menagerie/",
+]
 
 [tool.mypy]
 python_version = "3.12"
@@ -64,6 +101,9 @@ exclude = ["scripts/", "mujoco_menagerie/"]
 [tool.pytest.ini_options]
 addopts = [
     "--ignore=mujoco_menagerie",
+]
+testpaths = [
+    "tests",
 ]
 
 [tool.isort]
@@ -76,7 +116,8 @@ group_by_package = true
 line_length = 120
 use_parentheses = true
 multi_line_output = 3
-skip = ["mujoco_menagerie"]
+include_trailing_comma = true
+skip = ["mujoco_menagerie", ".pytype"]
 skip_glob = ["**/*.ipynb"]
 
 [tool.pyink]
@@ -88,3 +129,15 @@ extend-exclude = '''(
  mujoco_menagerie
  | .ipynb$
 )'''
+
+[pytype]
+inputs = "."
+exclude = [
+    "**/*_test.py",
+    "**/test_*.py",
+    "mujoco_menagerie/**",
+    "mujoco_playground/_src/wrapper_torch.py",
+    "mujoco_playground/learning/getup_rl_games.py"
+]
+output = ".pytype"
+report_errors = true
