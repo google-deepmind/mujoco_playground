@@ -1,0 +1,24 @@
+<mujoco model="panda scene">
+  <include file="mjx_scene.xml"/>
+
+  <worldbody>
+    <camera name="front" pos="0.9 0 0.3" fovy="58" mode="fixed" euler="0 0.8 1.5708"/>
+    <body name="box" pos="1 0 0.03">
+      <freejoint/>
+      <geom type="box" name="box" size="0.02 0.02 0.03" condim="3"
+       friction="1 .03 .003" rgba="0 1 0 1" contype="2" conaffinity="1" solref="0.01 1"/>
+    </body>
+    <body mocap="true" name="mocap_target">
+      <geom type="box" size="0.02 0.02 0.03" rgba="1 0 0 0.2" contype="0" conaffinity="0"/>
+    </body>
+  </worldbody>
+
+  <keyframe>
+    <key name="low_home"
+      qpos="-0.00002 0.47804 -0.00055 -1.81309 -0.00161 2.34597 0.78501 0.04000 0.04000 0.70000 0.00000 0.03000 1.00000 0.00000 0.00000 0.00000"
+      ctrl="-0.00002 0.47804 -0.00055 -1.81309 -0.00161 2.34597 0.78501 0.04000"/>
+    <key name="picked"
+      qpos="0.0481 0.5604 -0.0417 -1.8459 0.0342 2.3654 0.7852 0.0198 0.0200 0.6368 0.0064 0.1179 1.0000 0.0001 -0.0010 -0.0063"
+      ctrl="0.0481 0.5604 -0.0417 -1.8459 0.0342 2.3654 0.7852 0.0000"/>
+  </keyframe>
+</mujoco>

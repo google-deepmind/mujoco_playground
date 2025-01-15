@@ -1,0 +1,57 @@
+<mujoco model="go1 feetonly flat terrain scene">
+  <include file="go1_mjx_feetonly.xml"/>
+
+  <statistic center="0 0 0.1" extent="0.8" meansize="0.04"/>
+
+  <visual>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
+    <rgba force="1 0 0 1"/>
+    <global azimuth="120" elevation="-20"/>
+    <map force="0.01"/>
+    <scale forcewidth="0.3" contactwidth="0.5" contactheight="0.2"/>
+    <quality shadowsize="8192"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1" markrgb="0 0 0"
+      width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
+  </asset>
+
+  <worldbody>
+    <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="0" priority="1"
+      friction="0.6" condim="3"/>
+  </worldbody>
+
+  <keyframe>
+    <key name="home" qpos="
+    0 0 0.278
+    1 0 0 0
+    0.1 0.9 -1.8
+    -0.1 0.9 -1.8
+    0.1 0.9 -1.8
+    -0.1 0.9 -1.8"
+      ctrl="0.1 0.9 -1.8 -0.1 0.9 -1.8 0.1 0.9 -1.8 -0.1 0.9 -1.8"/>
+    <key name="home_higher" qpos="0 0 0.31 1 0 0 0 0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63"
+      ctrl="0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63"/>
+    <key
+    name="footstand"
+    qpos='
+    0 0 0.54
+    0.8 0 -0.8 0
+    0 0.82 -1.6 0 0.82 -1.68 0 1.82 -1.16 0.0 1.82 -1.16'
+    ctrl='0 0.82 -1.6 0 0.82 -1.68 0 1.82 -1.16 0.0 1.82 -1.16'/>
+    <key name="handstand"
+      qpos="0 0 0.54
+      0.8 0 0.8 0
+      0 -0.686 -1.16
+      0 -0.686 -1.16
+      0 1.7 -1.853
+      0 1.7 -1.853"
+      ctrl="0 -0.686 -1.16 0 -0.686 -1.16 0 1.7 -1.853 0 1.7 -1.853"/>
+    <key name="pre_recovery"
+      qpos="-0.0318481 -0.000215369 0.0579031 1 -2.70738e-05 6.06169e-05 0.000231261 -0.352275 1.18554 -2.80738 0.360892 1.1806 -2.80281 -0.381197 1.16812 -2.79123 0.391054 1.1622 -2.78576"
+      ctrl="-0.352275 1.18554 -2.80738 0.360892 1.1806 -2.80281 -0.381197 1.16812 -2.79123 0.391054 1.1622 -2.78576"/>
+  </keyframe>
+</mujoco>
