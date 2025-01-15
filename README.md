@@ -8,10 +8,10 @@ A comprehensive suite of environments for robot learning research, accelerated b
 
 Features include:
 
-- Classic control environments from `dm_control` reimplemented in MJX
-- Quadruped and bipedal locomotion environments
-- Non-prehensile and dexterous manipulation environments
-- Vision-based support via Madrona
+- Classic control environments from `dm_control` reimplemented in MJX.
+- Quadruped and bipedal locomotion environments.
+- Non-prehensile and dexterous manipulation environments.
+- Vision-based support via Madrona.
 
 ## Installation
 
