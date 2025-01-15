@@ -1,0 +1,63 @@
+<mujoco model="panda scene with updated robotiq gripper">
+  <include file="panda_updated_robotiq_2f85.xml"/>
+  <compiler angle="radian" assetdir="assets" autolimits="true"/>
+
+  <option timestep="0.005" iterations="10" ls_iterations="10" integrator="implicitfast">
+    <flag eulerdamp="disable"/>
+  </option>
+
+  <custom>
+    <numeric data="12" name="max_contact_points"/>
+  </custom>
+
+  <statistic center="0.3 0 0.4" extent="1"/>
+
+  <visual>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
+    <rgba force="1 0 0 1"/>
+    <global azimuth="-40" elevation="-30"/>
+    <map force="0.01"/>
+    <quality shadowsize="8192"/>
+    <scale contactwidth="0.075" contactheight="0.025" forcewidth="0.05" com="0.05" framewidth="0.01" framelength="0.2"/>
+  </visual>
+
+  <asset>
+    <texture name="box" type="cube" fileup="fileup.png" fileback="fileback.png"
+      filedown="filedown.png" filefront="filefront.png" fileleft="fileleft.png"
+      fileright="fileright.png"/>
+    <material name="box" texture="box"/>
+    <texture name="box_alpha" type="cube" fileup="fileup_light.png" fileback="fileback_light.png"
+      filedown="filedown_light.png" filefront="filefront_light.png" fileleft="fileleft_light.png"
+      fileright="fileright_light.png"/>
+    <material name="box_alpha" texture="box_alpha"/>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1" markrgb="0 0 0"
+      width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 3" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" contype="1" pos="0 0 -0.02297"/>
+    <geom name="wall" size="0.48 0.75 0.05" type="plane" contype="1" pos="0.946 0 0.5" quat="1 0 -1 0"/>
+    <geom name="pad" type="box" pos="0.54586 0.02337 -0.02" size="0.315 0.6 0.01" contype="0" conaffinity="0" rgba="0.5 0.5 0.5 0.2"/>
+    <geom name="camera_tracking_box" type="box" pos="0.59586 0.02337 -0.02" size="0.21 0.32 0.02" contype="0" conaffinity="0" rgba="0.5 0.0 0.5 0.1"/>
+    <body name="box" pos="0.5 0 0.0">
+      <freejoint name="box_joint"/>
+      <geom type="box" name="box" size="0.07553 0.11482 0.05073" condim="3"
+        friction="0.6" contype="2" conaffinity="1" solref="0.02 1" priority="1"
+        mass="0.15" material="box"/>
+    </body>
+    <body mocap="true" name="mocap_target">
+      <geom type="box" size="0.07553 0.11482 0.05073" contype="0" conaffinity="0"
+       material="box_alpha"/>
+    </body>
+  </worldbody>
+
+  <keyframe>
+    <key name="home"
+      qpos="-0.182772 0.146282 0.172246 -2.24238 -0.0788546 2.45127 0.0160022 0.8 0.8 0.8 0.8 0.8 0.8
+            0.56784 -0.0253974 0.0306525 0 0 0 0.99882"
+      ctrl="0 0 0 0 0 0 0 0.82"/>
+  </keyframe>
+</mujoco>

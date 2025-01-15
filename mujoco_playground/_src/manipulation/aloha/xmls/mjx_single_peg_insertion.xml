@@ -1,0 +1,42 @@
+<mujoco model="single peg insertion">
+  <asset>
+    <texture type="cube" name="socket_texture" fileright="socket_blue.png" fileleft="socket_blue.png" fileup="socket_blue.png" filedown="socket_blue.png" filefront="socket_white.png" fileback="socket_blue.png"/>
+    <material name="socket_texture" texture="socket_texture"/>
+  </asset>
+  <include file="mjx_scene.xml"/>
+
+  <option iterations="10" ls_iterations="10" timestep="0.005" integrator="implicitfast" impratio="5"/>
+
+  <default>
+    <default class="stiff">
+      <geom solref="0.01 1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="socket" pos="0 0 0.022">
+      <site name="socket_entrance" pos="0.048 0 0" group="4"/>
+      <site name="socket_rear" pos="-0.0 0 0" group="4"/>
+      <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>
+      <geom class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0 -0.02" size="0.048 0.022 0.002" type="box" name="socket-B" material="socket_texture" contype="1" conaffinity="1"/>
+      <geom class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0 0.02" size="0.048 0.022 0.002" zaxis="0 0 -1" type="box" name="socket-T" material="socket_texture" contype="1" conaffinity="1"/>
+      <geom class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 -0.02 0" size="0.048 0.018 0.002" zaxis="0 1 0" type="box" name="socket-L" material="socket_texture" contype="1" conaffinity="1"/>
+      <geom class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0.02 0" size="0.048 0.018 0.002" zaxis="0 -1 0" type="box" name="socket-R" material="socket_texture" contype="1" conaffinity="1"/>
+      <geom class="stiff" mass="0.006" condim="4" friction="1 0.05 0.001" pos="-0.044 0 0" size="0.004 0.018 0.018" type="box" name="wall" rgba="1 0 0 1" contype="1" conaffinity="1"/>
+    </body>
+
+    <body name="peg" pos="0.2 0.2 0.4">
+      <site name="peg_end1" pos="0.048 0 0" group="4"/>
+      <site name="peg_end2" pos="-0.048 0 0" group="4"/>
+      <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>
+      <geom class="stiff" mass="0.044" condim="4" friction="1 0.05 0.001" pos="0 0 0" size="0.048 0.01 0.01" type="box" name="red_peg" rgba="1 0 0 1" contype="1" conaffinity="1"/>
+    </body>
+  </worldbody>
+
+  <keyframe>
+    <key name="home" qpos='0.083383 -0.122008 0.950168 0.108187 -0.869224 -0.0731298 0.0305 0.0305 -0.0862348 -0.109522 0.949474 -0.113041 -0.887378 0.0754333 0.0186 0.0186 -0.146984 0 0.0227945 1 0 0 0 0.136459 0 0.0107945 1 0 0 0' ctrl='0.083383 -0.122008 0.950168 0.108187 -0.869224 -0.0731298 0.0305 -0.0862348 -0.109522 0.949474 -0.113041 -0.887378 0.0754333 0.0186'/>
+    <key name="pickup" qpos='-0.18852 0.0244602 0.0227488 -0.000345485 0.0265609 6.70585e-05 0.002 0.00199988 -0.03142 0.161802 0.559969 0.0310691 0.484061 0.000365724 0.037 0.0369944 0.0532579 -0.00929037 0.0227984 0.707097 0.707097 -0.00370558 -0.00370368 0.2 0.2 0.0107951 1 2.61756e-17 5.76568e-19 9.29656e-15'
+     ctrl='-0.189 0 0 0 0 0 0 -0.0314 0.138 0.545 0.0314 0.471 0 0.037'/>
+  </keyframe>
+
+</mujoco>

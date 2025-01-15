@@ -1,0 +1,50 @@
+default_stages: [pre-commit]
+exclude: '.*__init__\.py$'
+
+# Install
+# 1. pip install -e .
+# 2. pre-commit install
+# 3. pre-commit run --all-files  # make sure all files are clean
+repos:
+  - repo: https://github.com/google/pyink
+    rev: 24.10.0
+    hooks:
+      - id: pyink
+        name: Pyink (Formatting)
+        # pyink will automatically read configuration from pyproject.toml
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Isort (Import Sorting)
+        # isort will automatically read configuration from pyproject.toml
+
+  # - repo: local
+  #   hooks:
+  #     - id: pylint
+  #       name: Pylint (Google Style)
+  #       entry: pylint
+  #       args: ['--rcfile=pylintrc']
+  #       language: system
+  #       types: [python]
+
+  # - repo: local # re-using locally installed libraries
+  #   hooks:
+  #     - id: pytype
+  #       name: Pytype (Type Checking)
+  #       entry: pytype
+  #       language: system
+  #       types: [python]
+  #       always_run: true
+
+  # - repo: local
+  #   hooks:
+  #     - id: pytest
+  #       name: Run Pytest
+  #       entry: pytest
+  #       language: system
+  #       pass_filenames: false
+  #       always_run: true
+  #       args: ["-n", "auto"]  # Execute tests in parallel
+  #       verbose: true

@@ -1,0 +1,60 @@
+<mujoco model="go1 scene">
+  <include file="go1_mjx_feetonly.xml"/>
+
+  <statistic center="0 0 0.1" extent="0.8" meansize="0.04"/>
+
+  <visual>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
+    <rgba force="1 0 0 1"/>
+    <global azimuth="120" elevation="-20"/>
+    <map force="0.01"/>
+    <scale forcewidth="0.3" contactwidth="0.5" contactheight="0.2"/>
+    <quality shadowsize="8192"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1" markrgb="0 0 0"
+      width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
+    <material name="stairs" rgba="1 1 1 1" reflectance=".8"/>
+  </asset>
+
+  <default>
+    <default class="stairs">
+      <geom material="stairs" contype="1" conaffinity="0"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <geom name="floor" size="0 0 0.01" material="groundplane" type="plane" contype="1" conaffinity="0"/>
+
+    <body name="stairs" pos="0.2 0 0" childclass="stairs">
+      <geom pos="0.2 0 0.075" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="0.4 0 0.22" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="0.6 0 0.375" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="0.8 0 0.525" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="1.0 0 0.675" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="1.2 0 0.825" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="1.4 0 0.975" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="1.6 0 1.125" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="1.8 0 1.275" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="2 0 1.42" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="2.2 0 1.57" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="2.4 0 1.72" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="2.6 0 1.87" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="2.8 0 2.02" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="3 0 2.17" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="3.2 0 2.32" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="3.4 0 2.47" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="3.6 0 2.62" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="3.8 0 2.77" type="box" size="0.1 0.75 0.025"/>
+      <geom pos="4 0 2.92" type="box" size="0.1 0.75 0.025"/>
+    </body>
+  </worldbody>
+
+  <keyframe>
+    <key name="home" qpos="0 0 0.27 1 0 0 0 0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8"
+      ctrl="0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8"/>
+  </keyframe>
+</mujoco>
