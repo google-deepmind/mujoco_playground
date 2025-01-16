@@ -16,12 +16,12 @@ Features include:
 For more details, checkout the project [website](https://playground.mujoco.org/).
 
 <p align="center">
-    <img src="./assets/simulation.gif" width="33%">
-    <img src="./assets/humanoid.gif" width="33%">
-    <img src="./assets/locomotion.gif" width="33%">
-    <img src="./assets/manipulation.gif" width="33%">
-    <img src="./assets/nonprehensile.gif" width="33%">
-    <img src="./assets/vision.gif" width="33%">
+    <img src="./assets/simulation.gif" width="32.9%">
+    <img src="./assets/humanoid.gif" width="32.9%">
+    <img src="./assets/locomotion.gif" width="32.9%">
+    <img src="./assets/manipulation.gif" width="32.9%">
+    <img src="./assets/nonprehensile.gif" width="32.9%">
+    <img src="./assets/vision.gif" width="32.9%">
 </p>
 
 ## Installation
