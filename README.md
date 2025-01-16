@@ -17,11 +17,11 @@ For more details, checkout the project [website](https://playground.mujoco.org/)
 
 <p align="center">
     <img src="./assets/simulation.gif" width="32.9%">
-    <img src="./assets/humanoid.gif" width="32.9%">
-    <img src="./assets/locomotion.gif" width="32.9%">
-    <img src="./assets/manipulation.gif" width="32.9%">
-    <img src="./assets/nonprehensile.gif" width="32.9%">
-    <img src="./assets/vision.gif" width="32.9%">
+    <img src="./assets/humanoid_c.gif" width="32.9%">
+    <img src="./assets/locomotion_c.gif" width="32.9%">
+    <img src="./assets/manipulation_c.gif" width="32.9%">
+    <img src="./assets/nonprehensile_c.gif" width="32.9%">
+    <img src="./assets/vision_c.gif" width="32.9%">
 </p>
 
 ## Installation
