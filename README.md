@@ -4,14 +4,14 @@
   <a href="#"><img alt="MuJoCo Playground" src="assets/banner.png" width="100%"></a>
 </h1>
 
-A comprehensive suite of GPU-acclerated environments for robot learning research and sim-to-real, accelerated by [MuJoCo MJX](https://github.com/google-deepmind/mujoco/tree/main/mjx).
+A comprehensive suite of GPU-accelerated environments for robot learning research and sim-to-real, accelerated by [MuJoCo MJX](https://github.com/google-deepmind/mujoco/tree/main/mjx).
 
 Features include:
 
 - Classic control environments from `dm_control` reimplemented in MJX.
 - Quadruped and bipedal locomotion environments.
 - Non-prehensile and dexterous manipulation environments.
-- Vision-based support via [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx).
+- Vision-based support available via [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx).
 
 ## Installation
 
@@ -36,7 +36,7 @@ pip install playground
 
 #### Madrona-MJX (optional)
 
-For vision-based environments, follow the installation instructions on the [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx?tab=readme-ov-file#installation) repository.
+For vision-based environments, please refer to the installation instructions in the [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx?tab=readme-ov-file#installation) repository.
 
 ## Getting started
 
@@ -90,3 +90,5 @@ The texture used in the rough terrain for the locomotion environments is from [P
 All other content in this repository is licensed under the Apache License, Version 2.0. A copy of this license is provided in the top-level [LICENSE](LICENSE) file in this repository. You can also obtain it from https://www.apache.org/licenses/LICENSE-2.0.
 
 This is not an officially supported Google product.
+
+
