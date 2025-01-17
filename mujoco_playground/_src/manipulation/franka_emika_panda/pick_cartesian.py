@@ -25,6 +25,7 @@ import mujoco
 from mujoco import mjx
 import numpy as np
 
+from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.franka_emika_panda import panda
 from mujoco_playground._src.manipulation.franka_emika_panda import panda_kinematics
@@ -49,7 +50,7 @@ def default_config():
       episode_length=200,
       action_repeat=1,
       # Size of cartesian increment.
-      action_scale=0.01,
+      action_scale=0.005,
       reward_config=config_dict.create(
           reward_scales=config_dict.create(
               # Gripper goes to the box.
@@ -58,6 +59,8 @@ def default_config():
               box_target=8.0,
               # Do not collide the gripper with the floor.
               no_floor_collision=0.25,
+              # Do not collide cube with gripper
+              no_box_collision=0.05,
               # Destabilizes training in cartesian action space.
               robot_target_qpos=0.0,
           ),
@@ -69,6 +72,9 @@ def default_config():
       vision=False,
       vision_config=default_vision_config(),
       obs_noise=config_dict.create(brightness=[1.0, 1.0]),
+      box_init_range=0.05,
+      success_threshold=0.05,
+      action_history_length=1,
   )
   return config
 
@@ -112,6 +118,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
 
     # Set gripper in sight of camera
     self._post_init(obj_name='box', keyframe='low_home')
+    self._box_geom = self._mj_model.geom('box').id
 
     if self._vision:
       try:
@@ -168,9 +175,10 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
 
     # intialize box position
     rng, rng_box = jax.random.split(rng)
+    r_range = self._config.box_init_range
     box_pos = jp.array([
         x_plane,
-        jax.random.uniform(rng_box, (), minval=-0.05, maxval=0.05),
+        jax.random.uniform(rng_box, (), minval=-r_range, maxval=r_range),
         0.0,
     ])
 
@@ -218,6 +226,9 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
         'newly_reset': jp.array(False, dtype=bool),
         'prev_action': jp.zeros(3),
         '_steps': jp.array(0, dtype=int),
+        'action_history': jp.zeros((
+            self._config.action_history_length,
+        )),  # Gripper only
     }
 
     reward, done = jp.zeros(2)
@@ -245,6 +256,17 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     """Runs one timestep of the environment's dynamics."""
+    action_history = (
+        jp.roll(state.info['action_history'], 1).at[0].set(action[2])
+    )
+    state.info['action_history'] = action_history
+    # Add action delay
+    state.info['rng'], key = jax.random.split(state.info['rng'])
+    action_idx = jax.random.randint(
+        key, (), minval=0, maxval=self._config.action_history_length
+    )
+    action = action.at[2].set(state.info['action_history'][action_idx])
+
     state.info['newly_reset'] = state.info['_steps'] == 0
 
     newly_reset = state.info['newly_reset']
@@ -275,9 +297,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
 
     # Cartesian control
     increment = jp.zeros(4)
-    increment = increment.at[1:].set(
-        action[:]
-    )  # set y, z and gripper commands.
+    increment = increment.at[1:].set(action)  # set y, z and gripper commands.
     ctrl, new_tip_position, no_soln = self._move_tip(
         state.info['current_pos'],
         self._start_tip_transform[:3, :3],
@@ -296,6 +316,10 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
         k: v * self._config.reward_config.reward_scales[k]
         for k, v in raw_rewards.items()
     }
+
+    # Penalize collision with box.
+    hand_box = collision.geoms_colliding(data, self._box_geom, self._hand_geom)
+    raw_rewards['no_box_collision'] = jp.where(hand_box, 0.0, 1.0)
 
     total_reward = jp.clip(sum(rewards.values()), -1e4, 1e4)
 
@@ -362,7 +386,11 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
   def _get_success(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
     box_pos = data.xpos[self._obj_body]
     target_pos = info['target_pos']
-    return jp.linalg.norm(box_pos - target_pos) < 0.05
+    if (
+        self._vision
+    ):  # Randomized camera positions cannot see location along y line.
+      box_pos, target_pos = box_pos[2], target_pos[2]
+    return jp.linalg.norm(box_pos - target_pos) < self._config.success_threshold
 
   def _move_tip(
       self,
