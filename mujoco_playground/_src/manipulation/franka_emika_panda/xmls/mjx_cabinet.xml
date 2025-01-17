@@ -1,4 +1,4 @@
-<mujoco model="panda scene">
+<mujoco model="panda cabinet">
   <include file="mjx_scene.xml"/>
 
   <worldbody>
