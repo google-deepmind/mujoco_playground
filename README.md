@@ -13,7 +13,7 @@ Features include:
 - Non-prehensile and dexterous manipulation environments.
 - Vision-based support available via [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx).
 
-For more details, checkout the project [website](https://playground.mujoco.org/).
+For more details, check out the project [website](https://playground.mujoco.org/).
 
 ## Installation
 
