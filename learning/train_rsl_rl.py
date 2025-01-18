@@ -75,6 +75,9 @@ _DEVICE = flags.DEFINE_string("device", "cuda:0", "Device for training.")
 _MULTI_GPU = flags.DEFINE_boolean(
     "multi_gpu", False, "If true, use multi-GPU training (distributed)."
 )
+_CAMERA = flags.DEFINE_string(
+    "camera", None, "Camera name to use for rendering."
+)
 
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
@@ -230,7 +233,11 @@ def main(argv):
   fps = 1.0 / base_env.dt / render_every
   traj = rollout[::render_every]
   frames = eval_env.render(
-      traj, camera="track", height=480, width=640, scene_option=scene_option
+      traj,
+      camera=_CAMERA.value,
+      height=480,
+      width=640,
+      scene_option=scene_option,
   )
   media.write_video("rollout.mp4", frames, fps=fps)
   print("Rollout video saved as 'rollout.mp4'.")
