@@ -1,8 +1,7 @@
 # MuJoCo Playground
 
-<h1>
-  <a href="#"><img alt="MuJoCo Playground" src="assets/banner.png" width="100%"></a>
-</h1>
+![Banner for playground](https://github.com/google-deepmind/mujoco_playground/blob/main/assets/banner.png?raw=true)
+
 
 A comprehensive suite of GPU-accelerated environments for robot learning research and sim-to-real, built with [MuJoCo MJX](https://github.com/google-deepmind/mujoco/tree/main/mjx).
 
@@ -71,7 +70,7 @@ Two additional colabs require local runtimes with Madrona-MJX installed locally 
 
 ## How can I contribute?
 
-Get started by installing the library and exploring its features! Found a bug? Report it in the issue tracker. Interested in contributing? If you’re a developer with robotics experience, we’d love your help—check out the [contribution guidelines](CONTRIBUTING) for more details.
+Get started by installing the library and exploring its features! Found a bug? Report it in the issue tracker. Interested in contributing? If you’re a developer with robotics experience, we’d love your help—check out the [contribution guidelines](CONTRIBUTING.md) for more details.
 
 ## Citation
 

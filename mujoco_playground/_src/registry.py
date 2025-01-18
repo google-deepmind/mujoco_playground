@@ -54,10 +54,7 @@ def load(
   elif env_name in dm_control_suite.ALL:
     return dm_control_suite.load(env_name, config, config_overrides)
 
-  raise ValueError(
-      f"Env '{env_name}' not found. Available envs:"
-      f" {manipulation.ALL + locomotion.ALL + dm_control_suite.ALL}"
-  )
+  raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL_ENVS}")
 
 
 def get_domain_randomizer(env_name: str) -> Optional[DomainRandomizer]:
