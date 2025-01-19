@@ -25,7 +25,7 @@ pip install playground
 ### From Source
 
 > [!IMPORTANT]
-> Requires Python 3.9 or later.
+> Requires Python 3.10 or later.
 
 1. `pip install -U "jax[cuda12]"`
     * Verify GPU backend: python -c "import jax; print(jax.default_backend())" should print gpu
