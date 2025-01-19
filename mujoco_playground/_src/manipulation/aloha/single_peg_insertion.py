@@ -21,7 +21,6 @@ from jax import numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward as reward_util
 from mujoco_playground._src.manipulation.aloha import aloha_constants as consts
@@ -61,37 +60,27 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(
-        xml_path=consts.XML_PATH.as_posix(),
+        xml_path=(consts.XML_PATH 
+                  / "mjx_single_peg_insertion.xml").as_posix(),
         config=config,
         config_overrides=config_overrides,
     )
     self._post_init()
 
   def _post_init(self):
-    self._left_gripper_site = self._mj_model.site("left/gripper").id
-    self._right_gripper_site = self._mj_model.site("right/gripper").id
+    self._post_init_aloha(keyframe="home")
     self._socket_entrance_site = self._mj_model.site("socket_entrance").id
     self._socket_rear_site = self._mj_model.site("socket_rear").id
     self._peg_end2_site = self._mj_model.site("peg_end2").id
     self._socket_body = self._mj_model.body("socket").id
     self._peg_body = self._mj_model.body("peg").id
-    self._table_geom = self._mj_model.geom("table").id
-    self._finger_geoms = [
-        self._mj_model.geom(geom_id).id for geom_id in consts.FINGER_GEOMS
-    ]
+
     self._socket_qadr = self._mj_model.jnt_qposadr[
         self._mj_model.body_jntadr[self._socket_body]
     ]
     self._peg_qadr = self._mj_model.jnt_qposadr[
         self._mj_model.body_jntadr[self._peg_body]
     ]
-    arm_joint_ids = [self._mj_model.joint(j).id for j in consts.ARM_JOINTS]
-    self._arm_qadr = jp.array(
-        [self._mj_model.jnt_qposadr[joint_id] for joint_id in arm_joint_ids]
-    )
-    self._init_q = jp.array(self._mj_model.keyframe("home").qpos)
-    self._init_ctrl = jp.array(self._mj_model.keyframe("home").ctrl)
-    self._lowers, self._uppers = self.mj_model.actuator_ctrlrange.T
 
     # Lift goal: both in the air.
     self._socket_entrance_goal_pos = jp.array([-0.05, 0, 0.15])
@@ -226,12 +215,7 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
         peg_dist, (0, 0.01), margin=0.15, sigmoid="linear"
     )
 
-    # Check for collisions with the floor.
-    hand_table_collisions = [
-        collision.geoms_colliding(data, self._table_geom, g)
-        for g in self._finger_geoms
-    ]
-    table_collision = (sum(hand_table_collisions) > 0).astype(float)
+    table_collision = self.hand_table_collision(data)
 
     socket_orientation = jp.dot(
         data.xmat[self._socket_body][2], jp.array([0.0, 0.0, 1.0])

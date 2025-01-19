@@ -21,7 +21,6 @@ XML_PATH = (
     / "manipulation"
     / "aloha"
     / "xmls"
-    / "mjx_single_peg_insertion.xml"
 )
 
 ARM_JOINTS = [
@@ -48,4 +47,11 @@ FINGER_GEOMS = [
     "right/left_finger_bottom",
     "right/right_finger_top",
     "right/right_finger_bottom",
+]
+
+FINGER_JOINTS = [
+    "left/left_finger",
+    "left/right_finger",
+    "right/left_finger",
+    "right/right_finger"
 ]
