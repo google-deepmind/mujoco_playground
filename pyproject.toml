@@ -39,6 +39,7 @@ keywords = ["mjx", "mujoco", "dm_control"]
 test = [
     "absl-py",
     "pytest",
+    "pytest-xdist",
     "dm_control",
 ]
 notebooks = [
