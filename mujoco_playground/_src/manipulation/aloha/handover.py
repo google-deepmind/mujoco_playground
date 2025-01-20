@@ -39,12 +39,15 @@ def default_config() -> config_dict.ConfigDict:
               box_handover=4,
               handover_target=8,
               no_table_collision=0.3,
-              transfer_hands=0.5,
-              sparse_handover=10.0,
           ),
-          table_penalty=-10.0
       ),
   )
+
+
+# Default parameters: 12 cm decay range centered around x = 0.
+def logistic_barrier(x: jax.Array, x0=0, k=100, direction=1.0):
+    # direction = 1.0: Penalize going to the left.
+    return 1/(1 + jp.exp(-k * direction*(x - x0)))
 
 
 class HandOver(aloha_base.AlohaEnv):
@@ -90,7 +93,7 @@ class HandOver(aloha_base.AlohaEnv):
 
     box_xy = jp.array([
         jax.random.uniform(rng_box_x, (), minval=-0.05, maxval=0.05),
-        jax.random.uniform(rng_box_y, (), minval=-0.2, maxval=0.2),
+        jax.random.uniform(rng_box_y, (), minval=-0.1, maxval=0.1),
     ])
     init_q = self._init_q.at[self._box_qadr : self._box_qadr + 2].add(box_xy)
 
@@ -102,10 +105,12 @@ class HandOver(aloha_base.AlohaEnv):
     )
 
     rng, rng_target = jax.random.split(rng)
-    target_pos = jp.array([0.18, 0.0, 0.25])
+    target_pos = jp.array([0.20, 0.0, 0.25])
     target_pos += jax.random.uniform(
         rng_target, (3,), minval=-0.15, maxval=0.15
     )
+    target_x = jp.clip(target_pos[0], 0.15, None) # Saturate log barrier.
+    target_pos = target_pos.at[0].set(target_x)
 
     data = data.replace(
         mocap_pos=data.mocap_pos.at[self._mocap_target].set(target_pos)
@@ -113,11 +118,8 @@ class HandOver(aloha_base.AlohaEnv):
     info = {
         'rng': rng,
         'target_pos': target_pos,
+        'prev_potential': jp.array(0.0, dtype=float),
         '_steps': jp.array(0, dtype=int),
-        's_l_gripped': jp.array(0.0, dtype=float),  # smoothed grip signal
-        's_r_gripped': jp.array(0.0, dtype=float),
-        'f_sparse_handover': jp.array(0, dtype=bool), # whether transfer already awarded
-        'picks': jp.array(0, dtype=int), # If still learning how to pick up the block, guide that. Else, guide the transfer.
         'episode_picked': jp.array(0, dtype=bool),  # To help count above.
     }
 
@@ -126,9 +128,6 @@ class HandOver(aloha_base.AlohaEnv):
 
     metrics = {
         'out_of_bounds': jp.array(0.0, dtype=float),
-        'l_gripped': jp.array(0.0, dtype=float),
-        'r_gripped': jp.array(0.0, dtype=float),
-        'transfer_sampled': jp.array(0.0, dtype=float),
         **{k: 0.0 for k in self._config.reward_config.scales.keys()},
     }
 
@@ -136,30 +135,27 @@ class HandOver(aloha_base.AlohaEnv):
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     newly_reset = state.info['_steps'] == 0
-    state.info['s_l_gripped'] = jp.where(
-        newly_reset, 0.0, state.info['s_l_gripped']
-    )
-    state.info['s_r_gripped'] = jp.where(
-        newly_reset, 0.0, state.info['s_r_gripped']
-    )
     state.info['episode_picked'] = jp.where(
         newly_reset, 0, state.info['episode_picked']
+    )
+    state.info['prev_potential'] = jp.where(
+        newly_reset, 0.0, state.info['prev_potential']
     )
 
     # Ocassionally steer exploration.
     state.info['rng'], key_swap = jax.random.split(state.info['rng'])
     to_sample = newly_reset * jax.random.bernoulli(key_swap, 0.05)
-    picked, transferred = (self._picked_q, self._picked_ctrl), (self._transferred_q, self._transferred_ctrl)
+    picked, cur = (self._picked_q, self._picked_ctrl), (state.data.qpos, state.data.ctrl)
 
     def choose_tuple(x, y, f: bool):
-      # If f, choose x. Else, y.
       return jax.tree_util.tree_map(
         lambda x, y: f * x + (1-f) * y, x, y
       )
-    guiding = choose_tuple(transferred, picked, (state.info['picks'] >= 2).astype(float))
-    _qpos, _ctrl = choose_tuple(guiding, (state.data.qpos, state.data.ctrl), to_sample.astype(float))
+
+    _qpos, _ctrl = choose_tuple(picked, cur, to_sample.astype(float))
     data = state.data.replace(qpos=_qpos, ctrl=_ctrl)
 
+    # Scale actions
     delta = action * self._config.action_scale
     ctrl = state.data.ctrl + delta
     ctrl = jp.clip(ctrl, self._lowers, self._uppers)
@@ -172,35 +168,45 @@ class HandOver(aloha_base.AlohaEnv):
         k: v * self._config.reward_config.scales[k]
         for k, v in raw_rewards.items()
     }
-    reward = sum(rewards.values()) / sum(
+    potential = sum(rewards.values()) / sum(
         self._config.reward_config.scales.values()
     )
 
-    # # Table collisions can destabilize simulation.
-    # table_collision = self.hand_table_collision(data)
-    # reward += table_collision * self._config.reward_config.table_penalty
- 
+    # Reward progress. Clip at zero to not penalize mistakes like dropping during exploration.
+    reward = jp.maximum(
+        potential - state.info['prev_potential'], jp.zeros_like(potential)
+    )
+
     box_pos = data.xpos[self._box_body]
+    
+    # Don't affect learning to transfer between hands but bias to holding the end state.
+    l_gripper = data.site_xpos[self._left_gripper_site]
+    condition = logistic_barrier(l_gripper[0], direction=-1) * logistic_barrier(box_pos[0], 0.10)
+    reward += 0.02 * potential * condition
+    state.info['prev_potential'] = jp.maximum(
+        potential, state.info['prev_potential']
+    )
+    reward = jp.where(newly_reset, 0.0, reward)  # Prevent first-step artifact
+
+    # No reward information if you've dropped a block after you've picked it up.
+    picked = box_pos[2] > 0.15
+    state.info['episode_picked'] = jp.logical_or(
+        state.info['episode_picked'], picked
+    )
+    dropped = (box_pos[2] < 0.05) & state.info['episode_picked']
+
     out_of_bounds = jp.any(jp.abs(box_pos) > 1.0)
     out_of_bounds |= box_pos[2] < 0.0
-    done = out_of_bounds | jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
+    done = out_of_bounds | jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any() | dropped
     state.info['_steps'] += self._config.action_repeat
     state.info['_steps'] = jp.where(
         done | (state.info['_steps'] >= self._config.episode_length),
         0,
         state.info['_steps'],
     )
-    picked = jp.linalg.norm(box_pos - self._handover_pos) < 0.05
-    state.info['picks'] += jp.logical_not(state.info['episode_picked']).astype(int) * picked.astype(int)
-    state.info['episode_picked'] = jp.logical_or(
-        state.info['episode_picked'], picked
-    )
 
     state.metrics.update(**rewards, 
-        out_of_bounds=out_of_bounds.astype(float),
-        l_gripped = state.info['s_l_gripped'],
-        r_gripped = state.info['s_r_gripped'],
-        transfer_sampled = (to_sample * (state.info['picks'] >= 2).astype(float)))
+        out_of_bounds=out_of_bounds.astype(float))
 
     obs = self._get_obs(data, state.info)
     return mjx_env.State(
@@ -216,15 +222,6 @@ class HandOver(aloha_base.AlohaEnv):
     box = data.xpos[self._box_body]
     l_gripper = data.site_xpos[self._left_gripper_site]
     r_gripper = data.site_xpos[self._right_gripper_site]
-    l_gripped = self.is_grasped(data, 'left')
-    r_gripped = self.is_grasped(data, 'right')
-    info['s_l_gripped'] = l_gripped * self.grip_alpha + info['s_l_gripped'] * (
-        1 - self.grip_alpha
-    )
-    info['s_r_gripped'] = r_gripped * self.grip_alpha + info['s_r_gripped'] * (
-        1 - self.grip_alpha
-    )
-    l_gripped, r_gripped = info['s_l_gripped'], info['s_r_gripped']
 
     pre = jp.where(box[0] < self._left_thresh, 1.0, 0.0)
     past = jp.where(box[0] >= self._right_thresh, 1.0, 0.0)
@@ -243,24 +240,10 @@ class HandOver(aloha_base.AlohaEnv):
     hand_handover = distance(l_gripper, self._handover_pos) * past
     box_handover = jp.maximum(box_handover, hand_handover)
 
-    #### Facilitate transfer between hands
-    ## Let the right hand take the box
-    transfer_hands = (1 - l_gripped) * past * r_gripped
-
-    ## Big reward for the risk
-    hand_over = ((1 - l_gripped) * past * r_gripped) > 0.8
-    hand_over *= jp.logical_not(info['f_sparse_handover'])
-    info['f_sparse_handover'] = jp.logical_or(
-        info['f_sparse_handover'], hand_over > 0
-    )
-
     #### Bring box to target
     box_target = distance(info['target_pos'], box) * (r_rg + r_rg_bias)
     # Don't let the left hand do it.
-    def logistic_barrier(x: jax.Array):
-      k = 100 # About 12 cm between 1 and 0, centered around 0.
-      return 1 - (1/(1 + jp.exp(-k * x)))
-    box_target *= logistic_barrier(l_gripper[0])
+    box_target *= logistic_barrier(l_gripper[0], direction=-1)
 
     #### Avoid table collision - unstable simulation.
     table_collision = self.hand_table_collision(data)
@@ -269,8 +252,6 @@ class HandOver(aloha_base.AlohaEnv):
         'gripper_box': r_lg + r_rg + r_rg_bias,
         'box_handover': box_handover,
         'handover_target': box_target,
-        'transfer_hands': transfer_hands,
-        'sparse_handover': hand_over.astype(float),
         'no_table_collision': 1 - table_collision,
     }
 
@@ -283,7 +264,6 @@ class HandOver(aloha_base.AlohaEnv):
     box_top = data.site_xpos[self._box_top_site]
     box_bottom = data.site_xpos[self._box_bottom_site]
     finger_qposadr = data.qpos[self._finger_qposadr]
-    l_gripped, r_gripped = info['s_l_gripped'], info['s_r_gripped']
     box_width = self.mjx_model.geom_size[self._box_geom][1]
 
     obs = jp.concatenate([
@@ -301,11 +281,10 @@ class HandOver(aloha_base.AlohaEnv):
         (info['_steps'].reshape((1,)) / self._config.episode_length).astype(
             float
         ),
-        jp.array([l_gripped, r_gripped]),
     ])
 
     return obs
 
   @property
   def observation_size(self) -> int:
-    return 85
+    return 83
