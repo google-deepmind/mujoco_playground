@@ -29,5 +29,4 @@ jobs:
           python -c "import mujoco_playground"
       - name: Test with pytest
         run: |
-          uv pip install pytest pytest-xdist
           pytest -n auto mujoco_playground
