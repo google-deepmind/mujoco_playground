@@ -99,8 +99,9 @@ if __name__ == "__main__":
 
   if vision:
     # Load the compiled rendering backend to save time!
-    # os.environ["MADRONA_MWGPU_KERNEL_CACHE"] = \
+    # os.environ["MADRONA_MWGPU_KERNEL_CACHE"] = (
     # "<YOUR_PATH>/madrona_mjx/build/cache"
+    # )
 
     # Coordinate between Jax and the Madrona rendering backend
     def limit_jax_mem(limit):
