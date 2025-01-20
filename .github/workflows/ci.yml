@@ -24,7 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
           uv pip install --system -e ".[test]"
-      - name: Install submodules
+      - name: Trigger git clone
+        run: |
+          python -c "import mujoco_playground"
       - name: Test with pytest
         run: |
           pytest -n auto mujoco_playground
