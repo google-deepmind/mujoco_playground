@@ -60,8 +60,7 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(
-        xml_path=(consts.XML_PATH 
-                  / "mjx_single_peg_insertion.xml").as_posix(),
+        xml_path=(consts.XML_PATH / "mjx_single_peg_insertion.xml").as_posix(),
         config=config,
         config_overrides=config_overrides,
     )

@@ -16,12 +16,7 @@
 
 from mujoco_playground._src import mjx_env
 
-XML_PATH = (
-    mjx_env.ROOT_PATH
-    / "manipulation"
-    / "aloha"
-    / "xmls"
-)
+XML_PATH = mjx_env.ROOT_PATH / "manipulation" / "aloha" / "xmls"
 
 ARM_JOINTS = [
     "left/waist",
@@ -53,5 +48,5 @@ FINGER_JOINTS = [
     "left/left_finger",
     "left/right_finger",
     "right/left_finger",
-    "right/right_finger"
+    "right/right_finger",
 ]

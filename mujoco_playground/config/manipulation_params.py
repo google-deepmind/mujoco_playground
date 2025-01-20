@@ -36,7 +36,7 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
       ),
   )
   if env_name == "AlohaHandOver":
-    rl_config.num_timesteps = 50_000_000
+    rl_config.num_timesteps = 100_000_000
     rl_config.num_evals = int(rl_config.num_timesteps / 4_000_000)
     rl_config.unroll_length = 15
     rl_config.num_minibatches = 32

@@ -20,6 +20,7 @@ import jax
 from jax import numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
+import numpy as np
 
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.aloha import aloha_constants as consts
@@ -46,8 +47,8 @@ def default_config() -> config_dict.ConfigDict:
 
 # Default parameters: 12 cm decay range centered around x = 0.
 def logistic_barrier(x: jax.Array, x0=0, k=100, direction=1.0):
-    # direction = 1.0: Penalize going to the left.
-    return 1/(1 + jp.exp(-k * direction*(x - x0)))
+  # direction = 1.0: Penalize going to the left.
+  return 1 / (1 + jp.exp(-k * direction * (x - x0)))
 
 
 class HandOver(aloha_base.AlohaEnv):
@@ -67,7 +68,9 @@ class HandOver(aloha_base.AlohaEnv):
     self.grip_alpha = 0.1
 
   def _post_init(self):
-    self._post_init_aloha(keyframe="home")
+    self._post_init_aloha(keyframe='home')
+    # Aid finger exploration
+    self._lowers[6] = 0.01
     self._mocap_target = self._mj_model.body('mocap_target').mocapid
     self._box_body = self._mj_model.body('box').id
     self._box_top_site = self._mj_model.site('box_top').id
@@ -109,7 +112,7 @@ class HandOver(aloha_base.AlohaEnv):
     target_pos += jax.random.uniform(
         rng_target, (3,), minval=-0.15, maxval=0.15
     )
-    target_x = jp.clip(target_pos[0], 0.15, None) # Saturate log barrier.
+    target_x = jp.clip(target_pos[0], 0.15, None)  # Saturate log barrier.
     target_pos = target_pos.at[0].set(target_x)
 
     data = data.replace(
@@ -142,19 +145,6 @@ class HandOver(aloha_base.AlohaEnv):
         newly_reset, 0.0, state.info['prev_potential']
     )
 
-    # Ocassionally steer exploration.
-    state.info['rng'], key_swap = jax.random.split(state.info['rng'])
-    to_sample = newly_reset * jax.random.bernoulli(key_swap, 0.05)
-    picked, cur = (self._picked_q, self._picked_ctrl), (state.data.qpos, state.data.ctrl)
-
-    def choose_tuple(x, y, f: bool):
-      return jax.tree_util.tree_map(
-        lambda x, y: f * x + (1-f) * y, x, y
-      )
-
-    _qpos, _ctrl = choose_tuple(picked, cur, to_sample.astype(float))
-    data = state.data.replace(qpos=_qpos, ctrl=_ctrl)
-
     # Scale actions
     delta = action * self._config.action_scale
     ctrl = state.data.ctrl + delta
@@ -178,11 +168,14 @@ class HandOver(aloha_base.AlohaEnv):
     )
 
     box_pos = data.xpos[self._box_body]
-    
+
     # Don't affect learning to transfer between hands but bias to holding the end state.
     l_gripper = data.site_xpos[self._left_gripper_site]
-    condition = logistic_barrier(l_gripper[0], direction=-1) * logistic_barrier(box_pos[0], 0.10)
+    condition = logistic_barrier(l_gripper[0], direction=-1) * logistic_barrier(
+        box_pos[0], 0.10
+    )
     reward += 0.02 * potential * condition
+
     state.info['prev_potential'] = jp.maximum(
         potential, state.info['prev_potential']
     )
@@ -194,10 +187,16 @@ class HandOver(aloha_base.AlohaEnv):
         state.info['episode_picked'], picked
     )
     dropped = (box_pos[2] < 0.05) & state.info['episode_picked']
+    reward += dropped.astype(float) * -0.1  # Small penalty.
 
     out_of_bounds = jp.any(jp.abs(box_pos) > 1.0)
     out_of_bounds |= box_pos[2] < 0.0
-    done = out_of_bounds | jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any() | dropped
+    done = (
+        out_of_bounds
+        | jp.isnan(data.qpos).any()
+        | jp.isnan(data.qvel).any()
+        | dropped
+    )
     state.info['_steps'] += self._config.action_repeat
     state.info['_steps'] = jp.where(
         done | (state.info['_steps'] >= self._config.episode_length),
@@ -205,8 +204,7 @@ class HandOver(aloha_base.AlohaEnv):
         state.info['_steps'],
     )
 
-    state.metrics.update(**rewards, 
-        out_of_bounds=out_of_bounds.astype(float))
+    state.metrics.update(**rewards, out_of_bounds=out_of_bounds.astype(float))
 
     obs = self._get_obs(data, state.info)
     return mjx_env.State(

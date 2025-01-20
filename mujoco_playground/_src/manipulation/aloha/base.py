@@ -21,9 +21,9 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import collision
 import numpy as np
 
+from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.aloha import aloha_constants as consts
 
