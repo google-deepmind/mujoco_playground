@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [main, btaba-ci]
+    branches: [main]
   pull_request:
     branches: [main]
 
