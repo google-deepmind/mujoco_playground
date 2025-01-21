@@ -12,21 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-# pylint: disable=wrong-import-position
 """Train a PPO agent using JAX on the specified environment."""
-
-import os
-
-xla_flags = os.environ.get("XLA_FLAGS", "")
-xla_flags += " --xla_gpu_triton_gemm_any=True"
-os.environ["XLA_FLAGS"] = xla_flags
-os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-os.environ["MUJOCO_GL"] = "egl"
 
 from datetime import datetime
 import functools
 import json
+import os
 import time
+import warnings
 
 from absl import app
 from absl import flags
@@ -52,11 +45,16 @@ from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
 
+xla_flags = os.environ.get("XLA_FLAGS", "")
+xla_flags += " --xla_gpu_triton_gemm_any=True"
+os.environ["XLA_FLAGS"] = xla_flags
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+os.environ["MUJOCO_GL"] = "egl"
+
 # Ignore the info logs from brax
 logging.set_verbosity(logging.WARNING)
 
 # Suppress warnings
-import warnings
 
 # Suppress RuntimeWarnings from JAX
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="jax")
