@@ -1,8 +1,8 @@
 # MuJoCo Playground
 
-<h1>
-  <a href="#"><img alt="MuJoCo Playground" src="assets/banner.png" width="100%"></a>
-</h1>
+[![Build](https://img.shields.io/github/actions/workflow/status/google-deepmind/mujoco_playground/ci.yml?branch=main)](https://github.com/google-deepmind/mujoco_playground/actions)
+[![PyPI version](https://img.shields.io/pypi/v/playground)](https://pypi.org/project/playground/)
+![Banner for playground](https://github.com/google-deepmind/mujoco_playground/blob/main/assets/banner.png?raw=true)
 
 A comprehensive suite of GPU-accelerated environments for robot learning research and sim-to-real, built with [MuJoCo MJX](https://github.com/google-deepmind/mujoco/tree/main/mjx).
 
@@ -26,7 +26,7 @@ pip install playground
 ### From Source
 
 > [!IMPORTANT]
-> Requires Python 3.9 or later.
+> Requires Python 3.10 or later.
 
 1. `pip install -U "jax[cuda12]"`
     * Verify GPU backend: python -c "import jax; print(jax.default_backend())" should print gpu
@@ -71,7 +71,7 @@ Two additional colabs require local runtimes with Madrona-MJX installed locally 
 
 ## How can I contribute?
 
-Get started by installing the library and exploring its features! Found a bug? Report it in the issue tracker. Interested in contributing? If you’re a developer with robotics experience, we’d love your help—check out the [contribution guidelines](CONTRIBUTING) for more details.
+Get started by installing the library and exploring its features! Found a bug? Report it in the issue tracker. Interested in contributing? If you’re a developer with robotics experience, we’d love your help—check out the [contribution guidelines](CONTRIBUTING.md) for more details.
 
 ## Citation
 

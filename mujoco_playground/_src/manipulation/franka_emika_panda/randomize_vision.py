@@ -96,7 +96,7 @@ def domain_randomize(
     geom_rgba = mjx_model.geom_rgba.at[box_geom_id].set(rgba)
 
     strip_white = jax.random.uniform(key_strip, (), minval=0.8, maxval=1.0)
-    geom_rgba = mjx_model.geom_rgba.at[strip_geom_id].set(
+    geom_rgba = geom_rgba.at[strip_geom_id].set(
         jp.array([strip_white, strip_white, strip_white, 1.0])
     )
 

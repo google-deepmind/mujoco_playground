@@ -196,12 +196,12 @@ def main(argv):
   if _CLIPPING_EPSILON.present:
     ppo_params.clipping_epsilon = _CLIPPING_EPSILON.value
   if _POLICY_HIDDEN_LAYER_SIZES.present:
-    ppo_params.network_factory.policy_hidden_layer_sizes = tuple(
-        _POLICY_HIDDEN_LAYER_SIZES.value
+    ppo_params.network_factory.policy_hidden_layer_sizes = list(
+        map(int, _POLICY_HIDDEN_LAYER_SIZES.value)
     )
   if _VALUE_HIDDEN_LAYER_SIZES.present:
-    ppo_params.network_factory.value_hidden_layer_sizes = tuple(
-        _VALUE_HIDDEN_LAYER_SIZES.value
+    ppo_params.network_factory.value_hidden_layer_sizes = list(
+        map(int, _VALUE_HIDDEN_LAYER_SIZES.value)
     )
   if _POLICY_OBS_KEY.present:
     ppo_params.network_factory.policy_obs_key = _POLICY_OBS_KEY.value
