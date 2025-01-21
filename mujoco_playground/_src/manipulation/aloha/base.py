@@ -17,11 +17,15 @@
 from typing import Any, Dict, Optional, Union
 
 from etils import epath
+import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
+import numpy as np
 
+from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
+from mujoco_playground._src.manipulation.aloha import aloha_constants as consts
 
 
 def get_assets() -> Dict[str, bytes]:
@@ -58,6 +62,26 @@ class AlohaEnv(mjx_env.MjxEnv):
     self._mjx_model = mjx.put_model(self._mj_model)
     self._xml_path = xml_path
 
+  def _post_init_aloha(self, keyframe: str = "home"):
+    """Initializes helpful robot properties."""
+    self._left_gripper_site = self._mj_model.site("left/gripper").id
+    self._right_gripper_site = self._mj_model.site("right/gripper").id
+    self._table_geom = self._mj_model.geom("table").id
+    self._finger_geoms = [
+        self._mj_model.geom(geom_id).id for geom_id in consts.FINGER_GEOMS
+    ]
+    self._init_q = jp.array(self._mj_model.keyframe(keyframe).qpos)
+    self._init_ctrl = jp.array(self._mj_model.keyframe(keyframe).ctrl)
+    self._lowers, self._uppers = self.mj_model.actuator_ctrlrange.T
+    arm_joint_ids = [self._mj_model.joint(j).id for j in consts.ARM_JOINTS]
+    self._arm_qadr = jp.array(
+        [self._mj_model.jnt_qposadr[joint_id] for joint_id in arm_joint_ids]
+    )
+    self._finger_qposadr = np.array([
+        self._mj_model.jnt_qposadr[self._mj_model.joint(j).id]
+        for j in consts.FINGER_JOINTS
+    ])
+
   @property
   def xml_path(self) -> str:
     return self._xml_path
@@ -73,3 +97,11 @@ class AlohaEnv(mjx_env.MjxEnv):
   @property
   def mjx_model(self) -> mjx.Model:
     return self._mjx_model
+
+  def hand_table_collision(self, data) -> jp.ndarray:
+    # Check for collisions with the floor.
+    hand_table_collisions = [
+        collision.geoms_colliding(data, self._table_geom, g)
+        for g in self._finger_geoms
+    ]
+    return (sum(hand_table_collisions) > 0).astype(float)

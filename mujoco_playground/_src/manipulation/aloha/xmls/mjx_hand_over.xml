@@ -1,0 +1,37 @@
+<mujoco model="hand-over">
+  <include file="mjx_scene.xml"/>
+
+  <option iterations="10" ls_iterations="10" timestep="0.005" integrator="implicitfast" impratio="5"/>
+
+  <default>
+    <default class="stiff">
+      <geom solref="0.01 1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <geom type="plane" name="left_thresh" pos="-0.1 0 0" size="0.0 0.0 0.01" zaxis="-1 0 0" condim="3"
+      friction="1 .03 .003" rgba="0 0 1 0.2" contype="0" conaffinity="0" group="5"/>
+    <geom type="plane" name="right_thresh" pos="0 0 0" size="0.0 0.0 0.01" zaxis="-1 0 0" condim="3"
+      friction="1 .03 .003" rgba="0 1 0 0.2" contype="0" conaffinity="0" group="5"/>
+    <body name="box" pos="0.2 0.2 0.03">
+      <site name="box_top" pos="0 0 0.02" group="4"/>
+      <site name="box_bottom" pos="0 0 -0.02" group="4"/>
+      <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>
+      <geom class="stiff" mass="0.044" condim="4" friction="1 0.05 0.001" pos="0 0 0" size="0.02 0.015 0.03" type="box" name="box" rgba="1 0 0 1" contype="1" conaffinity="1"/>
+    </body>
+    <body mocap="true" name="mocap_target">
+      <geom type="box" size="0.02 0.015 0.03" rgba="1 0 0 0.2" contype="0" conaffinity="0"/>
+    </body>
+  </worldbody>
+
+  <keyframe>
+    <key name="home" qpos='0.083383 -0.554374 1.23718 0.108587 -0.65136 -0.072894 0.0305 0.0304972 0.083383 -0.554374 1.23718 0.108587 -0.65136 -0.072894 0.0305 0.0304972 -0.16 6.71945e-16 0.0307918 1 3.39549e-17 5.33887e-19 -8.349e-15'
+    ctrl='0.083383 -0.554374 1.23718 0.108587 -0.65136 -0.072894 0.037 0.083383 -0.554374 1.23718 0.108587 -0.65136 -0.072894 0.037'/>
+    <key name="picked" qpos='0.083383 -0.50673 1.31927 0.108972 -0.622276 -0.0728423 0.0233136 0.0239463 0.083383 -0.548235 1.25553 0.108963 -0.624864 -0.0726727 0.0305 0.0304974 -0.142 -0.00517577 0.155939 0.984089 0.00358185 -0.17744 0.00838328'
+    ctrl='0.083383 -0.50673 1.31927 0.108972 -0.622276 -0.0728423 0.00 0.083383 -0.548235 1.25553 0.108963 -0.624864 -0.0726727 0.04'/>
+    <key name="transferred" qpos='0.0833837 -0.0921995 0.782307 0.109334 -0.59576 -0.0725939 0.0366926 0.0366699 -0.03142 -0.0590293 0.83235 0.109343 -0.595945 -0.0725633 0.0233137 0.0239462 0.0130744 0.00761309 0.218353 0.983081 0.00461715 0.176885 -0.0473438'
+    ctrl='0.0833837 -0.0921995 0.782307 0.109334 -0.59576 -0.0725939 0.0366926 -0.03142 -0.0590293 0.83235 0.109343 -0.595945 -0.0725633 0 '/>
+  </keyframe>
+
+</mujoco>

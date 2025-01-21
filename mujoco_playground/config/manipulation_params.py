@@ -35,8 +35,21 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
           value_obs_key="state",
       ),
   )
-
-  if env_name == "AlohaSinglePegInsertion":
+  if env_name == "AlohaHandOver":
+    rl_config.num_timesteps = 100_000_000
+    rl_config.num_evals = int(rl_config.num_timesteps / 4_000_000)
+    rl_config.unroll_length = 15
+    rl_config.num_minibatches = 32
+    rl_config.num_updates_per_batch = 8
+    rl_config.discounting = 0.97
+    rl_config.learning_rate = 1e-3
+    rl_config.entropy_cost = 2e-2
+    rl_config.num_envs = 2048
+    rl_config.num_eval_envs = 128
+    rl_config.batch_size = 512
+    rl_config.max_grad_norm = 1.0
+    rl_config.network_factory.policy_hidden_layer_sizes = (256, 256, 256)
+  elif env_name == "AlohaSinglePegInsertion":
     rl_config.num_timesteps = 150_000_000
     rl_config.num_evals = 10
     rl_config.unroll_length = 40
