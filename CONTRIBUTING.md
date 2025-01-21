@@ -12,6 +12,26 @@ You generally only need to submit a CLA once, so if you've already submitted one
 (even if it was for a different project), you probably don't need to do it
 again.
 
+## Adding New Tasks
+
+We welcome contributions of new tasks, particularly those that demonstrate:
+
+- Impressive capabilities in simulation
+- Tasks that have been successfully transferred to real robots
+
+When submitting a new task, please ensure:
+
+1. The task is well-documented with clear objectives and reward structure
+2. Add the relevant RL hyperparameters to the config file so that it can be
+   independently reproduced
+3. Ensure that it works across at least 3 seeds
+4. Show a video of the behavior
+5. Make sure your new task passes all the tests
+
+For an example of a well-structured task contribution, see @Andrew-Luo1's
+excellent [ALOHA Handover Task
+PR](https://github.com/google-deepmind/mujoco_playground/pull/29).
+
 ## Code reviews
 
 All submissions, including submissions by project members, require review. We
@@ -23,7 +43,6 @@ information on using pull requests.
 
 This project follows [Google's Open Source Community
 Guidelines](https://opensource.google/conduct/).
-
 
 ## Linting and Code Health
 
@@ -39,12 +58,18 @@ or you can run manually
 
 ```shell
 pyink .
-
 isort .
-
 pylint . --rcfile=pylintrc
-
 pytype .
 ```
 
-And resolve any issues that pop up.
+and resolve any issues that pop up.
+
+## Testing
+
+To run the tests, use the following command:
+
+```shell
+pytest
+```
+
