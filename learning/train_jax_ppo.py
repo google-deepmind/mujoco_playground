@@ -14,18 +14,12 @@
 # ==============================================================================
 """Train a PPO agent using JAX on the specified environment."""
 
-import os
-
-xla_flags = os.environ.get("XLA_FLAGS", "")
-xla_flags += " --xla_gpu_triton_gemm_any=True"
-os.environ["XLA_FLAGS"] = xla_flags
-os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-os.environ["MUJOCO_GL"] = "egl"
-
 from datetime import datetime
 import functools
 import json
+import os
 import time
+import warnings
 
 from absl import app
 from absl import flags
@@ -39,7 +33,6 @@ import jax
 import jax.numpy as jp
 import mediapy as media
 from ml_collections import config_dict
-from ml_collections import config_flags
 import mujoco
 from orbax import checkpoint as ocp
 from tensorboardX import SummaryWriter
@@ -52,11 +45,16 @@ from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
 
+xla_flags = os.environ.get("XLA_FLAGS", "")
+xla_flags += " --xla_gpu_triton_gemm_any=True"
+os.environ["XLA_FLAGS"] = xla_flags
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+os.environ["MUJOCO_GL"] = "egl"
+
 # Ignore the info logs from brax
 logging.set_verbosity(logging.WARNING)
 
 # Suppress warnings
-import warnings
 
 # Suppress RuntimeWarnings from JAX
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="jax")
@@ -267,11 +265,11 @@ def main(argv):
   print(f"Checkpoint path: {ckpt_path}")
 
   # Save environment configuration
-  with open(ckpt_path / "config.json", "w") as fp:
+  with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
     json.dump(env_cfg.to_json(), fp, indent=4)
 
   # Define policy parameters function for saving checkpoints
-  def policy_params_fn(current_step, make_policy, params):
+  def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
     orbax_checkpointer = ocp.PyTreeCheckpointer()
     save_args = orbax_utils.save_args_from_target(params)
     path = ckpt_path / f"{current_step}"
@@ -352,7 +350,7 @@ def main(argv):
   )
 
   # Train or load the model
-  make_inference_fn, params, _ = train_fn(
+  make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter
       environment=env,
       progress_fn=progress,
       eval_env=None if _VISION.value else eval_env,
@@ -389,7 +387,7 @@ def main(argv):
   rollout = [state0]
 
   # Run evaluation rollout
-  for i in range(env_cfg.episode_length):
+  for _ in range(env_cfg.episode_length):
     act_rng, rng = jax.random.split(rng)
     ctrl, _ = jit_inference_fn(state.obs, act_rng)
     state = jit_step(state, ctrl)

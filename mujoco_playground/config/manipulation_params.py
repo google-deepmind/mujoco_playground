@@ -192,7 +192,7 @@ def brax_vision_ppo_config(env_name: str) -> config_dict.ConfigDict:
   return rl_config
 
 
-def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
+def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:  # pylint: disable=unused-argument
   """Returns tuned RSL-RL PPO config for the given environment."""
 
   rl_config = config_dict.create(
@@ -202,7 +202,8 @@ def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
           init_noise_std=1.0,
           actor_hidden_dims=[512, 256, 128],
           critic_hidden_dims=[512, 256, 128],
-          activation="elu",  # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+          # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+          activation="elu",
           class_name="ActorCritic",
       ),
       algorithm=config_dict.create(
@@ -212,7 +213,8 @@ def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
           clip_param=0.2,
           entropy_coef=0.001,
           num_learning_epochs=5,
-          num_mini_batches=4,  # mini batch size = num_envs*nsteps / nminibatches
+          # mini batch size = num_envs*nsteps / nminibatches
+          num_mini_batches=4,
           learning_rate=3.0e-4,  # 5.e-4
           schedule="adaptive",  # could be adaptive, fixed
           gamma=0.99,

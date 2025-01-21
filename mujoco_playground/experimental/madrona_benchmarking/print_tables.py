@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Print tables to analyze bottlenecks for the Cartpole and Franka Pixel environments."""
+# pylint: skip-file
+"""Print tables to analyze bottlenecks for the Cartpole and Franka Pixel
+environments."""
 
-import enum
 from pathlib import Path
 
 import pandas as pd
@@ -25,7 +26,7 @@ fname = "madrona_mjx.csv"
 fpath = Path(__file__).parent / "data" / fname
 df = pd.read_csv(fpath)
 # Select the correct mode and image size.
-df = df[(df["bottleneck_mode"] == True) & (df["img_size"] == 64)]
+df = df[(df["bottleneck_mode"] is True) & (df["img_size"] == 64)]
 
 fname_train = "madrona.csv"
 fpath_train = Path(__file__).parent.parent / "data" / fname_train
@@ -37,7 +38,8 @@ def calculate_average_fps(df, env):
   Calculate the average FPS for a given env across all seeds.
 
   Parameters:
-  df (pd.DataFrame): The input dataframe with columns 'step', 'seed', 'training/walltime', 'env'.
+  df (pd.DataFrame): The input dataframe with columns 'step', 'seed',
+    'training/walltime', 'env'.
   env (str): The environment to filter by.
 
   Returns:
@@ -48,7 +50,7 @@ def calculate_average_fps(df, env):
 
   # Group by seed and calculate FPS for each seed
   fps_values = []
-  for seed, seed_df in env_df.groupby("seed"):
+  for _, seed_df in env_df.groupby("seed"):
     # Sort by step to ensure chronological order
     seed_df = seed_df.sort_values("step")
 
@@ -76,9 +78,12 @@ for env_name in ["CartpoleBalance", "PandaPickCubeCartesian"]:
   fps_train = calculate_average_fps(df_train, env_name)
   tm_train = 1 / fps_train
   df_env = df[df["env_name"] == env_name]
-  # tm_winf =  1/df[df["bottleneck_mode"] == MeasurementMode.STEP_WINFERENCE.value]["fps"].mean()
-  # tm_wvis =  1/df[df["bottleneck_mode"] == MeasurementMode.STEP_WVISION.value]["fps"].mean()
-  # tm_state = 1/df[df["bottleneck_mode"] == MeasurementMode.STEP_STATE.value]["fps"].mean()
+  # tm_winf =  1/df[df["bottleneck_mode"] == \
+  #   MeasurementMode.STEP_WINFERENCE.value]["fps"].mean()
+  # tm_wvis =  1/df[df["bottleneck_mode"] == \
+  #   MeasurementMode.STEP_WVISION.value]["fps"].mean()
+  # tm_state = 1/df[df["bottleneck_mode"] == \
+  #   MeasurementMode.STEP_STATE.value]["fps"].mean()
   tm_winf = (
       1
       / df_env[

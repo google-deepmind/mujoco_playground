@@ -88,7 +88,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
   """Environment for training the Franka Panda robot to pick up a cube in
   Cartesian space."""
 
-  def __init__(
+  def __init__(  # pylint: disable=non-parent-init-called,super-init-not-called
       self,
       config=default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
