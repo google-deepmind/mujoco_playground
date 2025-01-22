@@ -129,6 +129,8 @@ def register_environment(
   """
   _envs[env_name] = env_class
   _cfgs[env_name] = cfg_class
+  if env_name not in ALL:
+    ALL.append(env_name)
 
 
 def get_default_config(env_name: str) -> config_dict.ConfigDict:
