@@ -112,7 +112,11 @@ _randomizer = {
     "Go1Footstand": go1_randomize.domain_randomize,
 }
 
-ALL = list(_envs.keys())
+
+def __getattr__(name):
+  if name == "ALL":
+    return list(_envs.keys())
+  raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 def register_environment(
@@ -158,7 +162,7 @@ def load(
       An instance of the environment.
   """
   if env_name not in _envs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL}")
+    raise ValueError(f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}")
   config = config or get_default_config(env_name)
   return _envs[env_name](config=config, config_overrides=config_overrides)
 

@@ -28,8 +28,6 @@ DomainRandomizer = Optional[
     Callable[[mjx.Model, jax.Array], Tuple[mjx.Model, mjx.Model]]
 ]
 
-ALL_ENVS = locomotion.ALL + manipulation.ALL + dm_control_suite.ALL
-
 
 def get_default_config(env_name: str):
   if env_name in manipulation.ALL:
@@ -54,7 +52,9 @@ def load(
   elif env_name in dm_control_suite.ALL:
     return dm_control_suite.load(env_name, config, config_overrides)
 
-  raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL_ENVS}")
+  all_envs = manipulation.ALL + locomotion.ALL + dm_control_suite.ALL
+
+  raise ValueError(f"Env '{env_name}' not found. Available envs: {all_envs}")
 
 
 def get_domain_randomizer(env_name: str) -> Optional[DomainRandomizer]:
