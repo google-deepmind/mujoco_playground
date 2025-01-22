@@ -24,7 +24,6 @@ _ALL_ENVS = manipulation.ALL
 
 
 class TestSuite(parameterized.TestCase):
-  """Tests for the manipulation environments."""
 
   @parameterized.named_parameters(
       {"testcase_name": f"test_can_create_{env_name}", "env_name": env_name}

@@ -29,7 +29,6 @@ _ONNX_DIR = _HERE / "onnx"
 
 
 class OnnxController:
-  """ONNX controller for the Berkeley humanoid."""
 
   def __init__(
       self,

@@ -24,7 +24,6 @@ _ALL_ENVS = locomotion.ALL
 
 
 class TestSuite(parameterized.TestCase):
-  """Tests for the locomotion environments."""
 
   @parameterized.named_parameters(
       {"testcase_name": f"test_can_create_{env_name}", "env_name": env_name}

@@ -142,9 +142,6 @@ exclude = [
 output = ".pytype"
 report_errors = true
 
-[tool.pylint]
-ignore-paths = 'mujoco_playground/experimental/**$'
-
 [tool.hatch.build]
 include = [
     "mujoco_playground/__init__.py",

@@ -99,9 +99,7 @@ if __name__ == "__main__":
 
   if vision:
     # Load the compiled rendering backend to save time!
-    # os.environ["MADRONA_MWGPU_KERNEL_CACHE"] = (
-    # "<YOUR_PATH>/madrona_mjx/build/cache"
-    # )
+    # os.environ["MADRONA_MWGPU_KERNEL_CACHE"] = "<YOUR_PATH>/madrona_mjx/build/cache"
 
     # Coordinate between Jax and the Madrona rendering backend
     def limit_jax_mem(limit):
@@ -129,8 +127,7 @@ if __name__ == "__main__":
     episode_length = int(3 / ctrl_dt)
     if img_size > 400:
       # Memory saving mode.
-      # Should not affect benchmarking results, as the same rendering calls are
-      #  made.
+      # Should not affect benchmarking results, as the same rendering calls are made.
       env_specific = {"vision_config.history": 1}
 
   else:
@@ -171,12 +168,12 @@ if __name__ == "__main__":
   )
 
   jit_reset = jax.jit(env.reset)
-  state_outer = jit_reset(jax.random.split(jax.random.PRNGKey(0), num_envs))
+  state = jit_reset(jax.random.split(jax.random.PRNGKey(0), num_envs))
 
   # Random noise inference function.
   if mode in [MeasurementMode.STATE.value, MeasurementMode.STATE_VISION.value]:
 
-    def inference_fn(_, key):
+    def inference_fn(_obs, key):
       return (
           jax.random.uniform(
               key, (num_envs, env.action_size), minval=-1.0, maxval=1.0
@@ -188,6 +185,7 @@ if __name__ == "__main__":
   else:
     # Randomly initialized Brax inference function.
     from brax.training.acme import running_statistics
+    from brax.training.acme import specs
     from brax.training.agents.ppo import losses as ppo_losses
     from brax.training.agents.ppo.networks import make_inference_fn
     from brax.training.agents.ppo.networks_vision import make_ppo_networks_vision
@@ -195,7 +193,7 @@ if __name__ == "__main__":
 
     network_factory = make_ppo_networks_vision
 
-    env_state = unvmap(state_outer, 0)
+    env_state = unvmap(state, 0)
     preprocess_fn = running_statistics.normalize
     ppo_network = network_factory(
         env.observation_size,
@@ -231,9 +229,8 @@ if __name__ == "__main__":
   def rollout(state, seed):
     """
     Main benchmarking component.
-    The "token" system ensures proper timing, as it depends on all of the
-    final output dimensions. Naively returning the final state adds several GB
-    of additional memory requirement for high res.
+    The "token" system ensures proper timing, as it depends on all of the final output dimensions.
+    Naively returning the final state adds several GB of additional memory requirement for high res.
     """
 
     def env_step(c, _):
@@ -248,10 +245,10 @@ if __name__ == "__main__":
     (state, _), tokens = jax.lax.scan(env_step, (state, key_act), length=N)
     return jp.sum(tokens)
 
-  jit_rollout = rollout.lower(state_outer, 0).compile()
+  jit_rollout = rollout.lower(state, 0).compile()
 
   t0 = time.time()
-  output = jit_rollout(state_outer, 1)
+  output = jit_rollout(state, 1)
   jax.tree_util.tree_map(
       lambda x: x.block_until_ready(), output
   )  # Await device completion
@@ -281,13 +278,13 @@ if __name__ == "__main__":
 
   # Check if the file already exists to write the header only if needed
   try:
-    with open(csv_file_path, "r", encoding="utf-8") as f:
+    with open(csv_file_path, "r") as f:
       existing_headers = f.readline().strip().split(",")
   except FileNotFoundError:
     existing_headers = []
 
   # Open the CSV file in append mode
-  with open(csv_file_path, "a", newline="", encoding="utf-8") as f:
+  with open(csv_file_path, "a", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=cur_row.keys())
 
     # Write the header if the file is new or doesn't have matching headers

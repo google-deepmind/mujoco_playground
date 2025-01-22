@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# =================================================================================
-# pylint: skip-file
+# ==============================================================================
 """
-Generate plots comparing Madrona MJX with ManiSkill3 and Isaac Lab for the
-CartpoleBalance environment.
+Generate plots comparing Madrona MJX with ManiSkill3 and Isaac Lab for the CartpoleBalance environment.
 """
 
 import matplotlib.pyplot as plt
@@ -26,7 +24,7 @@ import seaborn as sn
 
 
 # Custom function for scientific notation formatting
-def scientific_notation_formatter(x, _):
+def scientific_notation_formatter(x, pos):
   if x == 0:
     return "0"
   else:
@@ -34,12 +32,12 @@ def scientific_notation_formatter(x, _):
 
 
 # Format the y-axis as powers of 2
-def log2_to_exp_formatter(x, _):
+def log2_to_exp_formatter(x, pos):
   return f"${{2^{{{int(x)}}}}}$"
 
 
 # Custom formatter function
-def format_power_of_10(num, _):
+def format_power_of_10(num, pos):
   # num = 2**num
   """Format a number into scientific notation as, for example, 2.3 x 10^4."""
   if num == 0:
@@ -53,7 +51,7 @@ def format_power_of_10(num, _):
     return r"$10^{%d}$" % exponent
   else:
     # Otherwise, show something like 2.3 x 10^4
-    return f"${base:.1f}\times 10^{{{exponent}}}$"
+    return r"${:.1f}\times 10^{{{}}}$".format(base, exponent)
 
 
 def load_maniskill_result(name, state=False):
@@ -71,14 +69,14 @@ def load_maniskill_result(name, state=False):
         (df_filtered["num_cameras"] == 1) & (df_filtered["obs_mode"] == "rgb")
     ]
 
-  df_dict = {
+  _df = {
       "num_envs": df_filtered["num_envs"],
       "fps": df_filtered["env.step/fps"],
       "source_file": name,
   }
   if not state:
-    df_dict["camera_size"] = df_filtered["camera_width"]
-  return pd.DataFrame(df_dict)
+    _df["camera_size"] = df_filtered["camera_width"]
+  return pd.DataFrame(_df)
 
 
 def load_madrona_mjx_result(name, state=False):
@@ -89,13 +87,13 @@ def load_madrona_mjx_result(name, state=False):
     df = df[df["img_size"] == 0]
   else:
     df = df[df["img_size"] > 0]
-  df_dict = {
+  _df = {
       "num_envs": df["num_envs"],
       "fps": df["fps"],
       "source_file": name,
       "camera_size": df["img_size"],
   }
-  return pd.DataFrame(df_dict)
+  return pd.DataFrame(_df)
 
 
 # --- Vision ---
@@ -260,8 +258,7 @@ for i, cs in enumerate(camera_sizes):
   ax.set_xlabel("Batch Size")
   ax.set_ylabel("FPS")
   ax.yaxis.set_major_formatter(FuncFormatter(scientific_notation_formatter))
-  # If you only want a single legend overall, remove the per-axes legend and
-  #  place one globally at the end
+  # If you only want a single legend overall, remove the per-axes legend and place one globally at the end
   ax.legend().remove()
 
 # Optionally add a single legend for the entire figure
@@ -453,16 +450,14 @@ for full_plot in [True, False]:
   df_seaborn["camera_size"] = df_seaborn["camera_size"].astype(int)
 
   # Add a column for bar stack order (state on bottom, render on top).
-  # Seaborn doesn't support having bars on top of eachother so we plot total
-  #  in back and state on top of it.
+  # Seaborn doesn't support having bars on top of eachother so we plot total in back and state on top of it.
   df_seaborn["stack_order"] = df_seaborn["time_component"].map(
       {"tps_state": 0, "tps_total": 1}
   )
 
   def plot_stacked_bars_seaborn(data, camera_sizes, simulators, sim_colors):
     """
-    Generate a FacetGrid of stacked bar charts comparing rendering and state
-     times.
+    Generate a FacetGrid of stacked bar charts comparing rendering and state times.
     """
     # Configure Seaborn
     global sn

@@ -30,7 +30,6 @@ _ONNX_DIR = _HERE / "onnx"
 
 
 class OnnxController:
-  """ONNX controller for the Leap hand."""
 
   def __init__(
       self,
@@ -59,7 +58,7 @@ class OnnxController:
     self._counter = 0
     self._n_substeps = n_substeps
 
-  def get_obs(self, model, data) -> np.ndarray:  # pylint: disable=unused-argument
+  def get_obs(self, model, data) -> np.ndarray:
     joint_angles = data.qpos[self._hand_qids]
     qpos_error = joint_angles - self._motor_targets
     cube_pos_error = (
