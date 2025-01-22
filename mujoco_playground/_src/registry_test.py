@@ -41,14 +41,14 @@ class RegistryTest(absltest.TestCase):
     config = registry.get_default_config('DemoEnv')
     self.assertEqual(config, config_dict.ConfigDict())
 
-    register_manipulation('DemoEnv', DemoEnv, demo_default_config)
-    env = registry.load('DemoEnv')
+    register_manipulation('DemoEnv1', DemoEnv, demo_default_config)
+    env = registry.load('DemoEnv1')
     self.assertIsInstance(env, DemoEnv)
     config = registry.get_default_config('DemoEnv')
     self.assertEqual(config, config_dict.ConfigDict())
 
-    register_locomotion('DemoEnv', DemoEnv, demo_default_config)
-    env = registry.load('DemoEnv')
+    register_locomotion('DemoEnv2', DemoEnv, demo_default_config)
+    env = registry.load('DemoEnv2')
     self.assertIsInstance(env, DemoEnv)
     config = registry.get_default_config('DemoEnv')
     self.assertEqual(config, config_dict.ConfigDict())
