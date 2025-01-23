@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+# pylint: disable=line-too-long
 """Logitech F710 Gamepad class that uses HID under the hood.
 
 Adapted from motion_imitation: https://github.com/erwincoumans/motion_imitation/tree/master/motion_imitation/robots/gamepad/gamepad_reader.py.
@@ -31,6 +32,7 @@ def _interpolate(value, old_max, new_scale, deadzone=0.01):
 
 
 class Gamepad:
+  """Gamepad class that reads from a Logitech F710 gamepad."""
 
   def __init__(
       self,
@@ -63,10 +65,11 @@ class Gamepad:
       self._device.set_nonblocking(True)
       print(
           "Connected to"
-          f" {self._device.get_manufacturer_string()} {self._device.get_product_string()}"
+          f" {self._device.get_manufacturer_string()} "
+          f"{self._device.get_product_string()}"
       )
       return True
-    except Exception as e:
+    except (hid.HIDException, OSError) as e:
       print(f"Error connecting to device: {e}")
       return False
 
@@ -80,7 +83,7 @@ class Gamepad:
         data = self._device.read(64)
         if data:
           self.update_command(data)
-      except Exception as e:
+      except (hid.HIDException, OSError) as e:
         print(f"Error reading from device: {e}")
 
     self._device.close()

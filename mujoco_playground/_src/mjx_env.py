@@ -28,7 +28,6 @@ from mujoco import mjx
 import numpy as np
 import tqdm
 
-
 # Root path is used for loading XML strings directly using etils.epath.
 ROOT_PATH = epath.Path(__file__).parent
 # Base directory for external dependencies.

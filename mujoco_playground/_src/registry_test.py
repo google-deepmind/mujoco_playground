@@ -15,13 +15,12 @@
 """Tests for the registry module."""
 
 from absl.testing import absltest
-import jax.numpy as jp
 from ml_collections import config_dict
 
+from mujoco_playground._src import dm_control_suite
+from mujoco_playground._src import locomotion
+from mujoco_playground._src import manipulation
 from mujoco_playground._src import registry
-from mujoco_playground._src.dm_control_suite import register_environment as register_dm_control_suite
-from mujoco_playground._src.locomotion import register_environment as register_locomotion
-from mujoco_playground._src.manipulation import register_environment as register_manipulation
 
 
 class RegistryTest(absltest.TestCase):
@@ -35,19 +34,21 @@ class RegistryTest(absltest.TestCase):
     def demo_default_config():
       return config_dict.ConfigDict()
 
-    register_dm_control_suite('DemoEnv', DemoEnv, demo_default_config)
+    dm_control_suite.register_environment(
+        'DemoEnv', DemoEnv, demo_default_config
+    )
     env = registry.load('DemoEnv')
     self.assertIsInstance(env, DemoEnv)
     config = registry.get_default_config('DemoEnv')
     self.assertEqual(config, config_dict.ConfigDict())
 
-    register_manipulation('DemoEnv', DemoEnv, demo_default_config)
+    manipulation.register_environment('DemoEnv', DemoEnv, demo_default_config)
     env = registry.load('DemoEnv')
     self.assertIsInstance(env, DemoEnv)
     config = registry.get_default_config('DemoEnv')
     self.assertEqual(config, config_dict.ConfigDict())
 
-    register_locomotion('DemoEnv', DemoEnv, demo_default_config)
+    locomotion.register_environment('DemoEnv', DemoEnv, demo_default_config)
     env = registry.load('DemoEnv')
     self.assertIsInstance(env, DemoEnv)
     config = registry.get_default_config('DemoEnv')

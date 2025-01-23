@@ -60,9 +60,9 @@ def domain_randomize(
 ) -> Tuple[mjx.Model, mjx.Model]:
   """Tile the necessary axes for the Madrona BatchRenderer."""
   mj_model = pick_cartesian.PandaPickCubeCartesian().mj_model
-  FLOOR_GEOM_ID = mj_model.geom('floor').id
-  BOX_GEOM_ID = mj_model.geom('box').id
-  STRIP_GEOM_ID = mj_model.geom('init_space').id
+  floor_geom_id = mj_model.geom('floor').id
+  box_geom_id = mj_model.geom('box').id
+  strip_geom_id = mj_model.geom('init_space').id
 
   in_axes = jax.tree_util.tree_map(lambda x: None, mjx_model)
   in_axes = in_axes.tree_replace({
@@ -93,16 +93,16 @@ def domain_randomize(
     rgba = jp.array(
         [jax.random.uniform(key_box, (), minval=0.5, maxval=1.0), 0.0, 0.0, 1.0]
     )
-    geom_rgba = mjx_model.geom_rgba.at[BOX_GEOM_ID].set(rgba)
+    geom_rgba = mjx_model.geom_rgba.at[box_geom_id].set(rgba)
 
     strip_white = jax.random.uniform(key_strip, (), minval=0.8, maxval=1.0)
-    geom_rgba = geom_rgba.at[STRIP_GEOM_ID].set(
+    geom_rgba = geom_rgba.at[strip_geom_id].set(
         jp.array([strip_white, strip_white, strip_white, 1.0])
     )
 
     # Sample a shade of gray
     gray_scale = jax.random.uniform(key_floor, (), minval=0.0, maxval=0.25)
-    geom_rgba = geom_rgba.at[FLOOR_GEOM_ID].set(
+    geom_rgba = geom_rgba.at[floor_geom_id].set(
         jp.array([gray_scale, gray_scale, gray_scale, 1.0])
     )
 
@@ -112,11 +112,11 @@ def domain_randomize(
         jax.random.randint(key_matid, shape=(num_geoms,), minval=0, maxval=10)
         + mat_offset
     )
-    geom_matid = geom_matid.at[BOX_GEOM_ID].set(
+    geom_matid = geom_matid.at[box_geom_id].set(
         -2
     )  # Use the above randomized colors
-    geom_matid = geom_matid.at[FLOOR_GEOM_ID].set(-2)
-    geom_matid = geom_matid.at[STRIP_GEOM_ID].set(-2)
+    geom_matid = geom_matid.at[floor_geom_id].set(-2)
+    geom_matid = geom_matid.at[strip_geom_id].set(-2)
 
     #### Cameras ####
     key_pos, key_ori, key = jax.random.split(key, 3)
@@ -134,7 +134,7 @@ def domain_randomize(
     assert (
         nlight == 1
     ), f'Sim2Real was trained with a single light source, got {nlight}'
-    key_lsha, key_ldir, key_ldct, key = jax.random.split(key, 4)
+    key_lsha, key_ldir, key = jax.random.split(key, 3)
 
     # Direction
     shine_at = jp.array([0.661, -0.001, 0.179])  # Gripper starting position
