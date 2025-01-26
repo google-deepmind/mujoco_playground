@@ -23,6 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
+    "brax>=0.12.1",
     "etils",
     "flax",
     "jax",
@@ -31,20 +32,21 @@ dependencies = [
     "mujoco-mjx>=3.2.7",
     "mujoco>=3.2.7",
     "tqdm",
-    "brax>=0.12.1",
 ]
-keywords = ["mjx", "mujoco", "dm_control"]
+keywords = ["mjx", "mujoco", "sim2real", "reinforcement learning"]
 
 [project.optional-dependencies]
 test = [
     "absl-py",
+    "dm_control",
     "pytest",
     "pytest-xdist",
-    "dm_control",
 ]
 notebooks = [
     "matplotlib",
     "mediapy",
+    "jupyter",
+    "wandb",
 ]
 dev = [
     "playground[test]",
