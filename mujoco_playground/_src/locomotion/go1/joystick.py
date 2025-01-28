@@ -599,10 +599,3 @@ class Joystick(go1_base.Go1Env):
     w_k = jax.random.bernoulli(w_rng, 0.5, shape=(3,))
     x_kp1 = x_k - w_k * (x_k - y_k * z_k)
     return x_kp1
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return {
-        "state": (48,),
-        "privileged_state": (123,),
-    }

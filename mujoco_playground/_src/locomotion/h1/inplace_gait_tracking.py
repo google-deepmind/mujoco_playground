@@ -375,7 +375,3 @@ class InplaceGaitTracking(h1_base.H1Env):
   def _cost_lin_vel(self, global_linvel: jax.Array) -> jax.Array:
     # Penalize xy linear velocity.
     return jp.sum(jp.square(global_linvel[:2]))
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 186

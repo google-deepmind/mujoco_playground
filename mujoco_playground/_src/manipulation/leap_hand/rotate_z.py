@@ -260,10 +260,6 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
   def _cost_pose(self, joint_angles: jax.Array) -> jax.Array:
     return jp.sum(jp.square(joint_angles - self._default_pose))
 
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return {"privileged_state": (105,), "state": (32,)}
-
 
 def domain_randomize(model: mjx.Model, rng: jax.Array):
   mj_model = CubeRotateZAxis().mj_model

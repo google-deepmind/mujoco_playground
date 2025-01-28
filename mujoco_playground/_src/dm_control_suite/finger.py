@@ -189,10 +189,6 @@ class Spin(mjx_env.MjxEnv):
     return self.mjx_model.nu
 
   @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 9
-
-  @property
   def mj_model(self) -> mujoco.MjModel:
     return self._mj_model
 
@@ -343,10 +339,6 @@ class Turn(mjx_env.MjxEnv):
   @property
   def action_size(self) -> int:
     return self.mjx_model.nu
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 12
 
   @property
   def mj_model(self) -> mujoco.MjModel:

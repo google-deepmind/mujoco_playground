@@ -367,10 +367,3 @@ class Getup(go1_base.Go1Env):
 
   def _cost_dof_acc(self, qacc: jax.Array) -> jax.Array:
     return jp.sum(jp.square(qacc))
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return {
-        "state": (42,),
-        "privileged_state": (91,),
-    }

@@ -567,7 +567,3 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
   @property
   def action_size(self):
     return 7
-
-  @property
-  def observation_size(self):
-    return 48

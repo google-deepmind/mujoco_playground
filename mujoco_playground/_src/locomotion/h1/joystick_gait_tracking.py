@@ -477,7 +477,3 @@ class JoystickGaitTracking(h1_base.H1Env):
     )
     cmd = jp.hstack([lin_vel_x, lin_vel_y, ang_vel_yaw])
     return cmd
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 113

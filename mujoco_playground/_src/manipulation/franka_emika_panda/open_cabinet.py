@@ -213,7 +213,3 @@ class PandaOpenCabinet(panda.PandaBase):
     ])
 
     return obs
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 55

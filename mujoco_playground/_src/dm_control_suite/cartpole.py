@@ -279,10 +279,6 @@ class Balance(mjx_env.MjxEnv):
     return self.mjx_model.nu
 
   @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 5
-
-  @property
   def mj_model(self) -> mujoco.MjModel:
     return self._mj_model
 

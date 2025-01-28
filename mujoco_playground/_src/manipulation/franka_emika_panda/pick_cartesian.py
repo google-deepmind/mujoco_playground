@@ -434,11 +434,6 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     return new_ctrl, new_tip_pos, no_soln
 
   @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    ret = {'pixels/view_0': (64, 64, 3)} if self._vision else 70
-    return ret
-
-  @property
   def action_size(self) -> int:
     return 3
 

@@ -474,10 +474,6 @@ class CubeReorient(leap_hand_base.LeapHandEnv):
     data = state.data.replace(xfrc_applied=xfrc)
     return state.replace(data=data)
 
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return {"privileged_state": (128,), "state": (57,)}
-
 
 def domain_randomize(model: mjx.Model, rng: jax.Array):
   mj_model = CubeReorient().mj_model

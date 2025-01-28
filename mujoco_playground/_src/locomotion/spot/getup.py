@@ -277,7 +277,3 @@ class Getup(spot_base.SpotEnv):
     c1 = jp.sum(jp.square(act - info["last_act"]))
     c2 = jp.sum(jp.square(act - 2 * info["last_act"] + info["last_last_act"]))
     return c1 + c2
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 30

@@ -790,10 +790,3 @@ class Joystick(g1_base.G1Env):
         jp.zeros(3),
         jp.hstack([lin_vel_x, lin_vel_y, ang_vel_yaw]),
     )
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return {
-        "state": (103,),
-        "privileged_state": (216,),
-    }

@@ -252,7 +252,3 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
         "peg_z_up": peg_orientation * peg_lift,
         "peg_insertion_reward": peg_insertion_reward,
     }
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 82

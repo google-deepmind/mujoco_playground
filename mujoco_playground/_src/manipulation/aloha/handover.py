@@ -283,7 +283,3 @@ class HandOver(aloha_base.AlohaEnv):
     ])
 
     return obs
-
-  @property
-  def observation_size(self) -> int:
-    return 83

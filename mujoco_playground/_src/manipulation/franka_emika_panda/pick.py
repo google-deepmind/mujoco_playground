@@ -230,10 +230,6 @@ class PandaPickCube(panda.PandaBase):
 
     return obs
 
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 66
-
 
 class PandaPickCubeOrientation(PandaPickCube):
   """Bring a box to a target and orientation."""
