@@ -270,8 +270,11 @@ class MjxEnv(abc.ABC):
 
   @property
   def observation_size(self) -> ObservationSize:
-    out = jax.eval_shape(self.reset, jax.random.PRNGKey(0))
-    return jax.tree_util.tree_map(lambda x: x.shape, out.obs)
+    abstract_state = jax.eval_shape(self.reset, jax.random.PRNGKey(0))
+    obs = abstract_state.obs
+    if isinstance(obs, Mapping):
+      return jax.tree_util.tree_map(lambda x: x.shape, obs)
+    return obs.shape[-1]
 
   def render(
       self,

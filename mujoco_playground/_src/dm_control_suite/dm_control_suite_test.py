@@ -33,7 +33,7 @@ class TestSuite(parameterized.TestCase):
     state = jax.jit(env.reset)(jax.random.PRNGKey(42))
     state = jax.jit(env.step)(state, jp.zeros(env.action_size))
     self.assertIsNotNone(state)
-    self.assertEqual(state.obs.shape, env.observation_size)
+    self.assertEqual(state.obs.shape[0], env.observation_size)
     self.assertFalse(jp.isnan(state.data.qpos).any())
 
 
