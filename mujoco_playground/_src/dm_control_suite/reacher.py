@@ -44,7 +44,7 @@ def default_config() -> config_dict.ConfigDict:
 
 def _make_model(xml_path: epath.Path, target_size: float) -> mujoco.MjModel:
   spec = mujoco.MjSpec.from_string(xml_path.read_text(), common.get_assets())
-  target_body = spec.find_body("target")
+  target_body = spec.body("target")
   target_geom = target_body.first_geom()
   target_geom.size[0] = target_size
   return spec.compile()
