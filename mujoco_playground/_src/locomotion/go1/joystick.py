@@ -362,7 +362,7 @@ class Joystick(go1_base.Go1Env):
         linvel,  # 3
         angvel,  # 3
         joint_angles - self._default_pose,  # 12
-        noisy_joint_vel,  # 12
+        joint_vel,  # 12
         data.actuator_force,  # 12
         info["last_contact"],  # 4
         feet_vel,  # 4*3
