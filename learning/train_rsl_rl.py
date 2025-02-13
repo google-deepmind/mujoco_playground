@@ -139,7 +139,7 @@ def main(argv):
   with open(
       os.path.join(ckpt_path, "config.json"), "w", encoding="utf-8"
   ) as fp:
-    json.dump(env_cfg.to_json(), fp, indent=4)
+    json.dump(env_cfg.to_dict(), fp, indent=4)
 
   # Domain randomization
   randomizer = registry.get_domain_randomizer(_ENV_NAME.value)
