@@ -266,7 +266,7 @@ def main(argv):
 
   # Save environment configuration
   with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
-    json.dump(env_cfg.to_json(), fp, indent=4)
+    json.dump(env_cfg.to_dict(), fp, indent=4)
 
   # Define policy parameters function for saving checkpoints
   def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
