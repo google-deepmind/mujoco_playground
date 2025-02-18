@@ -20,15 +20,13 @@ import jax.numpy as jp
 
 from mujoco_playground._src import locomotion
 
-_ALL_ENVS = locomotion.ALL
-
 
 class TestSuite(parameterized.TestCase):
   """Tests for the locomotion environments."""
 
   @parameterized.named_parameters(
       {"testcase_name": f"test_can_create_{env_name}", "env_name": env_name}
-      for env_name in _ALL_ENVS
+      for env_name in locomotion.ALL_ENVS
   )
   def test_can_create_all_environments(self, env_name: str) -> None:
     env = locomotion.load(env_name)

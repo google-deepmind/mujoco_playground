@@ -20,15 +20,13 @@ import jax.numpy as jp
 
 from mujoco_playground._src import manipulation
 
-_ALL_ENVS = manipulation.ALL
-
 
 class TestSuite(parameterized.TestCase):
   """Tests for the manipulation environments."""
 
   @parameterized.named_parameters(
       {"testcase_name": f"test_can_create_{env_name}", "env_name": env_name}
-      for env_name in _ALL_ENVS
+      for env_name in manipulation.ALL_ENVS
   )
   def test_can_create_all_environments(self, env_name: str) -> None:
     env = manipulation.load(env_name)

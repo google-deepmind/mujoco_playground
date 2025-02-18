@@ -31,7 +31,7 @@ class RegistryTest(absltest.TestCase):
       def __init__(self, config, config_overrides):
         pass
 
-    def demo_default_config():
+    def demo_default_config() -> None:
       return config_dict.ConfigDict()
 
     dm_control_suite.register_environment(
@@ -53,6 +53,16 @@ class RegistryTest(absltest.TestCase):
     self.assertIsInstance(env, DemoEnv)
     config = registry.get_default_config('DemoEnv')
     self.assertEqual(config, config_dict.ConfigDict())
+
+  def test_constants(self) -> None:
+    self.assertNotEmpty(dm_control_suite.ALL_ENVS)
+    self.assertNotEmpty(locomotion.ALL_ENVS)
+    self.assertNotEmpty(manipulation.ALL_ENVS)
+    self.assertNotEmpty(registry.ALL_ENVS)
+    self.assertEqual(
+        registry.ALL_ENVS,
+        dm_control_suite.ALL_ENVS + locomotion.ALL_ENVS + manipulation.ALL_ENVS,
+    )
 
 
 if __name__ == '__main__':

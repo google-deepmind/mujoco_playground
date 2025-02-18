@@ -26,7 +26,7 @@ class TestSuite(parameterized.TestCase):
 
   @parameterized.named_parameters(
       {"testcase_name": f"test_can_create_{env_name}", "env_name": env_name}
-      for env_name in dm_control_suite.ALL
+      for env_name in dm_control_suite.ALL_ENVS
   )
   def test_can_create_all_environments(self, env_name: str) -> None:
     env = dm_control_suite.load(env_name)
