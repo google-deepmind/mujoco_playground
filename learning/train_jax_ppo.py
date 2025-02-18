@@ -163,6 +163,8 @@ def main(argv):
 
   if _NUM_TIMESTEPS.present:
     ppo_params.num_timesteps = _NUM_TIMESTEPS.value
+  if _PLAY_ONLY.present:
+    ppo_params.num_timesteps = 0
   if _NUM_EVALS.present:
     ppo_params.num_evals = _NUM_EVALS.value
   if _REWARD_SCALING.present:
