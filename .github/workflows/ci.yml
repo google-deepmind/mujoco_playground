@@ -29,4 +29,4 @@ jobs:
           python -c "import mujoco_playground"
       - name: Test with pytest
         run: |
-          pytest -n auto mujoco_playground
+          pytest -n auto mujoco_playground/_src/

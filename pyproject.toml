@@ -101,11 +101,8 @@ warn_unused_configs = true
 exclude = ["scripts/", "mujoco_menagerie/"]
 
 [tool.pytest.ini_options]
-addopts = [
-    "--ignore=mujoco_menagerie",
-]
 testpaths = [
-    "tests",
+    "mujoco_playground/_src/",
 ]
 
 [tool.isort]
