@@ -1,0 +1,77 @@
+<mujoco model="single peg insertion">
+  <include file="mjx_scene.xml"/>
+
+  <option iterations="10" ls_iterations="10" timestep="0.005" integrator="implicitfast" impratio="5"/>
+
+  <default>
+    <default class="stiff">
+      <geom solref="0.01 1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <body name="socket" pos="0 0 0">
+      <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>
+      <site name="socket_entrance" pos="0.048 0 0" group="4"/>
+      <site name="socket_rear" pos="-0.0 0 0" group="4"/>
+      <site name="socket_grip_here" pos="-0.02 0 0" group="4"/>
+      <site name="socket_end1" pos="-0.048 0 0" group="4"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0 -0.02" size="0.048 0.022 0.002" type="box" name="socket-B"               rgba="0 0 1.0 1" contype="1" conaffinity="1"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0 0.02" size="0.048 0.022 0.002" zaxis="0 0 -1" type="box" name="socket-T" rgba="0 0 1.0 1" contype="1" conaffinity="1"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 -0.02 0" size="0.048 0.018 0.002" zaxis="0 1 0" type="box" name="socket-L" rgba="0 0 1.0 1" contype="1" conaffinity="1"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0.02 0" size="0.048 0.018 0.002" zaxis="0 -1 0" type="box" name="socket-R" rgba="0 0 1.0 1" contype="1" conaffinity="1"/>
+      <geom group="2" class="stiff" mass="0.006" condim="4" friction="1 0.05 0.001" pos="-0.044 0 0" size="0.004 0.018 0.018" type="box" name="socket-W"              rgba="1.0 0 0 1" contype="1" conaffinity="1"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0 -0.0199" size="0.047 0.021 0.002" type="box" name="Wsocket-B"               rgba="1.0 1.0 1.0 1" contype="0" conaffinity="0"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0 0  0.0199" size="0.047 0.021 0.002"  zaxis="0 0 -1" type="box" name="Wsocket-T" rgba="1.0 1.0 1.0 1" contype="0" conaffinity="0"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0   -0.0199 0" size="0.047 0.018 0.002" zaxis="0 1 0" type="box" name="Wsocket-L" rgba="1.0 1.0 1.0 1" contype="0" conaffinity="0"/>
+      <geom group="2" class="stiff" mass="0.016" condim="4" friction="1 0.05 0.001" pos="0    0.0199 0" size="0.047 0.018 0.002"  zaxis="0 -1 0" type="box" name="Wsocket-R" rgba="1.0 1.0 1.0 1" contype="0" conaffinity="0"/>
+    </body>
+
+    <body name="peg" pos="0 0 0" quat="1 0 0 0">
+      <joint type="free" stiffness="0" damping="0" frictionloss="0" armature="0"/>
+      <site name="peg_end1" pos="0.048 0 0" group="4"/>
+      <site name="peg_end2" pos="-0.048 0 0" group="4"/>
+      <site name="peg_grip_here" pos="-0.02 0 0" group="4"/>
+      <geom group="2" class="stiff" mass="0.044" condim="4" friction="1 0.05 0.001" pos="0 0 0" size="0.048 0.01 0.01" type="box" name="red_peg" rgba="1.0 0 0 1" contype="1" conaffinity="1"/>
+    </body>
+
+    <body mocap="true" name="socket_mocap_target">
+      <geom name="socket_mocap_target" group="6" type="box" size="0.048 0.022 0.022" rgba="0 0 1 0.2" contype="0" conaffinity="0"/>
+    </body>
+
+    <body mocap="true" name="peg_mocap_target">
+      <geom group="6" name="peg_mocap_target" type="box" size="0.048 0.01 0.01" rgba="1 0 0 0.2" contype="0" conaffinity="0"/>
+    </body>
+  </worldbody>
+
+  <keyframe>
+    <key name="home"
+      qpos='0.25 -0.4 1.5 0 -0.73 0 0.037 0.037
+            0.25 -0.4 1.5 0 -0.73 0 0.037 0.037
+           -0.18 -0.125 0.022 1 0 0 0 
+            0.18 -0.125 0.0125 -0.1063 0 0 0.9943'
+      ctrl='0.25 -0.4 1.5 0 -0.73 0 0.037
+            0.25 -0.4 1.5 0 -0.73 0 0.037'/>
+    <key name="preinsert"
+      qpos='0.0172277 -0.332444 0.957626 -0.0207785 0.00992025 0.0131805 0.0302954 0.0310357
+           -0.026578 -0.384497 1.04661 -0.0646032 0.0385963 0.0453648 0.0183696 0.0189226 
+           -0.0649253 -0.0117744 0.146772 0.999797 -0.00441232 -0.0178954 0.00809233
+            0.116109 -0.00942746 0.121246 0.00746082 0.0222193 -0.00744852 0.999698'
+      ctrl='0.0172277 -0.332444 0.957626 -0.0207785 0.00992025 0.0131805 0.0
+           -0.026578 -0.384497 1.04661 -0.0646032 0.0385963 0.0453648 0.0'/>
+  </keyframe>
+
+  <contact>
+    <!-- Left object from right gripper -->
+    <exclude body1="socket" body2="right/base_link"/>
+    <exclude body1="socket" body2="right/gripper_base"/>
+    <exclude body1="socket" body2="right/left_finger_link"/>
+    <exclude body1="socket" body2="right/right_finger_link"/>
+    <!-- Right object from left gripper -->
+    <exclude body1="peg" body2="left/base_link"/>
+    <exclude body1="peg" body2="left/gripper_base"/>
+    <exclude body1="peg" body2="left/left_finger_link"/>
+    <exclude body1="peg" body2="left/right_finger_link"/>
+  </contact>
+
+</mujoco>

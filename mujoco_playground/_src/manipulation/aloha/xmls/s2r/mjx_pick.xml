@@ -1,0 +1,34 @@
+<mujoco model="single cube">
+  <include file="mjx_scene_single.xml"/>
+
+  <option iterations="10" ls_iterations="10" timestep="0.005" integrator="implicitfast" impratio="5"/>
+
+  <default>
+    <default class="stiff">
+      <geom solref="0.01 1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <camera name="left" pos="-0.301 0.824 0.124" xyaxes="-1.000 -0.009 0.000 -0.002 0.174 0.985"/>
+    <body name="box" pos="-0.1 0.0 0.0125">
+      <freejoint/>
+      <geom type="box" group="2" mass="0.05" name="box" size="0.048 0.0125 0.0125" condim="4"
+       friction="1 .03 .001" rgba="0 1 0 1" contype="1" conaffinity="1" solref="0.02 1"/>
+      <site name="box_grip_here" pos="-0.02 0 0" group="4"/>
+      <site name="box_end_2" pos="0.048 0 0" group="5"/>
+    </body>
+
+    <body mocap="true" name="box_mocap_target">
+      <geom type="box" size="0.048 0.0125 0.0125" pos="0 0 0" rgba="1 0 0 0.2" group="0" contype="0" conaffinity="0"/>
+    </body>
+
+  </worldbody>
+
+  <keyframe>
+    <key name='home' qpos='0 -0.4 1.5 0 -0.73 0 0.037 0.037
+                           -0.1  0.12 0.12 0.9943 2.47206e-17 2.11275e-18 0.1063'
+     ctrl='0 -0.4 1.5 0 -0.73 0 0.037'/>
+  </keyframe>
+
+</mujoco>
