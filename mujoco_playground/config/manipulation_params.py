@@ -74,8 +74,8 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     rl_config.num_eval_envs = 128
     rl_config.batch_size = 512
     rl_config.network_factory.policy_hidden_layer_sizes = (32, 32, 32, 32)
-    rl_config.network_factory.policy_obs_key="state"
-    rl_config.network_factory.value_obs_key= "privileged"
+    rl_config.network_factory.policy_obs_key = "state"
+    rl_config.network_factory.value_obs_key = "privileged"
   elif env_name == "AlohaS2RPegInsertion":
     rl_config.num_timesteps = 10_000_000
     rl_config.num_evals = max(int(rl_config.num_timesteps / 2_000_000), 5)
@@ -90,7 +90,7 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     rl_config.batch_size = 512
     rl_config.network_factory = config_dict.create(
         policy_hidden_layer_sizes=(32, 32, 32, 32),
-        value_hidden_layer_sizes= (32, 32, 32, 32),
+        value_hidden_layer_sizes=(32, 32, 32, 32),
         policy_obs_key="state",
         value_obs_key="privileged",
     )

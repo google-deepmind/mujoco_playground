@@ -22,9 +22,9 @@ from mujoco import mjx
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.aloha import handover as aloha_handover
 from mujoco_playground._src.manipulation.aloha import single_peg_insertion as aloha_peg
-from mujoco_playground._src.manipulation.aloha.s2r import pick as aloha_s2r_pick
-from mujoco_playground._src.manipulation.aloha.s2r import peg_insertion as aloha_s2r_peg_insertion
 from mujoco_playground._src.manipulation.aloha.s2r import distillation as aloha_s2r_distillation
+from mujoco_playground._src.manipulation.aloha.s2r import peg_insertion as aloha_s2r_peg_insertion
+from mujoco_playground._src.manipulation.aloha.s2r import pick as aloha_s2r_pick
 from mujoco_playground._src.manipulation.franka_emika_panda import open_cabinet as panda_open_cabinet
 from mujoco_playground._src.manipulation.franka_emika_panda import pick as panda_pick
 from mujoco_playground._src.manipulation.franka_emika_panda import pick_cartesian as panda_pick_cartesian
@@ -119,7 +119,9 @@ def load(
       An instance of the environment.
   """
   if env_name not in _envs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}")
+    raise ValueError(
+        f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}"
+    )
   config = config or get_default_config(env_name)
   return _envs[env_name](config=config, config_overrides=config_overrides)
 

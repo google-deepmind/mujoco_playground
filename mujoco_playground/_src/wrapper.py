@@ -237,7 +237,11 @@ def _supplement_vision_randomization_fn(
   for field in required_fields:
     if getattr(in_axes, field) is None:
       in_axes = in_axes.tree_replace({field: 0})
-      val = jp.repeat(-1, mjx_model.geom_matid.shape[0], 0) if field == 'geom_matid' else getattr(mjx_model, field)
+      val = (
+          jp.repeat(-1, mjx_model.geom_matid.shape[0], 0)
+          if field == 'geom_matid'
+          else getattr(mjx_model, field)
+      )
       mjx_model = mjx_model.tree_replace({
           field: jp.repeat(jp.expand_dims(val, 0), num_worlds, axis=0),
       })
