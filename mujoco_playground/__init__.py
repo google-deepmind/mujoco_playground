@@ -25,6 +25,7 @@ from mujoco_playground._src.mjx_env import MjxEnv
 from mujoco_playground._src.mjx_env import render_array
 from mujoco_playground._src.mjx_env import State
 from mujoco_playground._src.mjx_env import step
+
 # pylint: enable=g-importing-member
 
 __all__ = [
