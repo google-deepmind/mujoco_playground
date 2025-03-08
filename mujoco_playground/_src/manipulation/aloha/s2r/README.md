@@ -9,7 +9,7 @@ https://github.com/user-attachments/assets/205fe8b9-1773-4715-8025-5de13490d0da
 In this module, we demonstrate policy distillation—a straightforward method for deploying a simulation-trained reinforcement learning policy that initially uses privileged state observations (such as object positions). The process involves two steps: 
 
 1. **Teacher Policy Training:** A state-based teacher policy is trained using RL.
-2. **Student Policy Distillation:** The teacher is then distilled into a student policy via behaviour cloning (BC), where the student learns to map its observations \(o_s(x_t)\) (e.g., exteroceptive RGBD images) to the teacher’s deterministic actions \(\pi_t(o_t(x_t))\). For example, while both policies observe joint angles, the student uses RGBD images, whereas the teacher directly accesses (noisy) object positions.
+2. **Student Policy Distillation:** The teacher is then distilled into a student policy via behaviour cloning (BC), where the student learns to map its observations $o_s(x)$ (e.g., exteroceptive RGBD images) to the teacher’s deterministic actions $\pi_t(o_t(x))$. For example, while both policies observe joint angles, the student uses RGBD images, whereas the teacher directly accesses (noisy) object positions.
 
 The distillation process—where the student uses left and right wrist-mounted RGBD cameras for exteroception—takes about **3 minutes** on an RTX4090. This rapid turnaround is due to three factors:
 
@@ -36,7 +36,7 @@ This module includes an alternative state-based peg insertion implementation com
 
 Behaviour cloning (BC) can be orders of magnitude more sample-efficient than reinforcement learning. In our approach, we use an L2 loss defined as:
 
-$|| \pi_s(o_s(x_t)) - \pi_t(o_t(x_t)) ||$
+$|| \pi_s(o_s(x)) - \pi_t(o_t(x)) ||$
 
 In contrast, the policy gradient in RL generally takes the form:
 
