@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+"""Module for the PegInsertion task in the Aloha manipulation environment."""
 
 import functools
 import pathlib
@@ -75,7 +75,7 @@ def default_config() -> config_dict.ConfigDict:  # TODO :Clean up.
 
 
 def load_brax_policy(
-    path: str, env_name, action_size, distill: bool = False
+    path: Union[str, pathlib.Path], env_name, action_size, distill: bool = False
 ):  # Distillation requires extra inference metadata.
   ppo_params = manipulation_params.brax_ppo_config(env_name)
   # Pickcube 1-arm policy.
@@ -109,13 +109,19 @@ def load_pick_policy(path, env_name):
 
 
 class PegInsertion(base.S2RBase):
+  """
+  Phase 2 of the peg insertion task. From a pre-insertion position,
+  brings the peg into the socket.
+  """
 
   def __init__(
       self,
       config: Optional[config_dict.ConfigDict] = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
       *,
-      distill: bool = False,  # If true, this class just provides methods for the downstream distill class to use.
+      # If true, this class just provides methods
+      # for the downstream distill class to use.
+      distill: bool = False,
   ):
     self._distill = distill
     xml_path = (
@@ -199,10 +205,10 @@ class PegInsertion(base.S2RBase):
       obs = {**obs, **self._get_obs_distill(data, info)}
 
     # Random obs delay.
-    _actor_obs, _ = flax.core.pop(obs, "has_switched")
-    _actor_obs, _ = flax.core.pop(_actor_obs, "privileged")
+    actor_obs, _ = flax.core.pop(obs, "has_switched")
+    actor_obs, _ = flax.core.pop(actor_obs, "privileged")
     info["obs_history"] = base.init_obs_history(
-        _actor_obs, self._config.max_obs_delay
+        actor_obs, self._config.max_obs_delay
     )
 
     # Assert that obs_history has same keys as obs minus popped keys
@@ -230,12 +236,8 @@ class PegInsertion(base.S2RBase):
     sparse_rewards, success, dropped, final_grasp = (
         self._calculate_sparse_rewards(state, data)
     )
-    dense_rewards = self._calculate_dense_rewards(
-        data, state.info, state.metrics
-    )
-    reg_rewards = self._calculate_reg_rewards(
-        data, state.info, action, state.metrics
-    )
+    dense_rewards = self._calculate_dense_rewards(data, state.metrics)
+    reg_rewards = self._calculate_reg_rewards(data, state.metrics)
 
     # Calculate total reward
     total_reward = self._calculate_total_reward(
@@ -248,8 +250,8 @@ class PegInsertion(base.S2RBase):
     # Update state
     state = self._update_state(state, data, total_reward, done)
     state.metrics.update({
-        "success": success.astype(float),
-        "drop": dropped.astype(float),
+        "success": jp.array(success, dtype=float),
+        "drop": jp.array(dropped, dtype=float),
         "final_grasp": final_grasp,
     })
     return state
@@ -309,7 +311,7 @@ class PegInsertion(base.S2RBase):
     return sparse_rewards, success, dropped, final_grasp
 
   def _calculate_dense_rewards(
-      self, data: mjx.Data, info: dict, metrics: Dict[str, float]
+      self, data: mjx.Data, metrics: Dict[str, float]
   ) -> Dict[str, float]:
     socket_entrance_pos = data.site_xpos[self._socket_entrance_site]
     socket_rear_pos = data.site_xpos[self._socket_end_site]
@@ -357,8 +359,6 @@ class PegInsertion(base.S2RBase):
   def _calculate_reg_rewards(
       self,
       data: mjx.Data,
-      info: dict,
-      action: jax.Array,
       metrics: Dict[str, float],
   ) -> Dict[str, float]:
     robot_target_qpos = self._robot_target_qpos(data)
@@ -421,7 +421,7 @@ class PegInsertion(base.S2RBase):
 
   def _check_done_conditions(
       self, data: mjx.Data, state: State, dropped: bool
-  ) -> Tuple[bool, bool, bool, bool]:
+  ) -> bool:
     # Check if out of bounds
     out_of_bounds = jp.any(jp.abs(data.xpos[self._socket_body]) > 1.0)
     out_of_bounds |= jp.any(jp.abs(data.xpos[self._peg_body]) > 1.0)
@@ -485,14 +485,15 @@ class PegInsertion(base.S2RBase):
         data,
         obs,
         jp.array(total_reward),
-        done.astype(float),
+        jp.array(done, dtype=float),
         state.metrics,
         state.info,
     )
 
   def _action_mux(self, action: jp.array, state: mjx_env.State):
     """
-    Chooses which policy to apply. If you've already toggled switched this round, always use the external policy.
+    Chooses which policy to apply. If you've already toggled
+    switched this round, always use the external policy.
     """
 
     data = state.data
@@ -510,7 +511,8 @@ class PegInsertion(base.S2RBase):
     )
 
     #### Exploration Manager ####
-    # If it's the first switch of the run, save the data to the buffer of states you can skip to at autoreset.
+    # If it's the first switch of the run, save the data to
+    # the buffer of states you can skip to at autoreset.
     def update_first_value(buf, val):
       buf = jp.roll(buf, 1, axis=0)
       buf = buf.at[0].set(val)
@@ -555,7 +557,8 @@ class PegInsertion(base.S2RBase):
     newly_reset = state.info["_steps"] == 0
     to_skip = newly_reset * jax.random.bernoulli(key_skip, self._skip_prob)
 
-    # The pre insert buffer is initialized with the home position, in which case you can't skip.
+    # The pre insert buffer is initialized with the home position,
+    # in which case you can't skip.
     to_skip = jp.logical_and(to_skip, jp.any(preinsert_qpos != self._init_q))
     state.info["has_switched"] = jp.where(
         to_skip, 1, state.info["has_switched"]

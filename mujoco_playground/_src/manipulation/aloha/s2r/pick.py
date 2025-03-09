@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Implementation of the ALOHA pick task for sim-to-real transfer."""
+
 from typing import Any, Dict, Optional, Tuple, Union
 
 import flax
@@ -26,7 +28,6 @@ import numpy as np
 from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward as reward_util
-from mujoco_playground._src.manipulation.aloha import base
 from mujoco_playground._src.manipulation.aloha.s2r import base
 from mujoco_playground._src.mjx_env import State  # pylint: disable=g-importing-member
 
@@ -81,6 +82,8 @@ def default_config() -> config_dict.ConfigDict:
 
 
 class Pick(base.S2RBase):
+  """Phase 1 of the peg insertion task.
+  Picks a block and brings it to the target."""
 
   def __init__(
       self,
@@ -151,9 +154,7 @@ class Pick(base.S2RBase):
     dense_rewards = self._calculate_dense_rewards(
         data, state.info, state.metrics
     )
-    reg_rewards = self._calculate_reg_rewards(
-        data, state.info, action, state.metrics
-    )
+    reg_rewards = self._calculate_reg_rewards(data, state.metrics)
 
     # Calculate total reward
     total_reward = self._calculate_total_reward(
@@ -161,14 +162,14 @@ class Pick(base.S2RBase):
     )
 
     # Check done conditions
-    done, crossed_line = self._check_done_conditions(data, state)
+    done, crossed_line = self._check_done_conditions(data)
     total_reward += jp.where(crossed_line, -1.0, 0.0)
 
     # Update score
     self._update_score(state, success, done)
 
     # Update state
-    state = self._update_state(state, data, total_reward, done, newly_reset)
+    state = self._update_state(state, data, total_reward, done)
 
     return state
 
@@ -185,7 +186,7 @@ class Pick(base.S2RBase):
 
   def _calculate_sparse_rewards(
       self, state: State, data: mjx.Data
-  ) -> Tuple[Dict[str, float], bool, int]:
+  ) -> Tuple[Dict[str, float], bool]:
     grasped = self.is_grasped(data, "left")
     gripping_error = jp.linalg.norm(self.gripping_error(data, "left", "box"))
     grasped_correct = gripping_error < base.GRASP_THRESH
@@ -200,8 +201,8 @@ class Pick(base.S2RBase):
     raw_sparse_rewards = {
         "grasped": grasped,
         "lift": lifted,
-        "success": success.astype(float),
-        "success_time": success.astype(float) * success_time,
+        "success": jp.array(success, dtype=float),
+        "success_time": jp.array(success, dtype=float) * success_time,
     }
     state.metrics.update(**raw_sparse_rewards)
     sparse_rewards = {
@@ -223,11 +224,9 @@ class Pick(base.S2RBase):
   def _calculate_reg_rewards(
       self,
       data: mjx.Data,
-      info: Dict[str, Any],
-      action: jax.Array,
       metrics: Dict[str, float],
   ) -> Dict[str, float]:
-    raw_reg_rewards = self._get_reg_pick(data, info, action)
+    raw_reg_rewards = self._get_reg_pick(data)
     f_lfing = self.get_finger_force(data, "left", "left")
     f_rfing = self.get_finger_force(data, "left", "right")
     f_fing = jp.mean(jp.linalg.norm(f_lfing) + jp.linalg.norm(f_rfing))
@@ -262,8 +261,9 @@ class Pick(base.S2RBase):
     return reward
 
   def _check_done_conditions(
-      self, data: mjx.Data, state: State
-  ) -> Tuple[bool, bool, bool]:
+      self,
+      data: mjx.Data,
+  ) -> Tuple[bool, bool]:
     id_far_end = self.mj_model.site("box_end_2").id
     box_far_end = data.site_xpos[id_far_end]
     crossed_line = box_far_end[0] > (0.0 + 0.048 + 0.025)
@@ -279,8 +279,8 @@ class Pick(base.S2RBase):
     last_step = (
         state.info["_steps"] + self._config.action_repeat
     ) >= self._config.episode_length
-    state.info["score"] += success.astype(int) * last_step
-    state.info["score"] = jp.clip(state.info["score"], min=0, max=(5 - 1))
+    state.info["score"] += jp.array(success, dtype=int) * last_step
+    state.info["score"] = jp.clip(state.info["score"], min=0, max=4)
     state.metrics["score"] = state.info["score"] * 1.0
     state.info["_steps"] += self._config.action_repeat
     state.info["_steps"] = jp.where(
@@ -290,19 +290,19 @@ class Pick(base.S2RBase):
     )
 
   def _update_state(
-      self,
-      state: State,
-      data: mjx.Data,
-      total_reward: float,
-      done: bool,
-      newly_reset: bool,
+      self, state: State, data: mjx.Data, total_reward: float, done: bool
   ) -> State:
     obs = self._get_obs_pick(data, state.info)
     obs = {"state": obs, "privileged": obs}
     state.info["rng"], key_obs = jax.random.split(state.info["rng"])
     base.use_obs_history(key_obs, state.info["obs_history"], obs)
     return State(
-        data, obs, total_reward, done.astype(float), state.metrics, state.info
+        data,
+        obs,
+        total_reward,
+        jp.array(done, dtype=float),
+        state.metrics,
+        state.info,
     )
 
   def _calculate_thresholds(self, score: int) -> Tuple[float, float]:
@@ -365,9 +365,7 @@ class Pick(base.S2RBase):
     }
     return rewards
 
-  def _get_reg_pick(
-      self, data: mjx.Data, info: Dict[str, Any], action: jp.ndarray
-  ) -> Dict[str, Any]:
+  def _get_reg_pick(self, data: mjx.Data) -> Dict[str, Any]:
     rewards = {
         "robot_target_qpos": self._robot_target_qpos(data),
     }
@@ -382,7 +380,7 @@ class Pick(base.S2RBase):
     right_id = self._left_right_finger_geom_bottom
 
     hand_floor_collision = [
-        collision.geoms_colliding(data, getattr(self, f"_floor_geom"), g)
+        collision.geoms_colliding(data, getattr(self, "_floor_geom"), g)
         for g in [
             left_id,
             right_id,
@@ -391,19 +389,28 @@ class Pick(base.S2RBase):
     ]
     floor_collision = sum(hand_floor_collision) > 0
     no_floor_collision = (1 - floor_collision).astype(float)
-    rewards[f"no_floor_collision"] = no_floor_collision
+    rewards["no_floor_collision"] = no_floor_collision
 
     return rewards
 
 
 def domain_randomize(model: mjx.Model, rng: jax.Array):
+  """Randomize domain parameters for sim-to-real transfer.
+
+  Args:
+    model: The MuJoCo model to randomize
+    rng: JAX random number generator key
+
+  Returns:
+    Tuple of (randomized model, in_axes for vmap)
+  """
   mj_model = Pick().mj_model
   obj_id = mj_model.geom("box").id
   obj_body_id = mj_model.body("box").id
 
   @jax.vmap
   def rand(rng):
-    key, key_size, key_mass = jax.random.split(rng, 3)
+    key_size, key_mass = jax.random.split(rng)
     # geom size
     geom_size_sides = jax.random.uniform(key_size, (), minval=0.01, maxval=0.03)
     geom_size = model.geom_size.at[obj_id, 1:3].set(geom_size_sides)

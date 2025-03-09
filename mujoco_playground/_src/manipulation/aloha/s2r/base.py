@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""
+This module contains the base class for the two phases of peg insertion.
+It includes functionalities for initializing objects, calculating observations,
+and managing the state of the environment during robotic manipulation tasks.
+"""
 
 import functools
 from typing import Any, Dict, Optional, Tuple, Union
@@ -53,12 +58,21 @@ def get_rand_dir(rng: jax.Array) -> jax.Array:
 
 
 def init_obs_history(init_obs: Dict, history_len: int) -> Dict:
-  """
-  init obs history dict for each entry in init_obs, initialized to the same value.
+  """Initialize observation history dictionary.
+
+  For each entry in init_obs, creates a history initialized to the same value.
+
+  Args:
+    init_obs: Initial observation dictionary
+    history_len: Length of history to maintain
+
+  Returns:
+    Dictionary containing observation histories
   """
   obs_history = {}
   for k, v in init_obs.items():
-    obs_axes = (history_len,) + (1,) * len(v.shape)  # for state and pixel obs.
+    # for state and pixel obs
+    obs_axes = (history_len,) + (1,) * len(v.shape)
     obs_history[k] = jp.tile(v, obs_axes)
   return obs_history
 
@@ -86,7 +100,7 @@ class S2RBase(base.AlohaEnv):
   def __init__(
       self,
       xml_path,
-      config: Optional[config_dict.ConfigDict] = None,
+      config: config_dict.ConfigDict,
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(xml_path, config, config_overrides)
@@ -199,8 +213,14 @@ class S2RBase(base.AlohaEnv):
     return robot_target_qpos / len(self.hands)
 
   def sample_fan(self, rng: jax.Array, obj: str) -> Tuple[jax.Array, jax.Array]:
-    """
-    returns a perturbation pos and quaternion.
+    """Sample a perturbation position and quaternion in a fan pattern.
+
+    Args:
+      rng: Random number generator key
+      obj: Object name
+
+    Returns:
+      Tuple of position perturbation and quaternion
     """
     rng, rng_r, rng_angle = jax.random.split(rng, 3)
     r = jax.random.uniform(
@@ -210,11 +230,11 @@ class S2RBase(base.AlohaEnv):
         maxval=self.noise_config[f"_{obj}_init_pos"].radius_max,
     )
     par = self.noise_config[f"_{obj}_init_pos"].angle
+    # Can't be a symmetric fan or depth cameras can't distinguish objects
     angle = jax.random.uniform(
         rng_angle,
         shape=(),
-        minval=-par
-        / 2,  # Can't be a symmetric fan or depth cameras can't distinguish objects.
+        minval=-par / 2,
         maxval=par / 2,
     )
     dx = r * jp.cos(angle)
@@ -229,6 +249,14 @@ class S2RBase(base.AlohaEnv):
     return jp.array([dx, dy, 0.0]), quat
 
   def init_objects(self, rng: jax.Array) -> Tuple[mjx.Data, dict[str, Any]]:
+    """Initialize object positions and targets.
+
+    Args:
+      rng: Random number generator key
+
+    Returns:
+      Tuple of MJX data and info dictionary
+    """
     info = {}
     init_q = jp.array(self._init_q)
 
@@ -249,9 +277,9 @@ class S2RBase(base.AlohaEnv):
       base_quat = jp.array(
           [jp.cos(base_angle / 2), 0.0, 0.0, jp.sin(base_angle / 2)]
       )
-      # R = self.base_info[side]["xmat"]
-      R = math.quat_to_mat(base_quat)
-      obj_pos = self.point2global(offset, R.T, t)
+      # rotation_matrix = self.base_info[side]["xmat"]
+      rotation_matrix = math.quat_to_mat(base_quat)
+      obj_pos = self.point2global(offset, rotation_matrix.T, t)
       init_q = init_q.at[obj_idx : obj_idx + 3].set(obj_pos)
 
       # Convert quat to mat
@@ -260,24 +288,24 @@ class S2RBase(base.AlohaEnv):
 
       # Target Position.
       rng, rng_target = jax.random.split(rng)
-      _range = self.noise_config[f"_{obj}_target_pos"]
+      range_val = self.noise_config[f"_{obj}_target_pos"]
       info[f"_{obj}_target_pos"] = targ + jax.random.uniform(
-          rng_target, (3,), minval=-_range, maxval=_range
+          rng_target, (3,), minval=-range_val, maxval=range_val
       )
 
     # Waist init.
     for hand in self.hands:
       rng, rng_waist = jax.random.split(rng)
-      _range = self.noise_config[f"_{hand}_waist_init_pos"]
+      range_val = self.noise_config[f"_{hand}_waist_init_pos"]
       first_idx = getattr(self, f"_{hand}_qposadr")[0]
       # fan is assymmetrical. TODO: False?
       rand_setpoint = self._init_q[first_idx] + jax.random.uniform(
-          rng_waist, (), minval=-_range, maxval=_range
+          rng_waist, (), minval=-range_val, maxval=range_val
       )
       init_q = init_q.at[first_idx].set(rand_setpoint)
       # Change for ctrl as well.
       first_idx_ctrl = getattr(self, f"_{hand}_ctrladr")[0]
-      _init_ctrl = (
+      init_ctrl = (
           jp.array(self._init_ctrl).at[first_idx_ctrl].set(rand_setpoint)
       )
 
@@ -285,7 +313,7 @@ class S2RBase(base.AlohaEnv):
         self._mjx_model,
         init_q,
         jp.zeros(self._mjx_model.nv, dtype=float),
-        ctrl=_init_ctrl,
+        ctrl=init_ctrl,
     )
 
     for i, obj in enumerate(self.obj_names):
@@ -305,10 +333,8 @@ class S2RBase(base.AlohaEnv):
             (self._config.action_history_length, self.action_size),
             dtype=jp.float32,
         ),
-        "motor_targets": _init_ctrl,
-        "init_ctrl": (
-            _init_ctrl
-        ),  # TODO: OK for brax PPO resets, breaks brax Dagger resets.
+        "motor_targets": init_ctrl,
+        "init_ctrl": init_ctrl,
     })
 
     return data, info
@@ -356,9 +382,21 @@ class S2RBase(base.AlohaEnv):
     return data
 
   def gripping_error(self, data, hand, obj) -> float:
-    R = data.xmat[getattr(self, f"_{hand}_base_link")]
+    """Calculate the error between gripper and object grip site.
+
+    Args:
+      data: MJX data
+      hand: Hand name ('left' or 'right')
+      obj: Object name
+
+    Returns:
+      Vector from gripper to grip site in local coordinates
+    """
+    rotation_matrix = data.xmat[getattr(self, f"_{hand}_base_link")]
     t = data.xpos[getattr(self, f"_{hand}_base_link")]
-    point2local = functools.partial(self.point2local, R=R, t=t)
+    point2local = functools.partial(
+        self.point2local, rotation_matrix=rotation_matrix, t=t
+    )
     p_lfing = data.site_xpos[getattr(self, f"_{hand}_left_fingertip")]
     p_rfing = data.site_xpos[getattr(self, f"_{hand}_right_fingertip")]
     p_mid = (p_lfing + p_rfing) / 2
@@ -374,9 +412,18 @@ class S2RBase(base.AlohaEnv):
   def _get_obs_pick_helper(
       self, data: mjx.Data, info: dict[str, Any], side: str, obj: str
   ) -> jax.Array:
-    """
-    Calculates the observations for the pickup task between the specified robot (left or right) and object.
-    Coordinates from Forward Kinematics are wrt the `side`'s base.
+    """Calculate observations for pickup task between robot and object.
+
+    Coordinates from Forward Kinematics are with respect to the side's base.
+
+    Args:
+      data: MJX data
+      info: Info dictionary
+      side: Robot side ('left' or 'right')
+      obj: Object name
+
+    Returns:
+      Observation array
     """
     # Robot minimal coords
     i_rob_qpos = getattr(self, f"_{side}_qposadr")
@@ -397,15 +444,19 @@ class S2RBase(base.AlohaEnv):
     g_target_mat = math.quat_to_mat(
         data.mocap_quat[getattr(self, f"_{obj}_mocap_target")]
     )
-    R = data.xmat[
+    rotation_matrix = data.xmat[
         getattr(self, f"_{side}_base_link")
     ]  # world to local. Orientation.
     t = data.xpos[
         getattr(self, f"_{side}_base_link")
     ]  # world to local. Translation.
 
-    frame2local = functools.partial(self.frame2local, R=R)
-    point2local = functools.partial(self.point2local, R=R, t=t)
+    frame2local = functools.partial(
+        self.frame2local, rotation_matrix=rotation_matrix
+    )
+    point2local = functools.partial(
+        self.point2local, rotation_matrix=rotation_matrix, t=t
+    )
 
     obj_v, obj_angv = frame2local(g_obj_v), frame2local(g_obj_angv)
     # gripper_pos = point2local(g_gripper_pos)
@@ -472,15 +523,14 @@ class S2RBase(base.AlohaEnv):
 
     # GRIPPER BOX
     info["rng"], key_gripper_box = jax.random.split(info["rng"])
-    _noise = jax.random.uniform(
+    noise_val = jax.random.uniform(
         key_gripper_box,
         (2, 3),
         minval=-self._config.obs_noise.gripper_box,
         maxval=self._config.obs_noise.gripper_box,
     )
-    n_gripper_box = gripper_box + (
-        _noise[1] - _noise[0]
-    )  # Triangle distribution
+    # Triangle distribution
+    n_gripper_box = gripper_box + (noise_val[1] - noise_val[0])
 
     # OBJ POS
     info["rng"], key_obj = jax.random.split(info["rng"])
@@ -508,9 +558,9 @@ class S2RBase(base.AlohaEnv):
 
   def _get_obs_pick(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
     """
-    Calculate the observations in local coordinates allowing the gripper to pick up an object.
-    Returns left than right-hand observations.
-    Warning: l, r f_fing must be normalised!
+    Calculate the observations in local coordinates
+    allowing the gripper to pick up an object.
+    Returns left and right-hand observations.
     """
     all_obs = []
     for side, obj in zip(self.hands, self.obj_names):
@@ -579,11 +629,40 @@ class S2RBase(base.AlohaEnv):
     m = jp.linalg.norm(v1) * jp.linalg.norm(v2)
     return (jp.arccos(jp.dot(v1, v2) / (m + 1e-7)) < t_align).astype(float)
 
-  def frame2local(self, frame, R):
-    return R @ frame
+  def frame2local(self, frame, rotation_matrix):
+    """Convert frame from global to local coordinates.
 
-  def point2local(self, point, R, t):
-    return self.frame2local(point - t, R)
+    Args:
+      frame: Frame in global coordinates
+      rotation_matrix: Rotation matrix from global to local
 
-  def point2global(self, point, R, t):
-    return R.T @ point + t
+    Returns:
+      Frame in local coordinates
+    """
+    return rotation_matrix @ frame
+
+  def point2local(self, point, rotation_matrix, t):
+    """Convert point from global to local coordinates.
+
+    Args:
+      point: Point in global coordinates
+      rotation_matrix: Rotation matrix from global to local
+      t: Translation vector
+
+    Returns:
+      Point in local coordinates
+    """
+    return self.frame2local(point - t, rotation_matrix)
+
+  def point2global(self, point, rotation_matrix, t):
+    """Convert point from local to global coordinates.
+
+    Args:
+      point: Point in local coordinates
+      rotation_matrix: Rotation matrix from global to local
+      t: Translation vector
+
+    Returns:
+      Point in global coordinates
+    """
+    return rotation_matrix.T @ point + t

@@ -72,7 +72,7 @@ python learning/train_jax_ppo.py --env_name AlohaS2RPegInsertion --save_params_p
 sleep 0.5
 
 # Distill to student (skip evaluations to save time)
-python mujoco_playground/experimental/train_dagger.py --domain-randomization --num-evals 0
+python mujoco_playground/experimental/train_dagger.py --domain-randomization --num-evals 0 --print-loss
 
 # Bonus: Convert to ONNX for easy deployment
 python mujoco_playground/experimental/jax2onnx/aloha_nets_to_onnx.py --checkpoint_path <YOUR_DISTILL_CHECKPOINT_DIR>

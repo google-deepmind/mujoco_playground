@@ -13,9 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Distillation module for sim-to-real
+transfer of ALOHA peg insertion."""
+
 import pathlib
 from typing import Any, Dict, Optional, Union
 
+from brax.io import model as brax_loader
+from brax.training import networks
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
@@ -88,10 +93,8 @@ def adjust_brightness(img, scale):
 
 
 def get_frozen_encoder_fn():
-  from brax.training import networks
-
+  """Returns a function that encodes observations using a frozen vision MLP."""
   vision_mlp = networks.VisionMLP(layer_sizes=(0,), policy_head=False)
-  from brax.io import model as brax_loader
 
   fpath = (
       pathlib.Path(__file__).parent / 'params' / 'VisionMLP2ChanCIFAR10.prms'
@@ -108,27 +111,34 @@ def get_frozen_encoder_fn():
 
 
 class DistillPegInsertion(peg_insertion.PegInsertion):
+  """Distillation environment for peg insertion task with vision capabilities.
+
+  This class extends the PegInsertion environment to support policy distillation
+  with vision-based observations, including depth and RGB camera inputs.
+  """
 
   def __init__(
       self,
-      config: Optional[config_dict.ConfigDict] = default_config(),
+      config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     super().__init__(config, config_overrides, distill=True)
     self._vision = config.vision
     self.encoder_fn = get_frozen_encoder_fn()
     if self._vision:
+      # Import here to avoid dependency issues when vision is disabled
+      # pylint: disable=import-outside-toplevel
       from madrona_mjx.renderer import BatchRenderer
 
-      H = self._config.vision_config.render_height
-      W = self._config.vision_config.render_width
+      render_height = self._config.vision_config.render_height
+      render_width = self._config.vision_config.render_width
 
       self.renderer = BatchRenderer(
           m=self._mjx_model,
           gpu_id=self._config.vision_config.gpu_id,
           num_worlds=self._config.vision_config.render_batch_size,
-          batch_render_view_height=H,
-          batch_render_view_width=W,
+          batch_render_view_height=render_height,
+          batch_render_view_width=render_width,
           enabled_geom_groups=np.asarray(
               self._config.vision_config.enabled_geom_groups
           ),
@@ -147,8 +157,8 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
         max_depth = self.max_depth['pixels/view_0']
         self.line_bank = jp.array(
             depth_noise.np_get_line_bank(
-                H,
-                W,
+                render_height,
+                render_width,
                 bank_size=16384,
                 color_range=[max_depth * 0.2, max_depth * 0.85],
             )
@@ -201,9 +211,9 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
     info['render_token'], rgb, depth = self.renderer.init(data, self._mjx_model)
     # Process depth.
     info['rng'], rng_l, rng_r = jax.random.split(info['rng'], 3)
-    dmap_l = self.process_depth(depth, 0, 'pixels/view_0', rng_l, info)
+    dmap_l = self.process_depth(depth, 0, 'pixels/view_0', rng_l)
     r_dmap_l = jax.image.resize(dmap_l, (8, 8, 1), method='nearest')
-    dmap_r = self.process_depth(depth, 1, 'pixels/view_1', rng_r, info)
+    dmap_r = self.process_depth(depth, 1, 'pixels/view_1', rng_r)
     r_dmap_r = jax.image.resize(dmap_r, (8, 8, 1), method='nearest')
 
     rgb_l = jp.asarray(rgb[0][..., :3], dtype=jp.float32) / 255.0
@@ -276,9 +286,10 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
     return proprio
 
   def add_depth_noise(self, key, img: jp.ndarray):
-    W = self._config.vision_config.render_width
-    H = self._config.vision_config.render_height
-    assert img.shape == (H, W, 1)
+    """Add realistic depth sensor noise to the depth image."""
+    render_width = self._config.vision_config.render_width
+    render_height = self._config.vision_config.render_height
+    assert img.shape == (render_height, render_width, 1)
     # squeeze
     img = img.squeeze(-1)
     grad_threshold = self._config.obs_noise.grad_threshold
@@ -313,8 +324,8 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
       chan: int,
       view_name: str,
       key: Optional[jp.ndarray] = None,
-      info: dict = None,
   ):
+    """Process depth image with normalization and optional noise."""
     img_size = self._config.vision_config.render_width
     num_cams = len(self._config.vision_config.enabled_cameras)
     assert depth.shape == (num_cams, img_size, img_size, 1)
@@ -323,11 +334,12 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
     # max_depth = info['max_depth']
     too_big = jp.where(depth > max_depth, 0, 1)
     depth = depth * too_big
-    if self._config.obs_noise.depth:
+    if self._config.obs_noise.depth and key is not None:
       depth = self.add_depth_noise(key, depth)
     return depth / max_depth  # Normalize
 
   def rgb_noise(self, key, img, info):
+    """Apply domain randomization noise to RGB images."""
     # Implement domain rando on peg and socket.
     # Assumes images are already normalized.
     thresh = 0.2
@@ -351,8 +363,9 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
     return img
 
   @property
-  # Manually set observation size; default method breaks madrona MJX.
   def observation_size(self):
+    """Return the observation space dimensions for each observation type."""
+    # Manually set observation size; default method breaks madrona MJX.
     ret = {
         'has_switched': (1,),
         'proprio': (33,),
@@ -378,10 +391,8 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
     return ret
 
 
-from brax.io import model as brax_loader
-
-
 def make_teacher_policy():
+  """Create a teacher policy for distillation from pre-trained models."""
   env = DistillPegInsertion(config_overrides={'vision': False})
 
   f_pick_teacher = (
@@ -445,8 +456,8 @@ def make_teacher_policy():
 
 
 def domain_randomize(model: mjx.Model, rng: jax.Array):
-  default_config = default_vision_config()
-  cam_ids = default_config.enabled_cameras
+  """Apply domain randomization to camera positions, lights, and materials."""
+  cam_ids = default_vision_config().enabled_cameras
 
   @jax.vmap
   def rand(rng):
