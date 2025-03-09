@@ -43,6 +43,12 @@ For vision-based environments, please refer to the installation instructions in 
 
 ## Getting started
 
+Run zbot with
+
+```bash
+python train_jax_ppo.py --env_name=ZbotJoystickFlatTerrain --num_evals=200
+```
+
 ### Basic Tutorials
 | Colab | Description |
 |-------|-------------|
