@@ -1,0 +1,169 @@
+<!-- collisions
+1. Add head
+2. Add shoulders
+3. Add motors legs
+  -->
+<mujoco model="zbot">
+  <compiler angle="radian" meshdir="meshes" />
+  <option iterations="3" ls_iterations="5" timestep="0.002" integrator="Euler">
+    <flag eulerdamp="disable"/>
+  </option>
+
+  <default>
+    <default class="zbot">
+      <geom condim="1" contype="0" conaffinity="0"/>
+      <site size="0.01" rgba="1 0 0 1" group="4"/>
+      <joint axis="0 0 1" damping="0.5"/>
+      <position inheritrange="1.0" kp="20"/>
+
+      <default class="joint_class">
+        <joint armature="0.01" frictionloss="0.01" actuatorfrcrange="-2 2" range="-0.610865 0.610865"/>
+      </default>
+
+      <default class="visual">
+        <geom type="mesh" density="0" group="2" material="metal" contype="0" conaffinity="0"/>
+      </default>
+      <default class="collision">
+        <geom group="3"/>
+        <default class="FOOT1">
+          <geom size="0.049 0.009 0.02" pos="-0.013 0.029 0.02" type="box" contype="1" conaffinity="1"/>
+          <site size="0.049 0.009 0.02" pos="-0.013 0.029 0.02" type="box"/>
+        </default>
+          <default class="FOOT2">
+          <geom size="0.049 0.009 0.02" pos="-0.013 -0.029 0.02" type="box" contype="1" conaffinity="1"/>
+          <site size="0.049 0.009 0.02" pos="-0.013 -0.029 0.02" type="box"/>
+        </default>
+      </default>
+    </default>
+  </default>
+  <asset>
+    <material name="metal" rgba=".3 .3 .3 1"/>
+    <mesh name="Z-BOT2_MASTER-BODY-SKELETON" file="Z-BOT2_MASTER-BODY-SKELETON.stl"/>
+    <mesh name="Z-BOT2-MASTER-SHOULDER2" file="Z-BOT2-MASTER-SHOULDER2.stl"/>
+    <mesh name="Z-BOT2-MASTER-SHOULDER2_2" file="Z-BOT2-MASTER-SHOULDER2_2.stl"/>
+    <mesh name="U-HIP-L" file="U-HIP-L.stl"/>
+    <mesh name="U-HIP-R" file="U-HIP-R.stl"/>
+    <mesh name="3215_1Flange" file="3215_1Flange.stl"/>
+    <mesh name="3215_1Flange_2" file="3215_1Flange_2.stl"/>
+    <mesh name="3215_BothFlange" file="3215_BothFlange.stl"/>
+    <mesh name="3215_BothFlange_2" file="3215_BothFlange_2.stl"/>
+    <mesh name="3215_BothFlange_3" file="3215_BothFlange_3.stl"/>
+    <mesh name="3215_BothFlange_4" file="3215_BothFlange_4.stl"/>
+    <mesh name="R-ARM-MIRROR-1" file="R-ARM-MIRROR-1.stl"/>
+    <mesh name="L-ARM-MIRROR_1" file="L-ARM-MIRROR_1.stl"/>
+    <mesh name="3215_BothFlange_5" file="3215_BothFlange_5.stl"/>
+    <mesh name="3215_BothFlange_6" file="3215_BothFlange_6.stl"/>
+    <mesh name="FINGER_1" file="FINGER_1.stl"/>
+    <mesh name="FINGER_1_2" file="FINGER_1_2.stl"/>
+    <mesh name="FOOT" file="FOOT.stl"/>
+    <mesh name="FOOT_2" file="FOOT_2.stl"/>
+  </asset>
+
+  <worldbody>
+    <light name="spotlight" mode="targetbodycom" target="Z-BOT2_MASTER-BODY-SKELETON" pos="3 0 4"/>
+    <body name="Z-BOT2_MASTER-BODY-SKELETON" childclass="zbot" pos="0 0 0.407" euler="0 0 1.57">
+      <freejoint/>
+      <site name="imu" />
+      <camera name="front" pos="1.210 -0.435 0.32" xyaxes="0.342 0.940 0.000 -0.321 0.117 0.940" mode="trackcom"/>
+      <camera name="track" pos="0.805 -1.105 0.2" xyaxes="0.814 0.580 0.000 -0.140 0.196 0.971" mode="trackcom"/>
+      <inertial pos="-8.68153e-05 0.00960053 -0.0589276" quat="0.707354 -0.00845854 0.000660632 0.706809" mass="2.42118" diaginertia="0.0213218 0.0124974 0.0110819"/>
+
+      <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="Z-BOT2_MASTER-BODY-SKELETON"/>
+      <geom class="visual" pos="0.055995 -0.00960999 -0.00952781" quat="1.64085e-08 1.64085e-08 -0.707107 -0.707107" type="mesh" rgba="0.95 0.93 0.88 1" mesh="Z-BOT2-MASTER-SHOULDER2"/>
+      <geom class="visual" pos="0.07584 0.00919001 -0.0144278" quat="3.2817e-08 0.707107 -1.89469e-08 -0.707107" type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_1Flange"/>
+      <geom class="visual" pos="0.0944404 -0.00960971 -0.107412" quat="0.5 0.5 -0.5 0.5" type="mesh" rgba="0.95 0.93 0.88 1" mesh="R-ARM-MIRROR-1"/>
+      <geom class="visual" pos="0.106219 -0.00986943 -0.173617" quat="0.122788 -0.122788 0.696364 0.696364" type="mesh" rgba="0.95 0.93 0.88 1" mesh="FINGER_1"/>
+      <geom class="visual" pos="-0.055995 -0.00960999 -0.00952781" quat="0.707107 -0.707107 -3.2817e-08 3.2817e-08" type="mesh" rgba="0.95 0.93 0.88 1" mesh="Z-BOT2-MASTER-SHOULDER2_2"/>
+      <geom class="visual" pos="-0.07584 0.00919001 -0.0144278" quat="0.707107 -3.53553e-08 0.707107 4.92255e-08" type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_1Flange_2"/>
+      <geom class="visual" pos="-0.0944403 -0.00960971 -0.107412" quat="0.707107 -0.707107 -4.48288e-08 3.9752e-08" type="mesh" rgba="0.95 0.93 0.88 1"  mesh="L-ARM-MIRROR_1"/>
+      <geom class="visual" pos="-0.106219 -0.00986943 -0.173617" quat="0.696364 -0.696364 0.122788 0.122788" type="mesh" rgba="0.95 0.93 0.88 1" mesh="FINGER_1_2"/>
+      <geom class="collision" size="0.08 0.04 0.04" pos="0 0 -.04" type="box"/>
+
+      <body name="U-HIP-L" pos="0.0428082 0.00773508 -0.0844184" quat="0 2.32051e-08 1 2.32051e-08">
+        <inertial pos="-0.00116062 -0.0043962 0.0353962" quat="0.921476 0.220762 0.207667 0.242942" mass="0.0471324" diaginertia="3.44774e-05 3.0413e-05 1.26353e-05"/>
+        <joint name="L_Hip_Roll" pos="0 0 0" axis="0 0 1" range="-0.7 0.7" class="joint_class"/>
+        <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="U-HIP-L"/>
+        <body name="3215_BothFlange" pos="0 0.0186997 0.0564" quat="0.707107 -0.707107 0 0">
+          <inertial pos="0.0123316 -0.00899712 -0.0185084" quat="0.145714 0.695819 0.101439 0.695926" mass="0.0682953" diaginertia="2.54323e-05 2.35496e-05 1.92309e-05"/>
+          <joint name="L_Hip_Yaw" pos="0 0 0" axis="0 0 1" range="-1.54 0.157" class="joint_class"/>
+          <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_BothFlange"/>
+          <body name="3215_BothFlange_3" pos="-0.00739965 -0.032 -0.0179" quat="0.5 0.5 -0.5 -0.5">
+            <inertial pos="0.0436622 -0.00285684 -0.0185251" quat="0.501297 0.512271 0.501533 0.484504" mass="0.143337" diaginertia="0.000148209 0.000127579 4.86495e-05"/>
+            <joint name="L_Hip_Pitch" pos="0 0 0" axis="0 0 1" range="-1.54 1" class="joint_class"/>
+            <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_BothFlange_3"/>
+            <body name="3215_BothFlange_5" pos="0.1 0.01 -0.000259724" quat="1 2.32051e-08 2.32051e-08 0">
+              <inertial pos="0.05 2.60326e-09 -0.0179884" quat="0.49947 0.500681 0.50053 0.499318" mass="0.128213" diaginertia="0.000154386 0.000145408 3.53654e-05"/>
+              <joint name="L_Knee_Pitch" pos="0 0 0" axis="0 0 1" range="0 1.57" class="joint_class"/>
+              <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_BothFlange_5"/>
+              <body name="FOOT" pos="0.1 3.36408e-09 -0.000199995" quat="-1.64085e-08 -0.707107 -0.707107 1.64085e-08">
+                <inertial pos="-0.0150779 0.0278353 0.0187" quat="0.507219 0.507219 0.492675 0.492675" mass="0.27814" diaginertia="0.000205404 0.000181871 4.48069e-05"/>
+                <joint name="L_Ankle_Pitch" pos="0 0 0" axis="0 0 1" range="-0.9 0.9" class="joint_class"/>
+                <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="FOOT"/>
+                <geom name="l_foot1" class="FOOT1" euler="0 0 0"/>
+                <site name="l_foot" class="FOOT1" euler="0 0 0"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+      <body name="U-HIP-R" pos="-0.0428681 0.00773508 -0.0844184" quat="0 2.32051e-08 1 2.32051e-08">
+        <inertial pos="0.00116062 -0.0043962 0.0353962" quat="0.921476 0.220762 -0.207667 -0.242942" mass="0.0471324" diaginertia="3.44774e-05 3.0413e-05 1.26353e-05"/>
+        <joint name="R_Hip_Roll" pos="0 0 0" axis="0 0 1" range="-0.7 0.7" class="joint_class"/>
+        <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="U-HIP-R"/>
+        <body name="3215_BothFlange_2" pos="0 -0.0186997 0.0564" quat="0.707107 -0.707107 0 0">
+          <inertial pos="-0.0123316 -0.00898328 0.0178111" quat="0.0705026 0.700607 0.114113 0.700826" mass="0.0682953" diaginertia="2.5341e-05 2.36252e-05 1.92157e-05"/>
+          <joint name="R_Hip_Yaw" pos="0 0 0" axis="0 0 -1" range="-1.54 0.157" class="joint_class"/>
+          <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_BothFlange_2"/>
+          <body name="3215_BothFlange_4" pos="0.00739966 -0.032 0.0188997" quat="0.5 -0.5 0.5 -0.5">
+            <inertial pos="0.0436622 0.00286343 -0.0185366" quat="0.484624 0.501567 0.512165 0.501256" mass="0.143337" diaginertia="0.000148208 0.000127573 4.86473e-05"/>
+            <joint name="R_Hip_Pitch" pos="0 0 0" axis="0 0 1" range="-1 1.54" class="joint_class"/>
+            <geom class="visual"type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_BothFlange_4"/>
+            <body name="3215_BothFlange_6" pos="0.1 -0.01 -0.000259715" quat="1 2.32051e-08 -2.32051e-08 0">
+              <inertial pos="0.05 2.88121e-09 -0.0178883" quat="0.500076 0.500076 0.499924 0.499924" mass="0.128213" diaginertia="0.000154544 0.000145407 3.5524e-05"/>
+              <joint name="R_Knee_Pitch" pos="0 0 0" axis="0 0 1" range="-1.57 0" class="joint_class"/>
+              <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="3215_BothFlange_6"/>
+              <body name="FOOT_2" pos="0.1 3.36408e-09 4.73152e-09" quat="1.64085e-08 -0.707107 0.707107 -4.92255e-08">
+                <inertial pos="-0.0150779 -0.0278353 0.0187" quat="0.492675 0.492675 0.507219 0.507219" mass="0.27814" diaginertia="0.000205404 0.000181871 4.48069e-05"/>
+                <joint name="R_Ankle_Pitch" pos="0 0 0" axis="0 0 1" class="joint_class"/>
+                <geom class="visual" type="mesh" rgba="0.95 0.93 0.88 1" mesh="FOOT_2"/>
+                <geom name="r_foot1" class="FOOT2" euler="0 0 0"/>
+                <site name="r_foot" class="FOOT2" euler="0 0 0"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+ <actuator>
+    <position name="L_Hip_Roll" joint="L_Hip_Roll" />
+    <position name="L_Hip_Yaw" joint="L_Hip_Yaw" />
+    <position name="L_Hip_Pitch" joint="L_Hip_Pitch" />
+    <position name="L_Knee_Pitch" joint="L_Knee_Pitch" />
+    <position name="L_Ankle_Pitch" joint="L_Ankle_Pitch" />
+    <position name="R_Hip_Roll" joint="R_Hip_Roll" />
+    <position name="R_Hip_Yaw" joint="R_Hip_Yaw" />
+    <position name="R_Hip_Pitch" joint="R_Hip_Pitch" />
+    <position name="R_Knee_Pitch" joint="R_Knee_Pitch" />
+    <position name="R_Ankle_Pitch" joint="R_Ankle_Pitch" />
+  </actuator>
+
+  <sensor>
+    <gyro site="imu" name="gyro"/>
+    <velocimeter site="imu" name="local_linvel"/>
+    <accelerometer site="imu" name="accelerometer"/>
+    <framezaxis objtype="site" objname="imu" name="upvector"/>
+    <framexaxis objtype="site" objname="imu" name="forwardvector"/>
+    <framelinvel objtype="site" objname="imu" name="global_linvel"/>
+    <frameangvel objtype="site" objname="imu" name="global_angvel"/>
+    <framepos objtype="site" objname="imu" name="position"/>
+    <framequat objtype="site" objname="imu" name="orientation"/>
+    <framelinvel objtype="site" objname="l_foot" name="l_foot_global_linvel"/>
+    <framelinvel objtype="site" objname="r_foot" name="r_foot_global_linvel"/>
+    <framexaxis objtype="site" objname="l_foot" name="l_foot_upvector"/>
+    <framexaxis objtype="site" objname="r_foot" name="r_foot_upvector"/>
+    <framepos objtype="site" objname="l_foot" name="l_foot_pos"/>
+    <framepos objtype="site" objname="r_foot" name="r_foot_pos"/>
+  </sensor>
+</mujoco>
