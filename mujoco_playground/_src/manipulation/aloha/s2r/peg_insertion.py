@@ -202,7 +202,7 @@ class PegInsertion(base.S2RBase):
     obs = self._get_obs_insertion(data, info)
     if self._distill:
       self.reset_color_noise(info)
-      obs = {**obs, **self._get_obs_distill(data, info)}
+      obs = {**obs, **self._get_obs_distill(data, info, init=True)}
 
     # Random obs delay.
     actor_obs, _ = flax.core.pop(obs, "has_switched")
@@ -465,7 +465,7 @@ class PegInsertion(base.S2RBase):
     if self._distill:
       obs = {
           **obs,
-          **self._get_obs_distill(data, state.info),
+          **self._get_obs_distill(data, state.info, init=False),
       }
 
     # Update observation history

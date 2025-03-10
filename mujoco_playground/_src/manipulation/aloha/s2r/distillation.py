@@ -63,7 +63,7 @@ def default_config() -> (
       vision_config=default_vision_config(),
       obs_noise=config_dict.create(
           depth=True,
-          brightness=[1.0, 3.0],
+          brightness=[0.5, 2.5],
           grad_threshold=0.05,
           noise_multiplier=10,
           obj_pos=0.015,  # meters
@@ -198,7 +198,7 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
     for chan in [0, 2]:
       generate_noise(chan)
 
-  def _get_obs_distill(self, data, info):
+  def _get_obs_distill(self, data, info, init=False):
     obs_pick = self._get_obs_pick(data, info)
     obs_insertion = jp.concatenate([obs_pick, self._get_obs_dist(data, info)])
     if not self._vision:
@@ -207,8 +207,12 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
           (info['_steps'] / self._config.episode_length).reshape(1),
       ])
       return {'state_with_time': state_wt}
-
-    info['render_token'], rgb, depth = self.renderer.init(data, self._mjx_model)
+    if init:
+      info['render_token'], rgb, depth = self.renderer.init(
+          data, self._mjx_model
+      )
+    else:
+      _, rgb, depth = self.renderer.render(info['render_token'], data)
     # Process depth.
     info['rng'], rng_l, rng_r = jax.random.split(info['rng'], 3)
     dmap_l = self.process_depth(depth, 0, 'pixels/view_0', rng_l)
@@ -340,17 +344,8 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
 
   def rgb_noise(self, key, img, info):
     """Apply domain randomization noise to RGB images."""
-    # Implement domain rando on peg and socket.
     # Assumes images are already normalized.
-    thresh = 0.2
     pixel_noise = 0.03
-    for chan in [0, 2]:
-      assert img.shape == (32, 32, 3)
-      noise = info['color_noise'][chan]
-      mask = img[:, :, chan : chan + 1] > thresh
-      img += mask * noise
-      scaled_img = img * info['shade_noise'][chan] / info['brightness']
-      img = jp.where(mask, scaled_img, img)
 
     # Add noise to all channels and clip
     key_noise, key = jax.random.split(key)
@@ -458,9 +453,53 @@ def make_teacher_policy():
 def domain_randomize(model: mjx.Model, rng: jax.Array):
   """Apply domain randomization to camera positions, lights, and materials."""
   cam_ids = default_vision_config().enabled_cameras
+  mj_model = DistillPegInsertion(config_overrides={'vision': False}).mj_model
+  table_geom_id = mj_model.geom('table').id
+  b_ids = [
+      mj_model.geom(f'socket-{wall}').id for wall in ['B', 'T', 'L', 'R']
+  ]  # blue geoms
+  r_ids = [
+      mj_model.geom('red_peg').id,
+      mj_model.geom('socket-W').id,
+  ]  # red geoms
 
   @jax.vmap
   def rand(rng):
+    # Geom RGBA
+    geom_rgba = model.geom_rgba
+
+    # MatID needs to change to enable RGBA randomization.
+    geom_matid = model.geom_matid.at[:].set(-1)
+    for id in b_ids:
+      rng_obj, rng = jax.random.split(rng)
+      obj_hue = jax.random.uniform(rng_obj, (), minval=0.5, maxval=1.0)
+      geom_rgba = geom_rgba.at[id, 2].set(obj_hue)  # randomize blue dim.
+      # Add some noise to the other two dims.
+      rng_color, rng = jax.random.split(rng)  # Doesn't work.
+      color_noise = jax.random.uniform(rng_color, (2,), minval=0, maxval=0.12)
+      geom_rgba = geom_rgba.at[id, :2].set(geom_rgba[id, :2] + color_noise)
+      geom_matid = geom_matid.at[id].set(-2)
+    for id in r_ids:
+      rng_obj, rng = jax.random.split(rng)
+      obj_hue = jax.random.uniform(rng_obj, (), minval=0.0, maxval=1.0)
+      geom_rgba = geom_rgba.at[id, 0].set(obj_hue)
+      rng_color, rng = jax.random.split(rng)
+      color_noise = jax.random.uniform(rng_color, (2,), minval=0, maxval=0.07)
+      geom_rgba = geom_rgba.at[id, 1:3].set(geom_rgba[id, 1:3] + color_noise)
+      geom_matid = geom_matid.at[id].set(-2)
+
+    # Set the floor to a random gray-ish color.
+    gray_value = jax.random.uniform(rng, (), minval=0.0, maxval=0.1)
+    floor_rgba = (
+        geom_rgba[table_geom_id]
+        .at[:3]
+        .set(jp.array([gray_value, gray_value, gray_value]))
+    )
+    geom_rgba = geom_rgba.at[table_geom_id].set(floor_rgba)
+
+    # geom_matid = geom_matid.at[peg_geom_id].set(-2)
+    # geom_matid = geom_matid.at[table_geom_id].set(-2)
+
     # Cameras
     cam_pos = model.cam_pos
     cam_quat = model.cam_quat
@@ -475,7 +514,6 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
           perturb_orientation(rng_ori, cam_quat[cur_idx], 5)
       )
 
-    geom_rgba = model.geom_rgba
     n_lights = model.light_pos.shape[0]  # full: (n_lights, 3)
 
     # Light position
@@ -507,19 +545,27 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
         cam_pos,
         cam_quat,
         geom_rgba,
+        geom_matid,
         light_pos,
         light_dir,
         light_castshadow,
     )
 
-  (cam_pos, cam_quat, geom_rgba, light_pos, light_dir, light_castshadow) = rand(
-      rng
-  )
+  (
+      cam_pos,
+      cam_quat,
+      geom_rgba,
+      geom_matid,
+      light_pos,
+      light_dir,
+      light_castshadow,
+  ) = rand(rng)
   in_axes = jax.tree_util.tree_map(lambda x: None, model)
   in_axes = in_axes.tree_replace({
       'cam_pos': 0,
       'cam_quat': 0,
       'geom_rgba': 0,
+      'geom_matid': 0,
       'light_pos': 0,
       'light_dir': 0,
       'light_castshadow': 0,
@@ -529,6 +575,7 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
       'cam_pos': cam_pos,
       'cam_quat': cam_quat,
       'geom_rgba': geom_rgba,
+      'geom_matid': geom_matid,
       'light_pos': light_pos,
       'light_dir': light_dir,
       'light_castshadow': light_castshadow,
