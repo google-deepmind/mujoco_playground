@@ -25,19 +25,15 @@ os.environ[
 from datetime import datetime
 import functools
 import json
-from pathlib import Path
 
 from brax.io import model
 from brax.training.agents.bc import networks as bc_networks
 from brax.training.agents.bc import train as bc_fast
-# np.set_printoptions(precision=3, suppress=True, linewidth=100)
 from etils import epath
 from flax import linen
 from flax.training import orbax_utils
-# from IPython.display import clear_output
 import jax
 from jax import numpy as jp
-# from IPython.display import clear_output, display
 from orbax import checkpoint as ocp
 import typer
 
@@ -47,14 +43,6 @@ from mujoco_playground import wrapper
 from mujoco_playground._src.manipulation.aloha.s2r import distillation
 
 app = typer.Typer(pretty_exceptions_enable=False)
-
-metrics_keys = [
-    "success",
-    "peg_insertion",
-    "drop",
-    "final_grasp",
-    "robot_target_qpos",
-]
 
 
 @app.command()
@@ -128,28 +116,10 @@ def main(
 
   teacher_inference_fn = distillation.make_teacher_policy()
 
-  SUFFIX = None
-  FINETUNE_PATH = None
-
   # Generate unique experiment name.
   now = datetime.now()
   timestamp = now.strftime("%Y%m%d-%H%M%S")
   exp_name = f"{env_name}-{timestamp}"
-  if SUFFIX is not None:
-    exp_name += f"-{SUFFIX}"
-    print(f"Experiment name: {exp_name}")
-
-  # Possibly restore from the latest checkpoint.
-  if FINETUNE_PATH is not None:
-    FINETUNE_PATH = epath.Path(FINETUNE_PATH)
-    latest_ckpts = list(FINETUNE_PATH.glob("*"))
-    latest_ckpts = [ckpt for ckpt in latest_ckpts if ckpt.is_dir()]
-    latest_ckpts.sort(key=lambda x: int(x.name))
-    latest_ckpt = latest_ckpts[-1]
-    restore_checkpoint_path = latest_ckpt
-    print(f"Restoring from: {restore_checkpoint_path}")
-  else:
-    restore_checkpoint_path = None
 
   ckpt_path = epath.Path("logs").resolve() / exp_name
   ckpt_path.mkdir(parents=True, exist_ok=True)
@@ -189,16 +159,6 @@ def main(
     save_args = orbax_utils.save_args_from_target(params)
     path = ckpt_path / f"{current_step}"
     orbax_checkpointer.save(path, params, force=True, save_args=save_args)
-
-  m_path = Path(__file__)
-  m_path = m_path.parent.parent  # private_mujoco_playground
-  m_path = (
-      m_path
-      / "mujoco_playground"
-      / "external_deps"
-      / "mujoco_menagerie"
-      / "aloha"
-  )
 
   def progress(epoch, metrics: dict):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
