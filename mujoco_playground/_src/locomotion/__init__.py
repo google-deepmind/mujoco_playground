@@ -40,7 +40,7 @@ from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spo
 from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 from mujoco_playground._src.locomotion.zbot import joystick as zbot_joystick
-# from mujoco_playground._src.locomotion.zbot import randomize as zbot_randomize
+from mujoco_playground._src.locomotion.zbot import randomize as zbot_randomize
 
 _envs = {
     "BarkourJoystick": barkour_joystick.Joystick,
@@ -128,6 +128,7 @@ _randomizer = {
     "Go1Footstand": go1_randomize.domain_randomize,
     "T1JoystickFlatTerrain": t1_randomize.domain_randomize,
     "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
+    "ZbotJoystickFlatTerrain": zbot_randomize.domain_randomize,
 }
 
 
