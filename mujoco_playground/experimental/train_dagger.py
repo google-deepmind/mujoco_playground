@@ -249,7 +249,6 @@ def main(
       epochs=epochs,
       scramble_time=episode_length,
       dagger_beta_fn=dagger_beta_fn,
-      num_demos=num_envs,
       batch_size=256,
       env=env,
       num_envs=num_envs,
@@ -266,7 +265,7 @@ def main(
       policy_params_fn=policy_params_fn,
   )
   print(f"Training start: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-  params = train_fn()
+  _, params, _ = train_fn()
   print(f"Training done: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
   if policy_save_path is not None:
