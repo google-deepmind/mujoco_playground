@@ -281,7 +281,8 @@ class MjxEnv(abc.ABC):
     """Use this with xml_path to init a MjModel"""
     if hasattr(self, "_model_assets"):
       return self._model_assets
-    raise NotImplementedError("_model_assets not defined for this environment")
+    raise NotImplementedError("_model_assets not defined for this environment"
+                              "see cartpole.py for an example.")
 
   def render(
       self,
