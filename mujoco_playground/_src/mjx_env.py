@@ -276,6 +276,13 @@ class MjxEnv(abc.ABC):
       return jax.tree_util.tree_map(lambda x: x.shape, obs)
     return obs.shape[-1]
 
+  @property
+  def model_assets(self) -> Dict[str, Any]:
+    """ Use this with xml_path to init a MjModel """
+    if hasattr(self, "_model_assets"):
+      return self._model_assets
+    raise NotImplementedError("_model_assets not defined for this environment")
+
   def render(
       self,
       trajectory: List[State],
