@@ -278,7 +278,7 @@ class MjxEnv(abc.ABC):
 
   @property
   def model_assets(self) -> Dict[str, Any]:
-    """ Use this with xml_path to init a MjModel """
+    """Use this with xml_path to init a MjModel"""
     if hasattr(self, "_model_assets"):
       return self._model_assets
     raise NotImplementedError("_model_assets not defined for this environment")

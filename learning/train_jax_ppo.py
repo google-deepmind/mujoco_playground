@@ -24,10 +24,10 @@ import warnings
 from absl import app
 from absl import flags
 from absl import logging
-from brax.training.rscope import rscope_utils
 from brax.training.agents.ppo import networks as ppo_networks
 from brax.training.agents.ppo import networks_vision as ppo_networks_vision
 from brax.training.agents.ppo import train as ppo
+from brax.training.rscope import rscope_utils
 from etils import epath
 from flax.training import orbax_utils
 import jax
@@ -133,7 +133,10 @@ _POLICY_OBS_KEY = flags.DEFINE_string(
     "policy_obs_key", "state", "Policy obs key"
 )
 _VALUE_OBS_KEY = flags.DEFINE_string("value_obs_key", "state", "Value obs key")
-_RSCOPE_ENVS = flags.DEFINE_integer("rscope_envs", None, "Number of rscope envs")
+_RSCOPE_ENVS = flags.DEFINE_integer(
+    "rscope_envs", None, "Number of rscope envs"
+)
+
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
   if env_name in mujoco_playground.manipulation._envs:
@@ -335,7 +338,7 @@ def main(argv):
   # Progress function for logging
   def progress(num_steps, metrics):
     if _RSCOPE_ENVS.value:
-      rscope_utils.dump_eval(metrics['eval/data'])
+      rscope_utils.dump_eval(metrics["eval/data"])
     times.append(time.monotonic())
 
     # Log to Weights & Biases
