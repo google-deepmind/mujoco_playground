@@ -133,6 +133,7 @@ _POLICY_OBS_KEY = flags.DEFINE_string(
     "policy_obs_key", "state", "Policy obs key"
 )
 _VALUE_OBS_KEY = flags.DEFINE_string("value_obs_key", "state", "Value obs key")
+_DETERMINISTIC_EVAL = flags.DEFINE_boolean("deterministic_eval", False, "Use deterministic eval")
 _RSCOPE_ENVS = flags.DEFINE_integer(
     "rscope_envs", None, "Number of rscope envs"
 )
@@ -213,6 +214,8 @@ def main(argv):
     ppo_params.network_factory.policy_obs_key = _POLICY_OBS_KEY.value
   if _VALUE_OBS_KEY.present:
     ppo_params.network_factory.value_obs_key = _VALUE_OBS_KEY.value
+  if _DETERMINISTIC_EVAL.present:
+    ppo_params.deterministic_eval = _DETERMINISTIC_EVAL.value
 
   if _VISION.value:
     env_cfg.vision = True
