@@ -27,6 +27,7 @@ from absl import logging
 from brax.training.agents.ppo import networks as ppo_networks
 from brax.training.agents.ppo import networks_vision as ppo_networks_vision
 from brax.training.agents.ppo import train as ppo
+from brax.training.rscope import rscope_utils
 from etils import epath
 from flax.training import orbax_utils
 import jax
@@ -132,6 +133,10 @@ _POLICY_OBS_KEY = flags.DEFINE_string(
     "policy_obs_key", "state", "Policy obs key"
 )
 _VALUE_OBS_KEY = flags.DEFINE_string("value_obs_key", "state", "Value obs key")
+_DETERMINISTIC_EVAL = flags.DEFINE_boolean("deterministic_eval", False, "Use deterministic eval")
+_RSCOPE_ENVS = flags.DEFINE_integer(
+    "rscope_envs", None, "Number of rscope envs"
+)
 
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
@@ -209,6 +214,8 @@ def main(argv):
     ppo_params.network_factory.policy_obs_key = _POLICY_OBS_KEY.value
   if _VALUE_OBS_KEY.present:
     ppo_params.network_factory.value_obs_key = _VALUE_OBS_KEY.value
+  if _DETERMINISTIC_EVAL.present:
+    ppo_params.deterministic_eval = _DETERMINISTIC_EVAL.value
 
   if _VISION.value:
     env_cfg.vision = True
@@ -314,6 +321,8 @@ def main(argv):
 
   if "num_eval_envs" in training_params:
     del training_params["num_eval_envs"]
+  if _RSCOPE_ENVS.value:
+    rscope_utils.rscope_init(env.xml_path, env.model_assets)
 
   train_fn = functools.partial(
       ppo.train,
@@ -324,12 +333,15 @@ def main(argv):
       restore_checkpoint_path=restore_checkpoint_path,
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
+      rscope_envs=_RSCOPE_ENVS.value,
   )
 
   times = [time.monotonic()]
 
   # Progress function for logging
   def progress(num_steps, metrics):
+    if _RSCOPE_ENVS.value:
+      rscope_utils.dump_eval(metrics["eval/data"])
     times.append(time.monotonic())
 
     # Log to Weights & Biases
