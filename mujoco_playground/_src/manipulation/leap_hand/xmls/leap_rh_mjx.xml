@@ -15,7 +15,7 @@
     <material name="gray" rgba="0.5 0.5 0.5 1"/>
     <mesh name="leap_mount" file="meshes/leap_mount.obj"/>
 
-    <mesh name="palm" file="../../../../../../mujoco_menagerie/leap_hand/assets/palm_right.obj"/>
+    <mesh name="palm" file="../../../../../mujoco_menagerie/leap_hand/assets/palm_right.obj"/>
     <mesh name="base" file="../../../../../mujoco_menagerie/leap_hand/assets/base.obj"/>
     <mesh name="proximal" file="../../../../../mujoco_menagerie/leap_hand/assets/proximal.obj"/>
     <mesh name="medial" file="../../../../../mujoco_menagerie/leap_hand/assets/medial.obj"/>
