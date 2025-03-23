@@ -37,6 +37,9 @@ pip install playground
 6. Install playground: `uv pip install -e ".[all]"`
 7. Verify installation (and download Menagerie): `python -c "import mujoco_playground"`
 
+#### Important Note on GPU Precision:
+Users with NVIDIA Ampere architecture GPUs (e.g., RTX 30 and 40 series) may experience reproducibility issues in mujoco_playground due to JAX’s default use of TF32 for matrix multiplications. This lower precision can adversely affect RL training stability. To ensure consistent behavior with systems using full float32 precision (as on Turing GPUs), please run `export JAX_DEFAULT_MATMUL_PRECISION=highest` in your terminal before starting your experiments (or add it to the end of `~/.bashrc`).
+
 #### Madrona-MJX (optional)
 
 For vision-based environments, please refer to the installation instructions in the [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx?tab=readme-ov-file#installation) repository.
