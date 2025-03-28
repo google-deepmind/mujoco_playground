@@ -1,0 +1,304 @@
+import gym
+import numpy as np
+from gym import spaces
+from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.evaluation import evaluate_policy
+import matplotlib.pyplot as plt
+from stable_baselines3.common.noise import NormalActionNoise  # For exploration
+
+# Custom Humanoid Coffee-Making Environment
+class HumanoidCoffeeTrayEnv(gym.Env):
+    def __init__(self, stage=1, stack_penalty=2.0, reach_bonus=25, tray_balance_bonus=50):
+        super().__init__()
+        self.base_env = gym.make('Humanoid-v4')  # MuJoCo humanoid
+        self.stage = stage
+        self.stack_penalty = stack_penalty
+        self.reach_bonus = reach_bonus
+        self.tray_balance_bonus = tray_balance_bonus
+        self.action_space = spaces.Box(low=-1, high=1, shape=(29,))  # 17 joints + 10 fingers + 2 coffee actions (grind, pour)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self._get_obs_size(),))
+        self.max_steps = 2000  # Increased for coffee-making complexity
+        self.steps = 0
+        # Object properties
+        self.cup_pos = np.array([0.0, 0.0, 0.0])  # Coffee cup
+        self.tray_pos = np.array([0.6, 0.6, 0.9])
+        self.tray_target = np.array([1.0, 1.0, 0.5])
+        self.cup_vel = np.array([0.0, 0.0, 0.0])
+        self.cup_size = 1.0
+        self.cup_friction = 0.5
+        self.cup_color = np.array([1.0, 0.0, 0.0])  # Default red
+        self.beans = 20.0  # grams of coffee beans
+        self.grounds = 0.0  # grams of ground coffee
+        self.water = 0.0  # ml of water in cup
+        # Hand state
+        self.left_hand_pos = np.array([0.0, 0.0, 0.0])
+        self.right_hand_pos = np.array([0.0, 0.0, 0.0])
+        self.left_fingers = np.zeros(5)
+        self.right_fingers = np.zeros(5)
+        self.holding_cup = False
+        self.holding_tray = False
+        # Precision learning
+        self.grip_precision = {'cup': 0.8, 'tray': 0.8}
+        self.grip_success_rate = {'cup': [], 'tray': []}  # Last 100 attempts
+        self.grind_time = 5.0  # Initial grind duration (seconds)
+        self.grind_success_rate = []  # Last 100 grinds
+        self.pour_volume = 50.0  # Initial water volume (ml)
+        self.pour_success_rate = []  # Last 100 pours
+
+    def _get_obs_size(self):
+        base_obs = self.base_env.observation_space.shape[0]  # ~376
+        if self.stage == 1:
+            return base_obs + 8  # Cup pos + size + color + beans + grounds
+        elif self.stage == 2:
+            return base_obs + 9  # Add water
+        return base_obs + 15  # Add tray target + velocity
+
+    def reset(self):
+        self.steps = 0
+        self.holding_cup = self.holding_tray = False
+        self.left_fingers.fill(0)
+        self.right_fingers.fill(0)
+        self.cup_vel.fill(0)
+        self.beans = 20.0
+        self.grounds = 0.0
+        self.water = 0.0
+        obs = self.base_env.reset()
+        self.cup_pos = np.random.uniform([-1, -1, 0.5], [1, 1, 0.5], size=3)
+        self.tray_pos = np.array([0.6, 0.6, 0.9])
+        self.cup_size = np.random.uniform(0.8, 1.2)
+        self.cup_friction = np.random.uniform(0.2, 0.6)
+        self.cup_color = np.random.rand(3)
+        self.left_hand_pos = obs[2:5]
+        self.right_hand_pos = obs[2:5] + [0.1, 0, 0]
+        for key in self.grip_success_rate:
+            self.grip_success_rate[key] = []
+        self.grind_success_rate = []
+        self.pour_success_rate = []
+        return self._get_observation(obs)
+
+    def step(self, action):
+        self.steps += 1
+        base_action = action[:17]
+        left_finger_action = action[17:22]
+        right_finger_action = action[22:27]
+        grind_action = np.clip(action[27], 0, 1)  # 0-1 scale for grind time
+        pour_action = np.clip(action[28], 0, 1)  # 0-1 scale for pour volume
+        self.left_fingers = np.clip(left_finger_action, 0, 1)
+        self.right_fingers = np.clip(right_finger_action, 0, 1)
+
+        obs, base_reward, done, info = self.base_env.step(base_action)
+        self.left_hand_pos = obs[2:5]
+        self.right_hand_pos = obs[2:5] + [0.1, 0, 0]
+
+        # Distances
+        dist_to_cup = min(np.linalg.norm(self.left_hand_pos - self.cup_pos), np.linalg.norm(self.right_hand_pos - self.cup_pos))
+        dist_to_tray = min(np.linalg.norm(self.left_hand_pos - self.tray_pos), np.linalg.norm(self.right_hand_pos - self.tray_pos)) if self.stage == 3 else 0
+        dist_cup_to_table = np.linalg.norm(self.cup_pos - self.table_pos)
+        dist_tray_to_target = np.linalg.norm(self.tray_pos - self.tray_target) if self.stage == 3 else 0
+
+        # Coffee-making actions
+        if self.stage == 1 and self.holding_cup and dist_to_cup < 0.1:
+            grind_duration = self.grind_time * grind_action
+            grounds_produced = min(self.beans, grind_duration * (1 - self.cup_friction * 0.1))  # Friction affects grind efficiency
+            self.beans -= grounds_produced
+            self.grounds += grounds_produced
+            success = 9 <= self.grounds <= 11  # Target 10g ± 1g
+            self.grind_success_rate.append(1 if success else 0)
+            if len(self.grind_success_rate) > 100:
+                self.grind_success_rate.pop(0)
+            rate = np.mean(self.grind_success_rate) if self.grind_success_rate else 0.5
+            if success and rate > 0.8:
+                self.grind_time = max(3.0, self.grind_time * 0.95)
+            elif not success:
+                self.grind_time = min(7.0, self.grind_time * 1.05)
+
+        if self.stage == 2 and self.holding_cup and dist_to_cup < 0.1:
+            pour_amount = self.pour_volume * pour_action
+            self.water += pour_amount
+            success = 45 <= self.water <= 55  # Target 50ml ± 5ml
+            self.pour_success_rate.append(1 if success else 0)
+            if len(self.pour_success_rate) > 100:
+                self.pour_success_rate.pop(0)
+            rate = np.mean(self.pour_success_rate) if self.pour_success_rate else 0.5
+            if success and rate > 0.8:
+                self.pour_volume = max(40.0, self.pour_volume * 0.95)
+            elif not success:
+                self.pour_volume = min(60.0, self.pour_volume * 1.05)
+
+        # Dynamic tray physics (Stage 3)
+        if self.holding_tray and self.stage == 3:
+            tray_acc = (self.tray_pos - self.prev_tray_pos) / 0.01 if self.steps > 1 else np.zeros(3)
+            self.cup_vel += tray_acc * 0.01 - self.cup_friction * self.cup_vel
+            self.cup_pos += self.cup_vel * 0.01
+            self.cup_pos[:2] = np.clip(self.cup_pos[:2], self.tray_pos[:2] - 0.2, self.tray_pos[:2] + 0.2)
+        self.prev_tray_pos = self.tray_pos.copy()
+
+        # Gripping logic
+        def attempt_grip(dist, obj, holding, threshold, hand='left'):
+            fingers = self.left_fingers if hand == 'left' else self.right_fingers
+            mean_grip = np.mean(fingers) * self.cup_size if obj == 'cup' else np.mean(fingers)
+            if dist < 0.1 and not holding:
+                success = mean_grip > threshold and np.random.random() < (mean_grip - threshold + 0.2)
+                self.grip_success_rate[obj].append(1 if success else 0)
+                if len(self.grip_success_rate[obj]) > 100:
+                    self.grip_success_rate[obj].pop(0)
+                rate = np.mean(self.grip_success_rate[obj]) if self.grip_success_rate[obj] else 0.5
+                if success:
+                    print(f"Picked up {obj} with color {self.cup_color if obj == 'cup' else None}")
+                    if rate > 0.8:
+                        self.grip_precision[obj] = max(0.6, self.grip_precision[obj] * 0.95)
+                else:
+                    self.grip_precision[obj] = min(1.0, self.grip_precision[obj] * 1.05)
+                return success
+            return holding
+
+        self.holding_cup = attempt_grip(dist_to_cup, 'cup', self.holding_cup, self.grip_precision['cup'], 'left')
+        if self.stage == 3:
+            self.holding_tray = attempt_grip(dist_to_tray, 'tray', self.holding_tray, self.grip_precision['tray'], 'right')
+            if self.holding_tray:
+                self.holding_cup = False
+
+        if self.holding_cup:
+            self.cup_pos = self.left_hand_pos.copy()
+        if self.holding_tray:
+            self.tray_pos = self.right_hand_pos.copy()
+            if not self.cup_pos[2] < self.tray_pos[2]:
+                self.cup_pos = self.tray_pos + [0, 0, 0.1]
+
+        # Enhanced reward shaping
+        reward = 0
+        if self.stage == 1:  # Grind coffee
+            reward -= dist_to_cup * 0.1  # Small penalty for distance
+            if dist_to_cup < 0.1:
+                reward += self.reach_bonus
+            if 9 <= self.grounds <= 11:
+                reward += 50  # Perfect grind
+            elif self.grounds > 15:
+                reward -= 20  # Over-grind penalty
+        elif self.stage == 2:  # Pour water
+            reward -= dist_to_cup * 0.1
+            if dist_to_cup < 0.1:
+                reward += self.reach_bonus
+            if 45 <= self.water <= 55:
+                reward += 50  # Perfect pour
+            if self.grounds > 0 and self.water > 0:
+                coffee_quality = min(100, 100 * (self.grounds / 10) * (self.water / 50))  # Simulated quality
+                reward += coffee_quality * 0.5
+            if self.water > 60:
+                reward -= 10  # Spill penalty
+        else:  # Stage 3: Serve on tray
+            reward -= (dist_cup_to_table + dist_tray_to_target) * 0.1
+            if dist_to_tray < 0.1:
+                reward += self.reach_bonus
+            if dist_cup_to_table < 0.05:
+                reward += 50
+            if self.holding_tray:
+                cup_offset = np.linalg.norm(self.cup_pos - self.tray_pos - [0, 0, 0.1])
+                if cup_offset < 0.1:
+                    reward += self.tray_balance_bonus
+            if dist_tray_to_target < 0.05 and dist_cup_to_table < 0.05:
+                reward += 200  # Coffee served successfully
+
+        done = done or (self.steps >= self.max_steps) or \
+               (self.stage == 1 and self.grounds >= 9) or \
+               (self.stage == 2 and self.water >= 45 and self.grounds >= 9) or \
+               (self.stage == 3 and dist_tray_to_target < 0.05 and dist_cup_to_table < 0.05)
+        info["distances"] = {
+            "dist_to_cup": dist_to_cup,
+            "dist_to_tray": dist_to_tray,
+            "dist_cup_to_table": dist_cup_to_table,
+            "dist_tray_to_target": dist_tray_to_target
+        }
+        info["coffee_state"] = {"beans": self.beans, "grounds": self.grounds, "water": self.water}
+        info["grip_precision"] = self.grip_precision.copy()
+        info["grind_time"] = self.grind_time
+        info["pour_volume"] = self.pour_volume
+        return self._get_observation(obs), reward, done, info
+
+    def _get_observation(self, base_obs):
+        if self.stage == 1:
+            return np.concatenate([base_obs, self.cup_pos, [self.cup_size], self.cup_color, [self.beans, self.grounds]])
+        elif self.stage == 2:
+            return np.concatenate([base_obs, self.cup_pos, self.table_pos, [self.cup_size], self.cup_color, [self.beans, self.grounds, self.water]])
+        return np.concatenate([base_obs, self.cup_pos, self.table_pos, self.tray_target, self.cup_vel, [self.cup_size], self.cup_color, [self.beans, self.grounds, self.water]])
+
+    def render(self, mode='human'):
+        return self.base_env.render(mode=mode)
+
+# Training function with exploration noise
+def train_humanoid_curriculum():
+    # Add action noise for exploration
+    n_actions = 29
+    action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.1 * np.ones(n_actions))
+
+    env1 = make_vec_env(lambda: HumanoidCoffeeTrayEnv(stage=1, reach_bonus=25), n_envs=1)
+    model = PPO("MlpPolicy", env1, learning_rate=3e-4, n_steps=2048, batch_size=64, n_epochs=10,
+                gamma=0.99, gae_lambda=0.95, ent_coef=0.01, verbose=1, action_noise=action_noise)
+    print("Training Stage 1: Grind coffee")
+    model.learn(total_timesteps=500000)
+
+    env2 = make_vec_env(lambda: HumanoidCoffeeTrayEnv(stage=2, stack_penalty=2.0, reach_bonus=25), n_envs=1)
+    model.set_env(env2)
+    print("Training Stage 2: Pour water")
+    model.learn(total_timesteps=1500000)
+
+    env3 = make_vec_env(lambda: HumanoidCoffeeTrayEnv(stage=3, stack_penalty=2.0, reach_bonus=25, tray_balance_bonus=50), n_envs=1)
+    model.set_env(env3)
+    print("Training Stage 3: Serve on tray")
+    model.learn(total_timesteps=3000000)
+    model.save("ppo_humanoid_coffee_tray")
+    return model, env3
+
+# Evaluation with debugging
+def evaluate_with_debugging(model, env, label=""):
+    print(f"\nEvaluating {label}:")
+    total_rewards = []
+    final_distances = {key: [] for key in ["dist_to_cup", "dist_to_tray", "dist_cup_to_table", "dist_tray_to_target"]}
+    
+    for episode in range(5):
+        obs = env.reset()
+        episode_reward = 0
+        for step in range(env.envs[0].max_steps):
+            action, _ = model.predict(obs, deterministic=True)
+            obs, reward, done, info = env.step(action)
+            episode_reward += reward
+            if done:
+                break
+        total_rewards.append(episode_reward)
+        for key in final_distances:
+            final_distances[key].append(info["distances"][key])
+        print(f"Episode {episode + 1}: Reward={episode_reward:.2f}, Distances={info['distances']}, "
+              f"Coffee state={info['coffee_state']}, Grip precision={info['grip_precision']}, "
+              f"Grind time={info['grind_time']:.2f}, Pour volume={info['pour_volume']:.2f}")
+
+    mean_reward = np.mean(total_rewards)
+    std_reward = np.std(total_rewards)
+    mean_distances = {key: np.mean(values) for key, values in final_distances.items()}
+    print(f"\n{label} Summary: Mean reward={mean_reward:.2f}, Std={std_reward:.2f}")
+    print(f"Average final distances: {mean_distances}")
+    return mean_reward, std_reward, mean_distances
+
+# Visual debugging
+def test_with_visual_debugging(model, env, label=""):
+    print(f"\nTesting {label} (MuJoCo render + console debug):")
+    obs = env.reset()
+    total_reward = 0
+    for step in range(env.envs[0].max_steps):
+        action, _ = model.predict(obs, deterministic=True)
+        obs, reward, done, info = env.step(action)
+        total_reward += reward
+        env.render()
+        print(f"Step {step + 1}: Reward={reward:.2f}, Distances={info['distances']}, "
+              f"Coffee state={info['coffee_state']}, Grip precision={info['grip_precision']}, "
+              f"Grind time={info['grind_time']:.2f}, Pour volume={info['pour_volume']:.2f}")
+        if done:
+            print(f"Episode ended after {step + 1} steps. Total reward={total_reward:.2f}")
+            break
+
+# Main execution
+if __name__ == "__main__":
+    model, env = train_humanoid_curriculum()
+    test_with_visual_debugging(model, env, "Humanoid Coffee Tray (Stage 3)")
+    evaluate_with_debugging(model, env, "Humanoid Coffee Tray (Stage 3)")
+    env.close()
