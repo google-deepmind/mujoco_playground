@@ -368,6 +368,9 @@ def main(argv):
   jit_inference_fn = jax.jit(inference_fn)
 
   # Prepare for evaluation
+  eval_env = (
+      None if _VISION.value else registry.load(_ENV_NAME.value, config=env_cfg)
+  )
   num_envs = 1
   if _VISION.value:
     eval_env = env
