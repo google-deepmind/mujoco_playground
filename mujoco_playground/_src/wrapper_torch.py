@@ -34,19 +34,15 @@ from mujoco_playground._src import wrapper
 
 
 def _jax_to_torch(tensor):
-  from jax._src.dlpack import to_dlpack  # pylint: disable=import-outside-toplevel
   import torch.utils.dlpack as tpack  # pytype: disable=import-error # pylint: disable=import-outside-toplevel
 
-  tensor = to_dlpack(tensor)
   tensor = tpack.from_dlpack(tensor)
   return tensor
 
 
 def _torch_to_jax(tensor):
-  from jax._src.dlpack import from_dlpack  # pylint: disable=import-outside-toplevel
-  import torch.utils.dlpack as tpack  # pytype: disable=import-error # pylint: disable=import-outside-toplevel
+  from jax.dlpack import from_dlpack  # pylint: disable=import-outside-toplevel
 
-  tensor = tpack.to_dlpack(tensor)
   tensor = from_dlpack(tensor)
   return tensor
 
