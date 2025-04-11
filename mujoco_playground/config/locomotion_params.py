@@ -89,7 +89,7 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
         value_obs_key="privileged_state",
     )
   
-  elif env_name in ("Go2JoystickFlatTerrain"):
+  elif env_name in ("Go2JoystickFlatTerrain","Go2JoystickRoughTerrain"):
     rl_config.num_timesteps = 200_000_000
     rl_config.num_evals = 10
     rl_config.num_resets_per_eval = 1
