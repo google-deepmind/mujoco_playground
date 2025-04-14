@@ -26,6 +26,7 @@ import jax.numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
 import numpy as np
+from orbax import checkpoint as ocp
 
 from mujoco_playground._src.manipulation.aloha.s2r import base
 from mujoco_playground._src.manipulation.aloha.s2r import depth_noise
@@ -96,10 +97,14 @@ def get_frozen_encoder_fn():
   """Returns a function that encodes observations using a frozen vision MLP."""
   vision_mlp = networks.VisionMLP(layer_sizes=(0,), policy_head=False)
 
-  fpath = (
-      pathlib.Path(__file__).parent / 'params' / 'VisionMLP2ChanCIFAR10.prms'
-  )
-  params = brax_loader.load_params(fpath)
+  fpath = pathlib.Path(__file__).parent / 'params' / 'VisionMLP2ChanCIFAR10_OCP'
+  orbax_checkpointer = ocp.PyTreeCheckpointer()
+  sample_obs = {
+      'pixels/view_0': jp.ones((1, 32, 32, 3)),
+      'pixels/view_1': jp.ones((1, 32, 32, 3)),
+  }
+  target = vision_mlp.init(jax.random.PRNGKey(0), sample_obs)
+  params = orbax_checkpointer.restore(fpath, item=target)
 
   def encoder_fn(obs: Dict):
     stacked = {}
@@ -251,10 +256,10 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
         'pixels/view_1': dmap_r,
         'pixels/view_2': rgb_l,
         'pixels/view_3': rgb_r,
-        'pixels/latent_0': latent_rgb_l,  # actual policy inputs
-        'pixels/latent_1': latent_rgb_r,
-        'pixels/latent_2': r_dmap_l.ravel(),
-        'pixels/latent_3': r_dmap_r.ravel(),
+        'latent_0': latent_rgb_l,  # actual policy inputs
+        'latent_1': latent_rgb_r,
+        'latent_2': r_dmap_l.ravel(),
+        'latent_3': r_dmap_r.ravel(),
         'socket_hidden': socket_hidden,
         'peg_hidden': peg_hidden,
     }
@@ -376,10 +381,10 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
           'pixels/view_1': (8, 8, 1),
           'pixels/view_2': (32, 32, 3),
           'pixels/view_3': (32, 32, 3),
-          'pixels/latent_0': (64,),
-          'pixels/latent_1': (64,),
-          'pixels/latent_2': (64,),
-          'pixels/latent_3': (64,),
+          'latent_0': (64,),
+          'latent_1': (64,),
+          'latent_2': (64,),
+          'latent_3': (64,),
       })
     else:
       ret['state_with_time'] = (110,)
@@ -416,9 +421,7 @@ def make_teacher_policy():
   @jax.jit
   def teacher_inference_fn(obs, rng):
     l_obs, r_obs = jp.split(obs['state_pickup'], 2, axis=-1)
-    l_act, l_extras = teacher_pick_policy(
-        {'state': l_obs}, None
-    )  # l_extras: for example, loc: B x act_size.
+    l_act, l_extras = teacher_pick_policy({'state': l_obs}, None)
     r_act, r_extras = teacher_pick_policy({'state': r_obs}, None)
 
     if 'socket_hidden' in obs:
@@ -436,7 +439,7 @@ def make_teacher_policy():
         lambda x, y: jp.concatenate([x, y], axis=-1), l_extras, r_extras
     )
     obs_2 = {k: obs[k] for k in obs_keys}
-    act_2, act_extras_2 = teacher_insert_policy(obs_2, rng)
+    act_2, act_extras_2 = teacher_insert_policy(obs_2, None)
 
     # Select a pair based on condition.
     c = obs['has_switched'].reshape(-1, 1)  # 0 for policy 1; 1 for policy 2

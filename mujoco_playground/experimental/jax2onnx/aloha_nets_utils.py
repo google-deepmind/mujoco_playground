@@ -231,7 +231,6 @@ class TFVisionMLP(tf.keras.Model):
     # Optionally normalize states and append them.
     if states is not None:
       if (self.mean_state is not None) and (self.std_state is not None):
-        # import ipdb; ipdb.set_trace()
         proprio_size = (states.shape[0], 33)
         assert states.shape == proprio_size
         assert self.mean_state.shape == (33,)

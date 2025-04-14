@@ -76,9 +76,12 @@ def default_config() -> config_dict.ConfigDict:  # TODO :Clean up.
 
 def load_brax_policy(
     path: Union[str, pathlib.Path], env_name, action_size, distill: bool = False
-):  # Distillation requires extra inference metadata.
+):
+  """
+  Load a policy from a Brax checkpoint file. Assumes network parameters
+  match manipulation_params.py.
+  """
   ppo_params = manipulation_params.brax_ppo_config(env_name)
-  # Pickcube 1-arm policy.
   network_factory = functools.partial(
       ppo_networks.make_ppo_networks, **ppo_params.network_factory
   )
