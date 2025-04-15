@@ -20,8 +20,10 @@ from ml_collections import config_dict
 from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
+from mujoco_playground._src.manipulation.aloha import distillation as aloha_distillation
 from mujoco_playground._src.manipulation.aloha import handover as aloha_handover
-from mujoco_playground._src.manipulation.aloha import single_peg_insertion as aloha_peg
+from mujoco_playground._src.manipulation.aloha import peg_insertion as aloha_peg_insertion
+from mujoco_playground._src.manipulation.aloha import pick as aloha_pick
 from mujoco_playground._src.manipulation.franka_emika_panda import open_cabinet as panda_open_cabinet
 from mujoco_playground._src.manipulation.franka_emika_panda import pick as panda_pick
 from mujoco_playground._src.manipulation.franka_emika_panda import pick_cartesian as panda_pick_cartesian
@@ -31,7 +33,9 @@ from mujoco_playground._src.manipulation.leap_hand import rotate_z as leap_rotat
 
 _envs = {
     "AlohaHandOver": aloha_handover.HandOver,
-    "AlohaSinglePegInsertion": aloha_peg.SinglePegInsertion,
+    "AlohaPick": aloha_pick.Pick,
+    "AlohaPegInsertion": aloha_peg_insertion.SinglePegInsertion,
+    "AlohaPegInsertionDistill": aloha_distillation.DistillPegInsertion,
     "PandaPickCube": panda_pick.PandaPickCube,
     "PandaPickCubeOrientation": panda_pick.PandaPickCubeOrientation,
     "PandaPickCubeCartesian": panda_pick_cartesian.PandaPickCubeCartesian,
@@ -43,7 +47,9 @@ _envs = {
 
 _cfgs = {
     "AlohaHandOver": aloha_handover.default_config,
-    "AlohaSinglePegInsertion": aloha_peg.default_config,
+    "AlohaPick": aloha_pick.default_config,
+    "AlohaPegInsertion": aloha_peg_insertion.default_config,
+    "AlohaPegInsertionDistill": aloha_distillation.default_config,
     "PandaPickCube": panda_pick.default_config,
     "PandaPickCubeOrientation": panda_pick.default_config,
     "PandaPickCubeCartesian": panda_pick_cartesian.default_config,
@@ -56,6 +62,8 @@ _cfgs = {
 _randomizer = {
     "LeapCubeRotateZAxis": leap_rotate_z.domain_randomize,
     "LeapCubeReorient": leap_cube_reorient.domain_randomize,
+    "AlohaPick": aloha_pick.domain_randomize,
+    "AlohaPegInsertionDistill": aloha_distillation.domain_randomize,
 }
 
 
@@ -108,7 +116,9 @@ def load(
       An instance of the environment.
   """
   if env_name not in _envs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}")
+    raise ValueError(
+        f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}"
+    )
   config = config or get_default_config(env_name)
   return _envs[env_name](config=config, config_overrides=config_overrides)
 
