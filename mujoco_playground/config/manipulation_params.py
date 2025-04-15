@@ -49,19 +49,7 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     rl_config.batch_size = 512
     rl_config.max_grad_norm = 1.0
     rl_config.network_factory.policy_hidden_layer_sizes = (256, 256, 256)
-  elif env_name == "AlohaSinglePegInsertion":
-    rl_config.num_timesteps = 150_000_000
-    rl_config.num_evals = 10
-    rl_config.unroll_length = 40
-    rl_config.num_minibatches = 32
-    rl_config.num_updates_per_batch = 8
-    rl_config.discounting = 0.97
-    rl_config.learning_rate = 3e-4
-    rl_config.entropy_cost = 1e-2
-    rl_config.num_envs = 1024
-    rl_config.batch_size = 512
-    rl_config.network_factory.policy_hidden_layer_sizes = (256, 256, 256, 256)
-  elif env_name == "AlohaS2RPick":
+  elif env_name == "AlohaPick":
     rl_config.num_timesteps = 20_000_000
     rl_config.num_evals = int(rl_config.num_timesteps / 4_000_000)
     rl_config.unroll_length = 10
@@ -76,7 +64,7 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     rl_config.network_factory.policy_hidden_layer_sizes = (32, 32, 32, 32)
     rl_config.network_factory.policy_obs_key = "state"
     rl_config.network_factory.value_obs_key = "privileged"
-  elif env_name == "AlohaS2RPegInsertion":
+  elif env_name == "AlohaPegInsertion":
     rl_config.num_timesteps = 10_000_000
     rl_config.num_evals = max(int(rl_config.num_timesteps / 2_000_000), 5)
     rl_config.unroll_length = 10

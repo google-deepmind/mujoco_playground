@@ -94,8 +94,8 @@ def use_obs_history(key, obs_history: Dict, obs: Dict) -> Tuple[Dict, Dict]:
   return obs_history, obs
 
 
-class S2RBase(base.AlohaEnv):
-  """Base class for Aloha S2R agent components."""
+class PickBase(base.AlohaEnv):
+  """Base class for Pick and downstream tasks."""
 
   def __init__(
       self,

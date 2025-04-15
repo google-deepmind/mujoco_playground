@@ -61,14 +61,14 @@ Two key observations highlight why BC’s direct supervision is more efficient:
 
 ```bash
 cd <PATH_TO_YOUR_CLONE>
-export PARAMS_PATH=mujoco_playground/_src/manipulation/aloha/s2r/params
+export PARAMS_PATH=mujoco_playground/_src/manipulation/aloha/params
 
 # Teacher phase 1 (Note: Domain randomization disables rendering)
-python learning/train_jax_ppo.py --env_name AlohaS2RPick --domain_randomization --norender_final_policy --save_params_path $PARAMS_PATH/AlohaS2RPick.prms
+python learning/train_jax_ppo.py --env_name AlohaPick --domain_randomization --norender_final_policy --save_params_path $PARAMS_PATH/AlohaPick.prms
 sleep 0.5
 
 # Teacher phase 2
-python learning/train_jax_ppo.py --env_name AlohaS2RPegInsertion --save_params_path $PARAMS_PATH/AlohaS2RPegInsertion.prms
+python learning/train_jax_ppo.py --env_name AlohaPegInsertion --save_params_path $PARAMS_PATH/AlohaPegInsertion.prms
 sleep 0.5
 
 # Distill to student (skip evaluations to save time)

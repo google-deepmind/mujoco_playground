@@ -52,7 +52,7 @@ import tensorflow as tf
 import tf2onnx
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.manipulation.aloha.s2r.distillation import get_frozen_encoder_fn
+import mujoco_playground._src.manipulation.aloha.distillation as distillation
 from mujoco_playground.experimental.jax2onnx.aloha_nets_utils import TFVisionMLP
 from mujoco_playground.experimental.jax2onnx.aloha_nets_utils import transfer_jax_params_to_tf
 
@@ -100,12 +100,12 @@ obs_shape = {
     'has_switched': (1,),
     'pixels/rgb_l': pix_shape,
     'pixels/rgb_r': pix_shape,
-    'pixels/latent_0': (
+    'latent_0': (
         64,
     ),  # For simplicity, also include the 4 latents as in the obs for checkpoint-related param init.
-    'pixels/latent_1': (64,),
-    'pixels/latent_2': (64,),
-    'pixels/latent_3': (64,),
+    'latent_1': (64,),
+    'latent_2': (64,),
+    'latent_3': (64,),
     'privileged': (110,),
     'proprio': (33,),
     'state': (109,),
@@ -130,7 +130,7 @@ class TFPolicyWrapper(tf.keras.Model):
     # Unpack the dictionary into pixel streams and state vector.
     pixel_streams = [inputs['pixels/view_0'], inputs['pixels/view_1']]
     state = inputs['proprio']
-    latents = [inputs['pixels/latent_0'], inputs['pixels/latent_1']]
+    latents = [inputs['latent_0'], inputs['latent_1']]
     return self.policy_net(
         pixel_streams, states=state, depth_latent_streams=latents
     )
@@ -152,18 +152,19 @@ bc_network = network_factory(
     preprocess_observations_fn=running_statistics.normalize,
 )
 make_inference_fn = bc_networks.make_inference_fn(bc_network)
-encoder_fn = get_frozen_encoder_fn()
+encoder_fn = distillation.get_frozen_encoder_fn()
 
 # Load encoder params for transfering to TF.
-encoder_path = (
-    mjx_env.ROOT_PATH
-    / 'manipulation'
-    / 'aloha'
-    / 's2r'
-    / 'params'
-    / 'VisionMLP2ChanCIFAR10.prms'
-)
-encoder_params = model.load_params(encoder_path)
+# encoder_path = (
+#     mjx_env.ROOT_PATH
+#     / 'manipulation'
+#     / 'aloha'
+#     / 'params'
+#     / 'VisionMLP2ChanCIFAR10_OCP'
+# )
+# # encoder_params = model.load_params(encoder_path)
+# vision_mlp = networks.VisionMLP(layer_sizes=(0,), policy_head=False)
+encoder_params = distillation.load_frozen_encoder_params()
 
 # Initialize param structure for loading with orbax checkpointer.
 dummy_obs = {k: TEST_SCALE * jp.ones(v) for k, v in obs_shape.items()}
@@ -195,10 +196,10 @@ def make_inference_fn_wrapper(params):
 
     p_ins = {
         'proprio': jax_input['proprio'],
-        'pixels/latent_0': latents[0],  # RGB latents
-        'pixels/latent_1': latents[1],
-        'pixels/latent_2': jax_input['pixels/latent_2'],  # Depth latents
-        'pixels/latent_3': jax_input['pixels/latent_3'],
+        'latent_0': latents[0],  # RGB latents
+        'latent_1': latents[1],
+        'latent_2': jax_input['latent_2'],  # Depth latents
+        'latent_3': jax_input['latent_3'],
     }
 
     return base_inference_fn(p_ins, _)
@@ -212,8 +213,8 @@ def jax_params_to_onnx(params, output_path):
       'pixels/view_0': TEST_SCALE * np.ones(tf_pix_shape, dtype=np.float32),
       'pixels/view_1': TEST_SCALE * np.ones(tf_pix_shape, dtype=np.float32),
       'proprio': TEST_SCALE * np.ones((state_dim), dtype=np.float32),
-      'pixels/latent_0': TEST_SCALE * np.ones((1, 64), dtype=np.float32),
-      'pixels/latent_1': TEST_SCALE * np.ones((1, 64), dtype=np.float32),
+      'latent_0': TEST_SCALE * np.ones((1, 64), dtype=np.float32),
+      'latent_1': TEST_SCALE * np.ones((1, 64), dtype=np.float32),
   }
 
   mean = params[0].mean['proprio']
@@ -247,11 +248,11 @@ def jax_params_to_onnx(params, output_path):
       'proprio': tf.TensorSpec(
           shape=state_dim, dtype=tf.float32, name='proprio'
       ),
-      'pixels/latent_0': tf.TensorSpec(
-          shape=(1, 64), dtype=tf.float32, name='pixels/latent_0'
+      'latent_0': tf.TensorSpec(
+          shape=(1, 64), dtype=tf.float32, name='latent_0'
       ),
-      'pixels/latent_1': tf.TensorSpec(
-          shape=(1, 64), dtype=tf.float32, name='pixels/latent_1'
+      'latent_1': tf.TensorSpec(
+          shape=(1, 64), dtype=tf.float32, name='latent_1'
       ),
   }]
 
@@ -298,7 +299,11 @@ def jax_params_to_onnx(params, output_path):
 
 
 experiment = Path(ckpt_path)
-ckpts = list(experiment.glob('[!c]*'))
+ckpts = [
+    ckpt
+    for ckpt in experiment.glob('*')
+    if ckpt.name != 'bc_network_config.json'
+]
 ckpts.sort(key=lambda x: int(x.name))
 assert ckpts, 'No checkpoints found'
 orbax_checkpointer = ocp.PyTreeCheckpointer()

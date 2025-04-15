@@ -28,7 +28,7 @@ import numpy as np
 from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward as reward_util
-from mujoco_playground._src.manipulation.aloha.s2r import base
+from mujoco_playground._src.manipulation.aloha import pick_base
 from mujoco_playground._src.mjx_env import State  # pylint: disable=g-importing-member
 
 
@@ -81,7 +81,7 @@ def default_config() -> config_dict.ConfigDict:
   return config
 
 
-class Pick(base.S2RBase):
+class Pick(pick_base.PickBase):
   """Phase 1 of the peg insertion task.
   Picks a block and brings it to the target."""
 
@@ -91,12 +91,7 @@ class Pick(base.S2RBase):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     xml_path = (
-        mjx_env.ROOT_PATH
-        / "manipulation"
-        / "aloha"
-        / "xmls"
-        / "s2r"
-        / "mjx_pick.xml"
+        mjx_env.ROOT_PATH / "manipulation" / "aloha" / "xmls" / "mjx_pick.xml"
     )
     super().__init__(xml_path, config, config_overrides)
     self.obj_names = ["box"]
@@ -136,7 +131,7 @@ class Pick(base.S2RBase):
     actor_obs, _ = flax.core.pop(
         obs, "privileged"
     )  # Privileged obs is not randomly shifted.
-    info["obs_history"] = base.init_obs_history(
+    info["obs_history"] = pick_base.init_obs_history(
         actor_obs, self._config.max_obs_delay
     )
     reward, done = jp.zeros(2)
@@ -189,7 +184,7 @@ class Pick(base.S2RBase):
   ) -> Tuple[Dict[str, float], bool]:
     grasped = self.is_grasped(data, "left")
     gripping_error = jp.linalg.norm(self.gripping_error(data, "left", "box"))
-    grasped_correct = gripping_error < base.GRASP_THRESH
+    grasped_correct = gripping_error < pick_base.GRASP_THRESH
     grasped = grasped * grasped_correct.astype(float)
 
     box_pos = data.xpos[self._box_body]
@@ -295,7 +290,7 @@ class Pick(base.S2RBase):
     obs = self._get_obs_pick(data, state.info)
     obs = {"state": obs, "privileged": obs}
     state.info["rng"], key_obs = jax.random.split(state.info["rng"])
-    base.use_obs_history(key_obs, state.info["obs_history"], obs)
+    pick_base.use_obs_history(key_obs, state.info["obs_history"], obs)
     return State(
         data,
         obs,
@@ -355,7 +350,7 @@ class Pick(base.S2RBase):
         info["reached_box"],
         (
             jp.linalg.norm(self.gripping_error(data, "left", "box"))
-            < base.GRASP_THRESH
+            < pick_base.GRASP_THRESH
         ),
     )
 

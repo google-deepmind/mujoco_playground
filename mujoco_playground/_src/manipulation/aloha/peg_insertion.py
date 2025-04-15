@@ -32,7 +32,7 @@ import numpy as np
 
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward as reward_util
-from mujoco_playground._src.manipulation.aloha.s2r import base
+from mujoco_playground._src.manipulation.aloha import pick_base
 from mujoco_playground._src.mjx_env import State  # pylint: disable=g-importing-member
 from mujoco_playground.config import manipulation_params
 
@@ -111,7 +111,7 @@ def load_pick_policy(path, env_name):
   return jax.jit(single2biarm_inference_fn)
 
 
-class PegInsertion(base.S2RBase):
+class SinglePegInsertion(pick_base.PickBase):
   """
   Phase 2 of the peg insertion task. From a pre-insertion position,
   brings the peg into the socket.
@@ -132,8 +132,7 @@ class PegInsertion(base.S2RBase):
         / "manipulation"
         / "aloha"
         / "xmls"
-        / "s2r"
-        / "mjx_peg_insertion.xml"
+        / "mjx_single_peg_insertion.xml"
     )
     super().__init__(
         xml_path=xml_path,
@@ -144,9 +143,14 @@ class PegInsertion(base.S2RBase):
     if distill:
       self.pick_policy = lambda x: jp.zeros(self.action_size)
     else:
+      pick_path = pathlib.Path(__file__).parent / "params" / "AlohaPick.prms"
+      if not pick_path.exists():
+        raise FileNotFoundError(
+            f"Pick policy file not found: {pick_path}, please train one."
+        )
       self.pick_policy = load_pick_policy(
-          pathlib.Path(__file__).parent / "params" / "AlohaS2RPick.prms",
-          "AlohaS2RPick",
+          pick_path,
+          "AlohaPick",
       )
 
     self.obj_names = ["socket", "peg"]
@@ -210,7 +214,7 @@ class PegInsertion(base.S2RBase):
     # Random obs delay.
     actor_obs, _ = flax.core.pop(obs, "has_switched")
     actor_obs, _ = flax.core.pop(actor_obs, "privileged")
-    info["obs_history"] = base.init_obs_history(
+    info["obs_history"] = pick_base.init_obs_history(
         actor_obs, self._config.max_obs_delay
     )
 
@@ -473,7 +477,7 @@ class PegInsertion(base.S2RBase):
 
     # Update observation history
     state.info["rng"], key_obs = jax.random.split(state.info["rng"])
-    base.use_obs_history(key_obs, state.info["obs_history"], obs)
+    pick_base.use_obs_history(key_obs, state.info["obs_history"], obs)
 
     # Update step counter
     state.info["_steps"] += self._config.action_repeat

@@ -28,9 +28,9 @@ from mujoco import mjx
 import numpy as np
 from orbax import checkpoint as ocp
 
-from mujoco_playground._src.manipulation.aloha.s2r import base
-from mujoco_playground._src.manipulation.aloha.s2r import depth_noise
-from mujoco_playground._src.manipulation.aloha.s2r import peg_insertion
+from mujoco_playground._src.manipulation.aloha import depth_noise
+from mujoco_playground._src.manipulation.aloha import peg_insertion
+from mujoco_playground._src.manipulation.aloha import pick_base
 from mujoco_playground._src.manipulation.franka_emika_panda.randomize_vision import perturb_orientation
 
 
@@ -93,10 +93,8 @@ def adjust_brightness(img, scale):
   return jp.clip(img * scale, 0, 1)
 
 
-def get_frozen_encoder_fn():
-  """Returns a function that encodes observations using a frozen vision MLP."""
+def load_frozen_encoder_params():
   vision_mlp = networks.VisionMLP(layer_sizes=(0,), policy_head=False)
-
   fpath = pathlib.Path(__file__).parent / 'params' / 'VisionMLP2ChanCIFAR10_OCP'
   orbax_checkpointer = ocp.PyTreeCheckpointer()
   sample_obs = {
@@ -104,7 +102,13 @@ def get_frozen_encoder_fn():
       'pixels/view_1': jp.ones((1, 32, 32, 3)),
   }
   target = vision_mlp.init(jax.random.PRNGKey(0), sample_obs)
-  params = orbax_checkpointer.restore(fpath, item=target)
+  return orbax_checkpointer.restore(fpath, item=target)
+
+
+def get_frozen_encoder_fn():
+  """Returns a function that encodes observations using a frozen vision MLP."""
+  vision_mlp = networks.VisionMLP(layer_sizes=(0,), policy_head=False)
+  params = load_frozen_encoder_params()
 
   def encoder_fn(obs: Dict):
     stacked = {}
@@ -115,7 +119,7 @@ def get_frozen_encoder_fn():
   return encoder_fn
 
 
-class DistillPegInsertion(peg_insertion.PegInsertion):
+class DistillPegInsertion(peg_insertion.SinglePegInsertion):
   """Distillation environment for peg insertion task with vision capabilities.
 
   This class extends the PegInsertion environment to support policy distillation
@@ -272,7 +276,7 @@ class DistillPegInsertion(peg_insertion.PegInsertion):
     qpos_noise = jax.random.uniform(
         rng, (16,), minval=0, maxval=self._config.obs_noise.robot_qpos
     )
-    qpos_noise = qpos_noise * jp.array(base.QPOS_NOISE_MASK_SINGLE * 2)
+    qpos_noise = qpos_noise * jp.array(pick_base.QPOS_NOISE_MASK_SINGLE * 2)
     qpos = data.qpos[:16] + qpos_noise
     l_posobs = qpos[self._left_qposadr]
     r_posobs = qpos[self._right_qposadr]
@@ -395,23 +399,21 @@ def make_teacher_policy():
   """Create a teacher policy for distillation from pre-trained models."""
   env = DistillPegInsertion(config_overrides={'vision': False})
 
-  f_pick_teacher = (
-      pathlib.Path(__file__).parent / 'params' / 'AlohaS2RPick.prms'
-  )
+  f_pick_teacher = pathlib.Path(__file__).parent / 'params' / 'AlohaPick.prms'
   f_insert_teacher = (
-      pathlib.Path(__file__).parent / 'params' / 'AlohaS2RPegInsertion.prms'
+      pathlib.Path(__file__).parent / 'params' / 'AlohaPegInsertion.prms'
   )
 
   teacher_pick_policy = peg_insertion.load_brax_policy(
       f_pick_teacher.as_posix(),
-      'AlohaS2RPick',
+      'AlohaPick',
       int(env.action_size / 2),
       distill=True,
   )
 
   teacher_insert_policy = peg_insertion.load_brax_policy(
       f_insert_teacher.as_posix(),
-      'AlohaS2RPegInsertion',
+      'AlohaPegInsertion',
       env.action_size,
       distill=True,
   )
