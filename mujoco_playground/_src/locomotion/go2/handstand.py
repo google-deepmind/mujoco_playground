@@ -115,18 +115,14 @@ class Handstand(go2_base.Go2Env):
     self._joint_pose = self._default_pose[self._joint_ids]
 
     geom_names = [
-        "fl_calf1",
-        "fl_calf2",
-        "fr_calf1",
-        "fr_calf2",
-        "fl_thigh1",
-        "fl_thigh2",
-        "fl_thigh3",
-        "fr_thigh1",
-        "fr_thigh2",
-        "fr_thigh3",
-        "fl_hip",
-        "fr_hip",
+        "fl_calf_0",
+        "fl_calf_1",
+        "fr_calf_0",
+        "fr_calf_1",
+        "fl_thigh_0",
+        "fr_thigh_0",
+        "fl_hip_0",
+        "fr_hip_0",
     ]
     self._unwanted_contact_geom_ids = np.array(
         [self._mj_model.geom(name).id for name in geom_names]
@@ -391,18 +387,14 @@ class Footstand(Handstand):
     self._z_des = 0.53
 
     geom_names = [
-        "rl_calf1",
-        "rl_calf2",
-        "rr_calf1",
-        "rr_calf2",
-        "rl_thigh1",
-        "rl_thigh2",
-        "rl_thigh3",
-        "rr_thigh1",
-        "rr_thigh2",
-        "rr_thigh3",
-        "rl_hip",
-        "rr_hip",
+        "rl_calf_0",
+        "rl_calf_1",
+        "rr_calf_0",
+        "rr_calf_1",
+        "rl_thigh_0",
+        "rr_thigh_0",
+        "rl_hip_0",
+        "rr_hip_0",
     ]
     self._unwanted_contact_geom_ids = np.array(
         [self._mj_model.geom(name).id for name in geom_names]
