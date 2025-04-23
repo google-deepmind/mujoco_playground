@@ -141,10 +141,10 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     rl_config.num_resets_per_eval = 1
     rl_config.entropy_cost = 0.005
     rl_config.network_factory = config_dict.create(
-      policy_hidden_layer_sizes=(512, 256, 128),
-      value_hidden_layer_sizes=(512, 256, 128),
-      policy_obs_key="state",
-      value_obs_key="privileged_state",
+        policy_hidden_layer_sizes=(512, 256, 128),
+        value_hidden_layer_sizes=(512, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="privileged_state",
     )
 
   elif env_name in (

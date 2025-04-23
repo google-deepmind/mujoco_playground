@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+
+hydra:
+  run:
+    dir: ${log_dir}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${log_dir}/${hydra.job.name}
+    subdir: ${hydra.job.override_dirname}/seed=${training.seed}
+  job:
+    config:
+      override_dirname:
+        exclude_keys:
+          - log_dir
+          - training.seed
+          - wandb
+    chdir: true
+
+
+wandb:
+  group: null
+  notes: null
+  name: ${hydra:job.override_dirname}
+
+jit: true
+
+training:
+  seed: 0
+  render: true
