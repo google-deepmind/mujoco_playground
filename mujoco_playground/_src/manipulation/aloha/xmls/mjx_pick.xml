@@ -1,5 +1,5 @@
 <mujoco model="single cube">
-  <include file="mjx_scene_single.xml"/>
+  <include file="mjx_half_scene.xml"/>
 
   <option iterations="10" ls_iterations="10" timestep="0.005" integrator="implicitfast" impratio="5"/>
 

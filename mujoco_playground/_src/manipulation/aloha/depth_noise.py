@@ -263,51 +263,5 @@ def np_get_line_bank(height, width, bank_size=100, color_range=None):
   return np.stack(bank)
 
 
-def _or_reduce(arr, axis):
-  """
-  Reduces `arr` along the given axis using an 'or' operator defined as:
-    result = y if y != 0 else x
-  That is, it returns the last nonzero element along that axis (or 0 if all
-  are zero).
-
-  Parameters
-  ----------
-  arr : np.ndarray
-      The input array.
-  axis : int
-      The axis over which to reduce.
-
-  Returns
-  -------
-  reduced : np.ndarray
-      The array with the specified axis reduced.
-  """
-  # Flip the array along the specified axis so that the last element comes
-  # first.
-  arr_rev = jp.flip(arr, axis=axis)  # (H, W)
-
-  # Create a boolean mask of nonzero values.
-  mask = arr_rev != 0  # (H, W)
-
-  # Find the index of the first nonzero element in the reversed array.
-  # If all are zero, np.argmax will return 0. (This is fine since arr[...0]
-  # is 0.)
-  idx_rev = jp.argmax(mask, axis=axis)  # (H,)
-
-  # Convert that index back into an index for the original (unflipped) array.
-  n = arr.shape[axis]
-  idx_orig = n - 1 - idx_rev  # (H,)
-
-  idx_expanded = jp.expand_dims(idx_orig, axis=axis)  # (H, 1)
-
-  # Now take the elements along the axis.
-  reduced = jp.take_along_axis(arr, idx_expanded, axis=axis)  # (H, 1)
-
-  # Remove the reduced axis.
-  reduced = jp.squeeze(reduced, axis=axis)  # (H,)
-
-  return reduced
-
-
 def apply_line_noise(img, line_noise):
-  return _or_reduce(jp.stack([img, line_noise]), axis=0)
+  return jp.where(line_noise != 0, line_noise, img)

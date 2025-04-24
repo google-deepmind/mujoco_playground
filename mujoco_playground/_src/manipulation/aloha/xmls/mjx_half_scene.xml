@@ -1,7 +1,7 @@
 <mujoco model="aloha_scene">
   <compiler meshdir="assets" texturedir="assets"/>
 
-  <include file="mjx_aloha_single.xml"/>
+  <include file="mjx_half_aloha.xml"/>
 
   <custom>
     <numeric data="24" name="max_contact_points"/>

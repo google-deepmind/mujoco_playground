@@ -37,9 +37,6 @@ def get_assets() -> Dict[str, bytes]:
   path = mjx_env.ROOT_PATH / "manipulation" / "aloha" / "xmls"
   mjx_env.update_assets(assets, path, "*.xml")
   mjx_env.update_assets(assets, path / "assets")
-  path = mjx_env.ROOT_PATH / "manipulation" / "aloha" / "xmls" / "s2r"
-  mjx_env.update_assets(assets, path, "*.xml")
-  mjx_env.update_assets(assets, path / "assets")
   return assets
 
 
