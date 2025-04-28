@@ -106,6 +106,28 @@ def get_ppo_train_fn():
   return train_fn
 
 
+def get_sac_train_fn():
+  from brax.training.agents.sac import networks as sac_networks
+  from brax.training.agents.sac import train as sac
+
+  from mujoco_playground.config import locomotion_params
+
+  sac_params = locomotion_params.brax_sac_config(env_name)
+  sac_training_params = dict(sac_params)
+  network_factory = sac_networks.make_sac_networks
+  if "network_factory" in sac_params:
+    del sac_training_params["network_factory"]
+    network_factory = functools.partial(
+        sac_networks.make_sac_networks, **sac_params.network_factory
+    )
+  train_fn = functools.partial(
+      sac.train,
+      **dict(sac_training_params),
+      network_factory=network_factory,
+  )
+  return train_fn
+
+
 class Counter:
 
   def __init__(self):
@@ -187,7 +209,13 @@ def main(cfg):
       f"\n{OmegaConf.to_yaml(cfg)}"
   )
   logger = WeightAndBiasesWriter(cfg)
-  train_fn = get_ppo_train_fn()
+  if agent_name == "SAC":
+    train_fn = get_sac_train_fn()
+  elif agent_name == "PPO":
+    train_fn = get_ppo_train_fn()
+  else:
+    raise NotImplementedError
+  rng = jax.random.PRNGKey(cfg.training.seed)
   steps = Counter()
   with jax.disable_jit(not cfg.jit):
     make_policy, params, _ = train_fn(
