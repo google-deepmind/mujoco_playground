@@ -123,10 +123,10 @@ class Quadruped(mjx_env.MjxEnv):
   def _get_obs(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
     del info
     ego = self._egocentric_state(data)
-    torso_vel = self.torso_velocity(data)
-    upright = self.torso_upright(data)
-    imu = self.imu(data)
-    force_torque = self.force_torque(data)
+    torso_vel = self._torso_velocity(data)
+    upright = self._torso_upright(data)
+    imu = self._imu(data)
+    force_torque = self._force_torque(data)
     return jp.hstack((ego, torso_vel, upright, imu, force_torque))
 
   def _get_reward(
@@ -138,7 +138,7 @@ class Quadruped(mjx_env.MjxEnv):
   ) -> jax.Array:
     del info, action
     move_reward = reward.tolerance(
-        self.torso_velocity(data)[0],
+        self._torso_velocity(data)[0],
         bounds=(self._desired_speed, float("inf")),
         sigmoid="linear",
         margin=self._desired_speed,
@@ -150,7 +150,7 @@ class Quadruped(mjx_env.MjxEnv):
     return move_reward * upright_reward
 
   def _upright_reward(self, data: mjx.Data) -> jax.Array:
-    upright = self.torso_upright(data)
+    upright = self._torso_upright(data)
     return reward.tolerance(
         upright,
         bounds=(1, float("inf")),
@@ -160,20 +160,25 @@ class Quadruped(mjx_env.MjxEnv):
     )
 
   def _egocentric_state(self, data: mjx.Data) -> jax.Array:
+    """Returns the egocentric state of the quadruped, combining position, velocity, and action."""
     return jp.hstack((data.qpos[7:], data.qvel[7:], data.act))
 
-  def torso_upright(self, data: mjx.Data) -> jax.Array:
+  def _torso_upright(self, data: mjx.Data) -> jax.Array:
+    """Returns the upright orientation of the torso, extracted from the torso's rotation matrix."""
     return data.xmat[self._torso_id, 2, 2]
 
-  def torso_velocity(self, data: mjx.Data) -> jax.Array:
+  def _torso_velocity(self, data: mjx.Data) -> jax.Array:
+    """Returns the torso velocity using the velocimeter sensor data."""
     return mjx_env.get_sensor_data(self.mj_model, data, "velocimeter")
 
-  def imu(self, data: mjx.Data) -> jax.Array:
+  def _imu(self, data: mjx.Data) -> jax.Array:
+    """Returns the combined gyroscope and accelerometer data from the IMU sensor."""
     gyro = mjx_env.get_sensor_data(self.mj_model, data, "imu_gyro")
     accelerometer = mjx_env.get_sensor_data(self.mj_model, data, "imu_accel")
     return jp.hstack((gyro, accelerometer))
 
-  def force_torque(self, data: mjx.Data) -> jax.Array:
+  def _force_torque(self, data: mjx.Data) -> jax.Array:
+    """Returns the combined force and torque data from the specified sensor names."""
     return jp.hstack([
         mjx_env.get_sensor_data(self.mj_model, data, name)
         for name in self._force_torque_names
