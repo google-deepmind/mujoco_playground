@@ -15,28 +15,26 @@
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-from IPython.display import clear_output
-from IPython.display import display
 import matplotlib.pyplot as plt
 import numpy as np
+from IPython.display import clear_output, display
 
 
 class TrainingPlotter:
-
   def __init__(
-      self,
-      max_timesteps: int = 50_000_000,
-      figsize: Tuple[int, int] = (12, 8),
-      max_cols: int = 3,
+    self,
+    max_timesteps: int = 50_000_000,
+    figsize: Tuple[int, int] = (12, 8),
+    max_cols: int = 3,
   ):
     self.max_timesteps = max_timesteps
     self.max_cols = max_cols
 
     # Default main metrics that we always want to plot.
     self.default_metrics = [
-        "eval/episode_reward",
-        "eval/avg_episode_length",
-        "steps_per_second",
+      "eval/episode_reward",
+      "eval/avg_episode_length",
+      "steps_per_second",
     ]
 
     self.metrics = []
@@ -65,9 +63,7 @@ class TrainingPlotter:
     plt.rcParams["axes.linewidth"] = 0.8
 
     # Create initial figure and axes - we'll resize this later
-    n_cols = min(
-        self.max_cols, 1
-    )  # Start with at least 1 column, but respect max_cols
+    n_cols = min(self.max_cols, 1)  # Start with at least 1 column, but respect max_cols
     n_rows = 1
     self.fig, self.axes = plt.subplots(n_rows, n_cols, figsize=figsize)
     self.axes = np.array([[self.axes]])
@@ -110,9 +106,9 @@ class TrainingPlotter:
     reward_prefix = "eval/episode_reward/"
     for key in metrics:
       if (
-          key.startswith(reward_prefix)
-          and not key.endswith("_std")
-          and key != "eval/episode_reward"
+        key.startswith(reward_prefix)
+        and not key.endswith("_std")
+        and key != "eval/episode_reward"
       ):
         self.reward_detail_metrics.append(key)
         self.reward_detail_metrics_std.append(f"{key}_std")
@@ -175,16 +171,16 @@ class TrainingPlotter:
 
     # Update all metrics data.
     all_metrics = (
-        self.metrics
-        + self.reward_detail_metrics
-        + self.error_metrics
-        + self.termination_metrics
+      self.metrics
+      + self.reward_detail_metrics
+      + self.error_metrics
+      + self.termination_metrics
     )
     all_metrics_std = (
-        self.metrics_std
-        + self.reward_detail_metrics_std
-        + self.error_metrics_std
-        + self.termination_metrics_std
+      self.metrics_std
+      + self.reward_detail_metrics_std
+      + self.error_metrics_std
+      + self.termination_metrics_std
     )
 
     for metric in all_metrics:
@@ -193,9 +189,7 @@ class TrainingPlotter:
       elif metric in metrics:
         self.metrics_data[metric].append(metrics[metric])
       else:
-        last_value = (
-            self.metrics_data[metric][-1] if self.metrics_data[metric] else 0
-        )
+        last_value = self.metrics_data[metric][-1] if self.metrics_data[metric] else 0
         self.metrics_data[metric].append(last_value)
 
     for metric_std in all_metrics_std:
@@ -203,9 +197,9 @@ class TrainingPlotter:
         self.metrics_std_data[metric_std].append(metrics[metric_std])
       else:
         last_value = (
-            self.metrics_std_data[metric_std][-1]
-            if self.metrics_std_data[metric_std]
-            else 0
+          self.metrics_std_data[metric_std][-1]
+          if self.metrics_std_data[metric_std]
+          else 0
         )
         self.metrics_std_data[metric_std].append(last_value)
 
@@ -213,22 +207,22 @@ class TrainingPlotter:
 
     # Combine all metrics for plotting.
     all_metrics = (
-        self.metrics
-        + self.reward_detail_metrics
-        + self.error_metrics
-        + self.termination_metrics
+      self.metrics
+      + self.reward_detail_metrics
+      + self.error_metrics
+      + self.termination_metrics
     )
     all_metrics_std = (
-        self.metrics_std
-        + self.reward_detail_metrics_std
-        + self.error_metrics_std
-        + self.termination_metrics_std
+      self.metrics_std
+      + self.reward_detail_metrics_std
+      + self.error_metrics_std
+      + self.termination_metrics_std
     )
     all_labels = (
-        self.metric_labels
-        + self.reward_detail_metric_labels
-        + self.error_metric_labels
-        + self.termination_metric_labels
+      self.metric_labels
+      + self.reward_detail_metric_labels
+      + self.error_metric_labels
+      + self.termination_metric_labels
     )
 
     # Calculate grid dimensions using max_cols.
@@ -242,9 +236,7 @@ class TrainingPlotter:
       # Calculate a better figure size based on the number of plots and columns
       width = max(12, n_cols * 3.5)  # 3.5 inches per column
       height = max(8, n_rows * 2.5)  # 2.5 inches per row
-      self.fig, self.axes = plt.subplots(
-          n_rows, n_cols, figsize=(width, height)
-      )
+      self.fig, self.axes = plt.subplots(n_rows, n_cols, figsize=(width, height))
 
       # Handle case where there's only one plot.
       if n_rows == 1 and n_cols == 1:
@@ -259,12 +251,7 @@ class TrainingPlotter:
 
     # Add a single x-axis label at the bottom of the figure.
     self.fig.text(
-        0.5,
-        0.01,
-        "# environment steps",
-        ha="center",
-        fontsize=12,
-        fontweight="bold",
+      0.5, 0.01, "# environment steps", ha="center", fontsize=12, fontweight="bold"
     )
 
     # Update layout and display.
@@ -273,15 +260,15 @@ class TrainingPlotter:
     display(self.fig)
 
   def _plot_metrics(
-      self,
-      metrics_list: List[str],
-      metrics_std_list: List[str],
-      labels_list: List[str],
-      axes_grid: np.ndarray,
+    self,
+    metrics_list: List[str],
+    metrics_std_list: List[str],
+    labels_list: List[str],
+    axes_grid: np.ndarray,
   ) -> None:
     """Plot a set of metrics on the given axes grid."""
     for i, (metric, metric_std, label) in enumerate(
-        zip(metrics_list, metrics_std_list, labels_list)
+      zip(metrics_list, metrics_std_list, labels_list)
     ):
       row, col = i // axes_grid.shape[1], i % axes_grid.shape[1]
       if row < axes_grid.shape[0] and col < axes_grid.shape[1]:
@@ -306,9 +293,9 @@ class TrainingPlotter:
 
         y_values = self.metrics_data[metric]
         yerr_values = (
-            self.metrics_std_data[metric_std]
-            if metric_std in self.metrics_std_data
-            else None
+          self.metrics_std_data[metric_std]
+          if metric_std in self.metrics_std_data
+          else None
         )
 
         if y_values:
@@ -323,20 +310,18 @@ class TrainingPlotter:
 
           # Use smaller font for title to save space
           ax.set_title(
-              f"{prefix}{label}: {y_values[-1]:.3f}",
-              fontsize=10,
-              fontweight="bold",
+            f"{prefix}{label}: {y_values[-1]:.3f}", fontsize=10, fontweight="bold"
           )
 
           # Plot the line with improved styling
           line = ax.errorbar(
-              self.x_data,
-              y_values,
-              yerr=yerr_values,
-              color="black",
-              linewidth=1.5,
-              elinewidth=0.7,
-              capsize=2,
+            self.x_data,
+            y_values,
+            yerr=yerr_values,
+            color="black",
+            linewidth=1.5,
+            elinewidth=0.7,
+            capsize=2,
           )
 
           # Add very subtle shading under the curve for better visibility

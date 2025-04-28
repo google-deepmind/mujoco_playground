@@ -18,6 +18,7 @@ import jax
 from mujoco import mjx
 import numpy as np
 
+
 FLOOR_GEOM_ID = 0
 TORSO_BODY_ID = 1
 ANKLE_JOINT_IDS = np.array([[21, 22, 27, 28]])
@@ -29,7 +30,7 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
     # Floor friction: =U(0.4, 1.0).
     rng, key = jax.random.split(rng)
     geom_friction = model.geom_friction.at[FLOOR_GEOM_ID, 0].set(
-        jax.random.uniform(key, minval=0.2, maxval=0.6)
+        jax.random.uniform(key, minval=0.2, maxval=.6)
     )
 
     rng, key = jax.random.split(rng)

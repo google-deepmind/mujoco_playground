@@ -14,11 +14,11 @@
 # ==============================================================================
 """Deploy an MJX policy in ONNX format to C MuJoCo and play with it."""
 
-from etils import epath
 import mujoco
-from mujoco import viewer
 import numpy as np
 import onnxruntime as rt
+from etils import epath
+from mujoco import viewer
 
 from mujoco_playground._src.locomotion.apollo import constants as apollo_constants
 from mujoco_playground._src.locomotion.apollo.base import get_assets
@@ -32,20 +32,18 @@ class OnnxController:
   """ONNX controller for the Booster Apollo humanoid."""
 
   def __init__(
-      self,
-      policy_path: str,
-      default_angles: np.ndarray,
-      ctrl_dt: float,
-      n_substeps: int,
-      action_scale: float = 0.5,
-      vel_scale_x: float = 1.0,
-      vel_scale_y: float = 1.0,
-      vel_scale_rot: float = 1.0,
+    self,
+    policy_path: str,
+    default_angles: np.ndarray,
+    ctrl_dt: float,
+    n_substeps: int,
+    action_scale: float = 0.5,
+    vel_scale_x: float = 1.0,
+    vel_scale_y: float = 1.0,
+    vel_scale_rot: float = 1.0,
   ):
     self._output_names = ["continuous_actions"]
-    self._policy = rt.InferenceSession(
-        policy_path, providers=["CPUExecutionProvider"]
-    )
+    self._policy = rt.InferenceSession(policy_path, providers=["CPUExecutionProvider"])
 
     self._action_scale = action_scale
     self._default_angles = default_angles
@@ -56,15 +54,13 @@ class OnnxController:
     self._ctrl_dt = ctrl_dt
 
     self._phase = np.array([0.0, np.pi])
-    self._base_phase_dt = (
-        2 * np.pi * ctrl_dt
-    )  # Store base phase_dt without frequency
+    self._base_phase_dt = 2 * np.pi * ctrl_dt  # Store base phase_dt without frequency
 
     self._joystick = Gamepad(
-        vel_scale_x=vel_scale_x,
-        vel_scale_y=vel_scale_y,
-        vel_scale_rot=vel_scale_rot,
-        deadzone=0.03,
+      vel_scale_x=vel_scale_x,
+      vel_scale_y=vel_scale_y,
+      vel_scale_rot=vel_scale_rot,
+      deadzone=0.03,
     )
 
   def get_obs(self, model, data) -> np.ndarray:
@@ -77,7 +73,8 @@ class OnnxController:
     command = self._joystick.get_command()
     ph = self._phase if np.linalg.norm(command) >= 0.01 else np.ones(2) * np.pi
     phase = np.concatenate([np.cos(ph), np.sin(ph)])
-    obs = np.hstack([
+    obs = np.hstack(
+      [
         linvel,
         gyro,
         gravity,
@@ -86,7 +83,8 @@ class OnnxController:
         joint_velocities,
         self._last_action,
         phase,
-    ])
+      ]
+    )
     return obs.astype(np.float32)
 
   def get_control(self, model: mujoco.MjModel, data: mujoco.MjData) -> None:
@@ -112,8 +110,8 @@ def load_callback(model=None, data=None):
   mujoco.set_mjcb_control(None)
 
   model = mujoco.MjModel.from_xml_path(
-      apollo_constants.FEET_ONLY_FLAT_TERRAIN_XML.as_posix(),
-      assets=get_assets(),
+    apollo_constants.FEET_ONLY_FLAT_TERRAIN_XML.as_posix(),
+    assets=get_assets(),
   )
   data = mujoco.MjData(model)
 
@@ -125,14 +123,14 @@ def load_callback(model=None, data=None):
   model.opt.timestep = sim_dt
 
   policy = OnnxController(
-      policy_path=(_ONNX_DIR / "apollo_policy.onnx").as_posix(),
-      default_angles=np.array(model.keyframe("knees_bent").qpos[7:]),
-      ctrl_dt=ctrl_dt,
-      n_substeps=n_substeps,
-      action_scale=0.5,
-      vel_scale_x=1.5,
-      vel_scale_y=0.8,
-      vel_scale_rot=1.5,
+    policy_path=(_ONNX_DIR / "apollo_policy.onnx").as_posix(),
+    default_angles=np.array(model.keyframe("knees_bent").qpos[7:]),
+    ctrl_dt=ctrl_dt,
+    n_substeps=n_substeps,
+    action_scale=0.5,
+    vel_scale_x=1.5,
+    vel_scale_y=0.8,
+    vel_scale_rot=1.5,
   )
 
   mujoco.set_mjcb_control(policy.get_control)
