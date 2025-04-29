@@ -88,9 +88,9 @@ def get_ppo_train_fn():
   from brax.training.agents.ppo import networks as ppo_networks
   from brax.training.agents.ppo import train as ppo
 
-  from mujoco_playground.config import locomotion_params
+  from mujoco_playground.config import dm_control_suite_params
 
-  ppo_params = locomotion_params.brax_ppo_config(env_name)
+  ppo_params = dm_control_suite_params.brax_ppo_config(env_name)
   ppo_training_params = dict(ppo_params)
   network_factory = ppo_networks.make_ppo_networks
   if "network_factory" in ppo_params:
@@ -110,9 +110,9 @@ def get_sac_train_fn():
   from brax.training.agents.sac import networks as sac_networks
   from brax.training.agents.sac import train as sac
 
-  from mujoco_playground.config import locomotion_params
+  from mujoco_playground.config import dm_control_suite_params
 
-  sac_params = locomotion_params.brax_sac_config(env_name)
+  sac_params = dm_control_suite_params.brax_sac_config(env_name)
   sac_training_params = dict(sac_params)
   network_factory = sac_networks.make_sac_networks
   if "network_factory" in sac_params:
