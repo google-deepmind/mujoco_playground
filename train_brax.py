@@ -77,7 +77,7 @@ def get_state_path() -> str:
   return log_path
 
 
-def get_ppo_train_fn():
+def get_ppo_train_fn(env_name):
   from brax.training.agents.ppo import networks as ppo_networks
   from brax.training.agents.ppo import train as ppo
 
@@ -99,7 +99,7 @@ def get_ppo_train_fn():
   return train_fn
 
 
-def get_sac_train_fn():
+def get_sac_train_fn(env_name):
   from brax.training.agents.sac import networks as sac_networks
   from brax.training.agents.sac import train as sac
 
@@ -200,17 +200,17 @@ def main(cfg):
       f"\n{OmegaConf.to_yaml(cfg)}"
   )
   logger = WeightAndBiasesWriter(cfg)
-  if cfg.agent_name == "SAC":
-    train_fn = get_sac_train_fn()
-  elif cfg.agent_name == "PPO":
-    train_fn = get_ppo_train_fn()
+  if cfg.training.agent_name == "SAC":
+    train_fn = get_sac_train_fn(cfg.training.task_name)
+  elif cfg.training.agent_name == "PPO":
+    train_fn = get_ppo_train_fn(cfg.training.task_name)
   else:
     raise NotImplementedError
   rng = jax.random.PRNGKey(cfg.training.seed)
   steps = Counter()
-  env = registry.load(cfg.task_name)
-  env_cfg = registry.get_default_config(cfg.task_name)
-  eval_env = registry.load(cfg.task_name, config=env_cfg)
+  env = registry.load(cfg.training.task_name)
+  env_cfg = registry.get_default_config(cfg.training.task_name)
+  eval_env = registry.load(cfg.training.task_name, config=env_cfg)
   with jax.disable_jit(not cfg.jit):
     make_policy, params, _ = train_fn(
         environment=env,
