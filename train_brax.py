@@ -77,13 +77,6 @@ def get_state_path() -> str:
   return log_path
 
 
-env_name = "QuadrupedRun"
-env = registry.load(env_name)
-env_cfg = registry.get_default_config(env_name)
-eval_env = registry.load(env_name, config=env_cfg)
-agent_name = "PPO"
-
-
 def get_ppo_train_fn():
   from brax.training.agents.ppo import networks as ppo_networks
   from brax.training.agents.ppo import train as ppo
@@ -207,14 +200,17 @@ def main(cfg):
       f"\n{OmegaConf.to_yaml(cfg)}"
   )
   logger = WeightAndBiasesWriter(cfg)
-  if agent_name == "SAC":
+  if cfg.agent_name == "SAC":
     train_fn = get_sac_train_fn()
-  elif agent_name == "PPO":
+  elif cfg.agent_name == "PPO":
     train_fn = get_ppo_train_fn()
   else:
     raise NotImplementedError
   rng = jax.random.PRNGKey(cfg.training.seed)
   steps = Counter()
+  env = registry.load(cfg.task_name)
+  env_cfg = registry.get_default_config(cfg.task_name)
+  eval_env = registry.load(cfg.task_name, config=env_cfg)
   with jax.disable_jit(not cfg.jit):
     make_policy, params, _ = train_fn(
         environment=env,

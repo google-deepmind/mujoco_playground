@@ -28,3 +28,5 @@ jit: true
 training:
   seed: 0
   render: true
+  task_name: QuadrupedRun
+  agent_name: PPO
