@@ -16,6 +16,7 @@ hydra:
           - wandb
     chdir: true
 
+log_dir: outputs
 
 wandb:
   group: null
