@@ -200,9 +200,7 @@ def render(env, policy, steps, rng, camera=None):
   return np.asarray(videos).transpose(0, 1, 4, 2, 3)
 
 
-@hydra.main(
-    version_base=None, config_path="ss2r/configs", config_name="train_brax"
-)
+@hydra.main(version_base=None, config_path="config", config_name="train_brax")
 def main(cfg):
   _LOG.info(
       "Setting up experiment with the following configuration: "
