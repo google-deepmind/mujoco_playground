@@ -156,7 +156,7 @@ def rollout(
 
 
 def pytrees_unstack(pytree):
-  leaves, treedef = jax.tree_flatten(pytree)
+  leaves, treedef = jax.tree.flatten(pytree)
   n_trees = leaves[0].shape[0]
   new_leaves = [[] for _ in range(n_trees)]
   for leaf in leaves:
