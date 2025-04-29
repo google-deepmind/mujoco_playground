@@ -168,28 +168,11 @@ def pytrees_unstack(pytree):
 
 def render(env, policy, steps, rng, camera=None):
   state = env.reset(rng)
-  state = jax.tree.map(lambda x: x[:5], state)
-  orig_model = env._mjx_model
-  if hasattr(env, "_randomized_models"):
-    render_env = env
-    model = jax.tree.map(
-        lambda x, ax: jp.take(x, jp.arange(5), axis=ax)
-        if ax is not None
-        else x,
-        env._randomized_models,
-        env._in_axes,
-    )
-    render_env._randomized_models = model
-  else:
-    render_env = env
-  _, trajectory = rollout(render_env, policy, steps, rng[0], state)
-  env._mjx_model = orig_model
+  _, trajectory = rollout(env, policy, steps, rng[0], state)
   videos = []
-  for i in range(5):
-    ep_trajectory = jax.tree.map(lambda x: x[:, i], trajectory)
-    ep_trajectory = pytrees_unstack(ep_trajectory)
-    video = env.render(ep_trajectory, camera=camera)
-    videos.append(video)
+  ep_trajectory = pytrees_unstack(trajectory)
+  video = env.render(ep_trajectory, camera=camera)
+  videos.append(video)
   return np.asarray(videos).transpose(0, 1, 4, 2, 3)
 
 
