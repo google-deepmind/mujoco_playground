@@ -108,9 +108,6 @@ def ensure_menagerie_exists() -> None:
       raise
 
 
-ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
-
-
 Observation = Union[jax.Array, Mapping[str, jax.Array]]
 ObservationSize = Union[int, Mapping[str, Union[Tuple[int, ...], int]]]
 

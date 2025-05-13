@@ -41,6 +41,9 @@ from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spo
 from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 
+
+ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
+
 _envs = {
     "ApolloJoystickFlatTerrain": functools.partial(
         apollo_joystick.Joystick, task="flat_terrain"
