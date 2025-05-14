@@ -182,7 +182,9 @@ def load(
       An instance of the environment.
   """
   if env_name not in _envs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}")
+    raise ValueError(
+        f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}"
+    )
   config = config or get_default_config(env_name)
   return _envs[env_name](config=config, config_overrides=config_overrides)
 

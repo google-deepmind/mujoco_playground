@@ -24,17 +24,16 @@ import warnings
 from absl import app
 from absl import flags
 from absl import logging
+from brax.io import model
 from brax.training.agents.ppo import networks as ppo_networks
 from brax.training.agents.ppo import networks_vision as ppo_networks_vision
 from brax.training.agents.ppo import train as ppo
 from etils import epath
-from flax.training import orbax_utils
 import jax
 import jax.numpy as jp
 import mediapy as media
 from ml_collections import config_dict
 import mujoco
-from orbax import checkpoint as ocp
 from tensorboardX import SummaryWriter
 import wandb
 
@@ -73,9 +72,15 @@ _VISION = flags.DEFINE_boolean("vision", False, "Use vision input")
 _LOAD_CHECKPOINT_PATH = flags.DEFINE_string(
     "load_checkpoint_path", None, "Path to load checkpoint from"
 )
+_SAVE_PARAMS_PATH = flags.DEFINE_string(
+    "save_params_path", None, "Path to save parameters to"
+)
 _SUFFIX = flags.DEFINE_string("suffix", None, "Suffix for the experiment name")
 _PLAY_ONLY = flags.DEFINE_boolean(
     "play_only", False, "If true, only play with the model and do not train"
+)
+_RENDER_FINAL_POLICY = flags.DEFINE_boolean(
+    "render_final_policy", True, "If true, render the final policy"
 )
 _USE_WANDB = flags.DEFINE_boolean(
     "use_wandb",
@@ -264,17 +269,6 @@ def main(argv):
   ckpt_path.mkdir(parents=True, exist_ok=True)
   print(f"Checkpoint path: {ckpt_path}")
 
-  # Save environment configuration
-  with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
-    json.dump(env_cfg.to_dict(), fp, indent=4)
-
-  # Define policy parameters function for saving checkpoints
-  def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
-    orbax_checkpointer = ocp.PyTreeCheckpointer()
-    save_args = orbax_utils.save_args_from_target(params)
-    path = ckpt_path / f"{current_step}"
-    orbax_checkpointer.save(path, params, force=True, save_args=save_args)
-
   training_params = dict(ppo_params)
   if "network_factory" in training_params:
     del training_params["network_factory"]
@@ -319,8 +313,8 @@ def main(argv):
       ppo.train,
       **training_params,
       network_factory=network_factory,
-      policy_params_fn=policy_params_fn,
       seed=_SEED.value,
+      save_checkpoint_path=ckpt_path,
       restore_checkpoint_path=restore_checkpoint_path,
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
@@ -360,6 +354,12 @@ def main(argv):
   if len(times) > 1:
     print(f"Time to JIT compile: {times[1] - times[0]}")
     print(f"Time to train: {times[-1] - times[1]}")
+
+  if _SAVE_PARAMS_PATH.value is not None:
+    model.save_params(epath.Path(_SAVE_PARAMS_PATH.value).resolve(), params)
+
+  if not _RENDER_FINAL_POLICY.value:
+    return
 
   print("Starting inference...")
 
