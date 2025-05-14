@@ -42,7 +42,7 @@ from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 
 
-ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
+mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
 
 _envs = {
     "ApolloJoystickFlatTerrain": functools.partial(

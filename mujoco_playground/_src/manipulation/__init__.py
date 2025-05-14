@@ -30,7 +30,7 @@ from mujoco_playground._src.manipulation.leap_hand import reorient as leap_cube_
 from mujoco_playground._src.manipulation.leap_hand import rotate_z as leap_rotate_z
 
 
-ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
+mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
 
 _envs = {
     "AlohaHandOver": aloha_handover.HandOver,
