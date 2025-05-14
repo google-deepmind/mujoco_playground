@@ -31,9 +31,7 @@ DomainRandomizer = Optional[
 
 # A tuple containing all available environment names across all suites.
 ALL_ENVS = (
-    dm_control_suite.ALL_ENVS
-    + locomotion.ALL_ENVS
-    + manipulation.ALL_ENVS
+    dm_control_suite.ALL_ENVS + locomotion.ALL_ENVS + manipulation.ALL_ENVS
 )
 
 
