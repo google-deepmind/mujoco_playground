@@ -27,7 +27,6 @@ from absl import logging
 from brax.training.agents.ppo import networks as ppo_networks
 from brax.training.agents.ppo import networks_vision as ppo_networks_vision
 from brax.training.agents.ppo import train as ppo
-from rscope import rscope_utils
 from etils import epath
 from flax.training import orbax_utils
 import jax
@@ -36,6 +35,7 @@ import mediapy as media
 from ml_collections import config_dict
 import mujoco
 from orbax import checkpoint as ocp
+from rscope import rscope_utils
 from tensorboardX import SummaryWriter
 import wandb
 
@@ -133,7 +133,9 @@ _POLICY_OBS_KEY = flags.DEFINE_string(
     "policy_obs_key", "state", "Policy obs key"
 )
 _VALUE_OBS_KEY = flags.DEFINE_string("value_obs_key", "state", "Value obs key")
-_DETERMINISTIC_EVAL = flags.DEFINE_boolean("deterministic_eval", False, "Use deterministic eval")
+_DETERMINISTIC_EVAL = flags.DEFINE_boolean(
+    "deterministic_eval", False, "Use deterministic eval"
+)
 _RSCOPE_ENVS = flags.DEFINE_integer(
     "rscope_envs", None, "Number of rscope envs"
 )
