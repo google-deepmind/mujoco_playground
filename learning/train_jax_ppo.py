@@ -27,7 +27,7 @@ from absl import logging
 from brax.training.agents.ppo import networks as ppo_networks
 from brax.training.agents.ppo import networks_vision as ppo_networks_vision
 from brax.training.agents.ppo import train as ppo
-from brax.training.rscope import rscope_utils
+from rscope import rscope_utils
 from etils import epath
 from flax.training import orbax_utils
 import jax
@@ -333,7 +333,7 @@ def main(argv):
       restore_checkpoint_path=restore_checkpoint_path,
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
-      rscope_envs=_RSCOPE_ENVS.value,
+      num_traced_envs=_RSCOPE_ENVS.value,
   )
 
   times = [time.monotonic()]
