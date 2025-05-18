@@ -67,9 +67,10 @@ For vision-based environments, please refer to the installation instructions in 
 > [!IMPORTANT]
 > Assumes installation from source.
 
-To interactively view trajectories throughout training with [rscope](https://github.com/Andrew-Luo1/rscope)
+To interactively view trajectories throughout training with [rscope](https://github.com/Andrew-Luo1/rscope):
 
 ```
+pip install rscope
 python learning/train_jax_ppo.py --env_name PandaPickCube --rscope_envs 16 --deterministic_eval
 # In a separate terminal
 python -m rscope
