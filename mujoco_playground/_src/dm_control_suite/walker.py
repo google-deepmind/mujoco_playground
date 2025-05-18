@@ -119,7 +119,7 @@ class PlanarWalker(mjx_env.MjxEnv):
 
   def _get_obs(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
     del info  # Unused.
-    orientations = data.xmat[1:, [[0, 0], [0, 2]]].ravel()
+    orientations = data.xmat[1:, [0, 0], [0, 2]].ravel()
     height = data.xmat[self._torso_id, 2, 2]
     velocity = data.qvel
     return jp.concatenate([
