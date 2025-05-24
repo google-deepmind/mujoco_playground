@@ -35,7 +35,6 @@ import mediapy as media
 from ml_collections import config_dict
 import mujoco
 from orbax import checkpoint as ocp
-from rscope import rscope_utils
 from tensorboardX import SummaryWriter
 import wandb
 
@@ -138,6 +137,12 @@ _DETERMINISTIC_EVAL = flags.DEFINE_boolean(
 )
 _RSCOPE_ENVS = flags.DEFINE_integer(
     "rscope_envs", None, "Number of rscope envs"
+)
+_DETERMINISTIC_RSCOPE = flags.DEFINE_boolean(
+    "deterministic_rscope", True, "Log deterministic rollouts"
+)
+_LEGACY_EVALS = flags.DEFINE_boolean(
+    "legacy_evals", True, "Use legacy eval collection"
 )
 
 
@@ -277,13 +282,6 @@ def main(argv):
   with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
     json.dump(env_cfg.to_dict(), fp, indent=4)
 
-  # Define policy parameters function for saving checkpoints
-  def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
-    orbax_checkpointer = ocp.PyTreeCheckpointer()
-    save_args = orbax_utils.save_args_from_target(params)
-    path = ckpt_path / f"{current_step}"
-    orbax_checkpointer.save(path, params, force=True, save_args=save_args)
-
   training_params = dict(ppo_params)
   if "network_factory" in training_params:
     del training_params["network_factory"]
@@ -324,26 +322,26 @@ def main(argv):
   if "num_eval_envs" in training_params:
     del training_params["num_eval_envs"]
   if _RSCOPE_ENVS.value:
+    from rscope import rscope_utils
+
     rscope_utils.rscope_init(env.xml_path, env.model_assets)
 
   train_fn = functools.partial(
       ppo.train,
       **training_params,
       network_factory=network_factory,
-      policy_params_fn=policy_params_fn,
       seed=_SEED.value,
       restore_checkpoint_path=restore_checkpoint_path,
+      save_checkpoint_path=ckpt_path,
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
-      num_traced_envs=_RSCOPE_ENVS.value,
+      legacy_evals=_LEGACY_EVALS.value,
   )
 
   times = [time.monotonic()]
 
   # Progress function for logging
   def progress(num_steps, metrics):
-    if _RSCOPE_ENVS.value:
-      rscope_utils.dump_eval(metrics["eval/data"])
     times.append(time.monotonic())
 
     # Log to Weights & Biases
@@ -355,18 +353,76 @@ def main(argv):
       for key, value in metrics.items():
         writer.add_scalar(key, value, num_steps)
       writer.flush()
-
-    print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
+    if _LEGACY_EVALS.value:
+      print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
+    else:
+      print(f"{num_steps}: loss={metrics['training/total_loss']:.3f}")
 
   # Load evaluation environment
   eval_env = (
       None if _VISION.value else registry.load(_ENV_NAME.value, config=env_cfg)
   )
 
+  # Interactive visualisation of policy checkpoints
+  policy_params_fn = lambda *args: None
+  if _RSCOPE_ENVS.value:
+    if _VISION.value:
+      trace_env = wrapper.TraceWrapper(env)
+    else:
+      trace_env = registry.load(_ENV_NAME.value, config=env_cfg)
+      trace_env = wrapper.wrap_for_brax_training(
+          trace_env,
+          episode_length=ppo_params.episode_length,
+          action_repeat=ppo_params.action_repeat,
+          randomization_fn=training_params.get("randomization_fn"),
+      )
+      trace_env = wrapper.TraceWrapper(trace_env)
+
+    g_make_policy = None
+
+    @jax.jit
+    def get_trace(params, key):
+      key_unroll, key_reset = jax.random.split(key)
+      key_reset = jax.random.split(
+          key_reset,
+          ppo_params.num_envs if _VISION.value else _RSCOPE_ENVS.value,
+      )
+      # Assumed make_policy doesn't change.
+      policy = g_make_policy(params, deterministic=_DETERMINISTIC_RSCOPE.value)
+      state = trace_env.reset(key_reset)
+
+      # collect rollout. Return raw_rolout, obs, rew.
+      def step_fn(c, _):
+        state, key = c
+        key, key_act = jax.random.split(key)
+        act, _ = policy(state.obs, key_act)
+        state = trace_env.step(state, act)
+        full_ret = (state.info["trace"], state.obs, state.reward)
+        return (state, key), jax.tree.map(
+            lambda x: x[: _RSCOPE_ENVS.value], full_ret
+        )
+
+      _, (trace, obs, rew) = jax.lax.scan(
+          step_fn,
+          (state, key_unroll),
+          None,
+          length=ppo_params.episode_length // ppo_params.action_repeat,
+      )
+      return trace, obs, rew
+
+    def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
+      nonlocal g_make_policy
+      if g_make_policy is None:
+        g_make_policy = make_policy  # Assume does not change.
+
+      trace, obs, rew = get_trace(params, jax.random.PRNGKey(_SEED.value))
+      rscope_utils.dump_eval(trace, obs, rew)
+
   # Train or load the model
   make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter
       environment=env,
       progress_fn=progress,
+      policy_params_fn=policy_params_fn,
       eval_env=None if _VISION.value else eval_env,
   )
 
