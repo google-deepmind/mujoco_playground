@@ -29,6 +29,9 @@ from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import push_
 from mujoco_playground._src.manipulation.leap_hand import reorient as leap_cube_reorient
 from mujoco_playground._src.manipulation.leap_hand import rotate_z as leap_rotate_z
 
+
+mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
+
 _envs = {
     "AlohaHandOver": aloha_handover.HandOver,
     "AlohaSinglePegInsertion": aloha_peg.SinglePegInsertion,

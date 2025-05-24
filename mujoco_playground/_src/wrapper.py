@@ -15,13 +15,14 @@
 """Wrappers for MuJoCo Playground environments."""
 
 import functools
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 from brax.envs.wrappers import training as brax_training
 import jax
 from jax import numpy as jp
 import mujoco
 from mujoco import mjx
+import numpy as np
 
 from mujoco_playground._src import mjx_env
 
@@ -66,6 +67,21 @@ class Wrapper(mjx_env.MjxEnv):
   @property
   def xml_path(self) -> str:
     return self.env.xml_path
+
+  def render(
+      self,
+      trajectory: List[mjx_env.State],
+      height: int = 240,
+      width: int = 320,
+      camera: Optional[str] = None,
+      scene_option: Optional[mujoco.MjvOption] = None,
+      modify_scene_fns: Optional[
+          Sequence[Callable[[mujoco.MjvScene], None]]
+      ] = None,
+  ) -> Sequence[np.ndarray]:
+    return self.env.render(
+        trajectory, height, width, camera, scene_option, modify_scene_fns
+    )
 
 
 def wrap_for_brax_training(

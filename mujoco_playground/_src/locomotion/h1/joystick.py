@@ -149,7 +149,7 @@ class Joystick(h1_base.H1Env):
     motor_targets = self._default_pose + action * self._config.action_scale
     motor_targets = jp.clip(motor_targets, self._lowers, self._uppers)
     data = mjx_env.step(
-        self.mjx_model, state.data, motor_targets, self._n_frames
+        self.mjx_model, state.data, motor_targets, self._n_frames  # pytype: disable=attribute-error
     )
 
     obs = self._get_obs(data, state.info, state.obs, noise_rng)
