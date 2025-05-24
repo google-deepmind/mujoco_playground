@@ -142,7 +142,9 @@ _DETERMINISTIC_RSCOPE = flags.DEFINE_boolean(
     "deterministic_rscope", True, "Log deterministic rollouts"
 )
 _LEGACY_EVALS = flags.DEFINE_boolean(
-    "legacy_evals", True, "Use legacy eval collection"
+    "legacy_evals",
+    True,
+    "Overall training faster if set to False; see Brax documentation.",
 )
 
 
