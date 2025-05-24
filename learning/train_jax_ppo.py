@@ -41,6 +41,7 @@ import wandb
 import mujoco_playground
 from mujoco_playground import registry
 from mujoco_playground import wrapper
+from mujoco_playground._src.mjx_env import get_trace_factory
 from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
@@ -141,10 +142,10 @@ _RSCOPE_ENVS = flags.DEFINE_integer(
 _DETERMINISTIC_RSCOPE = flags.DEFINE_boolean(
     "deterministic_rscope", True, "Log deterministic rollouts"
 )
-_LEGACY_EVALS = flags.DEFINE_boolean(
-    "legacy_evals",
+_RUN_EVALS = flags.DEFINE_boolean(
+    "run_evals",
     True,
-    "Overall training faster if set to False; see Brax documentation.",
+    "Run evaluation rollouts between policy updates.",
 )
 
 
@@ -337,7 +338,7 @@ def main(argv):
       save_checkpoint_path=ckpt_path,
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
-      legacy_evals=_LEGACY_EVALS.value,
+      run_evals=_RUN_EVALS.value,
   )
 
   times = [time.monotonic()]
@@ -355,7 +356,7 @@ def main(argv):
       for key, value in metrics.items():
         writer.add_scalar(key, value, num_steps)
       writer.flush()
-    if _LEGACY_EVALS.value:
+    if _RUN_EVALS.value:
       print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
     else:
       print(f"{num_steps}: loss={metrics['training/total_loss']:.3f}")
@@ -380,45 +381,19 @@ def main(argv):
       )
       trace_env = wrapper.TraceWrapper(trace_env)
 
-    g_make_policy = None
-
-    @jax.jit
-    def get_trace(params, key):
-      key_unroll, key_reset = jax.random.split(key)
-      key_reset = jax.random.split(
-          key_reset,
-          ppo_params.num_envs if _VISION.value else _RSCOPE_ENVS.value,
-      )
-      # Assumed make_policy doesn't change.
-      policy = g_make_policy(params, deterministic=_DETERMINISTIC_RSCOPE.value)
-      state = trace_env.reset(key_reset)
-
-      # collect rollout. Return raw_rolout, obs, rew.
-      def step_fn(c, _):
-        state, key = c
-        key, key_act = jax.random.split(key)
-        act, _ = policy(state.obs, key_act)
-        state = trace_env.step(state, act)
-        full_ret = (state.info["trace"], state.obs, state.reward)
-        return (state, key), jax.tree.map(
-            lambda x: x[: _RSCOPE_ENVS.value], full_ret
-        )
-
-      _, (trace, obs, rew) = jax.lax.scan(
-          step_fn,
-          (state, key_unroll),
-          None,
-          length=ppo_params.episode_length // ppo_params.action_repeat,
-      )
-      return trace, obs, rew
+    set_make_policy, get_trace = get_trace_factory(
+        trace_env,
+        ppo_params,
+        _VISION.value,
+        _RSCOPE_ENVS.value,
+        _DETERMINISTIC_RSCOPE.value,
+    )
 
     def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
-      nonlocal g_make_policy
-      if g_make_policy is None:
-        g_make_policy = make_policy  # Assume does not change.
-
-      trace, obs, rew = get_trace(params, jax.random.PRNGKey(_SEED.value))
-      rscope_utils.dump_eval(trace, obs, rew)
+      set_make_policy(make_policy)
+      rscope_utils.dump_eval(
+          *get_trace(params, jax.random.PRNGKey(_SEED.value))
+      )
 
   # Train or load the model
   make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter
