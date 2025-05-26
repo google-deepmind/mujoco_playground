@@ -41,7 +41,6 @@ import wandb
 import mujoco_playground
 from mujoco_playground import registry
 from mujoco_playground import wrapper
-from mujoco_playground._src.mjx_env import get_trace_factory
 from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
@@ -324,10 +323,6 @@ def main(argv):
 
   if "num_eval_envs" in training_params:
     del training_params["num_eval_envs"]
-  if _RSCOPE_ENVS.value:
-    from rscope import rscope_utils
-
-    rscope_utils.rscope_init(env.xml_path, env.model_assets)
 
   train_fn = functools.partial(
       ppo.train,
@@ -369,9 +364,9 @@ def main(argv):
   # Interactive visualisation of policy checkpoints
   policy_params_fn = lambda *args: None
   if _RSCOPE_ENVS.value:
-    if _VISION.value:
-      trace_env = wrapper.TraceWrapper(env)
-    else:
+    from rscope import brax as rscope_utils
+
+    if not _VISION.value:
       trace_env = registry.load(_ENV_NAME.value, config=env_cfg)
       trace_env = wrapper.wrap_for_brax_training(
           trace_env,
@@ -379,21 +374,21 @@ def main(argv):
           action_repeat=ppo_params.action_repeat,
           randomization_fn=training_params.get("randomization_fn"),
       )
-      trace_env = wrapper.TraceWrapper(trace_env)
+    else:
+      trace_env = env
 
-    set_make_policy, get_trace = get_trace_factory(
+    rscope_handle = rscope_utils.BraxRolloutSaver(
         trace_env,
         ppo_params,
         _VISION.value,
         _RSCOPE_ENVS.value,
         _DETERMINISTIC_RSCOPE.value,
+        jax.random.PRNGKey(_SEED.value),
     )
 
     def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
-      set_make_policy(make_policy)
-      rscope_utils.dump_eval(
-          *get_trace(params, jax.random.PRNGKey(_SEED.value))
-      )
+      rscope_handle.set_make_policy(make_policy)
+      rscope_handle.dump_rollout(params)
 
   # Train or load the model
   make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter

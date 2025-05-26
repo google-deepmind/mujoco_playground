@@ -313,28 +313,3 @@ class MadronaWrapper:
   def __getattr__(self, name):
     """Delegate attribute access to the wrapped instance."""
     return getattr(self._env.unwrapped, name)
-
-
-class TraceWrapper(Wrapper):
-  """Saves full trajectories in state.info for rendering."""
-
-  def reset(self, rng: jax.Array) -> mjx_env.State:
-    state = self.env.reset(rng)
-    self._store(state)
-    return state
-
-  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    state = self.env.step(state, action)
-    self._store(state)
-    return state
-
-  def _store(self, state: mjx_env.State):
-    state.info['trace'] = {
-        'qpos': state.data.qpos,
-        'qvel': state.data.qvel,
-        'time': state.data.time,
-        'metrics': state.metrics,
-    }
-    if hasattr(state.data, 'mocap_pos') and hasattr(state.data, 'mocap_quat'):
-      state.info['trace']['mocap_pos'] = state.data.mocap_pos
-      state.info['trace']['mocap_quat'] = state.data.mocap_quat

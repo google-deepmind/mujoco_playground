@@ -275,7 +275,7 @@ class MjxEnv(abc.ABC):
 
   @property
   def model_assets(self) -> Dict[str, Any]:
-    """Use this with xml_path to init a MjModel"""
+    """Dictionary of model assets to use with MjModel.from_xml_path"""
     if hasattr(self, "_model_assets"):
       return self._model_assets
     raise NotImplementedError(
@@ -403,48 +403,3 @@ def get_qvel_ids(
     vdim = dof_width(jnt_type)
     index_list.extend(range(vadr, vadr + vdim))
   return np.array(index_list)
-
-
-def get_trace_factory(
-    trace_env: MjxEnv,
-    ppo_params: config_dict.ConfigDict,
-    vision: bool,
-    rscope_envs: int,
-    determistic: bool,
-):
-  make_policy = None
-
-  def set_make_policy(new_make_policy):
-    nonlocal make_policy
-    if not make_policy:
-      make_policy = new_make_policy
-
-  @jax.jit
-  def get_trace(params, key):
-    key_unroll, key_reset = jax.random.split(key)
-    key_reset = jax.random.split(
-        key_reset,
-        ppo_params.num_envs if vision else rscope_envs,
-    )
-    # Assumed make_policy doesn't change.
-    policy = make_policy(params, deterministic=determistic)
-    state = trace_env.reset(key_reset)
-
-    # collect rollout. Return raw_rolout, obs, rew.
-    def step_fn(c, _):
-      state, key = c
-      key, key_act = jax.random.split(key)
-      act, _ = policy(state.obs, key_act)
-      state = trace_env.step(state, act)
-      full_ret = (state.info["trace"], state.obs, state.reward)
-      return (state, key), jax.tree.map(lambda x: x[:rscope_envs], full_ret)
-
-    _, (trace, obs, rew) = jax.lax.scan(
-        step_fn,
-        (state, key_unroll),
-        None,
-        length=ppo_params.episode_length // ppo_params.action_repeat,
-    )
-    return trace, obs, rew
-
-  return set_make_policy, get_trace
