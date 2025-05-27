@@ -72,7 +72,8 @@ Basic usage
 python learning/train_jax_ppo.py --env_name CartpoleBalance
 ```
 
-To interactively view trajectories throughout training with [rscope](https://github.com/Andrew-Luo1/rscope/tree/main), install it and run:
+To interactively view trajectories throughout training with [rscope](https://github.com/Andrew-Luo1/rscope/tree/main), install it (`pip install rscope`) and run:
+
 ```
 python learning/train_jax_ppo.py --env_name PandaPickCube --rscope_envs 16 --run_evals=False --deterministic_rscope=True
 # In a separate terminal

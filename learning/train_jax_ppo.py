@@ -132,14 +132,15 @@ _POLICY_OBS_KEY = flags.DEFINE_string(
     "policy_obs_key", "state", "Policy obs key"
 )
 _VALUE_OBS_KEY = flags.DEFINE_string("value_obs_key", "state", "Value obs key")
-_DETERMINISTIC_EVAL = flags.DEFINE_boolean(
-    "deterministic_eval", False, "Use deterministic eval"
-)
 _RSCOPE_ENVS = flags.DEFINE_integer(
-    "rscope_envs", None, "Number of rscope envs"
+    "rscope_envs",
+    None,
+    "Number of parallel environment rollouts to save for the rscope viewer",
 )
 _DETERMINISTIC_RSCOPE = flags.DEFINE_boolean(
-    "deterministic_rscope", True, "Log deterministic rollouts"
+    "deterministic_rscope",
+    True,
+    "Run deterministic rollouts for the rscope viewer",
 )
 _RUN_EVALS = flags.DEFINE_boolean(
     "run_evals",
@@ -223,13 +224,15 @@ def main(argv):
     ppo_params.network_factory.policy_obs_key = _POLICY_OBS_KEY.value
   if _VALUE_OBS_KEY.present:
     ppo_params.network_factory.value_obs_key = _VALUE_OBS_KEY.value
-  if _DETERMINISTIC_EVAL.present:
-    ppo_params.deterministic_eval = _DETERMINISTIC_EVAL.value
-
   if _VISION.value:
     env_cfg.vision = True
     env_cfg.vision_config.render_batch_size = ppo_params.num_envs
   env = registry.load(_ENV_NAME.value, config=env_cfg)
+  if _RUN_EVALS.present:
+    if not _RUN_EVALS.value:
+      # Print out training metrics instead.
+      ppo_params.log_training_metrics = True
+    ppo_params.run_evals = _RUN_EVALS.value
 
   print(f"Environment Config:\n{env_cfg}")
   print(f"PPO Training Parameters:\n{ppo_params}")
@@ -333,12 +336,13 @@ def main(argv):
       save_checkpoint_path=ckpt_path,
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
-      run_evals=_RUN_EVALS.value,
   )
 
   times = [time.monotonic()]
 
   # Progress function for logging
+  prev_num_steps = 0
+
   def progress(num_steps, metrics):
     times.append(time.monotonic())
 
@@ -354,16 +358,22 @@ def main(argv):
     if _RUN_EVALS.value:
       print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
     else:
-      print(f"{num_steps}: loss={metrics['training/total_loss']:.3f}")
+      nonlocal prev_num_steps
+      if "episode/sum_reward" in metrics:
+        print(
+            f"Steps {prev_num_steps}-{num_steps}: mean episode"
+            f" reward={metrics['episode/sum_reward']:.3f}"
+        )
+      prev_num_steps = num_steps
 
   # Load evaluation environment
   eval_env = (
       None if _VISION.value else registry.load(_ENV_NAME.value, config=env_cfg)
   )
 
-  # Interactive visualisation of policy checkpoints
   policy_params_fn = lambda *args: None
   if _RSCOPE_ENVS.value:
+    # Interactive visualisation of policy checkpoints
     from rscope import brax as rscope_utils
 
     if not _VISION.value:
@@ -377,6 +387,17 @@ def main(argv):
     else:
       trace_env = env
 
+    def rscope_fn(full_states, obs, rew):
+      """
+      All arrays are of shape (unroll_length, rscope_envs, ...)
+      full_states: dict with keys 'qpos', 'qvel', 'time', 'metrics'
+      obs: nd.array or dict obs based on env configuration
+      rew: nd.array rewards
+      """
+      print(
+          f"Collected {rew.shape[1]} length {rew.shape[0]} rollouts for rscope"
+      )
+
     rscope_handle = rscope_utils.BraxRolloutSaver(
         trace_env,
         ppo_params,
@@ -384,6 +405,7 @@ def main(argv):
         _RSCOPE_ENVS.value,
         _DETERMINISTIC_RSCOPE.value,
         jax.random.PRNGKey(_SEED.value),
+        rscope_fn,
     )
 
     def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
