@@ -67,7 +67,7 @@ For vision-based environments, please refer to the installation instructions in 
 > [!IMPORTANT]
 > Assumes installation from source.
 
-Basic usage
+For basic usage, navigate to the repo's directory and run:
 ```bash
 python learning/train_jax_ppo.py --env_name CartpoleBalance
 ```
