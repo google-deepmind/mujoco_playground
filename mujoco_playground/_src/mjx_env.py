@@ -273,6 +273,16 @@ class MjxEnv(abc.ABC):
       return jax.tree_util.tree_map(lambda x: x.shape, obs)
     return obs.shape[-1]
 
+  @property
+  def model_assets(self) -> Dict[str, Any]:
+    """Dictionary of model assets to use with MjModel.from_xml_path"""
+    if hasattr(self, "_model_assets"):
+      return self._model_assets
+    raise NotImplementedError(
+        "_model_assets not defined for this environment"
+        "see cartpole.py for an example."
+    )
+
   def render(
       self,
       trajectory: List[State],
