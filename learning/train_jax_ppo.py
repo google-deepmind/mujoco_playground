@@ -178,6 +178,24 @@ def get_rl_config(env_name: str) -> config_dict.ConfigDict:
   raise ValueError(f"Env {env_name} not found in {registry.ALL_ENVS}.")
 
 
+def rscope_fn(full_states, obs, rew, done):
+  """
+  All arrays are of shape (unroll_length, rscope_envs, ...)
+  full_states: dict with keys 'qpos', 'qvel', 'time', 'metrics'
+  obs: nd.array or dict obs based on env configuration
+  rew: nd.array rewards
+  done: nd.array done flags
+  """
+  # Calculate cumulative rewards per episode, stopping at first done flag
+  done_mask = jp.cumsum(done, axis=0)
+  valid_rewards = rew * (done_mask == 0)
+  episode_rewards = jp.sum(valid_rewards, axis=0)
+  print(
+      "Collected rscope rollouts with reward"
+      f" {episode_rewards.mean():.3f} +- {episode_rewards.std():.3f}"
+  )
+
+
 def main(argv):
   """Run training and evaluation for the specified environment."""
 
@@ -354,8 +372,6 @@ def main(argv):
   times = [time.monotonic()]
 
   # Progress function for logging
-  prev_num_steps = 0
-
   def progress(num_steps, metrics):
     times.append(time.monotonic())
 
@@ -371,13 +387,11 @@ def main(argv):
     if _RUN_EVALS.value:
       print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
     if _LOG_TRAINING_METRICS.value:
-      nonlocal prev_num_steps
       if "episode/sum_reward" in metrics:
         print(
-            f"Steps {prev_num_steps}-{num_steps}: mean episode"
+            f"{num_steps}: mean episode"
             f" reward={metrics['episode/sum_reward']:.3f}"
         )
-      prev_num_steps = num_steps
 
   # Load evaluation environment
   eval_env = (
@@ -399,23 +413,6 @@ def main(argv):
       )
     else:
       rscope_env = env
-
-    def rscope_fn(full_states, obs, rew, done):
-      """
-      All arrays are of shape (unroll_length, rscope_envs, ...)
-      full_states: dict with keys 'qpos', 'qvel', 'time', 'metrics'
-      obs: nd.array or dict obs based on env configuration
-      rew: nd.array rewards
-      done: nd.array done flags
-      """
-      # Calculate cumulative rewards per episode, stopping at first done flag
-      done_mask = jp.cumsum(done, axis=0)
-      valid_rewards = rew * (done_mask == 0)
-      episode_rewards = jp.sum(valid_rewards, axis=0)
-      print(
-          "Collected rscope rollouts with reward"
-          f" {episode_rewards.mean():.3f} +- {episode_rewards.std():.3f}"
-      )
 
     rscope_handle = rscope_utils.BraxRolloutSaver(
         rscope_env,
