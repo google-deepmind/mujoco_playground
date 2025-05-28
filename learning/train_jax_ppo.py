@@ -147,6 +147,16 @@ _RUN_EVALS = flags.DEFINE_boolean(
     True,
     "Run evaluation rollouts between policy updates.",
 )
+_LOG_TRAINING_METRICS = flags.DEFINE_boolean(
+    "log_training_metrics",
+    False,
+    "Log training metrics instead of evaluation rollouts.",
+)
+_TRAINING_METRICS_STEPS = flags.DEFINE_integer(
+    "training_metrics_steps",
+    1_000_000,
+    "Number of steps between logging training metrics.",
+)
 
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
@@ -229,10 +239,11 @@ def main(argv):
     env_cfg.vision_config.render_batch_size = ppo_params.num_envs
   env = registry.load(_ENV_NAME.value, config=env_cfg)
   if _RUN_EVALS.present:
-    if not _RUN_EVALS.value:
-      # Print out training metrics instead.
-      ppo_params.log_training_metrics = True
     ppo_params.run_evals = _RUN_EVALS.value
+  if _LOG_TRAINING_METRICS.present:
+    ppo_params.log_training_metrics = _LOG_TRAINING_METRICS.value
+  if _TRAINING_METRICS_STEPS.present:
+    ppo_params.training_metrics_steps = _TRAINING_METRICS_STEPS.value
 
   print(f"Environment Config:\n{env_cfg}")
   print(f"PPO Training Parameters:\n{ppo_params}")
@@ -387,15 +398,21 @@ def main(argv):
     else:
       trace_env = env
 
-    def rscope_fn(full_states, obs, rew):
+    def rscope_fn(full_states, obs, rew, done):
       """
       All arrays are of shape (unroll_length, rscope_envs, ...)
       full_states: dict with keys 'qpos', 'qvel', 'time', 'metrics'
       obs: nd.array or dict obs based on env configuration
       rew: nd.array rewards
+      done: nd.array done flags
       """
+      # Calculate cumulative rewards per episode, stopping at first done flag
+      done_mask = jp.cumsum(done, axis=0)
+      valid_rewards = rew * (done_mask == 0)
+      episode_rewards = jp.sum(valid_rewards, axis=0)
       print(
-          f"Collected {rew.shape[1]} length {rew.shape[0]} rollouts for rscope"
+          "Collected rscope rollouts with reward"
+          f" {episode_rewards.mean():.3f} +- {episode_rewards.std():.3f}"
       )
 
     rscope_handle = rscope_utils.BraxRolloutSaver(
