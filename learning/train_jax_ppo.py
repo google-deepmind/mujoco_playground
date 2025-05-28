@@ -150,12 +150,14 @@ _RUN_EVALS = flags.DEFINE_boolean(
 _LOG_TRAINING_METRICS = flags.DEFINE_boolean(
     "log_training_metrics",
     False,
-    "Log training metrics instead of evaluation rollouts.",
+    "Whether to log training metrics and callback to progress_fn. Significantly"
+    " slows down training if too frequent.",
 )
 _TRAINING_METRICS_STEPS = flags.DEFINE_integer(
     "training_metrics_steps",
     1_000_000,
-    "Number of steps between logging training metrics.",
+    "Number of steps between logging training metrics. Increase if training"
+    " experiences slowdown.",
 )
 
 
@@ -368,7 +370,7 @@ def main(argv):
       writer.flush()
     if _RUN_EVALS.value:
       print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
-    else:
+    if _LOG_TRAINING_METRICS.value:
       nonlocal prev_num_steps
       if "episode/sum_reward" in metrics:
         print(
@@ -388,15 +390,15 @@ def main(argv):
     from rscope import brax as rscope_utils
 
     if not _VISION.value:
-      trace_env = registry.load(_ENV_NAME.value, config=env_cfg)
-      trace_env = wrapper.wrap_for_brax_training(
-          trace_env,
+      rscope_env = registry.load(_ENV_NAME.value, config=env_cfg)
+      rscope_env = wrapper.wrap_for_brax_training(
+          rscope_env,
           episode_length=ppo_params.episode_length,
           action_repeat=ppo_params.action_repeat,
           randomization_fn=training_params.get("randomization_fn"),
       )
     else:
-      trace_env = env
+      rscope_env = env
 
     def rscope_fn(full_states, obs, rew, done):
       """
@@ -416,7 +418,7 @@ def main(argv):
       )
 
     rscope_handle = rscope_utils.BraxRolloutSaver(
-        trace_env,
+        rscope_env,
         ppo_params,
         _VISION.value,
         _RSCOPE_ENVS.value,
