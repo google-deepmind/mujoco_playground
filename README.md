@@ -80,7 +80,6 @@ python learning/train_jax_ppo.py --env_name PandaPickCube --rscope_envs 16 --run
 python -m rscope
 ```
 
-
 ## FAQ
 
 ### How can I contribute?
