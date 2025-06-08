@@ -24,7 +24,6 @@ import warnings
 from absl import app
 from absl import flags
 from absl import logging
-from brax.io import model
 from brax.training.agents.ppo import networks as ppo_networks
 from brax.training.agents.ppo import networks_vision as ppo_networks_vision
 from brax.training.agents.ppo import train as ppo
@@ -265,7 +264,10 @@ def main(argv):
     restore_checkpoint_path = None
 
   # Set up checkpoint directory
-  ckpt_path = logdir / "checkpoints"
+  if _SAVE_PARAMS_PATH.value is not None:
+    ckpt_path = epath.Path(_SAVE_PARAMS_PATH.value).resolve() / "checkpoints"
+  else:
+    ckpt_path = logdir / "checkpoints"
   ckpt_path.mkdir(parents=True, exist_ok=True)
   print(f"Checkpoint path: {ckpt_path}")
 
@@ -354,9 +356,6 @@ def main(argv):
   if len(times) > 1:
     print(f"Time to JIT compile: {times[1] - times[0]}")
     print(f"Time to train: {times[-1] - times[1]}")
-
-  if _SAVE_PARAMS_PATH.value is not None:
-    model.save_params(epath.Path(_SAVE_PARAMS_PATH.value).resolve(), params)
 
   if not _RENDER_FINAL_POLICY.value:
     return
