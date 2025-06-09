@@ -27,17 +27,12 @@ os.environ[
 
 from datetime import datetime
 import functools
-import json
 
-from brax.io import model
 from brax.training.agents.bc import networks as bc_networks
 from brax.training.agents.bc import train as bc_fast
 from etils import epath
-from flax import linen
-from flax.training import orbax_utils
 import jax
 from jax import numpy as jp
-from orbax import checkpoint as ocp
 import typer
 
 from mujoco_playground import manipulation
@@ -61,7 +56,6 @@ def main(
         False, help="Use domain randomization"
     ),
     vision: bool = typer.Option(True, help="Use vision"),
-    policy_save_path: str = typer.Option(None, help="Path to save the policy"),
     num_envs: int = typer.Option(1024, help="Number of parallel environments"),
     episode_length: int = typer.Option(160, help="Length of each episode"),
     dagger_steps: int = typer.Option(400, help="Number of DAgger steps"),
@@ -111,7 +105,7 @@ def main(
       bc_networks.make_bc_networks,
       policy_hidden_layer_sizes=(256,) * 3,
       policy_obs_key=("proprio" if vision else "state_with_time"),
-      vision=vision,
+      latent_vision=True,
   )
 
   teacher_inference_fn = distillation.make_teacher_policy()
@@ -212,9 +206,6 @@ def main(
   print(f"Training start: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
   _, params, _ = train_fn()
   print(f"Training done: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-
-  if policy_save_path is not None:
-    model.save_params(policy_save_path, params)
 
 
 if __name__ == "__main__":

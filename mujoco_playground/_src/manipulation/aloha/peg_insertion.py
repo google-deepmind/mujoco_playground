@@ -18,9 +18,10 @@ import functools
 import pathlib
 from typing import Any, Dict, Optional, Tuple, Union
 
-from brax.io import model as brax_loader
 from brax.training.acme import running_statistics
-from brax.training.agents.bc import networks as bc_networks
+# from brax.training.agents.bc import networks as bc_networks
+from brax.training.agents.bc import checkpoint as bc_checkpoint
+from brax.training.agents.ppo import checkpoint as ppo_checkpoint
 from brax.training.agents.ppo import networks as ppo_networks
 import flax
 import jax
@@ -74,8 +75,21 @@ def default_config() -> config_dict.ConfigDict:  # TODO :Clean up.
   return config
 
 
+def get_latest_checkpoint(path: Union[str, pathlib.Path]):
+  """
+  Get the latest checkpoint from a directory. Assumes checkpoints names are
+  left-padded ascending. For example, 000005079040, 000010158080, ...
+  """
+  path = pathlib.Path(path)
+  # ignore anything ending in .json
+  checkpoints = [p for p in path.glob("*") if not p.name.endswith(".json")]
+  # sort by name
+  checkpoints.sort()
+  return checkpoints[-1]
+
+
 def load_brax_policy(
-    path: Union[str, pathlib.Path], env_name, action_size, distill: bool = False
+    path: Union[str, pathlib.Path], env_name, distill: bool = False
 ):
   """
   Load a policy from a Brax checkpoint file. Assumes network parameters
@@ -85,22 +99,13 @@ def load_brax_policy(
   network_factory = functools.partial(
       ppo_networks.make_ppo_networks, **ppo_params.network_factory
   )
-  network = network_factory(
-      0,  # no params init required.
-      action_size,
-      preprocess_observations_fn=running_statistics.normalize,
-  )
-  make_policy = (
-      bc_networks.make_inference_fn(network)
-      if distill
-      else ppo_networks.make_inference_fn(network)
-  )
-  trained_params = brax_loader.load_params(path)
-  return make_policy(trained_params, deterministic=True)
+  if distill:
+    return bc_checkpoint.load_policy(path, network_factory, deterministic=True)
+  return ppo_checkpoint.load_policy(path, network_factory, deterministic=True)
 
 
 def load_pick_policy(path, env_name):
-  raw_policy = load_brax_policy(path, env_name, 7)
+  raw_policy = load_brax_policy(path, env_name)
 
   def single2biarm_inference_fn(obs: jp.ndarray):
     l_obs, r_obs = jp.split(obs, 2, axis=-1)
@@ -143,11 +148,14 @@ class SinglePegInsertion(pick_base.PickBase):
     if distill:
       self.pick_policy = lambda x: jp.zeros(self.action_size)
     else:
-      pick_path = pathlib.Path(__file__).parent / "params" / "AlohaPick.prms"
+      pick_path = (
+          pathlib.Path(__file__).parent / "params" / "AlohaPick" / "checkpoints"
+      )
       if not pick_path.exists():
         raise FileNotFoundError(
             f"Pick policy file not found: {pick_path}, please train one."
         )
+      pick_path = get_latest_checkpoint(pick_path)
       self.pick_policy = load_pick_policy(
           pick_path,
           "AlohaPick",

@@ -38,7 +38,6 @@ import argparse
 import functools
 from pathlib import Path
 
-from brax.io import model
 from brax.training.acme import running_statistics
 from brax.training.acme import specs
 from brax.training.agents.bc import networks as bc_networks
@@ -143,7 +142,7 @@ network_factory = functools.partial(
     policy_hidden_layer_sizes=policy_hidden_layer_sizes,
     activation=linen.relu,
     policy_obs_key='proprio',
-    vision=True,
+    latent_vision=True,
 )
 
 bc_network = network_factory(
@@ -155,15 +154,6 @@ make_inference_fn = bc_networks.make_inference_fn(bc_network)
 encoder_fn = distillation.get_frozen_encoder_fn()
 
 # Load encoder params for transfering to TF.
-# encoder_path = (
-#     mjx_env.ROOT_PATH
-#     / 'manipulation'
-#     / 'aloha'
-#     / 'params'
-#     / 'VisionMLP2ChanCIFAR10_OCP'
-# )
-# # encoder_params = model.load_params(encoder_path)
-# vision_mlp = networks.VisionMLP(layer_sizes=(0,), policy_head=False)
 encoder_params = distillation.load_frozen_encoder_params()
 
 # Initialize param structure for loading with orbax checkpointer.

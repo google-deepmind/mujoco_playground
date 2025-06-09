@@ -18,11 +18,11 @@ cd <PATH_TO_YOUR_CLONE>
 export PARAMS_PATH=mujoco_playground/_src/manipulation/aloha/params
 
 # Train a single arm to pick up a cube.
-python learning/train_jax_ppo.py --env_name AlohaPick --domain_randomization --norender_final_policy --save_params_path $PARAMS_PATH/AlohaPick.prms
+python learning/train_jax_ppo.py --env_name AlohaPick --domain_randomization --norender_final_policy --save_params_path $PARAMS_PATH/AlohaPick
 sleep 0.5
 
 # Train a biarm to insert a peg into a socket. Requires above policy.
-python learning/train_jax_ppo.py --env_name AlohaPegInsertion --save_params_path $PARAMS_PATH/AlohaPegInsertion.prms
+python learning/train_jax_ppo.py --env_name AlohaPegInsertion --save_params_path $PARAMS_PATH/AlohaPegInsertion
 sleep 0.5
 
 # Train a student policy to insert a peg into a socket using *pixel inputs*. Requires above policy.

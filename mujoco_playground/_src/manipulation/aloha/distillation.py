@@ -19,8 +19,8 @@ transfer of ALOHA peg insertion."""
 import pathlib
 from typing import Any, Dict, Optional, Union
 
-from brax.io import model as brax_loader
 from brax.training import networks
+from brax.training.agents.ppo import train as ppo_train
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
@@ -397,28 +397,31 @@ class DistillPegInsertion(peg_insertion.SinglePegInsertion):
 
 def make_teacher_policy():
   """Create a teacher policy for distillation from pre-trained models."""
-  env = DistillPegInsertion(config_overrides={'vision': False})
-
-  f_pick_teacher = pathlib.Path(__file__).parent / 'params' / 'AlohaPick.prms'
-  f_insert_teacher = (
-      pathlib.Path(__file__).parent / 'params' / 'AlohaPegInsertion.prms'
+  env = peg_insertion.SinglePegInsertion()
+  f_pick_teacher = (
+      pathlib.Path(__file__).parent / 'params' / 'AlohaPick' / 'checkpoints'
   )
+  f_pick_teacher = peg_insertion.get_latest_checkpoint(f_pick_teacher)
+  f_insert_teacher = (
+      pathlib.Path(__file__).parent
+      / 'params'
+      / 'AlohaPegInsertion'
+      / 'checkpoints'
+  )
+  f_insert_teacher = peg_insertion.get_latest_checkpoint(f_insert_teacher)
 
   teacher_pick_policy = peg_insertion.load_brax_policy(
       f_pick_teacher.as_posix(),
       'AlohaPick',
-      int(env.action_size / 2),
       distill=True,
   )
 
   teacher_insert_policy = peg_insertion.load_brax_policy(
       f_insert_teacher.as_posix(),
       'AlohaPegInsertion',
-      env.action_size,
       distill=True,
   )
-  trained_params = brax_loader.load_params(f_insert_teacher.as_posix())  # WLOG
-  obs_keys = trained_params[0].mean.keys()
+  obs_keys = ppo_train._remove_pixels(env.observation_size.keys())
 
   @jax.jit
   def teacher_inference_fn(obs, rng):
