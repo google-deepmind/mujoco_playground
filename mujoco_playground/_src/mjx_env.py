@@ -376,7 +376,7 @@ def get_qpos_ids(
   for jnt_name in joint_names:
     jnt = model.joint(jnt_name).id
     jnt_type = model.jnt_type[jnt]
-    qadr = model.jnt_dofadr[jnt]
+    qadr = model.jnt_qposadr[jnt]
     qdim = qpos_width(jnt_type)
     index_list.extend(range(qadr, qadr + qdim))
   return np.array(index_list)
