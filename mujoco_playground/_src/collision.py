@@ -35,4 +35,4 @@ def get_collision_info(
 
 def geoms_colliding(state: mjx.Data, geom1: int, geom2: int) -> jax.Array:
   """Return True if the two geoms are colliding."""
-  return get_collision_info(state.contact, geom1, geom2)[0] < 0
+  return get_collision_info(state._impl.contact, geom1, geom2)[0] < 0  # pylint: disable=protected-access
