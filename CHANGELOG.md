@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - 2025-06-23
+
+- Change `light_directional` to `light_type` following MuJoCo API change from version 3.3.2 to 3.3.3. Fixes https://github.com/google-deepmind/mujoco_playground/issues/142.
+- Fix bug in `get_qpos_ids`.
+- Implement `render` in Wrapper.
+- Fix https://github.com/google-deepmind/mujoco_playground/issues/123.
+- Fix https://github.com/google-deepmind/mujoco_playground/issues/126.
+- Fix https://github.com/google-deepmind/mujoco_playground/issues/41.
+
 ## [0.0.4] - 2025-02-07
 
 ### Added
