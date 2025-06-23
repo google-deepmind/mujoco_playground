@@ -72,7 +72,7 @@ def domain_randomize(
       'cam_quat': 0,
       'light_pos': 0,
       'light_dir': 0,
-      'light_directional': 0,
+      'light_type': 0,
       'light_castshadow': 0,
   })
   rng = jax.random.key(0)
@@ -151,7 +151,7 @@ def domain_randomize(
     ).astype(jp.float32)
 
     # No need to randomize into specular lighting
-    light_directional = jp.ones((nlight,))
+    light_type = jp.ones((nlight,))
 
     return (
         geom_rgba,
@@ -159,7 +159,7 @@ def domain_randomize(
         cam_pos,
         cam_quat,
         light_dir,
-        light_directional,
+        light_type,
         light_castshadow,
     )
 
@@ -169,7 +169,7 @@ def domain_randomize(
       cam_pos,
       cam_quat,
       light_dir,
-      light_directional,
+      light_type,
       light_castshadow,
   ) = rand(jax.random.split(rng, num_worlds), light_positions)
 
@@ -180,7 +180,7 @@ def domain_randomize(
       'cam_quat': cam_quat,
       'light_pos': light_positions,
       'light_dir': light_dir,
-      'light_directional': light_directional,
+      'light_type': light_type,
       'light_castshadow': light_castshadow,
   })
 
