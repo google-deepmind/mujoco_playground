@@ -117,7 +117,8 @@ class Joystick(mjx_env.MjxEnv):
     xml_path = mjx_env.MENAGERIE_PATH / "google_barkour_vb" / "scene_mjx.xml"
     self._xml_path = xml_path.as_posix()
     xml = epath.Path(xml_path).read_text()
-    mj_model = mujoco.MjModel.from_xml_string(xml, assets=get_assets())
+    self._model_assets = get_assets()
+    mj_model = mujoco.MjModel.from_xml_string(xml, assets=self._model_assets)
     mj_model.vis.global_.offwidth = 3840
     mj_model.vis.global_.offheight = 2160
     mj_model.dof_damping[6:] = 0.5239
@@ -451,7 +452,7 @@ class Joystick(mjx_env.MjxEnv):
 
   @property
   def xml_path(self) -> str:
-    raise self._xml_path
+    return self._xml_path
 
   @property
   def action_size(self) -> int:

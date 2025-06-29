@@ -54,8 +54,9 @@ class PointMass(mjx_env.MjxEnv):
       )
 
     self._xml_path = _XML_PATH.as_posix()
+    self._model_assets = common.get_assets()
     self._mj_model = mujoco.MjModel.from_xml_string(
-        _XML_PATH.read_text(), common.get_assets()
+        _XML_PATH.read_text(), self._model_assets
     )
     self._mj_model.opt.timestep = self.sim_dt
     self._mjx_model = mjx.put_model(self._mj_model)
