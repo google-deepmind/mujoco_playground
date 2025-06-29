@@ -47,8 +47,9 @@ class SpotEnv(mjx_env.MjxEnv):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ) -> None:
     super().__init__(config, config_overrides)
+    self._model_assets = get_assets()
     self._mj_model = mujoco.MjModel.from_xml_string(
-        epath.Path(xml_path).read_text(), assets=get_assets()
+        epath.Path(xml_path).read_text(), assets=self._model_assets
     )
     self._mj_model.opt.timestep = config.sim_dt
 

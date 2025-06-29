@@ -51,8 +51,9 @@ class AlohaEnv(mjx_env.MjxEnv):
   ) -> None:
     super().__init__(config, config_overrides)
 
+    self._model_assets = get_assets()
     self._mj_model = mujoco.MjModel.from_xml_string(
-        epath.Path(xml_path).read_text(), assets=get_assets()
+        epath.Path(xml_path).read_text(), assets=self._model_assets
     )
     self._mj_model.opt.timestep = self._config.sim_dt
 
