@@ -414,12 +414,14 @@ def make_teacher_policy():
       f_pick_teacher.as_posix(),
       'AlohaPick',
       distill=True,
+      config_fname='ppo_network_config.json',
   )
 
   teacher_insert_policy = peg_insertion.load_brax_policy(
       f_insert_teacher.as_posix(),
       'AlohaPegInsertion',
       distill=True,
+      config_fname='ppo_network_config.json',
   )
   obs_keys = ppo_train._remove_pixels(env.observation_size.keys())
 

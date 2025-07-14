@@ -89,7 +89,10 @@ def get_latest_checkpoint(path: Union[str, pathlib.Path]):
 
 
 def load_brax_policy(
-    path: Union[str, pathlib.Path], env_name, distill: bool = False
+    path: Union[str, pathlib.Path],
+    env_name,
+    distill: bool = False,
+    config_fname: Optional[Union[str, pathlib.Path]] = None,
 ):
   """
   Load a policy from a Brax checkpoint file. Assumes network parameters
@@ -100,7 +103,11 @@ def load_brax_policy(
       ppo_networks.make_ppo_networks, **ppo_params.network_factory
   )
   if distill:
-    return bc_checkpoint.load_policy(path, network_factory, deterministic=True)
+    # override config_fname to allow loading a PPO policy into a BC inference function.
+    print(f"Loading PPO policy from {path} with config_fname {config_fname}")
+    return bc_checkpoint.load_policy(
+        path, network_factory, deterministic=True, config_fname=config_fname
+    )
   return ppo_checkpoint.load_policy(path, network_factory, deterministic=True)
 
 
