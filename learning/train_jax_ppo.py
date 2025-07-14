@@ -73,9 +73,15 @@ _VISION = flags.DEFINE_boolean("vision", False, "Use vision input")
 _LOAD_CHECKPOINT_PATH = flags.DEFINE_string(
     "load_checkpoint_path", None, "Path to load checkpoint from"
 )
+_SAVE_PARAMS_PATH = flags.DEFINE_string(
+    "save_params_path", None, "Path to save parameters to"
+)
 _SUFFIX = flags.DEFINE_string("suffix", None, "Suffix for the experiment name")
 _PLAY_ONLY = flags.DEFINE_boolean(
     "play_only", False, "If true, only play with the model and do not train"
+)
+_RENDER_FINAL_POLICY = flags.DEFINE_boolean(
+    "render_final_policy", True, "If true, render the final policy"
 )
 _USE_WANDB = flags.DEFINE_boolean(
     "use_wandb",
@@ -310,7 +316,10 @@ def main(argv):
     restore_checkpoint_path = None
 
   # Set up checkpoint directory
-  ckpt_path = logdir / "checkpoints"
+  if _SAVE_PARAMS_PATH.value is not None:
+    ckpt_path = epath.Path(_SAVE_PARAMS_PATH.value).resolve() / "checkpoints"
+  else:
+    ckpt_path = logdir / "checkpoints"
   ckpt_path.mkdir(parents=True, exist_ok=True)
   print(f"Checkpoint path: {ckpt_path}")
 
@@ -440,6 +449,9 @@ def main(argv):
   if len(times) > 1:
     print(f"Time to JIT compile: {times[1] - times[0]}")
     print(f"Time to train: {times[-1] - times[1]}")
+
+  if not _RENDER_FINAL_POLICY.value:
+    return
 
   print("Starting inference...")
 
