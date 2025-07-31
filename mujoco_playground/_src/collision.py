@@ -19,6 +19,7 @@ from typing import Any, Tuple
 import jax
 import jax.numpy as jnp
 from mujoco import mjx
+from mujoco.mjx._src import types
 
 
 def get_collision_info(
@@ -35,4 +36,8 @@ def get_collision_info(
 
 def geoms_colliding(state: mjx.Data, geom1: int, geom2: int) -> jax.Array:
   """Return True if the two geoms are colliding."""
+  if not isinstance(state._impl, types.DataJAX):
+    raise NotImplementedError(
+        "`geoms_colliding` only implemented for JAX MJX backend."
+    )
   return get_collision_info(state._impl.contact, geom1, geom2)[0] < 0  # pylint: disable=protected-access
