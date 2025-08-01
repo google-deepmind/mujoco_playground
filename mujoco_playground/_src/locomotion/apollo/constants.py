@@ -15,7 +15,6 @@
 """Constants for Apollo."""
 
 from etils import epath
-
 from mujoco_playground._src import mjx_env
 
 XML_DIR = mjx_env.ROOT_PATH / "locomotion" / "apollo" / "xmls"
@@ -25,18 +24,18 @@ FEET_ONLY_FLAT_TERRAIN_XML = XML_DIR / "scene_mjx_feetonly_flat_terrain.xml"
 
 def task_to_xml(task_name: str) -> epath.Path:
   return {
-    "flat_terrain": FEET_ONLY_FLAT_TERRAIN_XML,
+      "flat_terrain": FEET_ONLY_FLAT_TERRAIN_XML,
   }[task_name]
 
 
 FEET_SITES = [
-  "l_foot",
-  "r_foot",
+    "l_foot",
+    "r_foot",
 ]
 
 HAND_SITES = [
-  "left_palm",
-  "right_palm",
+    "left_palm",
+    "right_palm",
 ]
 
 LEFT_FEET_GEOMS = ["collision_l_sole"]

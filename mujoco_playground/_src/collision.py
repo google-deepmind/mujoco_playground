@@ -17,7 +17,7 @@
 from typing import Any, Tuple
 
 import jax
-import jax.numpy as jnp
+import jax.numpy as jp
 from mujoco import mjx
 from mujoco.mjx._src import types
 
@@ -26,9 +26,9 @@ def get_collision_info(
     contact: Any, geom1: int, geom2: int
 ) -> Tuple[jax.Array, jax.Array]:
   """Get the distance and normal of the collision between two geoms."""
-  mask = (jnp.array([geom1, geom2]) == contact.geom).all(axis=1)
-  mask |= (jnp.array([geom2, geom1]) == contact.geom).all(axis=1)
-  idx = jnp.where(mask, contact.dist, 1e4).argmin()
+  mask = (jp.array([geom1, geom2]) == contact.geom).all(axis=1)
+  mask |= (jp.array([geom2, geom1]) == contact.geom).all(axis=1)
+  idx = jp.where(mask, contact.dist, 1e4).argmin()
   dist = contact.dist[idx] * mask[idx]
   normal = (dist < 0) * contact.frame[idx, 0, :3]
   return dist, normal
@@ -36,8 +36,10 @@ def get_collision_info(
 
 def geoms_colliding(state: mjx.Data, geom1: int, geom2: int) -> jax.Array:
   """Return True if the two geoms are colliding."""
+  # if not isinstance(state._impl, types.DataJAX):
+  #   raise NotImplementedError(
+  #       "`geoms_colliding` only implemented for JAX MJX backend."
+  #   )
   if not isinstance(state._impl, types.DataJAX):
-    raise NotImplementedError(
-        "`geoms_colliding` only implemented for JAX MJX backend."
-    )
+    return jp.array(False)
   return get_collision_info(state._impl.contact, geom1, geom2)[0] < 0  # pylint: disable=protected-access

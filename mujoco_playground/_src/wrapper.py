@@ -14,6 +14,7 @@
 # ==============================================================================
 """Wrappers for MuJoCo Playground environments."""
 
+import contextlib
 import functools
 from typing import Any, Callable, List, Optional, Sequence, Tuple
 
@@ -22,9 +23,8 @@ import jax
 from jax import numpy as jp
 import mujoco
 from mujoco import mjx
-import numpy as np
-
 from mujoco_playground._src import mjx_env
+import numpy as np
 
 
 class Wrapper(mjx_env.MjxEnv):
@@ -141,11 +141,15 @@ class BraxAutoResetWrapper(Wrapper):
 
     def where_done(x, y):
       done = state.done
+      if done.shape and done.shape[0] != x.shape[0]:
+        return y
       if done.shape:
         done = jp.reshape(done, [x.shape[0]] + [1] * (len(x.shape) - 1))
       return jp.where(done, x, y)
 
-    data = jax.tree.map(where_done, state.info['first_state'], state.data)
+    data = jax.tree.map(
+        where_done, state.info['first_state'], state.data
+    )
     obs = jax.tree.map(where_done, state.info['first_obs'], state.obs)
     return state.replace(data=data, obs=obs)
 
@@ -161,23 +165,28 @@ class BraxDomainRandomizationVmapWrapper(Wrapper):
     super().__init__(env)
     self._mjx_model_v, self._in_axes = randomization_fn(self.mjx_model)
 
-  def _env_fn(self, mjx_model: mjx.Model) -> mjx_env.MjxEnv:
-    env = self.env
-    env.unwrapped._mjx_model = mjx_model
-    return env
+  @contextlib.contextmanager
+  def v_env_fn(self, mjx_model: mjx.Model):
+    env = self.env.unwrapped
+    old_mjx_model = env._mjx_model
+    try:
+      env.unwrapped._mjx_model = mjx_model
+      yield env
+    finally:
+      env.unwrapped._mjx_model = old_mjx_model
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
     def reset(mjx_model, rng):
-      env = self._env_fn(mjx_model=mjx_model)
-      return env.reset(rng)
+      with self.v_env_fn(mjx_model) as v_env:
+        return v_env.reset(rng)
 
     state = jax.vmap(reset, in_axes=[self._in_axes, 0])(self._mjx_model_v, rng)
     return state
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     def step(mjx_model, s, a):
-      env = self._env_fn(mjx_model=mjx_model)
-      return env.step(s, a)
+      with self.v_env_fn(mjx_model) as v_env:
+        return v_env.step(s, a)
 
     res = jax.vmap(step, in_axes=[self._in_axes, 0, 0])(
         self._mjx_model_v, state, action

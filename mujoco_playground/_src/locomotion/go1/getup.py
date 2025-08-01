@@ -62,6 +62,9 @@ def default_config() -> config_dict.ConfigDict:
               dof_vel=-0.1,
           ),
       ),
+      impl="jax",
+      nconmax=30 * 8192,
+      njmax=250,
   )
 
 
@@ -164,7 +167,16 @@ class Getup(go1_base.Go1Env):
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=qpos,
+        qvel=qvel,
+        ctrl=qpos[7:],
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     # Let the robot settle for a few steps.
     data = mjx_env.step(self.mjx_model, data, qpos[7:], self._settle_steps)

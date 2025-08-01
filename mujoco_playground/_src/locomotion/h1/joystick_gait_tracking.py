@@ -78,6 +78,9 @@ def default_config() -> config_dict.ConfigDict:
       gait_frequency=[0.5, 2.0],
       gaits=["walk"],
       foot_height=[0.08, 0.4],
+      impl="jax",
+      nconmax=8 * 8192,
+      njmax=19 + 8 * 4,
   )
 
 
@@ -144,9 +147,15 @@ class JoystickGaitTracking(h1_base.H1Env):
         jax.random.split(rng, 6)
     )
 
-    data = mjx_env.init(
-        self.mjx_model, qpos=self._init_q, qvel=jp.zeros(self.mjx_model.nv)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=self._init_q,
+        qvel=jp.zeros(self.mjx_model.nv),
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
+    data = mjx.forward(self.mjx_model, data)
 
     # Initialize history buffers.
     qpos_error_history = jp.zeros(self._config.history_len * 19)

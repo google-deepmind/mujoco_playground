@@ -18,6 +18,7 @@ import abc
 import subprocess
 import sys
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+import warnings
 
 from etils import epath
 from flax import struct
@@ -135,6 +136,11 @@ def init(
     mocap_quat: Optional[jax.Array] = None,
 ) -> mjx.Data:
   """Initialize MJX Data."""
+  warnings.warn(
+      "`init` will be removed in the next major release.",
+      DeprecationWarning,
+      stacklevel=2,
+  )
   data = mjx.make_data(model)
   if qpos is not None:
     data = data.replace(qpos=qpos)
@@ -149,6 +155,35 @@ def init(
   if mocap_quat is not None:
     data = data.replace(mocap_quat=mocap_quat.reshape(model.nmocap, -1))
   data = mjx.forward(model, data)
+  return data
+
+
+def make_data(
+    model: mujoco.MjModel,
+    qpos: Optional[jax.Array] = None,
+    qvel: Optional[jax.Array] = None,
+    ctrl: Optional[jax.Array] = None,
+    act: Optional[jax.Array] = None,
+    mocap_pos: Optional[jax.Array] = None,
+    mocap_quat: Optional[jax.Array] = None,
+    impl: Optional[str] = None,
+    nconmax: Optional[int] = None,
+    njmax: Optional[int] = None,
+) -> mjx.Data:
+  """Initialize MJX Data."""
+  data = mjx.make_data(model, impl=impl, nconmax=nconmax, njmax=njmax)
+  if qpos is not None:
+    data = data.replace(qpos=qpos)
+  if qvel is not None:
+    data = data.replace(qvel=qvel)
+  if ctrl is not None:
+    data = data.replace(ctrl=ctrl)
+  if act is not None:
+    data = data.replace(act=act)
+  if mocap_pos is not None:
+    data = data.replace(mocap_pos=mocap_pos.reshape(model.nmocap, -1))
+  if mocap_quat is not None:
+    data = data.replace(mocap_quat=mocap_quat.reshape(model.nmocap, -1))
   return data
 
 
@@ -275,7 +310,7 @@ class MjxEnv(abc.ABC):
 
   @property
   def model_assets(self) -> Dict[str, Any]:
-    """Dictionary of model assets to use with MjModel.from_xml_path"""
+    """Dictionary of model assets to use with MjModel.from_xml_path."""
     if hasattr(self, "_model_assets"):
       return self._model_assets
     raise NotImplementedError(

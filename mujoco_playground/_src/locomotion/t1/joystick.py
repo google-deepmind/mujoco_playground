@@ -95,6 +95,9 @@ def default_config() -> config_dict.ConfigDict:
       lin_vel_x=[-1.0, 1.0],
       lin_vel_y=[-0.8, 0.8],
       ang_vel_yaw=[-1.0, 1.0],
+      impl="jax",
+      nconmax=8 * 8192,
+      njmax=80,
   )
 
 
@@ -107,6 +110,9 @@ class Joystick(t1_base.T1Env):
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
+    if task.startswith("rough"):
+      config.nconmax = 100 * 8192
+      config.njmax = 500
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
         config=config,
@@ -214,7 +220,16 @@ class Joystick(t1_base.T1Env):
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=qpos,
+        qvel=qvel,
+        ctrl=qpos[7:],
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     # Phase, freq=U(1.25, 1.75)
     rng, key = jax.random.split(rng)
