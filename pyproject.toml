@@ -26,7 +26,7 @@ dependencies = [
     "brax>=0.12.1",
     "etils",
     "flax",
-    "jax",
+    "jax[cuda12]",
     "lxml",
     "ml_collections",
     "mujoco-mjx>=3.2.7",
@@ -93,6 +93,9 @@ lint.ignore = [
 exclude = [
     "mujoco_menagerie/",
 ]
+
+[tool.uv.sources]
+brax = { git = "https://github.com/google/brax", rev = "59f07fc" }
 
 [tool.mypy]
 python_version = "3.12"
