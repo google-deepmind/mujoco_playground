@@ -50,3 +50,25 @@ FINGER_JOINTS = [
     "right/left_finger",
     "right/right_finger",
 ]
+
+LEFT_JOINTS = [
+    "left/waist",
+    "left/shoulder",
+    "left/elbow",
+    "left/forearm_roll",
+    "left/wrist_angle",
+    "left/wrist_rotate",
+    "left/left_finger",
+    "left/right_finger",
+]
+
+RIGHT_JOINTS = [
+    "right/waist",
+    "right/shoulder",
+    "right/elbow",
+    "right/forearm_roll",
+    "right/wrist_angle",
+    "right/wrist_rotate",
+    "right/left_finger",
+    "right/right_finger",
+]
