@@ -22,12 +22,24 @@ from mujoco import mjx
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.aloha import handover as aloha_handover
 from mujoco_playground._src.manipulation.aloha import single_peg_insertion as aloha_peg
-from mujoco_playground._src.manipulation.franka_emika_panda import open_cabinet as panda_open_cabinet
+from mujoco_playground._src.manipulation.franka_emika_panda import (
+    open_cabinet as panda_open_cabinet,
+)
 from mujoco_playground._src.manipulation.franka_emika_panda import pick as panda_pick
-from mujoco_playground._src.manipulation.franka_emika_panda import pick_cartesian as panda_pick_cartesian
-from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import push_cube as robotiq_push_cube
+from mujoco_playground._src.manipulation.franka_emika_panda import (
+    pick_cartesian as panda_pick_cartesian,
+)
+from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import (
+    push_cube as robotiq_push_cube,
+)
 from mujoco_playground._src.manipulation.leap_hand import reorient as leap_cube_reorient
 from mujoco_playground._src.manipulation.leap_hand import rotate_z as leap_rotate_z
+from mujoco_playground._src.manipulation.tetheria_hand import (
+    reorient as tetheria_cube_reorient,
+)
+from mujoco_playground._src.manipulation.tetheria_hand import (
+    rotate_z as tetheria_cube_rotate_z,
+)
 
 
 mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
@@ -42,6 +54,8 @@ _envs = {
     "PandaRobotiqPushCube": robotiq_push_cube.PandaRobotiqPushCube,
     "LeapCubeReorient": leap_cube_reorient.CubeReorient,
     "LeapCubeRotateZAxis": leap_rotate_z.CubeRotateZAxis,
+    "TetheriaCubeReorient": tetheria_cube_reorient.CubeReorient,
+    "TetheriaCubeRotateZAxis": tetheria_cube_rotate_z.CubeRotateZAxis,
 }
 
 _cfgs = {
@@ -54,18 +68,22 @@ _cfgs = {
     "PandaRobotiqPushCube": robotiq_push_cube.default_config,
     "LeapCubeReorient": leap_cube_reorient.default_config,
     "LeapCubeRotateZAxis": leap_rotate_z.default_config,
+    "TetheriaCubeReorient": tetheria_cube_reorient.default_config,
+    "TetheriaCubeRotateZAxis": tetheria_cube_rotate_z.default_config,
 }
 
 _randomizer = {
     "LeapCubeRotateZAxis": leap_rotate_z.domain_randomize,
     "LeapCubeReorient": leap_cube_reorient.domain_randomize,
+    "TetheriaCubeRotateZAxis": tetheria_cube_rotate_z.domain_randomize,
+    "TetheriaCubeReorient": tetheria_cube_reorient.domain_randomize,
 }
 
 
 def __getattr__(name):
-  if name == "ALL_ENVS":
-    return tuple(_envs.keys())
-  raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    if name == "ALL_ENVS":
+        return tuple(_envs.keys())
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 def register_environment(
@@ -73,25 +91,25 @@ def register_environment(
     env_class: Type[mjx_env.MjxEnv],
     cfg_class: Callable[[], config_dict.ConfigDict],
 ) -> None:
-  """Register a new environment.
+    """Register a new environment.
 
-  Args:
-      env_name: The name of the environment.
-      env_class: The environment class.
-      cfg_class: The default configuration.
-  """
-  _envs[env_name] = env_class
-  _cfgs[env_name] = cfg_class
+    Args:
+        env_name: The name of the environment.
+        env_class: The environment class.
+        cfg_class: The default configuration.
+    """
+    _envs[env_name] = env_class
+    _cfgs[env_name] = cfg_class
 
 
 def get_default_config(env_name: str) -> config_dict.ConfigDict:
-  """Get the default configuration for an environment."""
-  if env_name not in _cfgs:
-    raise ValueError(
-        f"Env '{env_name}' not found in default configs. Available configs:"
-        f" {list(_cfgs.keys())}"
-    )
-  return _cfgs[env_name]()
+    """Get the default configuration for an environment."""
+    if env_name not in _cfgs:
+        raise ValueError(
+            f"Env '{env_name}' not found in default configs. Available configs:"
+            f" {list(_cfgs.keys())}"
+        )
+    return _cfgs[env_name]()
 
 
 def load(
@@ -99,33 +117,31 @@ def load(
     config: Optional[config_dict.ConfigDict] = None,
     config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
 ) -> mjx_env.MjxEnv:
-  """Get an environment instance with the given configuration.
+    """Get an environment instance with the given configuration.
 
-  Args:
-      env_name: The name of the environment.
-      config: The configuration to use. If not provided, the default
-        configuration is used.
-      config_overrides: A dictionary of overrides for the configuration.
+    Args:
+        env_name: The name of the environment.
+        config: The configuration to use. If not provided, the default
+          configuration is used.
+        config_overrides: A dictionary of overrides for the configuration.
 
-  Returns:
-      An instance of the environment.
-  """
-  if env_name not in _envs:
-    raise ValueError(
-        f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}"
-    )
-  config = config or get_default_config(env_name)
-  return _envs[env_name](config=config, config_overrides=config_overrides)
+    Returns:
+        An instance of the environment.
+    """
+    if env_name not in _envs:
+        raise ValueError(f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}")
+    config = config or get_default_config(env_name)
+    return _envs[env_name](config=config, config_overrides=config_overrides)
 
 
 def get_domain_randomizer(
     env_name: str,
 ) -> Optional[Callable[[mjx.Model, jax.Array], Tuple[mjx.Model, mjx.Model]]]:
-  """Get the default domain randomizer for an environment."""
-  if env_name not in _randomizer:
-    print(
-        f"Env '{env_name}' does not have a domain randomizer in the"
-        " manipulation registry."
-    )
-    return None
-  return _randomizer[env_name]
+    """Get the default domain randomizer for an environment."""
+    if env_name not in _randomizer:
+        print(
+            f"Env '{env_name}' does not have a domain randomizer in the"
+            " manipulation registry."
+        )
+        return None
+    return _randomizer[env_name]
