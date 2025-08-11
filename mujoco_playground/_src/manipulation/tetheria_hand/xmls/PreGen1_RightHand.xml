@@ -1,0 +1,398 @@
+<mujoco model="Tetheria_PreGen1_RightHand">
+  <compiler angle="radian" meshdir="meshes/"/>
+
+  <option timestep="0.01" integrator="Euler" iterations="5" ls_iterations="8">
+    <flag eulerdamp="disable"/>
+  </option>
+
+  <custom>
+    <numeric data="30" name="max_contact_points"/>
+    <numeric data="12" name="max_geom_pairs"/>
+  </custom>
+
+  <asset>
+    <material name="black" rgba="0.2 0.2 0.2 1"/>
+    <material name="gray" rgba="0.5 0.5 0.5 1"/>
+    <mesh name="tetheria_mount" file="tetheria_mount.obj"/>
+
+    <mesh name="right_frame_link" content_type="model/stl" file="right_frame_link.STL"/>
+    <mesh name="right_pinky_prismatic_2_link" content_type="model/stl" file="right_pinky_prismatic_2_link.STL"/>
+    <mesh name="right_index_prismatic_1_link" content_type="model/stl" file="right_index_prismatic_1_link.STL"/>
+    <mesh name="right_middle_prismatic_1_link" content_type="model/stl" file="right_middle_prismatic_1_link.STL"/>
+    <mesh name="right_middle_prismatic_2_link" content_type="model/stl" file="right_middle_prismatic_2_link.STL"/>
+    <mesh name="right_ring_prismatic_2_link" content_type="model/stl" file="right_ring_prismatic_2_link.STL"/>
+    <mesh name="right_pinky_prismatic_1_link" content_type="model/stl" file="right_pinky_prismatic_1_link.STL"/>
+    <mesh name="right_ring_prismatic_1_link" content_type="model/stl" file="right_ring_prismatic_1_link.STL"/>
+    <mesh name="right_pinky_f_link" content_type="model/stl" file="right_pinky_f_link.STL"/>
+    <mesh name="right_pinky_proximal_link" content_type="model/stl" file="right_pinky_proximal_link.STL"/>
+    <mesh name="right_pinky_middle_link" content_type="model/stl" file="right_pinky_middle_link.STL"/>
+    <mesh name="right_pinky_distal_link" content_type="model/stl" file="right_pinky_distal_link.STL"/>
+    <mesh name="right_pinky_tip_link" content_type="model/stl" file="right_pinky_tip_link.STL"/>
+    <mesh name="right_middle_f_link" content_type="model/stl" file="right_middle_f_link.STL"/>
+    <mesh name="right_middle_proximal_link" content_type="model/stl" file="right_middle_proximal_link.STL"/>
+    <mesh name="right_middle_middle_link" content_type="model/stl" file="right_middle_middle_link.STL"/>
+    <mesh name="right_middle_distal_link" content_type="model/stl" file="right_middle_distal_link.STL"/>
+    <mesh name="right_middle_tip_link" content_type="model/stl" file="right_middle_tip_link.STL"/>
+    <mesh name="right_index_f_link" content_type="model/stl" file="right_index_f_link.STL"/>
+    <mesh name="right_index_proximal_link" content_type="model/stl" file="right_index_proximal_link.STL"/>
+    <mesh name="right_index_middle_link" content_type="model/stl" file="right_index_middle_link.STL"/>
+    <mesh name="right_index_distal_link" content_type="model/stl" file="right_index_distal_link.STL"/>
+    <mesh name="right_index_tip_link" content_type="model/stl" file="right_index_tip_link.STL"/>
+    <mesh name="right_ring_f_link" content_type="model/stl" file="right_ring_f_link.STL"/>
+    <mesh name="right_ring_proximal_link" content_type="model/stl" file="right_ring_proximal_link.STL"/>
+    <mesh name="right_ring_middle_link" content_type="model/stl" file="right_ring_middle_link.STL"/>
+    <mesh name="right_ring_distal_link" content_type="model/stl" file="right_ring_distal_link.STL"/>
+    <mesh name="right_ring_tip_link" content_type="model/stl" file="right_ring_tip_link.STL"/>
+    <mesh name="right_index_prismatic_2_link" content_type="model/stl" file="right_index_prismatic_2_link.STL"/>
+    <mesh name="right_t_link" content_type="model/stl" file="right_t_link.STL"/>
+    <mesh name="right_thumb_mcp_link" content_type="model/stl" file="right_thumb_mcp_link.STL"/>
+    <mesh name="right_thumb_proximal_link" content_type="model/stl" file="right_thumb_proximal_link.STL"/>
+    <mesh name="right_thumb_distal_link" content_type="model/stl" file="right_thumb_distal_link.STL"/>
+    <mesh name="right_thumb_tip_link" content_type="model/stl" file="right_thumb_tip_link.STL"/>
+    <mesh name="right_palm_cover_link" content_type="model/stl" file="right_palm_cover_link.STL"/>
+
+  </asset>
+
+
+  <default>
+    <default class="leap_rh">
+      <geom group="3" friction="0.2" solref="0.02 1.5" solimp="0.9 0.99 0.001"/>
+      <default class="visual">
+        <geom group="2" type="mesh" contype="0" conaffinity="0" density="0" material="black"/>
+      </default>
+      <default class="tip">
+        <!-- <geom type="capsule" size="0.012 0.008" pos="0 -0.03 0.015" quat="1 1 0 0" friction="0.7 0.05 0.0002"/> -->
+        <geom size="0.01 0.012 0.016" pos="-0.0012969 -0.0335524 0.0145207" quat="0.703552 0.709596 -0.0292107 -0.0252203" type="box" friction="0.7 0.05 0.0002" rgba=".5 .5 .5 .3"/>
+      </default>
+      <default class="thumb_tip">
+        <!-- <geom type="capsule" size="0.012 0.008" pos="0.0 -0.04 -0.015" quat="1 1 0 0" friction="0.7 0.05 0.0002"/> -->
+        <geom size="0.01 0.012 0.016" pos="-0.00127744 -0.0455619 -0.0144774" quat="0.708101 0.705072 -0.0294902 -0.024426" type="box" friction="0.7 0.05 0.0002" rgba=".5 .5 .5 .3"/>
+      </default>
+
+      <position kp="3.0"/>
+      <!-- armature = rotor inertia * gear ratio^2 = 1.7 * 1e-8 * 288*288 = 0.00149376 -->
+      <!-- max torque = 0.2196 = 600/1000*0.366 -->
+      <!-- frictionloss = rough guess, small ish value -->
+      <!-- <joint axis="0 0 -1" damping="0.2" armature="0.00149376" frictionloss="0.02" actuatorfrcrange="-0.2196 0.2196"/> -->
+      <joint axis="0 0 -1" damping="0.2" armature="0.00149376" actuatorfrcrange="-0.2196 0.2196" frictionloss="0.02"/>
+
+      <default class="mcp">
+        <joint axis="0 -1 0" range="-0.2618 0.2618"/>
+        <position ctrlrange="-0.27 0.27" />
+      </default>
+      <default class="rot">
+        <joint range="0 1.5708"/>
+        <position ctrlrange="-0.1 1.58" />
+      </default>
+      <default class="pip">
+        <joint range="0 1.5708"/>
+        <position ctrlrange="-0.1 1.58" />
+      </default>
+      <default class="dip">
+        <joint range="0 1.5708"/>
+        <position ctrlrange="-0.1 1.58" />
+      </default>
+      <default class="thumb_cmc">
+        <joint range="0 1.7453" />
+        <position ctrlrange="-0.1 1.75" />
+      </default>
+      <default class="thumb_axl">
+        <joint range="0 1.4" />
+        <position ctrlrange="-0.1 1.5" />
+      </default>
+      <default class="thumb_mcp">
+        <joint range="0 1.2217"/>
+        <position ctrlrange="-0.1 1.3" />
+      </default>
+      <default class="thumb_ipl">
+        <joint range="0 1.5708"/>
+        <position ctrlrange="-0.1 1.58" />
+      </default>
+    </default>
+
+  </default>
+
+  <contact>
+    <!-- filter the palm from all other finger bodies except the tips -->
+    <exclude body1="palm" body2="right_t_link" />
+    <exclude body1="palm" body2="right_index_f_link" />
+    <exclude body1="palm" body2="right_middle_f_link" />
+    <exclude body1="palm" body2="right_ring_f_link" />
+    <exclude body1="palm" body2="right_pinky_f_link" />
+
+    <exclude body1="palm" body2="right_thumb_mcp_link" />
+    <exclude body1="palm" body2="right_index_proximal_link" />
+    <exclude body1="palm" body2="right_middle_proximal_link" />
+    <exclude body1="palm" body2="right_ring_proximal_link" />
+    <exclude body1="palm" body2="right_pinky_proximal_link" />
+
+    <exclude body1="palm" body2="right_thumb_proximal_link" />
+    <exclude body1="palm" body2="right_index_middle_link" />
+    <exclude body1="palm" body2="right_middle_middle_link" />
+    <exclude body1="palm" body2="right_ring_middle_link" />
+    <exclude body1="palm" body2="right_pinky_middle_link" />
+
+    <!-- filter the mount from all finger bodies except the tips -->
+
+    <exclude body1="tetheria_mount" body2="palm"/>
+
+    <exclude body1="tetheria_mount" body2="right_t_link"/>
+    <exclude body1="tetheria_mount" body2="right_index_f_link"/>
+    <exclude body1="tetheria_mount" body2="right_middle_f_link"/>
+    <exclude body1="tetheria_mount" body2="right_ring_f_link"/>
+    <exclude body1="tetheria_mount" body2="right_pinky_f_link"/>
+
+    <exclude body1="tetheria_mount" body2="right_thumb_mcp_link"/>
+    <exclude body1="tetheria_mount" body2="right_index_proximal_link"/>
+    <exclude body1="tetheria_mount" body2="right_middle_proximal_link"/>
+    <exclude body1="tetheria_mount" body2="right_ring_proximal_link"/>
+    <exclude body1="tetheria_mount" body2="right_pinky_proximal_link"/>
+
+    <exclude body1="tetheria_mount" body2="right_thumb_proximal_link"/>
+    <exclude body1="tetheria_mount" body2="right_index_middle_link"/>
+    <exclude body1="tetheria_mount" body2="right_middle_middle_link"/>
+    <exclude body1="tetheria_mount" body2="right_ring_middle_link"/>
+    <exclude body1="tetheria_mount" body2="right_pinky_middle_link"/>
+
+    <exclude body1="tetheria_mount" body2="right_thumb_distal_link"/>
+    <exclude body1="tetheria_mount" body2="right_index_distal_link"/>
+    <exclude body1="tetheria_mount" body2="right_middle_distal_link"/>
+    <exclude body1="tetheria_mount" body2="right_ring_distal_link"/>
+    <exclude body1="tetheria_mount" body2="right_pinky_distal_link"/>
+
+    <!-- none of the base fingertip geoms can touch each other -->
+    <exclude body1="right_t_link" body2="right_index_f_link" />
+    <exclude body1="right_t_link" body2="right_middle_f_link" />
+    <exclude body1="right_t_link" body2="right_ring_f_link" />
+    <exclude body1="right_t_link" body2="right_pinky_f_link" />
+
+    <exclude body1="right_index_f_link" body2="right_middle_f_link" />
+    <exclude body1="right_index_f_link" body2="right_ring_f_link" />
+    <exclude body1="right_index_f_link" body2="right_pinky_f_link" />
+
+    <exclude body1="right_middle_f_link" body2="right_ring_f_link" />
+    <exclude body1="right_middle_f_link" body2="right_pinky_f_link" />
+
+    <exclude body1="right_ring_f_link" body2="right_pinky_f_link" />
+
+  </contact>
+
+
+  <worldbody>
+    <light name="spotlight" mode="targetbodycom" target="palm" pos="3 0 4"/>
+    <body name="tetheria_mount" pos="0 0 0" quat="1 0 0 0" childclass="leap_rh">
+      <geom name="tetheria_mount_visual" pos="0 0 0" quat="1 0 0 0" class="visual" mesh="tetheria_mount"/>
+      <geom name="leap_mount_collision_0" size="0.002 0.025 0.005" pos="0.0405 0.02 0.009" quat="0.57346234 0 0.81923192 0" type="box"/>
+      <geom name="leap_mount_collision_1" size="0.005 0.010 0.005" pos="0.045 0.053 0.002" quat="0.4987168 0.64994038 -0.34910175 0.45495826" type="box"/>
+      <site name="grasp_site" pos="0.11 0.0 0.03" group="4"/>
+      <body name="palm" pos="0.04 0.01 -0.015" quat="0.4056 -0.5792 0.5792 -0.4056">
+        <geom type="mesh" class= "visual" rgba="0.611765 0.658824 0.670588 1" mesh="right_palm_cover_link"/>
+        <geom type="mesh" class="visual" rgba="0.611765 0.658824 0.670588 1" mesh="right_frame_link"/>
+        <!-- <geom size="0.03 0.015 0.02" pos="-0.012 -0.008 0.025" type="box" />
+        <geom size="0.02 0.015 0.029" pos="0.002 -0.008 0.07" type="box" />
+        <geom size="0.012 0.015 0.022" pos="0.03 -0.008 0.062" type="box" />
+        <geom size="0.012 0.015 0.029" pos="-0.03 -0.008 0.068" type="box" />
+        <geom size="0.012 0.01 0.02" pos="0.03 -0.003 0.025" type="box" /> -->
+        <!-- <geom name="palm_collision_1" size="0.011 0.013 0.017" pos="0.008 -0.011 -0.009" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_2" size="0.011 0.013 0.017" pos="-0.037 -0.011 -0.009" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_3" size="0.011 0.013 0.017" pos="-0.082 -0.011 -0.009" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_4" size="0.029 0.01 0.023" pos="-0.078 -0.0115 -0.066" quat="0.420605 -0.420605 -0.568411 -0.568411" type="box"/>
+        <geom name="palm_collision_5" size="0.01 0.06 0.015" pos="-0.035 -0.003 -0.030" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_6" size="0.005 0.06 0.01" pos="-0.035 -0.024 -0.032" quat="0.653227 -0.270728 -0.270728 -0.653227" type="box"/>
+        <geom name="palm_collision_7" size="0.012 0.058 0.023" pos="-0.033 -0.0115 -0.048" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_8" size="0.022 0.026 0.023" pos="-0.053 -0.0115 -0.078" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_9" size="0.002 0.018 0.017" pos="-0.009 -0.006 -0.098" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_10" size="0.022 0.028 0.002" pos="-0.003 0.010 -0.078" quat="-0.5 -0.5 -0.5 0.5" type="box"/> -->
+
+
+        <geom name="palm_collision_1" size="0.006 0.006 0.006" pos="0.031 -0.0045 0.096" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_2" size="0.006 0.006 0.006" pos="0.009 -0.0045 0.096" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_3" size="0.006 0.006 0.006" pos="-0.014 -0.0045 0.096" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_3_1" size="0.006 0.006 0.006" pos="-0.036 -0.0045 0.081" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+
+        <geom name="palm_collision_4" size="0.029 0.01 0.023" pos="-0.028 -0.0015 0.034" quat="0.420605 -0.420605 -0.568411 -0.568411" type="box"/>
+        <geom name="palm_collision_5" size="0.016 0.044 0.015" pos="0.0 0.007 0.07" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_6" size="0.0071 0.042 0.013" pos="0.002 -0.014 0.0745" quat="0.700443 -0.092458 -0.092458 -0.700443" type="box"/>
+        <geom name="palm_collision_7" size="0.012 0.042 0.023" pos="0.002 -0.0015 0.052" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_8" size="0.022 0.020 0.023" pos="-0.003 -0.0015 0.022" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_9" size="0.002 0.018 0.017" pos="0.041 0.004 0.002" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+        <geom name="palm_collision_10" size="0.022 0.028 0.002" pos="0.047 0.02 0.022" quat="-0.5 -0.5 -0.5 0.5" type="box"/>
+
+
+        <body name="right_index_f_link" pos="0.031448 -0.004172 0.10003" quat="0.999505 0.000456857 0.026173 -0.0174466">
+          <inertial pos="0 0 0.0017" mass="0.000169697" diaginertia="1.29009e-09 1.29009e-09 7.6801e-10"/>
+          <joint name="right_index_mcp_abd" pos="0 0 0" axis="0 1 0" range="-0.3491 0.3491" class="mcp" />
+          <geom type="mesh" rgba="0.611765 0.658824 0.670588 1" mesh="right_index_f_link" class="visual"/>
+          <!-- <geom size="0.005 0.005" quat="1 0 1 0" type="box" /> -->
+          <body name="right_index_proximal_link" pos="0 0 0.0034">
+            <inertial pos="-6.14568e-08 -0.00357858 0.0205176" quat="0.706858 0.0179374 -0.0179385 0.7069" mass="0.00600337" diaginertia="8.89988e-07 8.65278e-07 2.05352e-07"/>
+            <joint name="right_index_mcp_flex" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="rot" />
+            <geom type="mesh" rgba="1 0.4 0.4 1" mesh="right_index_proximal_link" class="visual"/>
+            <geom size="0.006 0.006 0.013" pos="0 -0.003 0.019" type="box" />
+            <body name="right_index_middle_link" pos="0 -0.0014554 0.043" quat="0.999962 0.00872639 0 0">
+              <inertial pos="2.38785e-08 -0.00110516 0.00939619" quat="0.706833 -0.0191908 0.0192032 0.70686" mass="0.0023759" diaginertia="1.62521e-07 1.35575e-07 7.42871e-08"/>
+              <joint name="right_index_pip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="pip" />
+              <geom type="mesh" rgba="0.490196 0.490196 0.490196 1" mesh="right_index_middle_link" class="visual"/>
+              <geom size="0.006 0.005 0.010" pos="0 -0.001 0.006" type="box" />
+              <body name="right_index_distal_link" pos="0 0.00036966 0.021997" quat="1 0.00052935 0 0">
+                <inertial pos="-0.00184412 0.000358323 0.0107277" quat="0.696253 -0.184428 0.0500635 0.69189" mass="0.00309312" diaginertia="1.89064e-07 1.75544e-07 6.39413e-08"/>
+                <joint name="right_index_dip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="dip" />
+                <geom type="mesh" rgba="0 1 1 1" mesh="right_index_distal_link" class="visual"/>
+                <geom pos="0 0.0033789 0.024944" quat="0.999999 -0.0015829 0 0" type="mesh" rgba="1 0.227451 0.882353 1" mesh="right_index_tip_link" class="visual"/>
+                <geom name="if_tip" size="0.005 0.005 0.01" pos="0 -0.003 0.014" type="box"/>
+                <site name="if_tip" pos="0 -0.003 0.023" group="4"/>
+              </body>
+            </body>
+          </body>
+        </body>
+        <body name="right_middle_f_link" pos="0.0085 -0.003 0.10061">
+          <inertial pos="0 0 0.0017" mass="0.000169697" diaginertia="1.29009e-09 1.29009e-09 7.6801e-10"/>
+          <joint name="right_middle_mcp_abd" pos="0 0 0" axis="0 1 0" range="-0.3491 0.3491" class="mcp" />
+          <geom type="mesh" rgba="0.611765 0.658824 0.670588 1" mesh="right_middle_f_link" class="visual"/>
+          <body name="right_middle_proximal_link" pos="0 0 0.0034">
+            <inertial pos="-5.79907e-08 -0.00357858 0.0205176" quat="0.706861 0.0179374 -0.0179384 0.706897" mass="0.00600338" diaginertia="8.89988e-07 8.65279e-07 2.05352e-07"/>
+            <joint name="right_middle_mcp_flex" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="rot" />
+            <geom type="mesh" rgba="1 0.4 0.4 1" mesh="right_middle_proximal_link" class="visual"/>
+            <geom size="0.006 0.006 0.013" pos="0 -0.003 0.019" type="box" />
+            <body name="right_middle_middle_link" pos="0 -0.0014554 0.043" quat="0.999962 0.00872639 0 0">
+              <inertial pos="9.42153e-09 -0.00110516 0.00939618" quat="0.706832 -0.0191899 0.0192034 0.706861" mass="0.0023759" diaginertia="1.62521e-07 1.35575e-07 7.42872e-08"/>
+              <joint name="right_middle_pip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="pip" />
+              <geom type="mesh" rgba="0.490196 0.490196 0.490196 1" mesh="right_middle_middle_link" class="visual"/>
+              <geom size="0.006 0.005 0.010" pos="0 -0.001 0.006" type="box" />
+              <body name="right_middle_distal_link" pos="0 0.00036966 0.021997" quat="1 0.00052935 0 0">
+                <inertial pos="-0.00184407 0.000358307 0.0107282" quat="0.696243 -0.184422 0.0500631 0.691902" mass="0.00309312" diaginertia="1.89075e-07 1.75556e-07 6.39407e-08"/>
+                <joint name="right_middle_dip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="dip" />
+                <geom type="mesh" rgba="0 1 1 1" mesh="right_middle_distal_link" class="visual"/>
+                <geom pos="0 0.0033789 0.024944" quat="0.999999 -0.0015829 0 0" type="mesh" rgba="1 0.227451 0.882353 1" mesh="right_middle_tip_link" class="visual"/>
+                <!-- <geom pos="0 0.0033789 0.024944" quat="0.999999 -0.0015829 0 0" type="mesh" rgba="1 0.227451 0.882353 1" mesh="right_middle_tip_link" class="plastic_collision"/> -->
+                <geom name="mf_tip" size="0.005 0.005 0.01" pos="0 -0.003 0.014" type="box"/>
+                <site name="mf_tip" pos="0 -0.003 0.023" group="4"/>
+              </body>
+            </body>
+          </body>
+        </body>
+        <body name="right_ring_f_link" pos="-0.014448 -0.004172 0.10003" quat="0.999505 0.000456857 -0.026173 0.0174466">
+          <inertial pos="0 0 0.0017" mass="0.000169697" diaginertia="1.29009e-09 1.29009e-09 7.6801e-10"/>
+          <joint name="right_ring_mcp_abd" pos="0 0 0" axis="0 1 0" range="-0.3491 0.3491" class="mcp"/>
+          <geom type="mesh" rgba="0.611765 0.658824 0.670588 1" mesh="right_ring_f_link" class="visual"/>
+          <body name="right_ring_proximal_link" pos="0 0 0.0034">
+            <inertial pos="-4.27735e-08 -0.00357857 0.0205176" quat="0.706879 0.0179383 -0.0179383 0.706879" mass="0.00600337" diaginertia="8.89987e-07 8.65277e-07 2.05351e-07"/>
+            <joint name="right_ring_mcp_flex" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="rot"/>
+            <geom type="mesh" rgba="1 0.4 0.4 1" mesh="right_ring_proximal_link" class="visual"/>
+            <geom size="0.006 0.006 0.013" pos="0 -0.003 0.019" type="box" />
+            <body name="right_ring_middle_link" pos="0 -0.0014554 0.043" quat="0.999962 0.00872639 0 0">
+              <inertial pos="5.2917e-09 -0.00110519 0.0093962" quat="0.706846 -0.0191893 0.019202 0.706846" mass="0.00237591" diaginertia="1.62521e-07 1.35575e-07 7.42877e-08"/>
+              <joint name="right_ring_pip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="pip" />
+              <geom type="mesh" rgba="0.490196 0.490196 0.490196 1" mesh="right_ring_middle_link" class="visual"/>
+              <geom size="0.006 0.005 0.010" pos="0 -0.001 0.006" type="box" />
+              <body name="right_ring_distal_link" pos="0 0.00036966 0.021997" quat="1 0.00052935 0 0">
+                <inertial pos="-0.00184407 0.000358289 0.0107282" quat="0.696244 -0.184422 0.050064 0.691901" mass="0.00309314" diaginertia="1.89076e-07 1.75558e-07 6.39409e-08"/>
+                <joint name="right_ring_dip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="dip"/>
+                <geom type="mesh" rgba="0 1 1 1" mesh="right_ring_distal_link" class="visual"/>
+                <geom pos="0 0.0033789 0.024944" quat="0.999999 -0.0015829 0 0" type="mesh" rgba="1 0.227451 0.882353 1" mesh="right_ring_tip_link" class="visual"/>
+                <!-- <geom pos="0 0.0033789 0.024944" quat="0.999999 -0.0015829 0 0" type="mesh" rgba="1 0.227451 0.882353 1" mesh="right_ring_tip_link" class="plastic_collision"/> -->
+                <geom name="rf_tip" size="0.005 0.005 0.01" pos="0 -0.003 0.014" type="box"/>
+                <site name="rf_tip" pos="0 -0.003 0.023" group="4"/>
+              </body>
+            </body>
+          </body>
+        </body>
+        <body name="right_pinky_f_link" pos="-0.036912 -0.0066167 0.087021" quat="0.998019 0.00182998 -0.0523041 0.034918">
+          <inertial pos="0 0 0.0017" mass="0.000169697" diaginertia="1.29009e-09 1.29009e-09 7.6801e-10"/>
+          <joint name="right_pinky_mcp_abd" pos="0 0 0" axis="0 1 0" range="-0.3491 0.3491" class="mcp"/>
+          <geom type="mesh" rgba="0.611765 0.658824 0.670588 1" mesh="right_pinky_f_link" class="visual"/>
+          <body name="right_pinky_proximal_link" pos="0 0 0.0034">
+            <inertial pos="-4.24866e-08 -0.00357857 0.0205176" quat="0.706879 0.0179383 -0.0179383 0.706879" mass="0.00600337" diaginertia="8.89987e-07 8.65277e-07 2.05351e-07"/>
+            <joint name="right_pinky_mcp_flex" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="rot"/>
+            <geom type="mesh" rgba="1 0.4 0.4 1" mesh="right_pinky_proximal_link" class="visual"/>
+            <geom size="0.006 0.006 0.013" pos="0 -0.003 0.019" type="box" />
+            <body name="right_pinky_middle_link" pos="0 -0.0014554 0.043" quat="0.999962 0.00872639 0 0">
+              <inertial pos="1.1729e-08 -0.00110519 0.0093962" quat="0.706846 -0.0191898 0.019202 0.706846" mass="0.00237591" diaginertia="1.6252e-07 1.35575e-07 7.42876e-08"/>
+              <joint name="right_pinky_pip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="pip"/>
+              <geom type="mesh" rgba="0.490196 0.490196 0.490196 1" mesh="right_pinky_middle_link" class="visual"/>
+              <geom size="0.006 0.005 0.010" pos="0 -0.001 0.006" type="box" />
+              <body name="right_pinky_distal_link" pos="0 0.00036966 0.021997" quat="1 0.00052935 0 0">
+                <inertial pos="-0.00184407 0.000358264 0.0107282" quat="0.696242 -0.184421 0.0500633 0.691903" mass="0.00309314" diaginertia="1.89076e-07 1.75557e-07 6.3941e-08"/>
+                <joint name="right_pinky_dip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="dip"/>
+                <geom type="mesh" rgba="0 1 1 1" mesh="right_pinky_distal_link" class="visual"/>
+                <geom pos="0 0.0033789 0.024944" quat="0.999999 -0.0015829 0 0" type="mesh" rgba="1 0.227451 0.882353 1" mesh="right_pinky_tip_link" class="visual"/>
+                <!-- <geom pos="0 0.0033789 0.024944" quat="0.999999 -0.0015829 0 0" type="mesh" rgba="1 0.227451 0.882353 1" mesh="right_pinky_tip_link" class="plastic_collision"/> -->
+                <geom name="pf_tip" size="0.005 0.005 0.01" pos="0 -0.003 0.014" type="box"/>
+
+                <site name="pf_tip" pos="0 -0.003 0.023" group="4"/>
+              </body>
+            </body>
+          </body>
+        </body>
+        <body name="right_t_link" pos="0.026317 -0.0175 0.02956" quat="0.579233 -0.40557 0.405572 -0.579235">
+          <inertial pos="-0.000792597 0.00920489 0.00837042" quat="0.968785 -0.231969 -0.0564922 0.066746" mass="0.00893482" diaginertia="1.11708e-06 8.42419e-07 4.36164e-07"/>
+          <joint name="right_thumb_cmc_abd" pos="0 0 0" axis="0 1 0" range="0 1.7453" class="thumb_cmc"/>
+          <geom type="mesh" rgba="0 0 1 1" mesh="right_t_link" class="visual"/>
+          <geom name="th_mp_collision" size="0.015 0.008 0.008" pos="-0.01 0.015 0.005" type="box"/>
+          <body name="right_thumb_mcp_link" pos="-0.0024625 0.011988 0.019805" quat="0.988119 0.0527639 -0.058289 0.132056">
+            <inertial pos="-3.98621e-09 -0.0014303 0.0147562" quat="0.706814 0.0205256 -0.020536 0.706804" mass="0.0102694" diaginertia="1.58158e-06 1.39018e-06 6.7267e-07"/>
+            <joint name="right_thumb_cmc_flex" pos="0 0 0" axis="1 0 0" range="0 0.9559" class="thumb_axl"/>
+            <geom type="mesh" rgba="1 0.4 0.4 1" mesh="right_thumb_mcp_link" class="visual"/>
+            <geom name="th_bs_collision_1" size="0.008 0.006 0.016" pos="0 0.0 00.014" type="box"/>
+            <body name="right_thumb_proximal_link" pos="0 0.0013652 0.035982">
+              <inertial pos="-9.60413e-08 -0.00147723 0.0133935" quat="0.707028 -0.010773 0.0107885 0.707021" mass="0.00574573" diaginertia="6.77924e-07 5.00351e-07 3.51862e-07"/>
+              <joint name="right_thumb_mcp" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="thumb_mcp"/>
+              <geom type="mesh" rgba="0 0.6 1 1" mesh="right_thumb_proximal_link" class="visual"/>
+              <geom name="th_px_collision_1" size="0.008 0.006 0.012" pos="0 -0.002 0.012" type="box"/>
+              <body name="right_thumb_distal_link" pos="0 0.00052357 0.029995">
+                <inertial pos="-0.00113926 -0.00130909 0.0133464" quat="0.698666 -0.140008 0.0513212 0.699736" mass="0.00692863" diaginertia="6.65186e-07 5.66522e-07 2.78338e-07"/>
+                <joint name="right_thumb_ip" pos="0 0 0" axis="1 0 0" range="0 1.5708" class="thumb_ipl"/>
+                <geom type="mesh" rgba="0.792157 0.819608 0.933333 1" mesh="right_thumb_distal_link" class="visual"/>
+                <geom pos="0 0.0024685 0.029987" quat="0.999982 0.00592597 0 0" type="mesh" rgba="1 0 1 1" mesh="right_thumb_tip_link" class="visual"/>
+                <geom name="th_tip" size="0.008 0.006 0.012" pos="0 -0.002 0.015" type="box"/>
+                <!-- <geom pos="0 0.0024685 0.029987" quat="0.999982 0.00592597 0 0" type="mesh" rgba="1 0 1 1" mesh="right_thumb_tip_link" class="plastic_collision"/> -->
+                <!-- <geom name="th_tip" size="0.009 0.008" pos="0 -0.004 0.01" type="capsule" /> -->
+                <site name="th_tip" pos="0 -0.005 0.027" group="4"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- <position name="rh_A_FFJ0" tendon="rh_FFJ0" class="dip" /> -->
+    <position name="right_index_A_dip" joint="right_index_dip" class="pip" />
+    <position name="right_index_A_pip" joint="right_index_pip" class="dip" />
+    <position name="right_index_A_mcp_abd" joint="right_index_mcp_abd" class="mcp" />
+    <position name="right_index_A_mcp_flex" joint="right_index_mcp_flex" class="rot" />
+
+    <position name="right_middle_A_dip" joint="right_middle_dip" class="pip" />
+    <position name="right_middle_A_pip" joint="right_middle_pip" class="dip" />
+    <position name="right_middle_A_mcp_abd" joint="right_middle_mcp_abd" class="mcp" />
+    <position name="right_middle_A_mcp_flex" joint="right_middle_mcp_flex" class="rot" />
+
+    <position name="right_ring_A_dip" joint="right_ring_dip" class="pip" />
+    <position name="right_ring_A_pip" joint="right_ring_pip" class="dip" />
+    <position name="right_ring_A_mcp_abd" joint="right_ring_mcp_abd" class="mcp" />
+    <position name="right_ring_A_mcp_flex" joint="right_ring_mcp_flex" class="rot" />
+
+    <position name="right_pinky_A_dip" joint="right_pinky_dip" class="pip" />
+    <position name="right_pinky_A_pip" joint="right_pinky_pip" class="dip" />
+    <position name="right_pinky_A_mcp_abd" joint="right_pinky_mcp_abd" class="mcp" />
+    <position name="right_pinky_A_mcp_flex" joint="right_pinky_mcp_flex" class="rot" />
+
+    <!-- <position name="rh_A_TBJ0" tendon="rh_TBJ0" class="thumb_ipl" /> -->
+
+    <position name="right_thumb_A_dip" joint="right_thumb_ip" class="thumb_ipl" />
+    <position name="right_thumb_A_pip" joint="right_thumb_mcp" class="thumb_mcp" />
+    <position name="right_thumb_A_mcp_abd" joint="right_thumb_cmc_abd" class="thumb_cmc" />
+    <position name="right_thumb_A_cmc_flex" joint="right_thumb_cmc_flex" class="thumb_axl" />
+  </actuator>
+
+  <!-- <equality> -->
+  <!-- <weld body1="mocap" body2="tetheria_mount" solref="0.01 1" solimp=".9 .9 0.01" /> -->
+  <!-- <joint joint1="right_thumb_mcp" joint2="right_thumb_ip"/>
+    <joint joint1="right_index_pip" joint2="right_index_dip"/>
+    <joint joint1="right_middle_pip" joint2="right_middle_dip"/>
+    <joint joint1="right_ring_pip" joint2="right_ring_dip"/>
+    <joint joint1="right_pinky_pip" joint2="right_pinky_dip"/> -->
+  <!-- </equality> -->
+
+</mujoco>

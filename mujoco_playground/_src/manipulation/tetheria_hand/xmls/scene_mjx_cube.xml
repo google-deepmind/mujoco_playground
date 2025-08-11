@@ -1,0 +1,91 @@
+<mujoco model="tetheria_scene">
+  <!-- <include file="leap_rh_mjx.xml"/> -->
+  <include file="PreGen1_RightHand.xml"/>
+  <include file="reorientation_cube.xml"/>
+
+  <statistic center="0.15 0 0" extent="0.4" meansize="0.01"/>
+
+  <visual>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
+    <rgba force="1 0 0 1"/>
+    <global azimuth="120" elevation="-20"/>
+    <map force="0.01" stiffness="500"/>
+    <scale forcewidth="0.1" contactwidth="0.5" contactheight="0.2"/>
+    <quality shadowsize="8192"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="800" height="800"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="1 1 1" rgb2="1 1 1" markrgb="0 0 0" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
+  </asset>
+
+  <worldbody>
+    <camera name="side" pos="-0.183 0.396 0.296" xyaxes="-0.783 -0.622 -0.000 0.332 -0.419 0.845"/>
+    <geom name="floor" pos="0 0 -0.25" size="0 0 0.01" type="plane" material="groundplane" contype="2" conaffinity="2"/>
+    <body name="goal" mocap="true" pos="0.325 0.17 0.0475">
+      <!-- <geom type="mesh" mesh="cube_mesh" material="dexcube" contype="0" conaffinity="0" density="0" group="2"/> -->
+      <geom type="mesh" mesh="cube_mesh" material="dexcube" contype="0" conaffinity="0" density="0" group="2"/>
+      <geom type="box" size=".035 .035 .035" mass=".108" group="3"/>
+    </body>
+  </worldbody>
+
+  <sensor>
+    <!-- cube. -->
+    <framepos name="cube_position" objtype="body" objname="cube"/>
+    <framequat name="cube_orientation" objtype="body" objname="cube"/>
+    <framelinvel name="cube_linvel" objtype="body" objname="cube"/>
+    <frameangvel name="cube_angvel" objtype="body" objname="cube"/>
+    <frameangacc name="cube_angacc" objtype="body" objname="cube"/>
+    <framezaxis name="cube_upvector" objtype="body" objname="cube"/>
+
+    <!-- hand. -->
+    <framepos name="palm_position" objtype="site" objname="grasp_site"/>
+    <framepos name="th_tip_position" objtype="site" objname="th_tip" reftype="site" refname="grasp_site"/>
+    <framepos name="if_tip_position" objtype="site" objname="if_tip" reftype="site" refname="grasp_site"/>
+    <framepos name="mf_tip_position" objtype="site" objname="mf_tip" reftype="site" refname="grasp_site"/>
+    <framepos name="rf_tip_position" objtype="site" objname="rf_tip" reftype="site" refname="grasp_site"/>
+    <framepos name="pf_tip_position" objtype="site" objname="pf_tip" reftype="site" refname="grasp_site"/>
+    <!-- goal. -->
+    <framequat name="cube_goal_orientation" objtype="body" objname="goal"/>
+    <framezaxis name="cube_goal_upvector" objtype="body" objname="goal"/>
+  </sensor>
+  <keyframe>
+    <key name="home" qpos="0 0.8 0.8 0.8 
+      0 0.75 0.75 0.75 
+      0 0.75 0.75 0.75 
+      0 0.75 0.75 0.75 
+      0.75 0.2 0.2 0.75
+      0.12 0.0 0.05 0.810967 -0.00262895 -0.585086 -0.000254303" ctrl="
+      0.75 0.75 0 0.75 
+      0.75 0.75 0 0.75 
+      0.75 0.75 0 0.75 
+      0.75 0.75 0 0.75
+      0.75 0.2 0.75 0.2 " mpos="0.25 0.16 0" mquat="1 0 0 0"/>
+  </keyframe>
+  <!-- <keyframe>
+    <key name="home" qpos="
+      0.8 0 0.8 0.8
+      0.8 0 0.8 0.8
+      0.8 0 0.8 0.8
+      0.8 0.8 0.8 0
+      0.1 0.0 0.05 0.810967 -0.00262895 -0.585086 -0.000254303" ctrl="
+      0.8 0 0.8 0.8
+      0.8 0 0.8 0.8
+      0.8 0 0.8 0.8
+      0.8 0.8 0.8 0" mpos="0.25 0.16 0" mquat="1 0 0 0"/>
+  </keyframe> -->
+  <!-- <keyframe>
+    <key name="home" qpos="0.267017 0.790296 0.798163 0.798145 
+      0.000944495 0.795641 0.800036 0.800125 
+      -9.97583e-05 0.796859 0.80004 0.80013 
+      -0.000871312 0.795353 0.800039 0.800127 
+      1.01231 0.376892 0.584027 0.583299 
+      0.109678 0.021985 0.018602 0.384549 0.0193474 -0.603071 -0.698608" ctrl="
+      0.58 1.02 0.372
+      0.8 0 0.8
+      0.8 0 0.8
+      0.8 0 0.8
+      0.8 0.8 0.8" mpos="0.25 0.16 0" mquat="1 0 0 0"/>
+  </keyframe> -->
+</mujoco>
