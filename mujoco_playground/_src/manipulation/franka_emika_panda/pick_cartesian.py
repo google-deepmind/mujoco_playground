@@ -290,8 +290,10 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     swapped_data = state.data.replace(
         qpos=self._guide_q, ctrl=self._guide_ctrl
     )  # help hit the terminal sparse reward.
-    data = jax.tree_util.tree_map(
-        lambda x, y: (1 - to_sample) * x + to_sample * y,
+    data = jax.tree_util.tree_map_with_path(
+        lambda path, x, y: ((1 - to_sample) * x + to_sample * y).astype(x.dtype)
+        if len(path) == 1
+        else x,
         state.data,
         swapped_data,
     )

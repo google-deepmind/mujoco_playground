@@ -87,9 +87,9 @@ class CubeReorient(leap_hand_base.LeapHandEnv):
 
   def _post_init(self) -> None:
     home_key = self._mj_model.keyframe("home")
-    self._init_q = jp.array(home_key.qpos)
-    self._init_mpos = jp.array(home_key.mpos)
-    self._init_mquat = jp.array(home_key.mquat)
+    self._init_q = jp.array(home_key.qpos, dtype=float)
+    self._init_mpos = jp.array(home_key.mpos, dtype=float)
+    self._init_mquat = jp.array(home_key.mquat, dtype=float)
     self._lowers = self._mj_model.actuator_ctrlrange[:, 0]
     self._uppers = self._mj_model.actuator_ctrlrange[:, 1]
     self._hand_qids = mjx_env.get_qpos_ids(self.mj_model, consts.JOINT_NAMES)
