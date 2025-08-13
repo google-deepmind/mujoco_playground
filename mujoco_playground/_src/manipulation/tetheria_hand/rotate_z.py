@@ -270,29 +270,29 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
     hand_qids = mjx_env.get_qpos_ids(mj_model, consts.JOINT_NAMES)
     hand_body_names = [
         "palm",
-        "right_pinky_f_link",
-        "right_pinky_proximal_link",
-        "right_pinky_middle_link",
-        "right_pinky_distal_link",
-        "right_middle_f_link",
-        "right_middle_proximal_link",
-        "right_middle_middle_link",
-        "right_middle_distal_link",
         "right_index_f_link",
         "right_index_proximal_link",
         "right_index_middle_link",
         "right_index_distal_link",
+        "right_middle_f_link",
+        "right_middle_proximal_link",
+        "right_middle_middle_link",
+        "right_middle_distal_link",
         "right_ring_f_link",
         "right_ring_proximal_link",
         "right_ring_middle_link",
         "right_ring_distal_link",
+        "right_pinky_f_link",
+        "right_pinky_proximal_link",
+        "right_pinky_middle_link",
+        "right_pinky_distal_link",
         "right_t_link",
         "right_thumb_mcp_link",
         "right_thumb_proximal_link",
         "right_thumb_distal_link",
     ]
     hand_body_ids = np.array([mj_model.body(n).id for n in hand_body_names])
-    fingertip_geoms = ["th_tip", "if_tip", "mf_tip", "rf_tip", "pf_tip"]
+    fingertip_geoms = ["if_tip", "mf_tip", "rf_tip", "pf_tip", "th_tip"]
     fingertip_geom_ids = [mj_model.geom(g).id for g in fingertip_geoms]
 
     @jax.vmap
