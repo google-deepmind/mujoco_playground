@@ -216,6 +216,8 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
             f'reward/{k}': 0.0
             for k in self._config.reward_config.reward_scales.keys()
         },
+        'reward/success': jp.array(0.0),
+        'reward/lifted': jp.array(0.0),
     }
 
     info = {
@@ -335,9 +337,8 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
 
     # Sparse rewards
     box_pos = data.xpos[self._obj_body]
-    total_reward += (
-        box_pos[2] > 0.05
-    ) * self._config.reward_config.lifted_reward
+    lifted = (box_pos[2] > 0.05) * self._config.reward_config.lifted_reward
+    total_reward += lifted
     success = self._get_success(data, state.info)
     total_reward += success * self._config.reward_config.success_reward
 
@@ -354,6 +355,10 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     out_of_bounds |= box_pos[2] < 0.0
     state.metrics.update(out_of_bounds=out_of_bounds.astype(float))
     state.metrics.update({f'reward/{k}': v for k, v in raw_rewards.items()})
+    state.metrics.update({
+        'reward/lifted': lifted.astype(float),
+        'reward/success': success.astype(float),
+    })
 
     done = (
         out_of_bounds
