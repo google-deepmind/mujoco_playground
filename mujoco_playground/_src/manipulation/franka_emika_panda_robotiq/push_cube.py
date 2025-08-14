@@ -21,12 +21,12 @@ import jax.numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
 from mujoco.mjx._src import math
-import numpy as np
-
+from mujoco.mjx._src import types
 from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward as reward_util
 from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import panda_robotiq
+import numpy as np
 
 WORKSPACE_MIN = (0.3, -0.5, 0.0)
 WORKSPACE_MAX = (0.75, 0.7, 0.5)
@@ -389,6 +389,9 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
   def _get_reward(
       self, data: mjx.Data, info: dict[str, Any], action: jax.Array
   ) -> dict[str, jax.Array]:
+    if not isinstance(data._impl, types.DataJAX):
+      raise ValueError("Evnironment requires JAX MJX implementation.")
+
     # Target, gripper, and object rewards.
     target_pos = data.mocap_pos[self._mocap_target, :].ravel()
     box_pos = data.xpos[self._obj_body]

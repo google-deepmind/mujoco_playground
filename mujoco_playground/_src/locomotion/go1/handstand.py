@@ -67,6 +67,9 @@ def default_config() -> config_dict.ConfigDict:
               dof_acc=0.0,
           ),
       ),
+      impl="jax",
+      nconmax=30 * 8192,
+      njmax=200,
   )
 
 
@@ -164,7 +167,16 @@ class Handstand(go1_base.Go1Env):
     )
     qvel = jp.where(init_from_crouch, jp.zeros(self.mjx_model.nv), qvel_nonzero)
 
-    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=qpos,
+        qvel=qvel,
+        ctrl=qpos[7:],
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     info = {
         "step": 0,

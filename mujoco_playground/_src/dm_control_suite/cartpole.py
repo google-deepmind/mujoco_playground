@@ -51,6 +51,9 @@ def default_config() -> config_dict.ConfigDict:
       action_repeat=1,
       vision=False,
       vision_config=default_vision_config(),
+      impl="jax",
+      nconmax=0,
+      njmax=2,
   )
 
 
@@ -95,7 +98,7 @@ class Balance(mjx_env.MjxEnv):
         _XML_PATH.read_text(), self._model_assets
     )
     self._mj_model.opt.timestep = self.sim_dt
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._post_init()
 
     if self._vision:
@@ -129,7 +132,7 @@ class Balance(mjx_env.MjxEnv):
     self._hinge_1_qposadr = self._mj_model.jnt_qposadr[hinge_1_jid]
 
   def _reset_swing_up(self, rng: jax.Array) -> jax.Array:
-    rng, rng1, rng2, rng3 = jax.random.split(rng, 4)
+    _, rng1, rng2, rng3 = jax.random.split(rng, 4)
 
     qpos = jp.zeros(self.mjx_model.nq)
     qpos = qpos.at[self._slider_qposadr].set(0.01 * jax.random.normal(rng1))
@@ -163,7 +166,15 @@ class Balance(mjx_env.MjxEnv):
     rng, rng1 = jax.random.split(rng, 2)
     qvel = 0.01 * jax.random.normal(rng1, (self.mjx_model.nv,))
 
-    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=qpos,
+        qvel=qvel,
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     metrics = {
         "reward/upright": jp.zeros(()),

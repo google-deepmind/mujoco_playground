@@ -79,6 +79,9 @@ def default_config() -> config_dict.ConfigDict:
           lin_vel_y=[-0.8, 0.8],
           ang_vel_yaw=[-1.0, 1.0],
       ),
+      impl="jax",
+      nconmax=4 * 8192,
+      njmax=12 + 4 * 4,
   )
 
 
@@ -134,11 +137,15 @@ class Joystick(spot_base.SpotEnv):
     self._weights = jp.array([1.0, 1.0, 1.0] * 4)
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
-    data = mjx_env.init(
-        self.mjx_model,
+    data = mjx_env.make_data(
+        self.mj_model,
         qpos=self._init_q,
         qvel=jp.zeros(self.mjx_model.nv),
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
+    data = mjx.forward(self.mjx_model, data)
 
     rng, key1, key2, key3 = jax.random.split(rng, 4)
     time_until_next_pert = jax.random.uniform(

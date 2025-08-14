@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## Next release
+
+- Pass through the [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp)
+  (MjWarp) implementation to MJX, so that MuJoCo Playground environments can
+  train with MuJoCo Warp! DM Control Suite and Locomotion environments now
+  support MjWarp. You can pass through the implementation via the config
+  override
+  `registry.load('CartpoleBalance', config_overrides={'impl': 'warp'})`.
+
 ## [0.0.5] - 2025-06-23
 
 - Change `light_directional` to `light_type` following MuJoCo API change from version 3.3.2 to 3.3.3. Fixes https://github.com/google-deepmind/mujoco_playground/issues/142.
