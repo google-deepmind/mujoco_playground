@@ -39,6 +39,7 @@ def default_config() -> config_dict.ConfigDict:
       sim_dt=0.005,
       episode_length=1000,
       action_repeat=1,
+      sample_initial_position=False,
       vision=False,
   )
 
@@ -101,6 +102,14 @@ class Quadruped(mjx_env.MjxEnv):
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
     data = mjx_env.init(self.mjx_model)
+    if self._config.sample_initial_position:
+      data = _find_non_contacting_height(
+          self.mjx_model,
+          data=mjx_env.make_data(self._mj_model),
+          orientation=(0.0, 0.0, 0.0, 1.0),
+          x_pos=0.0,
+          y_pos=0.0,
+      )
     metrics = {"reward/upright": jp.zeros(()), "reward/move": jp.zeros(())}
     info = {"rng": rng}
     reward, done = jp.zeros(2)
