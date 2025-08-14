@@ -361,37 +361,36 @@
     <position name="right_index_A_mcp_abd" joint="right_index_mcp_abd" class="mcp" />
     <position name="right_index_A_mcp_flex" joint="right_index_mcp_flex" class="rot" />
     <position name="right_index_A_pip" joint="right_index_pip" class="dip" />
-    <position name="right_index_A_dip" joint="right_index_dip" class="pip" />
+    <!-- <position name="right_index_A_dip" joint="right_index_dip" class="pip" /> -->
 
     <position name="right_middle_A_mcp_abd" joint="right_middle_mcp_abd" class="mcp" />
     <position name="right_middle_A_mcp_flex" joint="right_middle_mcp_flex" class="rot" />
     <position name="right_middle_A_pip" joint="right_middle_pip" class="dip" />
-    <position name="right_middle_A_dip" joint="right_middle_dip" class="pip" />
+    <!-- <position name="right_middle_A_dip" joint="right_middle_dip" class="pip" /> -->
 
     <position name="right_ring_A_mcp_abd" joint="right_ring_mcp_abd" class="mcp" />
     <position name="right_ring_A_mcp_flex" joint="right_ring_mcp_flex" class="rot" />
     <position name="right_ring_A_pip" joint="right_ring_pip" class="dip" />
-    <position name="right_ring_A_dip" joint="right_ring_dip" class="pip" />
+    <!-- <position name="right_ring_A_dip" joint="right_ring_dip" class="pip" /> -->
 
     <position name="right_pinky_A_mcp_abd" joint="right_pinky_mcp_abd" class="mcp" />
     <position name="right_pinky_A_mcp_flex" joint="right_pinky_mcp_flex" class="rot" />
     <position name="right_pinky_A_pip" joint="right_pinky_pip" class="dip" />
-    <position name="right_pinky_A_dip" joint="right_pinky_dip" class="pip" />
+    <!-- <position name="right_pinky_A_dip" joint="right_pinky_dip" class="pip" /> -->
 
     <!-- <position name="rh_A_TBJ0" tendon="rh_TBJ0" class="thumb_ipl" /> -->
     <position name="right_thumb_A_mcp_abd" joint="right_thumb_cmc_abd" class="thumb_cmc" />
     <position name="right_thumb_A_cmc_flex" joint="right_thumb_cmc_flex" class="thumb_axl" />
     <position name="right_thumb_A_pip" joint="right_thumb_mcp" class="thumb_mcp" />
-    <position name="right_thumb_A_dip" joint="right_thumb_ip" class="thumb_ipl" />
+    <!-- <position name="right_thumb_A_dip" joint="right_thumb_ip" class="thumb_ipl" /> -->
   </actuator>
 
-  <!-- <equality> -->
-  <!-- <weld body1="mocap" body2="tetheria_mount" solref="0.01 1" solimp=".9 .9 0.01" /> -->
-  <!-- <joint joint1="right_thumb_mcp" joint2="right_thumb_ip"/>
+  <equality>
+    <joint joint1="right_thumb_mcp" joint2="right_thumb_ip"/>
     <joint joint1="right_index_pip" joint2="right_index_dip"/>
     <joint joint1="right_middle_pip" joint2="right_middle_dip"/>
     <joint joint1="right_ring_pip" joint2="right_ring_dip"/>
-    <joint joint1="right_pinky_pip" joint2="right_pinky_dip"/> -->
-  <!-- </equality> -->
+    <joint joint1="right_pinky_pip" joint2="right_pinky_dip"/>
+  </equality>
 
 </mujoco>

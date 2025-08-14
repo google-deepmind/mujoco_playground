@@ -75,6 +75,18 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
 
     def _post_init(self) -> None:
         self._hand_qids = mjx_env.get_qpos_ids(self.mj_model, consts.JOINT_NAMES)
+
+        # Change: this is the control joints that are used for the policy
+        self._control_qids = mjx_env.get_qpos_ids(
+            self.mj_model, consts.CONTROL_JOINT_NAMES
+        )
+
+        control_set = set(self._control_qids)
+        self._control_qids_bool = jp.array(
+            [qid in control_set for qid in self._hand_qids],
+            dtype=bool,
+        )  # Change:boolean mask to check if the joint is a control joint
+
         self._hand_dqids = mjx_env.get_qvel_ids(self.mj_model, consts.JOINT_NAMES)
         self._cube_qids = mjx_env.get_qpos_ids(self.mj_model, ["cube_freejoint"])
         self._floor_geom_id = self._mj_model.geom("floor").id
@@ -83,7 +95,7 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
         home_key = self._mj_model.keyframe("home")
         self._init_q = jp.array(home_key.qpos)
         self._default_pose = self._init_q[self._hand_qids]
-        self._lowers, self._uppers = self.mj_model.actuator_ctrlrange.T
+        self._lowers, self._uppers = self.mj_model.jnt_range[self._hand_qids].T
 
     def reset(self, rng: jax.Array) -> mjx_env.State:
         # Randomize hand qpos and qvel.
@@ -110,7 +122,7 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
             self.mjx_model,
             qpos=qpos,
             qvel=qvel,
-            ctrl=q_hand,
+            ctrl=q_hand[self._control_qids_bool],  # Change: only use the control joints
             mocap_pos=jp.array([-100, -100, -100]),  # Hide goal for this task.
         )
 
@@ -126,13 +138,19 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
         for k in self._config.reward_config.scales.keys():
             metrics[f"reward/{k}"] = jp.zeros(())
 
-        obs_history = jp.zeros(self._config.history_len * 40)
+        # Change: 35 is the sum of the number of the joints (20) and the number of the control actions (15)
+        obs_history = jp.zeros(self._config.history_len * 35)
         obs = self._get_obs(data, info, obs_history)
         reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
         return mjx_env.State(data, obs, reward, done, metrics, info)
 
     def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-        motor_targets = self._default_pose + action * self._config.action_scale
+        motor_targets = (
+            self._default_pose[
+                self._control_qids_bool
+            ]  # Change: use the control joints
+            + +action * self._config.action_scale
+        )
         # NOTE: no clipping.
         data = mjx_env.step(self.mjx_model, state.data, motor_targets, self.n_substeps)
         state.info["motor_targets"] = motor_targets
@@ -174,8 +192,8 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
 
         state = jp.concatenate(
             [
-                noisy_joint_angles,  # 16
-                info["last_act"],  # 16
+                noisy_joint_angles,  # Change: 16 (leap hand) to 20 (tetheria hand)
+                info["last_act"],  # Change: 16 (leap hand) to 15 (tetheria hand)
             ]
         )  # 48
         obs_history = jp.roll(obs_history, state.size)
@@ -241,7 +259,9 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
         return jp.sum(jp.square(torques))
 
     def _cost_energy(self, qvel: jax.Array, qfrc_actuator: jax.Array) -> jax.Array:
-        return jp.sum(jp.abs(qvel) * jp.abs(qfrc_actuator))
+        return jp.sum(
+            jp.abs(qvel[self._control_qids_bool]) * jp.abs(qfrc_actuator)
+        )  # Change: only use the control joints
 
     def _cost_linvel(self, cube_linvel: jax.Array) -> jax.Array:
         return jp.linalg.norm(cube_linvel, ord=1, axis=-1)
