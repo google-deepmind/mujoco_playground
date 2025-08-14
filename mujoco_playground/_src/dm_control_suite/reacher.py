@@ -39,11 +39,16 @@ def default_config() -> config_dict.ConfigDict:
       episode_length=1000,
       action_repeat=1,
       vision=False,
+      impl="jax",
+      nconmax=0,
+      njmax=0,
   )
 
 
-def _make_model(xml_path: epath.Path, target_size: float) -> mujoco.MjModel:
-  spec = mujoco.MjSpec.from_string(xml_path.read_text(), common.get_assets())
+def _make_model(
+    xml_path: epath.Path, target_size: float, assets: Dict[str, Any]
+) -> mujoco.MjModel:
+  spec = mujoco.MjSpec.from_string(xml_path.read_text(), assets)
   if mujoco.__version__ >= "3.3.0":
     target_body = spec.body("target")
   else:
@@ -70,9 +75,10 @@ class Reacher(mjx_env.MjxEnv):
 
     self._target_size = target_size
     self._xml_path = _XML_PATH.as_posix()
-    self._mj_model = _make_model(_XML_PATH, target_size)
+    self._model_assets = common.get_assets()
+    self._mj_model = _make_model(_XML_PATH, target_size, self._model_assets)
     self._mj_model.opt.timestep = self.sim_dt
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._post_init()
 
   def _post_init(self) -> None:
@@ -103,7 +109,14 @@ class Reacher(mjx_env.MjxEnv):
         )
     )
 
-    data = mjx_env.init(self.mjx_model, qpos=qpos)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=qpos,
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     angle = jax.random.uniform(rng3, ()) * 2 * jp.pi
     radius = jax.random.uniform(rng4, (), minval=0.05, maxval=0.2)

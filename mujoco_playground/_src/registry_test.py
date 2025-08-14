@@ -60,8 +60,12 @@ class RegistryTest(absltest.TestCase):
     self.assertNotEmpty(manipulation.ALL_ENVS)
     self.assertNotEmpty(registry.ALL_ENVS)
     self.assertEqual(
-        registry.ALL_ENVS,
-        dm_control_suite.ALL_ENVS + locomotion.ALL_ENVS + manipulation.ALL_ENVS,
+        sorted(registry.ALL_ENVS),
+        sorted(
+            dm_control_suite.ALL_ENVS
+            + locomotion.ALL_ENVS
+            + manipulation.ALL_ENVS
+        ),
     )
 
 

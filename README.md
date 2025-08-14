@@ -63,6 +63,24 @@ For vision-based environments, please refer to the installation instructions in 
 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/training_vision_1.ipynb) | Training CartPole from Vision |
 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/training_vision_2.ipynb) | Robotic Manipulation from Vision |
 
+## Running from CLI
+> [!IMPORTANT]
+> Assumes installation from source.
+
+For basic usage, navigate to the repo's directory and run:
+```bash
+python learning/train_jax_ppo.py --env_name CartpoleBalance
+```
+
+### Training Visualization
+
+To interactively view trajectories throughout training with [rscope](https://github.com/Andrew-Luo1/rscope/tree/main), install it (`pip install rscope`) and run:
+
+```
+python learning/train_jax_ppo.py --env_name PandaPickCube --rscope_envs 16 --run_evals=False --deterministic_rscope=True
+# In a separate terminal
+python -m rscope
+```
 
 ## FAQ
 

@@ -73,7 +73,8 @@ class PandaRobotiqBase(mjx_env.MjxEnv):
 
     self._xml_path = xml_path.as_posix()
     xml = xml_path.read_text()
-    mj_model = mujoco.MjModel.from_xml_string(xml, assets=get_assets())
+    self._model_assets = get_assets()
+    mj_model = mujoco.MjModel.from_xml_string(xml, assets=self._model_assets)
     mj_model.opt.timestep = self.sim_dt
 
     self._mj_model = mj_model
@@ -161,7 +162,7 @@ class PandaRobotiqBase(mjx_env.MjxEnv):
 
   @property
   def xml_path(self) -> str:
-    raise self._xml_path
+    return self._xml_path
 
   @property
   def action_size(self) -> int:

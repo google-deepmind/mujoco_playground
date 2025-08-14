@@ -102,6 +102,9 @@ def default_config() -> config_dict.ConfigDict:
       # A duration will be sampled uniformly from this range at the beginning of
       # each episode.
       kick_wait_steps=[50, 150],
+      impl="jax",
+      nconmax=4 * 8192,
+      njmax=12 + 4 * 4,
   )
 
 
@@ -117,7 +120,8 @@ class Joystick(mjx_env.MjxEnv):
     xml_path = mjx_env.MENAGERIE_PATH / "google_barkour_vb" / "scene_mjx.xml"
     self._xml_path = xml_path.as_posix()
     xml = epath.Path(xml_path).read_text()
-    mj_model = mujoco.MjModel.from_xml_string(xml, assets=get_assets())
+    self._model_assets = get_assets()
+    mj_model = mujoco.MjModel.from_xml_string(xml, assets=self._model_assets)
     mj_model.vis.global_.offwidth = 3840
     mj_model.vis.global_.offheight = 2160
     mj_model.dof_damping[6:] = 0.5239
@@ -126,7 +130,7 @@ class Joystick(mjx_env.MjxEnv):
 
     self._mj_model = mj_model
     self._mj_model.opt.timestep = config.sim_dt
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._post_init()
 
   def _post_init(self) -> None:
@@ -165,9 +169,15 @@ class Joystick(mjx_env.MjxEnv):
   def reset(self, rng: jax.Array) -> mjx_env.State:
     rng, cmd_rng, noise_rng = jax.random.split(rng, 3)
 
-    data = mjx_env.init(
-        self.mjx_model, qpos=self._init_q, qvel=jp.zeros(self.mjx_model.nv)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=self._init_q,
+        qvel=jp.zeros(self.mjx_model.nv),
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
+    data = mjx.forward(self.mjx_model, data)
 
     rng, key1, key2, key3 = jax.random.split(rng, 4)
     kick_wait_steps = jax.random.randint(
@@ -451,7 +461,7 @@ class Joystick(mjx_env.MjxEnv):
 
   @property
   def xml_path(self) -> str:
-    raise self._xml_path
+    return self._xml_path
 
   @property
   def action_size(self) -> int:

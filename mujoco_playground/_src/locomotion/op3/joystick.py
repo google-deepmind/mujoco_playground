@@ -64,6 +64,9 @@ def default_config() -> config_dict.ConfigDict:
       velocity_kick=[1.0, 5.0],
       kick_durations=[0.05, 0.2],
       kick_wait_times=[1.0, 3.0],
+      impl="jax",
+      nconmax=16 * 8192,
+      njmax=16 * 4 + 20 * 4,
   )
 
 
@@ -118,9 +121,15 @@ class Joystick(op3_base.Op3Env):
         rng, 6
     )
 
-    data = mjx_env.init(
-        self.mjx_model, qpos=self._init_q, qvel=jp.zeros(self.mjx_model.nv)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=self._init_q,
+        qvel=jp.zeros(self.mjx_model.nv),
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
+    data = mjx.forward(self.mjx_model, data)
 
     time_until_next_pert = jax.random.uniform(
         pert1_rng,

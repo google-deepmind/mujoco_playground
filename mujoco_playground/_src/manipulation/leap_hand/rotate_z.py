@@ -109,7 +109,7 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
         qpos=qpos,
         qvel=qvel,
         ctrl=q_hand,
-        mocap_pos=jp.array([-100, -100, -100]),  # Hide goal for this task.
+        mocap_pos=jp.array([-100.0, -100.0, -100.0]),  # Hide goal for task.
     )
 
     info = {

@@ -37,6 +37,19 @@ _FILENAMES = [
 ]
 
 
+def default_config() -> config_dict.ConfigDict:
+  return config_dict.create(
+      ctrl_dt=0.03,
+      sim_dt=0.003,
+      episode_length=1000,
+      action_repeat=1,
+      vision=False,
+      impl="jax",
+      nconmax=0,
+      njmax=40,
+  )
+
+
 def _make_model(xml_path: str, n_bodies: int):
   """Generates an xml string defining a swimmer with `n_bodies` bodies."""
   if n_bodies < 3:
@@ -99,16 +112,6 @@ def _make_body(body_index):
   return body
 
 
-def default_config() -> config_dict.ConfigDict:
-  return config_dict.create(
-      ctrl_dt=0.03,
-      sim_dt=0.003,
-      episode_length=1000,
-      action_repeat=1,
-      vision=False,
-  )
-
-
 class Swim(mjx_env.MjxEnv):
   """Swimmer environment."""
 
@@ -125,11 +128,12 @@ class Swim(mjx_env.MjxEnv):
       )
 
     self._xml_path = _XML_PATH.as_posix()
+    self._model_assets = common.get_assets()
     self._mj_model = mujoco.MjModel.from_xml_string(
-        _make_model(self.xml_path, n_links), common.get_assets()
+        _make_model(self.xml_path, n_links), self._model_assets
     )
     self._mj_model.opt.timestep = self.sim_dt
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._post_init()
 
   def _post_init(self) -> None:
@@ -158,7 +162,14 @@ class Swim(mjx_env.MjxEnv):
         )
     )
 
-    data = mjx_env.init(self.mjx_model, qpos=qpos)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=qpos,
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     # Randomize target position.
     target_box = jp.where(jax.random.bernoulli(rng3, 0.2), 0.3, 2.0)
