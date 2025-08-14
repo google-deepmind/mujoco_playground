@@ -15,13 +15,14 @@
 """Wrappers for MuJoCo Playground environments."""
 
 import functools
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 from brax.envs.wrappers import training as brax_training
 import jax
 from jax import numpy as jp
 import mujoco
 from mujoco import mjx
+import numpy as np
 
 from mujoco_playground._src import mjx_env
 
@@ -66,6 +67,21 @@ class Wrapper(mjx_env.MjxEnv):
   @property
   def xml_path(self) -> str:
     return self.env.xml_path
+
+  def render(
+      self,
+      trajectory: List[mjx_env.State],
+      height: int = 240,
+      width: int = 320,
+      camera: Optional[str] = None,
+      scene_option: Optional[mujoco.MjvOption] = None,
+      modify_scene_fns: Optional[
+          Sequence[Callable[[mujoco.MjvScene], None]]
+      ] = None,
+  ) -> Sequence[np.ndarray]:
+    return self.env.render(
+        trajectory, height, width, camera, scene_option, modify_scene_fns
+    )
 
 
 def wrap_for_brax_training(
@@ -180,7 +196,7 @@ def _identity_vision_randomization_fn(
       'geom_size': 0,
       'light_pos': 0,
       'light_dir': 0,
-      'light_directional': 0,
+      'light_type': 0,
       'light_castshadow': 0,
       'light_cutoff': 0,
   })
@@ -202,8 +218,8 @@ def _identity_vision_randomization_fn(
       'light_dir': jp.repeat(
           jp.expand_dims(mjx_model.light_dir, 0), num_worlds, axis=0
       ),
-      'light_directional': jp.repeat(
-          jp.expand_dims(mjx_model.light_directional, 0), num_worlds, axis=0
+      'light_type': jp.repeat(
+          jp.expand_dims(mjx_model.light_type, 0), num_worlds, axis=0
       ),
       'light_castshadow': jp.repeat(
           jp.expand_dims(mjx_model.light_castshadow, 0), num_worlds, axis=0
@@ -229,7 +245,7 @@ def _supplement_vision_randomization_fn(
       'geom_size',
       'light_pos',
       'light_dir',
-      'light_directional',
+      'light_type',
       'light_castshadow',
       'light_cutoff',
   ]
@@ -276,7 +292,7 @@ class MadronaWrapper:
         'geom_size',
         'light_pos',
         'light_dir',
-        'light_directional',
+        'light_type',
         'light_castshadow',
         'light_cutoff',
     ]

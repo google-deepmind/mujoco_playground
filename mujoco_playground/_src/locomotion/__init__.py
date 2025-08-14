@@ -41,6 +41,9 @@ from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spo
 from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 
+
+mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
+
 _envs = {
     "ApolloJoystickFlatTerrain": functools.partial(
         apollo_joystick.Joystick, task="flat_terrain"
@@ -179,7 +182,9 @@ def load(
       An instance of the environment.
   """
   if env_name not in _envs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}")
+    raise ValueError(
+        f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}"
+    )
   config = config or get_default_config(env_name)
   return _envs[env_name](config=config, config_overrides=config_overrides)
 

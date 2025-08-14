@@ -105,10 +105,11 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
         / 'mjx_single_cube_camera.xml'
     )
     self._xml_path = xml_path.as_posix()
+    self._model_assets = panda.get_assets()
 
     mj_model = self.modify_model(
         mujoco.MjModel.from_xml_string(
-            xml_path.read_text(), assets=panda.get_assets()
+            xml_path.read_text(), assets=self._model_assets
         )
     )
     mj_model.opt.timestep = config.sim_dt

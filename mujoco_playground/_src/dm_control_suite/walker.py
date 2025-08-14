@@ -67,8 +67,9 @@ class PlanarWalker(mjx_env.MjxEnv):
       self._get_reward = self._get_move_reward
 
     self._xml_path = _XML_PATH.as_posix()
+    self._model_assets = common.get_assets()
     self._mj_model = mujoco.MjModel.from_xml_string(
-        _XML_PATH.read_text(), common.get_assets()
+        _XML_PATH.read_text(), self._model_assets
     )
     self._mj_model.opt.timestep = self.sim_dt
     self._mjx_model = mjx.put_model(self._mj_model)
@@ -119,7 +120,7 @@ class PlanarWalker(mjx_env.MjxEnv):
 
   def _get_obs(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
     del info  # Unused.
-    orientations = data.xmat[1:, [[0, 0], [0, 2]]].ravel()
+    orientations = data.xmat[1:, [0, 0], [0, 2]].ravel()
     height = data.xmat[self._torso_id, 2, 2]
     velocity = data.qvel
     return jp.concatenate([

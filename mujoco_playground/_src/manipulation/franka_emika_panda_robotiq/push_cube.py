@@ -418,7 +418,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
     )
 
     hand_box_collision_info = [
-        collision.get_collision_info(data.contact, g1, self._obj_geom)
+        collision.get_collision_info(data._impl.contact, g1, self._obj_geom)  # pylint: disable=protected-access
         for g1 in self._gripper_geoms
     ]
     hand_box_normal = jp.mean(

@@ -132,6 +132,33 @@ _POLICY_OBS_KEY = flags.DEFINE_string(
     "policy_obs_key", "state", "Policy obs key"
 )
 _VALUE_OBS_KEY = flags.DEFINE_string("value_obs_key", "state", "Value obs key")
+_RSCOPE_ENVS = flags.DEFINE_integer(
+    "rscope_envs",
+    None,
+    "Number of parallel environment rollouts to save for the rscope viewer",
+)
+_DETERMINISTIC_RSCOPE = flags.DEFINE_boolean(
+    "deterministic_rscope",
+    True,
+    "Run deterministic rollouts for the rscope viewer",
+)
+_RUN_EVALS = flags.DEFINE_boolean(
+    "run_evals",
+    True,
+    "Run evaluation rollouts between policy updates.",
+)
+_LOG_TRAINING_METRICS = flags.DEFINE_boolean(
+    "log_training_metrics",
+    False,
+    "Whether to log training metrics and callback to progress_fn. Significantly"
+    " slows down training if too frequent.",
+)
+_TRAINING_METRICS_STEPS = flags.DEFINE_integer(
+    "training_metrics_steps",
+    1_000_000,
+    "Number of steps between logging training metrics. Increase if training"
+    " experiences slowdown.",
+)
 
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
@@ -149,6 +176,24 @@ def get_rl_config(env_name: str) -> config_dict.ConfigDict:
     return dm_control_suite_params.brax_ppo_config(env_name)
 
   raise ValueError(f"Env {env_name} not found in {registry.ALL_ENVS}.")
+
+
+def rscope_fn(full_states, obs, rew, done):
+  """
+  All arrays are of shape (unroll_length, rscope_envs, ...)
+  full_states: dict with keys 'qpos', 'qvel', 'time', 'metrics'
+  obs: nd.array or dict obs based on env configuration
+  rew: nd.array rewards
+  done: nd.array done flags
+  """
+  # Calculate cumulative rewards per episode, stopping at first done flag
+  done_mask = jp.cumsum(done, axis=0)
+  valid_rewards = rew * (done_mask == 0)
+  episode_rewards = jp.sum(valid_rewards, axis=0)
+  print(
+      "Collected rscope rollouts with reward"
+      f" {episode_rewards.mean():.3f} +- {episode_rewards.std():.3f}"
+  )
 
 
 def main(argv):
@@ -209,11 +254,16 @@ def main(argv):
     ppo_params.network_factory.policy_obs_key = _POLICY_OBS_KEY.value
   if _VALUE_OBS_KEY.present:
     ppo_params.network_factory.value_obs_key = _VALUE_OBS_KEY.value
-
   if _VISION.value:
     env_cfg.vision = True
     env_cfg.vision_config.render_batch_size = ppo_params.num_envs
   env = registry.load(_ENV_NAME.value, config=env_cfg)
+  if _RUN_EVALS.present:
+    ppo_params.run_evals = _RUN_EVALS.value
+  if _LOG_TRAINING_METRICS.present:
+    ppo_params.log_training_metrics = _LOG_TRAINING_METRICS.value
+  if _TRAINING_METRICS_STEPS.present:
+    ppo_params.training_metrics_steps = _TRAINING_METRICS_STEPS.value
 
   print(f"Environment Config:\n{env_cfg}")
   print(f"PPO Training Parameters:\n{ppo_params}")
@@ -268,13 +318,6 @@ def main(argv):
   with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
     json.dump(env_cfg.to_dict(), fp, indent=4)
 
-  # Define policy parameters function for saving checkpoints
-  def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
-    orbax_checkpointer = ocp.PyTreeCheckpointer()
-    save_args = orbax_utils.save_args_from_target(params)
-    path = ckpt_path / f"{current_step}"
-    orbax_checkpointer.save(path, params, force=True, save_args=save_args)
-
   training_params = dict(ppo_params)
   if "network_factory" in training_params:
     del training_params["network_factory"]
@@ -319,9 +362,9 @@ def main(argv):
       ppo.train,
       **training_params,
       network_factory=network_factory,
-      policy_params_fn=policy_params_fn,
       seed=_SEED.value,
       restore_checkpoint_path=restore_checkpoint_path,
+      save_checkpoint_path=ckpt_path,
       wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
   )
@@ -341,18 +384,55 @@ def main(argv):
       for key, value in metrics.items():
         writer.add_scalar(key, value, num_steps)
       writer.flush()
-
-    print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
+    if _RUN_EVALS.value:
+      print(f"{num_steps}: reward={metrics['eval/episode_reward']:.3f}")
+    if _LOG_TRAINING_METRICS.value:
+      if "episode/sum_reward" in metrics:
+        print(
+            f"{num_steps}: mean episode"
+            f" reward={metrics['episode/sum_reward']:.3f}"
+        )
 
   # Load evaluation environment
   eval_env = (
       None if _VISION.value else registry.load(_ENV_NAME.value, config=env_cfg)
   )
 
+  policy_params_fn = lambda *args: None
+  if _RSCOPE_ENVS.value:
+    # Interactive visualisation of policy checkpoints
+    from rscope import brax as rscope_utils
+
+    if not _VISION.value:
+      rscope_env = registry.load(_ENV_NAME.value, config=env_cfg)
+      rscope_env = wrapper.wrap_for_brax_training(
+          rscope_env,
+          episode_length=ppo_params.episode_length,
+          action_repeat=ppo_params.action_repeat,
+          randomization_fn=training_params.get("randomization_fn"),
+      )
+    else:
+      rscope_env = env
+
+    rscope_handle = rscope_utils.BraxRolloutSaver(
+        rscope_env,
+        ppo_params,
+        _VISION.value,
+        _RSCOPE_ENVS.value,
+        _DETERMINISTIC_RSCOPE.value,
+        jax.random.PRNGKey(_SEED.value),
+        rscope_fn,
+    )
+
+    def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
+      rscope_handle.set_make_policy(make_policy)
+      rscope_handle.dump_rollout(params)
+
   # Train or load the model
   make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter
       environment=env,
       progress_fn=progress,
+      policy_params_fn=policy_params_fn,
       eval_env=None if _VISION.value else eval_env,
   )
 

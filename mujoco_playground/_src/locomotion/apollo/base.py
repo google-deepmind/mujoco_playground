@@ -16,17 +16,17 @@
 
 from typing import Any, Dict, Optional, Union
 
+from etils import epath
 import jax
 import jax.numpy as jp
-import mujoco
-import numpy as np
-from etils import epath
 from ml_collections import config_dict
+import mujoco
 from mujoco import mjx
+import numpy as np
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.locomotion.apollo import constants as consts
 from mujoco_playground._src.collision import geoms_colliding
+from mujoco_playground._src.locomotion.apollo import constants as consts
 
 
 def get_assets() -> Dict[str, bytes]:
@@ -46,15 +46,16 @@ class ApolloEnv(mjx_env.MjxEnv):
   """Base class for Apollo environments."""
 
   def __init__(
-    self,
-    xml_path: str,
-    config: config_dict.ConfigDict,
-    config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
+      self,
+      xml_path: str,
+      config: config_dict.ConfigDict,
+      config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ) -> None:
     super().__init__(config, config_overrides)
 
+    self._model_assets = get_assets()
     self._mj_model = mujoco.MjModel.from_xml_string(
-      epath.Path(xml_path).read_text(), assets=get_assets()
+        epath.Path(xml_path).read_text(), assets=self._model_assets
     )
     self._mj_model.opt.timestep = self.sim_dt
 
@@ -66,7 +67,9 @@ class ApolloEnv(mjx_env.MjxEnv):
 
     self._init_q = jp.array(self._mj_model.keyframe("knees_bent").qpos)
     self._default_ctrl = jp.array(self._mj_model.keyframe("knees_bent").ctrl)
-    self._default_pose = jp.array(self._mj_model.keyframe("knees_bent").qpos[7:])
+    self._default_pose = jp.array(
+        self._mj_model.keyframe("knees_bent").qpos[7:]
+    )
     self._actuator_torques = self.mj_model.jnt_actfrcrange[1:, 1]
 
     # Body IDs.
@@ -75,52 +78,64 @@ class ApolloEnv(mjx_env.MjxEnv):
     # Geom IDs.
     self._floor_geom_id = self._mj_model.geom("floor").id
     self._left_feet_geom_id = np.array(
-      [self._mj_model.geom(name).id for name in consts.LEFT_FEET_GEOMS]
+        [self._mj_model.geom(name).id for name in consts.LEFT_FEET_GEOMS]
     )
     self._right_feet_geom_id = np.array(
-      [self._mj_model.geom(name).id for name in consts.RIGHT_FEET_GEOMS]
+        [self._mj_model.geom(name).id for name in consts.RIGHT_FEET_GEOMS]
     )
     self._left_hand_geom_id = self._mj_model.geom("collision_l_hand_plate").id
     self._right_hand_geom_id = self._mj_model.geom("collision_r_hand_plate").id
     self._left_foot_geom_id = self._mj_model.geom("collision_l_sole").id
     self._right_foot_geom_id = self._mj_model.geom("collision_r_sole").id
-    self._left_shin_geom_id = self._mj_model.geom("collision_capsule_body_l_shin").id
-    self._right_shin_geom_id = self._mj_model.geom("collision_capsule_body_r_shin").id
-    self._left_thigh_geom_id = self._mj_model.geom("collision_capsule_body_l_thigh").id
-    self._right_thigh_geom_id = self._mj_model.geom("collision_capsule_body_r_thigh").id
+    self._left_shin_geom_id = self._mj_model.geom(
+        "collision_capsule_body_l_shin"
+    ).id
+    self._right_shin_geom_id = self._mj_model.geom(
+        "collision_capsule_body_r_shin"
+    ).id
+    self._left_thigh_geom_id = self._mj_model.geom(
+        "collision_capsule_body_l_thigh"
+    ).id
+    self._right_thigh_geom_id = self._mj_model.geom(
+        "collision_capsule_body_r_thigh"
+    ).id
 
     # Site IDs.
     self._imu_site_id = self._mj_model.site("imu").id
     self._feet_site_id = np.array(
-      [self._mj_model.site(name).id for name in consts.FEET_SITES]
+        [self._mj_model.site(name).id for name in consts.FEET_SITES]
     )
 
   # Sensor readings.
 
   def get_gravity(self, data: mjx.Data) -> jax.Array:
     """Return the gravity vector in the world frame."""
-    return mjx_env.get_sensor_data(self.mj_model, data, f"{consts.GRAVITY_SENSOR}")
+    return mjx_env.get_sensor_data(
+        self.mj_model, data, f"{consts.GRAVITY_SENSOR}"
+    )
 
   def get_global_linvel(self, data: mjx.Data) -> jax.Array:
     """Return the linear velocity of the robot in the world frame."""
     return mjx_env.get_sensor_data(
-      self.mj_model, data, f"{consts.GLOBAL_LINVEL_SENSOR}"
+        self.mj_model, data, f"{consts.GLOBAL_LINVEL_SENSOR}"
     )
 
   def get_global_angvel(self, data: mjx.Data) -> jax.Array:
     """Return the angular velocity of the robot in the world frame."""
     return mjx_env.get_sensor_data(
-      self.mj_model, data, f"{consts.GLOBAL_ANGVEL_SENSOR}"
+        self.mj_model, data, f"{consts.GLOBAL_ANGVEL_SENSOR}"
     )
 
   def get_local_linvel(self, data: mjx.Data) -> jax.Array:
     """Return the linear velocity of the robot in the local frame."""
-    return mjx_env.get_sensor_data(self.mj_model, data, f"{consts.LOCAL_LINVEL_SENSOR}")
+    return mjx_env.get_sensor_data(
+        self.mj_model, data, f"{consts.LOCAL_LINVEL_SENSOR}"
+    )
 
   def get_accelerometer(self, data: mjx.Data) -> jax.Array:
     """Return the accelerometer readings in the local frame."""
     return mjx_env.get_sensor_data(
-      self.mj_model, data, f"{consts.ACCELEROMETER_SENSOR}"
+        self.mj_model, data, f"{consts.ACCELEROMETER_SENSOR}"
     )
 
   def get_gyro(self, data: mjx.Data) -> jax.Array:
@@ -129,18 +144,14 @@ class ApolloEnv(mjx_env.MjxEnv):
 
   def get_feet_ground_contacts(self, data: mjx.Data) -> jax.Array:
     """Return an array indicating whether each foot is in contact with the ground."""
-    left_feet_contact = jp.array(
-      [
+    left_feet_contact = jp.array([
         geoms_colliding(data, geom_id, self._floor_geom_id)
         for geom_id in self._left_feet_geom_id
-      ]
-    )
-    right_feet_contact = jp.array(
-      [
+    ])
+    right_feet_contact = jp.array([
         geoms_colliding(data, geom_id, self._floor_geom_id)
         for geom_id in self._right_feet_geom_id
-      ]
-    )
+    ])
     return jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
 
   # Accessors.

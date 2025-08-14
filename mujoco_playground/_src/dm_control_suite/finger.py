@@ -52,9 +52,9 @@ def default_config() -> config_dict.ConfigDict:
 
 
 def _make_turn_model(
-    xml_path: epath.Path, target_radius: float
+    xml_path: epath.Path, target_radius: float, assets: Dict[str, Any]
 ) -> mujoco.MjModel:
-  spec = mujoco.MjSpec.from_string(xml_path.read_text(), common.get_assets())
+  spec = mujoco.MjSpec.from_string(xml_path.read_text(), assets)
   target_site = None
   for site in spec.sites:
     if site.name == "target":
@@ -65,10 +65,10 @@ def _make_turn_model(
   return spec.compile()
 
 
-def _make_spin_model(xml_path: epath.Path) -> mujoco.MjModel:
-  model = mujoco.MjModel.from_xml_string(
-      xml_path.read_text(), common.get_assets()
-  )
+def _make_spin_model(
+    xml_path: epath.Path, assets: Dict[str, Any]
+) -> mujoco.MjModel:
+  model = mujoco.MjModel.from_xml_string(xml_path.read_text(), assets)
   model.site_rgba[model.site("target").id, 3] = 0
   model.site_rgba[model.site("tip").id, 3] = 0
   model.dof_damping[model.joint("hinge").id] = 0.03
@@ -90,7 +90,8 @@ class Spin(mjx_env.MjxEnv):
       )
 
     self._xml_path = _XML_PATH.as_posix()
-    self._mj_model = _make_spin_model(_XML_PATH)
+    self._model_assets = common.get_assets()
+    self._mj_model = _make_spin_model(_XML_PATH, self._model_assets)
     self._mj_model.opt.timestep = self.sim_dt
     self._mjx_model = mjx.put_model(self._mj_model)
     self._post_init()
@@ -214,7 +215,10 @@ class Turn(mjx_env.MjxEnv):
       )
 
     self._xml_path = _XML_PATH.as_posix()
-    self._mj_model = _make_turn_model(_XML_PATH, target_radius)
+    self._model_assets = common.get_assets()
+    self._mj_model = _make_turn_model(
+        _XML_PATH, target_radius, self._model_assets
+    )
     self._mj_model.opt.timestep = self.sim_dt
     self._mjx_model = mjx.put_model(self._mj_model)
     self._post_init()
