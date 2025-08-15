@@ -8,12 +8,15 @@ A comprehensive suite of GPU-accelerated environments for robot learning researc
 
 Features include:
 
-- Classic control environments from `dm_control` reimplemented in MJX.
+- Classic control environments from `dm_control`.
 - Quadruped and bipedal locomotion environments.
 - Non-prehensile and dexterous manipulation environments.
 - Vision-based support available via [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx).
 
 For more details, check out the project [website](https://playground.mujoco.org/).
+
+> [!NOTE]
+> We now support training with both the MuJoCo MJX JAX implementation, as well as the [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) implementation at HEAD. See MuJoCo 3.3.5 [release notes](https://mujoco.readthedocs.io/en/stable/changelog.html#version-3-3-5-august-8-2025) under `MJX` for more details.
 
 ## Installation
 
@@ -22,6 +25,14 @@ You can install MuJoCo Playground directly from PyPI:
 ```sh
 pip install playground
 ```
+
+> [!WARNING]
+> The `playground` release may depend on pre-release versions of `mujoco` and
+> `warp-lang`, in which case you can try `pip install playground
+> --extra-index-url=https://py.mujoco.org
+> --extra-index-url=https://pypi.nvidia.com/warp-lang/`.
+> If there are still version mismatches, please open a github issue, and install
+> from source.
 
 ### From Source
 
