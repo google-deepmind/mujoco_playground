@@ -23,6 +23,8 @@
     <geom name="floor" type="hfield" hfield="terrain" material="groundplane" pos="0 0 -.01"/>
   </worldbody>
 
+  <include file="sensor_feet.xml"/>
+
   <keyframe>
     <key name="home" qpos="0 0 0.35 1 0 0 0 0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8"
       ctrl="0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8 0 0.9 -1.8"/>

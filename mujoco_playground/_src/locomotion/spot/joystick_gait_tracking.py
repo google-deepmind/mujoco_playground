@@ -22,7 +22,6 @@ from ml_collections import config_dict
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.spot import base as spot_base
@@ -178,8 +177,8 @@ class JoystickGaitTracking(spot_base.SpotEnv):
     metrics["swing_peak"] = jp.zeros(())
 
     contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._feet_floor_found_sensor
     ])
 
     obs = self._get_obs(data, info, noise_rng, contact)
@@ -197,8 +196,8 @@ class JoystickGaitTracking(spot_base.SpotEnv):
     state.info["motor_targets"] = motor_targets
 
     contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._feet_floor_found_sensor
     ])
     p_f = data.site_xpos[self._feet_site_id]
     p_fz = p_f[..., -1]

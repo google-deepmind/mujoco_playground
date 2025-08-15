@@ -23,7 +23,6 @@ import mujoco
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.h1 import base as h1_base
 from mujoco_playground._src.locomotion.h1 import h1_constants
@@ -332,12 +331,12 @@ class Joystick(h1_base.H1Env):
     vel_xy = feet_vel[..., :2]
     vel_xy_norm_sq = jp.sum(jp.square(vel_xy), axis=-1)
     left_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._left_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._left_foot_floor_found_sensor
     ])
     right_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._right_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._right_foot_floor_found_sensor
     ])
     feet_contact = jp.hstack(
         [left_feet_contact.any(), right_feet_contact.any()]

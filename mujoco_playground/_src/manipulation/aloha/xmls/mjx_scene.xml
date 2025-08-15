@@ -95,4 +95,15 @@
     <geom class="frame" pos="0.43 -0.361 1.02" quat="0 0 0 1" mesh="extrusion_2040_1000"/>
     <geom class="frame" pos="0 -0.391 -0.01" quat="0 0 0 1" mesh="wormseye_mount"/>
   </worldbody>
+
+  <sensor>
+    <contact name="table_left/left_finger_top_found" geom1="table" geom2="left/left_finger_top" reduce="mindist" num="1" data="found"/>
+    <contact name="table_left/left_finger_bottom_found" geom1="table" geom2="left/left_finger_bottom" reduce="mindist" num="1" data="found"/>
+    <contact name="table_right/right_finger_top_found" geom1="table" geom2="right/right_finger_top" reduce="mindist" num="1" data="found"/>
+    <contact name="table_right/right_finger_bottom_found" geom1="table" geom2="right/right_finger_bottom" reduce="mindist" num="1" data="found"/>
+    <contact name="table_right/left_finger_top_found" geom1="table" geom2="right/left_finger_top" reduce="mindist" num="1" data="found"/>
+    <contact name="table_right/left_finger_bottom_found" geom1="table" geom2="right/left_finger_bottom" reduce="mindist" num="1" data="found"/>
+    <contact name="table_left/right_finger_top_found" geom1="table" geom2="left/right_finger_top" reduce="mindist" num="1" data="found"/>
+    <contact name="table_left/right_finger_bottom_found" geom1="table" geom2="left/right_finger_bottom" reduce="mindist" num="1" data="found"/>
+  </sensor>
 </mujoco>

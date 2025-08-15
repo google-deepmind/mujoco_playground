@@ -53,6 +53,9 @@ def default_config() -> config_dict.ConfigDict:
               action_rate=0.0,
           ),
       ),
+      impl='jax',
+      nconmax=30 * 8192,
+      njmax=128,
   )
 
 
@@ -104,12 +107,15 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
 
     qpos = jp.concatenate([q_hand, q_cube])
     qvel = jp.concatenate([v_hand, v_cube])
-    data = mjx_env.init(
-        self.mjx_model,
+    data = mjx_env.make_data(
+        self._mj_model,
         qpos=qpos,
         qvel=qvel,
         ctrl=q_hand,
         mocap_pos=jp.array([-100.0, -100.0, -100.0]),  # Hide goal for task.
+        impl=self._mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
 
     info = {

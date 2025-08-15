@@ -23,7 +23,6 @@ from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.collision import geoms_colliding
 from mujoco_playground._src.locomotion.apollo import constants as consts
 import numpy as np
 
@@ -105,6 +104,31 @@ class ApolloEnv(mjx_env.MjxEnv):
         [self._mj_model.site(name).id for name in consts.FEET_SITES]
     )
 
+    # Contact sensor IDs.
+    self._left_feet_floor_found_sensor = [
+        self._mj_model.sensor(foot_geom + "_floor_found").id
+        for foot_geom in consts.LEFT_FEET_GEOMS
+    ]
+    self._right_feet_floor_found_sensor = [
+        self._mj_model.sensor(foot_geom + "_floor_found").id
+        for foot_geom in consts.RIGHT_FEET_GEOMS
+    ]
+    self._left_hand_left_thigh_found_sensor = self._mj_model.sensor(
+        "collision_l_hand_plate_collision_capsule_body_l_thigh_found"
+    ).id
+    self._right_hand_right_thigh_found_sensor = self._mj_model.sensor(
+        "collision_r_hand_plate_collision_capsule_body_r_thigh_found"
+    ).id
+    self._left_foot_right_foot_found_sensor = self._mj_model.sensor(
+        "collision_l_sole_collision_r_sole_found"
+    ).id
+    self._left_shin_right_shin_found_sensor = self._mj_model.sensor(
+        "collision_capsule_body_l_shin_collision_capsule_body_r_shin_found"
+    ).id
+    self._left_thigh_right_thigh_found_sensor = self._mj_model.sensor(
+        "collision_capsule_body_l_thigh_collision_capsule_body_r_thigh_found"
+    ).id
+
   # Sensor readings.
 
   def get_gravity(self, data: mjx.Data) -> jax.Array:
@@ -144,12 +168,18 @@ class ApolloEnv(mjx_env.MjxEnv):
   def get_feet_ground_contacts(self, data: mjx.Data) -> jax.Array:
     """Return an array indicating whether each foot is in contact with the ground."""
     left_feet_contact = jp.array([
-        geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._left_feet_geom_id
+        data.sensordata[
+            self._mj_model.sensor_adr[self._mj_model.sensor_adr[sensorid]]
+        ]
+        > 0
+        for sensorid in self._left_feet_floor_found_sensor
     ])
     right_feet_contact = jp.array([
-        geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._right_feet_geom_id
+        data.sensordata[
+            self._mj_model.sensor_adr[self._mj_model.sensor_adr[sensorid]]
+        ]
+        > 0
+        for sensorid in self._right_feet_floor_found_sensor
     ])
     return jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
 

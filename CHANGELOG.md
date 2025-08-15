@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
   support MjWarp. You can pass through the implementation via the config
   override
   `registry.load('CartpoleBalance', config_overrides={'impl': 'warp'})`.
+- Update environments to utilize contact sensors and remove `collision.py`.
 
 ## [0.0.5] - 2025-06-23
 

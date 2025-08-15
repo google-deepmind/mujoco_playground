@@ -23,10 +23,8 @@ from mujoco import mjx
 from mujoco.mjx._src import math
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.collision import geoms_colliding
 from mujoco_playground._src.locomotion.g1 import base as g1_base
 from mujoco_playground._src.locomotion.g1 import g1_constants as consts
 
@@ -237,6 +235,26 @@ class Joystick(g1_base.G1Env):
     self._left_thigh_geom_id = self._mj_model.geom("left_thigh").id
     self._right_thigh_geom_id = self._mj_model.geom("right_thigh").id
 
+    self._feet_floor_found_sensor = [
+        self._mj_model.sensor(foot_geom + "_floor_found").id
+        for foot_geom in ["left_foot", "right_foot"]
+    ]
+    self._right_foot_left_foot_found_sensor = self._mj_model.sensor(
+        "right_foot_left_foot_found"
+    ).id
+    self._left_foot_right_shin_found_sensor = self._mj_model.sensor(
+        "left_foot_right_shin_found"
+    ).id
+    self._right_foot_left_shin_found_sensor = self._mj_model.sensor(
+        "right_foot_left_shin_found"
+    ).id
+    self._left_hand_left_thigh_found_sensor = self._mj_model.sensor(
+        "left_hand_left_thigh_found"
+    ).id
+    self._right_hand_right_thigh_found_sensor = self._mj_model.sensor(
+        "right_hand_right_thigh_found"
+    ).id
+
   def reset(self, rng: jax.Array) -> mjx_env.State:
     qpos = self._init_q
     qvel = jp.zeros(self.mjx_model.nv)
@@ -317,8 +335,8 @@ class Joystick(g1_base.G1Env):
     metrics["swing_peak"] = jp.zeros(())
 
     contact = jp.array([
-        geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._feet_floor_found_sensor
     ])
     obs = self._get_obs(data, info, contact)
     reward, done = jp.zeros(2)
@@ -352,8 +370,8 @@ class Joystick(g1_base.G1Env):
     state.info["motor_targets"] = motor_targets
 
     contact = jp.array([
-        geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._feet_floor_found_sensor
     ])
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt
@@ -410,21 +428,15 @@ class Joystick(g1_base.G1Env):
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:
     fall_termination = self.get_gravity(data, "torso")[-1] < 0.0
-    contact_termination = collision.geoms_colliding(
-        data,
-        self._right_foot_geom_id,
-        self._left_foot_geom_id,
-    )
-    contact_termination |= collision.geoms_colliding(
-        data,
-        self._left_foot_geom_id,
-        self._right_shin_geom_id,
-    )
-    contact_termination |= collision.geoms_colliding(
-        data,
-        self._right_foot_geom_id,
-        self._left_shin_geom_id,
-    )
+    contact_termination = data.sensordata[
+        self._mj_model.sensor_adr[self._right_foot_left_foot_found_sensor]
+    ] > 0
+    contact_termination |= data.sensordata[
+        self._mj_model.sensor_adr[self._left_foot_right_shin_found_sensor]
+    ] > 0
+    contact_termination |= data.sensordata[
+        self._mj_model.sensor_adr[self._right_foot_left_shin_found_sensor]
+    ] > 0
     return (
         fall_termination
         | contact_termination
@@ -607,11 +619,17 @@ class Joystick(g1_base.G1Env):
     return cost
 
   def _cost_collision(self, data: mjx.Data) -> jax.Array:
-    c = collision.geoms_colliding(
-        data, self._left_hand_geom_id, self._left_thigh_geom_id
+    c = (
+        data.sensordata[
+            self._mj_model.sensor_adr[self._left_hand_left_thigh_found_sensor]
+        ]
+        > 0
     )
-    c |= collision.geoms_colliding(
-        data, self._right_hand_geom_id, self._right_thigh_geom_id
+    c |= (
+        data.sensordata[
+            self._mj_model.sensor_adr[self._right_hand_right_thigh_found_sensor]
+        ]
+        > 0
     )
     return jp.any(c)
 

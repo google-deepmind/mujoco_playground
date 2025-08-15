@@ -22,7 +22,6 @@ from ml_collections import config_dict
 from mujoco import mjx
 from mujoco.mjx._src import math
 from mujoco_playground._src import gait, mjx_env
-from mujoco_playground._src.collision import geoms_colliding
 from mujoco_playground._src.locomotion.apollo import base
 from mujoco_playground._src.locomotion.apollo import constants as consts
 
@@ -377,27 +376,17 @@ class Joystick(base.ApolloEnv):
     return jp.sum(jp.square(act - last_act))
 
   def _cost_collision(self, data: mjx.Data) -> jax.Array:
+    adr = self._mj_model.sensor_adr
     # Hand - thigh.
-    c = geoms_colliding(data, self._left_hand_geom_id, self._left_thigh_geom_id)
-    c |= geoms_colliding(
-        data, self._right_hand_geom_id, self._right_thigh_geom_id
-    )
+    c = data.sensordata[adr[self._left_hand_left_thigh_found_sensor]] > 0
+    c |= data.sensordata[adr[self._right_hand_right_thigh_found_sensor]] > 0
     # Foot - foot.
-    c |= geoms_colliding(
-        data, self._left_foot_geom_id, self._right_foot_geom_id
-    )
+    c |= data.sensordata[adr[self._left_foot_right_foot_found_sensor]] > 0
     # Shin - shin.
-    c |= geoms_colliding(
-        data,
-        self._left_shin_geom_id,
-        self._right_shin_geom_id,
-    )
+    c |= data.sensordata[adr[self._left_shin_right_shin_found_sensor]] > 0
     # Thigh - thigh.
-    c |= geoms_colliding(
-        data,
-        self._left_thigh_geom_id,
-        self._right_thigh_geom_id,
-    )
+    c |= data.sensordata[adr[self._left_thigh_right_thigh_found_sensor]] > 0
+
     return jp.any(c)
 
   def _cost_pose(self, qpos: jax.Array, commands: jax.Array) -> jax.Array:

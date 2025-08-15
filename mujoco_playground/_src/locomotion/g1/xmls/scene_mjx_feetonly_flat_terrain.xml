@@ -23,6 +23,8 @@
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane"/>
   </worldbody>
 
+  <include file="sensor.xml"/>
+
   <keyframe>
     <key name="home"
       qpos="

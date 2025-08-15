@@ -23,7 +23,6 @@ import mujoco
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.aloha import aloha_constants as consts
 
@@ -60,7 +59,7 @@ class AlohaEnv(mjx_env.MjxEnv):
     self._mj_model.vis.global_.offwidth = 3840
     self._mj_model.vis.global_.offheight = 2160
 
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._xml_path = xml_path
 
   def _post_init_aloha(self, keyframe: str = "home"):
@@ -83,6 +82,12 @@ class AlohaEnv(mjx_env.MjxEnv):
         for j in consts.FINGER_JOINTS
     ])
 
+    # Contact sensor IDs.
+    self._table_finger_found_sensor = [
+        self._mj_model.sensor("table_" + geom + "_found").id
+        for geom in consts.FINGER_GEOMS
+    ]
+
   @property
   def xml_path(self) -> str:
     return self._xml_path
@@ -102,7 +107,7 @@ class AlohaEnv(mjx_env.MjxEnv):
   def hand_table_collision(self, data) -> jp.ndarray:
     # Check for collisions with the floor.
     hand_table_collisions = [
-        collision.geoms_colliding(data, self._table_geom, g)
-        for g in self._finger_geoms
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._table_finger_found_sensor
     ]
     return (sum(hand_table_collisions) > 0).astype(float)

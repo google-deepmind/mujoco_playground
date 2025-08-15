@@ -67,6 +67,9 @@ def default_config() -> config_dict.ConfigDict:
           pert_duration_steps=[1, 100],
           pert_wait_steps=[60, 150],
       ),
+      impl='jax',
+      nconmax=30 * 8192,
+      njmax=128,
   )
 
 
@@ -126,13 +129,16 @@ class CubeReorient(leap_hand_base.LeapHandEnv):
 
     qpos = jp.concatenate([q_hand, q_cube])
     qvel = jp.concatenate([v_hand, v_cube])
-    data = mjx_env.init(
-        self.mjx_model,
+    data = mjx_env.make_data(
+        self._mj_model,
         qpos=qpos,
         ctrl=q_hand,
         qvel=qvel,
         mocap_pos=self._init_mpos,
         mocap_quat=goal_quat,
+        impl=self._mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
 
     rng, pert1, pert2, pert3 = jax.random.split(rng, 4)

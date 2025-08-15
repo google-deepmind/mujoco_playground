@@ -19,6 +19,12 @@
     </body>
   </worldbody>
 
+  <sensor>
+    <contact name="barrier_left_finger_pad_found" geom1="barrier" geom2="left_finger_pad" reduce="mindist" num="1" data="found"/>
+    <contact name="barrier_right_finger_pad_found" geom1="barrier" geom2="right_finger_pad" reduce="mindist" num="1" data="found"/>
+    <contact name="barrier_hand_capsule_found" geom1="barrier" geom2="hand_capsule" reduce="mindist" num="1" data="found"/>
+  </sensor>
+
   <keyframe>
     <key name="home"
       qpos="0 0.3 0 -1.57079 0 2.0 -0.7853 0.04 0.04 0.0"

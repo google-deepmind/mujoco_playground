@@ -24,7 +24,6 @@ import mujoco
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 
 _FEET_SITES = [
@@ -119,9 +118,30 @@ class Joystick(mjx_env.MjxEnv):
     super().__init__(config, config_overrides)
     xml_path = mjx_env.MENAGERIE_PATH / "google_barkour_vb" / "scene_mjx.xml"
     self._xml_path = xml_path.as_posix()
-    xml = epath.Path(xml_path).read_text()
     self._model_assets = get_assets()
-    mj_model = mujoco.MjModel.from_xml_string(xml, assets=self._model_assets)
+    mj_spec = mujoco.MjSpec.from_file(
+        xml_path.as_posix(), assets=self._model_assets
+    )
+    # add contact sensors
+    feet_floor_found_sensor = []
+    for geom in _FEET_GEOMS:
+      name = f"{geom}_floor_found"
+      mj_spec.add_sensor(
+          name=name,
+          type=mujoco.mjtSensor.mjSENS_CONTACT,
+          objtype=mujoco.mjtObj.mjOBJ_GEOM,
+          objname=geom,
+          reftype=mujoco.mjtObj.mjOBJ_GEOM,
+          refname="floor",
+          intprm=[1, 1, 1],  # data=found, reduce=mindist
+          datatype=mujoco.mjtDataType.mjDATATYPE_REAL,
+          needstage=mujoco.mjtStage.mjSTAGE_ACC,
+          dim=1,
+      )
+      feet_floor_found_sensor.append(name)
+    self._feet_floor_found_sensor = feet_floor_found_sensor
+    # compile spec
+    mj_model = mj_spec.compile()
     mj_model.vis.global_.offwidth = 3840
     mj_model.vis.global_.offheight = 2160
     mj_model.dof_damping[6:] = 0.5239
@@ -239,8 +259,11 @@ class Joystick(mjx_env.MjxEnv):
     torso_z = data.xpos[self._torso_body_id, -1]
 
     contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[
+            self._mj_model.sensor_adr[self._mj_model.sensor(sensor).id]
+        ]
+        > 0
+        for sensor in self._feet_floor_found_sensor
     ])
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt

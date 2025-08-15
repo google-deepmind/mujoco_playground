@@ -67,6 +67,12 @@ class Go1Env(mjx_env.MjxEnv):
     self._xml_path = xml_path
     self._imu_site_id = self._mj_model.site("imu").id
 
+    # Contact sensor ids.
+    self._feet_floor_found_sensor = [
+        self._mj_model.sensor(f"{geom}_floor_found").id
+        for geom in consts.FEET_GEOMS
+    ]
+
   # Sensor readings.
 
   def get_upvector(self, data: mjx.Data) -> jax.Array:

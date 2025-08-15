@@ -22,7 +22,6 @@ from ml_collections import config_dict
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.h1 import base as h1_base
@@ -205,12 +204,12 @@ class InplaceGaitTracking(h1_base.H1Env):
       metrics[f"reward/{k}"] = jp.zeros(())
 
     left_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._left_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._left_foot_floor_found_sensor
     ])
     right_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._right_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._right_foot_floor_found_sensor
     ])
     contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
     info["left_contact"] = jp.any(left_feet_contact)
@@ -230,12 +229,12 @@ class InplaceGaitTracking(h1_base.H1Env):
     state.info["motor_targets"] = motor_targets
 
     left_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._left_feet_geom_id
+        data.sensordata[sensorid] > 0
+        for sensorid in self._left_foot_floor_found_sensor
     ])
     right_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._right_feet_geom_id
+        data.sensordata[sensorid] > 0
+        for sensorid in self._right_foot_floor_found_sensor
     ])
     contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
     p_f = data.site_xpos[self._feet_site_id]

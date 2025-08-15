@@ -22,4 +22,11 @@
   <worldbody>
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="0"/>
   </worldbody>
+
+  <sensor>
+    <contact name="l_foot1_floor_found" geom1="l_foot1" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="l_foot2_floor_found" geom1="l_foot2" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="r_foot1_floor_found" geom1="r_foot1" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="r_foot2_floor_found" geom1="r_foot2" geom2="floor" reduce="mindist" num="1" data="found"/>
+  </sensor>
 </mujoco>

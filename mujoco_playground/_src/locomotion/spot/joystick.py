@@ -22,7 +22,6 @@ from ml_collections import config_dict
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.spot import base as spot_base
@@ -235,8 +234,8 @@ class Joystick(spot_base.SpotEnv):
     state.info["motor_targets"] = motor_targets
 
     contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._feet_floor_found_sensor
     ])
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt

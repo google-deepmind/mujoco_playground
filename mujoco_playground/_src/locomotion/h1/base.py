@@ -60,6 +60,16 @@ class H1Env(mjx_env.MjxEnv):
     self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._xml_path = xml_path
 
+    # Contact sensor IDs.
+    self._left_foot_floor_found_sensor = [
+        self._mj_model.sensor(f"left_foot{i}_floor_found").id
+        for i in range(1, 4)
+    ]
+    self._right_foot_floor_found_sensor = [
+        self._mj_model.sensor(f"right_foot{i}_floor_found").id
+        for i in range(1, 4)
+    ]
+
   # Sensor readings.
 
   def get_gravity(self, data: mjx.Data) -> jax.Array:

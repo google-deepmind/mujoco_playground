@@ -22,7 +22,7 @@ from ml_collections import config_dict
 from mujoco import mjx
 from mujoco.mjx._src import math
 from mujoco.mjx._src import types
-from mujoco_playground._src import collision
+
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward as reward_util
 from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import panda_robotiq
@@ -84,6 +84,9 @@ def default_config():
               action_rate=-0.1,
           ),
       ),
+      impl="jax",
+      nconmax=32 * 8192,
+      njmax=256,
   )
 
 
@@ -164,13 +167,16 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
             maxval=self._jnt_range[:, 1] * self._joint_range_init_percent_limit,
         )
     )
-    data = mjx_env.init(
-        self._mjx_model,
-        init_q,
-        jp.zeros(self._mjx_model.nv, dtype=float),
+    data = mjx_env.make_data(
+        self._mj_model,
+        qpos=init_q,
+        qvel=jp.zeros(self._mjx_model.nv, dtype=float),
         ctrl=self._init_ctrl,
         mocap_pos=jp.array([target_pos]),
         mocap_quat=jp.array([target_quat]),
+        impl=self._mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
 
     # initialize env state and info
@@ -287,12 +293,8 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
         gripper_pos[1] < WORKSPACE_MIN[1]
     )
     hand_wall_collision = [
-        collision.geoms_colliding(data, self._wall_geom, g)
-        for g in [
-            self._left_finger_geom,
-            self._right_finger_geom,
-            self._hand_geom,
-        ]
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._hand_wall_found_sensor
     ]
     has_wall_collision = sum(hand_wall_collision) > 0
     joints_near_limits = jp.any(
@@ -304,12 +306,8 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
         )
     )
     hand_floor_collision = [
-        collision.geoms_colliding(data, self._floor_geom, g)
-        for g in [
-            self._left_finger_geom,
-            self._right_finger_geom,
-            self._hand_geom,
-        ]
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._hand_floor_found_sensor
     ]
     floor_collision = sum(hand_floor_collision) > 0
     return (
@@ -389,9 +387,6 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
   def _get_reward(
       self, data: mjx.Data, info: dict[str, Any], action: jax.Array
   ) -> dict[str, jax.Array]:
-    if not isinstance(data._impl, types.DataJAX):
-      raise ValueError("Evnironment requires JAX MJX implementation.")
-
     # Target, gripper, and object rewards.
     target_pos = data.mocap_pos[self._mocap_target, :].ravel()
     box_pos = data.xpos[self._obj_body]
@@ -420,13 +415,13 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
         ori_error, (0, 0.2), margin=jp.pi, sigmoid="reciprocal"
     )
 
-    hand_box_collision_info = [
-        collision.get_collision_info(data._impl.contact, g1, self._obj_geom)  # pylint: disable=protected-access
-        for g1 in self._gripper_geoms
-    ]
-    hand_box_normal = jp.mean(
-        jp.array([(d < 0) * n for d, n in hand_box_collision_info]), axis=0
-    )
+    hand_box_normal = []
+    for sensorid in self._gripper_obj_normal_sensor:
+      adr = self._mj_model.sensor_adr[sensorid]
+      dim = self._mj_model.sensor_dim[sensorid]
+      hand_box_normal.append(data.sensordata[adr : adr + dim])
+
+    hand_box_normal = jp.mean(jp.array(hand_box_normal), axis=0)
     hand_box_normal = math.normalize(hand_box_normal)
     hand_box_normal_side = jp.cross(jp.array([0.0, 0.0, 1.0]), hand_box_normal)
     gripper_collision_side = jp.linalg.norm(hand_box_normal_side)
