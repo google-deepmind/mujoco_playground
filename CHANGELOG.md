@@ -6,11 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - Pass through the [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp)
   (MjWarp) implementation to MJX, so that MuJoCo Playground environments can
-  train with MuJoCo Warp! DM Control Suite and Locomotion environments now
-  support MjWarp. You can pass through the implementation via the config
+  train with MuJoCo Warp! You can pass through the implementation via the config
   override
   `registry.load('CartpoleBalance', config_overrides={'impl': 'warp'})`.
 - Update environments to utilize contact sensors and remove `collision.py`.
+- Remove `mjx_env.init` in favor of `mjx_env.make_data` since `make_data`
+  now requires an `MjModel` argument rather than an `mjx.Model` argument.
+- Add device to `mjx_env.make_data`, fixes #174.
 
 ## [0.0.5] - 2025-06-23
 
