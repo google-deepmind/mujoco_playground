@@ -13,46 +13,116 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the wrapper module."""
+
 import functools
 
 from absl.testing import absltest
+from absl.testing import parameterized
+from brax.envs.wrappers import training as brax_training
 import jax
 import jax.numpy as jp
-import numpy as np
-
 from mujoco_playground._src import dm_control_suite
 from mujoco_playground._src import wrapper
+import numpy as np
 
 
-class WrapperTest(absltest.TestCase):
+class WrapperTest(parameterized.TestCase):
 
-  def test_auto_reset_wrapper(self):
+  @parameterized.named_parameters(
+      ('full_reset', True),
+      ('cache_reset', False),
+  )
+  def test_auto_reset_wrapper(self, full_reset):
+    """Tests the AutoResetWrapper."""
     class DoneEnv:
 
       def __init__(self, env):
         self._env = env
 
       def reset(self, key):
-        return self._env.reset(key)
+        state = self._env.reset(key)
+        state.info['AutoResetWrapper_preserve_info'] = 1
+        state.info['other_info'] = 1
+        return state
 
       def step(self, state, action):
         state = self._env.step(state, jp.ones_like(action))
         state = state.replace(done=action[0] > 0)
+        state.info['AutoResetWrapper_preserve_info'] = 2
+        state.info['other_info'] = 2
         return state
 
     env = wrapper.BraxAutoResetWrapper(
-        DoneEnv(dm_control_suite.load('CartpoleBalance'))
+        brax_training.VmapWrapper(
+            DoneEnv(dm_control_suite.load('CartpoleBalance'))
+        ),
+        full_reset=full_reset,
     )
 
     jit_reset = jax.jit(env.reset)
     jit_step = jax.jit(env.step)
-    state = jit_reset(jax.random.PRNGKey(0))
-    first_qpos = state.info['first_state'].qpos
+    state = jit_reset(jax.random.PRNGKey(0)[None])
+    first_qpos = state.data.qpos
 
-    state = jit_step(state, -jp.ones(env._env.action_size))
+    # First step should not be done.
+    state = jit_step(state, -jp.ones(env._env.action_size)[None])
+    np.testing.assert_allclose(state.info['AutoResetWrapper_done_count'], 0)
     self.assertGreater(np.linalg.norm(state.data.qpos - first_qpos), 1e-3)
-    state = jit_step(state, jp.ones(env._env.action_size))
-    np.testing.assert_allclose(state.data.qpos, first_qpos, atol=1e-6)
+    self.assertEqual(state.info['AutoResetWrapper_preserve_info'], 2)
+    self.assertEqual(state.info['other_info'], 2)
+
+    for i in range(1, 3):
+      state = jit_step(state, jp.ones(env._env.action_size)[None])
+      jax.tree.map(lambda x: x.block_until_ready(), state)
+      if full_reset:
+        self.assertTrue((state.data.qpos != first_qpos).all())
+      else:
+        np.testing.assert_allclose(state.data.qpos, first_qpos, atol=1e-6)
+      np.testing.assert_allclose(state.info['AutoResetWrapper_done_count'], i)
+      self.assertEqual(state.info['AutoResetWrapper_preserve_info'], 2)
+      expected_other_info = 1 if full_reset else 2
+      self.assertEqual(state.info['other_info'], expected_other_info)
+
+  @parameterized.named_parameters(
+      ('full_reset', True),
+      ('cache_reset', False),
+  )
+  def test_evalwrapper_with_reset(self, full_reset):
+    """Tests EvalWrapper with reset in the AutoResetWrapper."""
+    episode_length = 10
+    num_envs = 4
+
+    env = dm_control_suite.load('CartpoleBalance')
+    env = wrapper.wrap_for_brax_training(
+        env,
+        episode_length=episode_length,
+        full_reset=full_reset,
+    )
+    env = brax_training.EvalWrapper(env)
+
+    jit_reset = jax.jit(env.reset)
+    jit_step = jax.jit(env.step)
+
+    rng = jax.random.PRNGKey(0)
+    rng = jax.random.split(rng, num_envs)
+    state = jit_reset(rng)
+    first_obs = state.obs
+    action = jp.zeros((num_envs, env.action_size))
+
+    for _ in range(episode_length):
+      state = jit_step(state, action)
+
+    # All episodes should finish at episode_length.
+    avg_episode_length = state.info['eval_metrics'].episode_steps.mean()
+    np.testing.assert_allclose(avg_episode_length, episode_length, atol=1e-6)
+    active_episodes = state.info['eval_metrics'].active_episodes
+    self.assertTrue(np.all(active_episodes == 0))
+
+    np.testing.assert_array_equal(state.info['steps'], 10 * np.ones(num_envs))
+    if full_reset:
+      self.assertTrue((state.obs != first_obs).all())
+    else:
+      np.testing.assert_allclose(state.obs, first_obs, rtol=1e-6)
 
   def test_domain_randomization_wrapper(self):
     def randomization_fn(model, rng):

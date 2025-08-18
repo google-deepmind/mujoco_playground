@@ -13,6 +13,9 @@ All notable changes to this project will be documented in this file.
 - Remove `mjx_env.init` in favor of `mjx_env.make_data` since `make_data`
   now requires an `MjModel` argument rather than an `mjx.Model` argument.
 - Add device to `mjx_env.make_data`, fixes #174.
+- Update AutoResetWrapper to allow full resets on done. Fixes #179. Also
+  provides a means for doing curriculum learning via
+  `state.info['AutoResetWrapper_done_count']`, see #140.
 
 ## [0.0.5] - 2025-06-23
 
