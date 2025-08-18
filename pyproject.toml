@@ -52,7 +52,7 @@ explicit = true
 [tool.uv.sources]
 mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
-mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "977f94e9dfba12e1861fe5cbc56c50bfb734a78e", subdirectory = "mjx" }
+mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "main", subdirectory = "mjx" }
 
 [project.optional-dependencies]
 test = [
