@@ -1,13 +1,13 @@
 <mujoco>
   <sensor>
-    <contact name="left_foot_1_floor_found" geom1="left_foot_1" geom2="floor" num="1" data="found"/>
-    <contact name="left_foot_2_floor_found" geom1="left_foot_2" geom2="floor" num="1" data="found"/>
-    <contact name="left_foot_3_floor_found" geom1="left_foot_3" geom2="floor" num="1" data="found"/>
-    <contact name="left_foot_4_floor_found" geom1="left_foot_4" geom2="floor" num="1" data="found"/>
-    <contact name="right_foot_1_floor_found" geom1="right_foot_1" geom2="floor" num="1" data="found"/>
-    <contact name="right_foot_2_floor_found" geom1="right_foot_2" geom2="floor" num="1" data="found"/>
-    <contact name="right_foot_3_floor_found" geom1="right_foot_3" geom2="floor" num="1" data="found"/>
-    <contact name="right_foot_4_floor_found" geom1="right_foot_4" geom2="floor" num="1" data="found"/>
-    <contact name="left_foot_right_foot_found" geom1="left_foot" geom2="right_foot" num="1" data="found"/>
+    <contact name="left_foot_1_floor_found" geom1="left_foot_1" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="left_foot_2_floor_found" geom1="left_foot_2" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="left_foot_3_floor_found" geom1="left_foot_3" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="left_foot_4_floor_found" geom1="left_foot_4" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="right_foot_1_floor_found" geom1="right_foot_1" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="right_foot_2_floor_found" geom1="right_foot_2" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="right_foot_3_floor_found" geom1="right_foot_3" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="right_foot_4_floor_found" geom1="right_foot_4" geom2="floor" num="1" reduce="mindist" data="found"/>
+    <contact name="left_foot_right_foot_found" geom1="left_foot" geom2="right_foot" num="1" reduce="mindist" data="found"/>
   </sensor>
 </mujoco>

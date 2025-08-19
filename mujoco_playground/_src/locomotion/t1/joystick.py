@@ -640,12 +640,12 @@ class Joystick(t1_base.T1Env):
     return jp.array(1.0)
 
   def _cost_collision(self, data: mjx.Data) -> jax.Array:
-    return jp.array([
+    return jp.array(
         data.sensordata[
             self._mj_model.sensor_adr[self._left_foot_right_foot_found_sensor]
         ]
         > 0
-    ])
+    )
 
   # Pose-related rewards.
 
