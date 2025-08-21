@@ -511,13 +511,7 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
 
   @jax.vmap
   def rand(rng):
-    # Cube friction: =U(0.1, 0.5).
     rng, key = jax.random.split(rng)
-    cube_friction = jax.random.uniform(key, (1,), minval=0.1, maxval=0.5)
-    geom_friction = model.geom_friction.at[
-        cube_geom_id : cube_geom_id + 1, 0
-    ].set(cube_friction)
-
     # Fingertip friction: =U(0.5, 1.0).
     fingertip_friction = jax.random.uniform(key, (1,), minval=0.5, maxval=1.0)
     geom_friction = model.geom_friction.at[fingertip_geom_ids, 0].set(
@@ -527,8 +521,6 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
     # Scale cube mass: *U(0.8, 1.2).
     rng, key1, key2 = jax.random.split(rng, 3)
     dmass = jax.random.uniform(key1, minval=0.8, maxval=1.2)
-    cube_mass = model.body_mass[cube_body_id]
-    body_mass = model.body_mass.at[cube_body_id].set(cube_mass * dmass)
     body_inertia = model.body_inertia.at[cube_body_id].set(
         model.body_inertia[cube_body_id] * dmass
     )
