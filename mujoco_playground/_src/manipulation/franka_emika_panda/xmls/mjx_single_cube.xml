@@ -12,6 +12,8 @@
     </body>
   </worldbody>
 
+  <include file="sensor.xml"/>
+
   <keyframe>
     <key name="home"
       qpos="0 0.3 0 -1.57079 0 2.0 -0.7853 0.04 0.04 0.7 0 0.03 1 0 0 0"

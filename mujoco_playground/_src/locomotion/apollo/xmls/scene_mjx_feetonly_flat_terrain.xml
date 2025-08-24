@@ -23,6 +23,16 @@
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" priority="1" friction="0.6" condim="3"/>
   </worldbody>
 
+  <sensor>
+    <contact name="collision_l_sole_floor_found" geom1="collision_l_sole" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="collision_r_sole_floor_found" geom1="collision_r_sole" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="collision_l_hand_plate_collision_capsule_body_l_thigh_found" geom1="collision_l_hand_plate" geom2="collision_capsule_body_l_thigh" reduce="mindist" num="1" data="found"/>
+    <contact name="collision_r_hand_plate_collision_capsule_body_r_thigh_found" geom1="collision_r_hand_plate" geom2="collision_capsule_body_r_thigh" reduce="mindist" num="1" data="found"/>
+    <contact name="collision_l_sole_collision_r_sole_found" geom1="collision_l_sole" geom2="collision_r_sole" reduce="mindist" num="1" data="found"/>
+    <contact name="collision_capsule_body_l_shin_collision_capsule_body_r_shin_found" geom1="collision_capsule_body_l_shin" geom2="collision_capsule_body_r_shin" reduce="mindist" num="1" data="found"/>
+    <contact name="collision_capsule_body_l_thigh_collision_capsule_body_r_thigh_found" geom1="collision_capsule_body_l_thigh" geom2="collision_capsule_body_r_thigh" reduce="mindist" num="1" data="found"/>
+  </sensor>
+
   <keyframe>
     <key name="stand"
       qpos="

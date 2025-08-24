@@ -24,6 +24,8 @@
       friction="0.6" condim="3"/>
   </worldbody>
 
+  <include file="sensor.xml"/>
+
   <keyframe>
     <key name="home"
       qpos="

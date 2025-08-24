@@ -48,6 +48,9 @@ def default_config() -> config_dict.ConfigDict:
               peg_insertion_reward=8,
           )
       ),
+      impl='jax',
+      nconmax=24 * 8192,
+      njmax=256,
   )
 
 
@@ -93,11 +96,14 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
     init_q = self._init_q.at[self._peg_qadr : self._peg_qadr + 2].add(peg_xy)
     init_q = init_q.at[self._socket_qadr : self._socket_qadr + 2].add(socket_xy)
 
-    data = mjx_env.init(
-        self._mjx_model,
-        init_q,
-        jp.zeros(self._mjx_model.nv, dtype=float),
+    data = mjx_env.make_data(
+        self._mj_model,
+        qpos=init_q,
+        qvel=jp.zeros(self._mjx_model.nv, dtype=float),
         ctrl=self._init_ctrl,
+        impl=self._mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
 
     info = {"rng": rng}

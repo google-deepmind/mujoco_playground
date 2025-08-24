@@ -23,7 +23,6 @@ from mujoco import mjx
 import mujoco  # pylint: disable=unused-import
 from mujoco.mjx._src import math
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.franka_emika_panda import panda
 from mujoco_playground._src.mjx_env import State  # pylint: disable=g-importing-member
@@ -49,6 +48,9 @@ def default_config() -> config_dict.ConfigDict:
               robot_target_qpos=0.3,
           )
       ),
+      impl="jax",
+      nconmax=12 * 8192,
+      njmax=96,
   )
 
 
@@ -73,10 +75,16 @@ class PandaOpenCabinet(panda.PandaBase):
 
     # Enable hand base collision to shape learning
     self.mj_model.geom("hand_capsule").conaffinity = 3
-    self._mjx_model = mjx.put_model(self.mj_model)
+    self._mjx_model = mjx.put_model(self.mj_model, impl=self._config.impl)
 
     self._post_init(obj_name="handle", keyframe="upright")
     self._barrier_geom = self._mj_model.geom("barrier").id
+
+    # Contact sensor IDs.
+    self._barrier_hand_found_sensor = [
+        self._mj_model.sensor(f"barrier_{geom}_found").id
+        for geom in ["left_finger_pad", "right_finger_pad", "hand_capsule"]
+    ]
 
   def reset(self, rng: jax.Array) -> State:
     """Resets the environment to an initial state."""
@@ -104,8 +112,14 @@ class PandaOpenCabinet(panda.PandaBase):
         jp.array(self._init_ctrl).at[:7].set(self._init_ctrl[:7] + perturb_arm)
     )
 
-    data: mjx.Data = mjx_env.init(
-        self._mjx_model, init_q, jp.zeros(self._mjx_model.nv), ctrl=init_ctrl
+    data: mjx.Data = mjx_env.make_data(
+        self._mj_model,
+        qpos=init_q,
+        qvel=jp.zeros(self._mjx_model.nv),
+        ctrl=init_ctrl,
+        impl=self._mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
 
     info = {
@@ -174,12 +188,8 @@ class PandaOpenCabinet(panda.PandaBase):
 
     # Check for collisions with the barrier
     hand_barrier_collision = [
-        collision.geoms_colliding(data, self._barrier_geom, g)
-        for g in [
-            self._left_finger_geom,
-            self._right_finger_geom,
-            self._hand_geom,
-        ]
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._barrier_hand_found_sensor
     ]
     barrier_collision = sum(hand_barrier_collision) > 0
     no_barrier_collision = 1 - barrier_collision

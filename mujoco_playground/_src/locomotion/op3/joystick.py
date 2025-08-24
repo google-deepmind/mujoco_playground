@@ -22,7 +22,6 @@ from ml_collections import config_dict
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.op3 import base as op3_base
 from mujoco_playground._src.locomotion.op3 import op3_constants as consts
@@ -64,6 +63,9 @@ def default_config() -> config_dict.ConfigDict:
       velocity_kick=[1.0, 5.0],
       kick_durations=[0.05, 0.2],
       kick_wait_times=[1.0, 3.0],
+      impl="jax",
+      nconmax=16 * 8192,
+      njmax=16 * 4 + 20 * 4,
   )
 
 
@@ -113,14 +115,29 @@ class Joystick(op3_base.Op3Env):
       )
     self._foot_linvel_sensor_adr = jp.array(foot_linvel_sensor_adr)
 
+    self._left_feet_floor_found_sensor = [
+        self._mj_model.sensor(foot_geom + "_floor_found").id
+        for foot_geom in consts.LEFT_FEET_GEOMS
+    ]
+    self._right_feet_floor_found_sensor = [
+        self._mj_model.sensor(foot_geom + "_floor_found").id
+        for foot_geom in consts.RIGHT_FEET_GEOMS
+    ]
+
   def reset(self, rng: jax.Array) -> mjx_env.State:
     rng, cmd_rng, noise_rng, pert1_rng, pert2_rng, pert3_rng = jax.random.split(
         rng, 6
     )
 
-    data = mjx_env.init(
-        self.mjx_model, qpos=self._init_q, qvel=jp.zeros(self.mjx_model.nv)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=self._init_q,
+        qvel=jp.zeros(self.mjx_model.nv),
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
+    data = mjx.forward(self.mjx_model, data)
 
     time_until_next_pert = jax.random.uniform(
         pert1_rng,
@@ -369,12 +386,12 @@ class Joystick(op3_base.Op3Env):
     vel_xy_norm_sq = jp.sum(jp.square(vel_xy), axis=-1)
 
     left_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._left_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._left_feet_floor_found_sensor
     ])
     right_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._right_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._right_feet_floor_found_sensor
     ])
     feet_contact = jp.hstack(
         [jp.any(left_feet_contact), jp.any(right_feet_contact)]

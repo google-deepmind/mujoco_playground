@@ -21,12 +21,10 @@ import jax.numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
 from mujoco.mjx._src import math
-import numpy as np
-
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.franka_emika_panda import panda
 from mujoco_playground._src.mjx_env import State  # pylint: disable=g-importing-member
+import numpy as np
 
 
 def default_config() -> config_dict.ConfigDict:
@@ -49,6 +47,9 @@ def default_config() -> config_dict.ConfigDict:
               robot_target_qpos=0.3,
           )
       ),
+      impl='jax',
+      nconmax=24 * 8192,
+      njmax=128,
   )
   return config
 
@@ -76,6 +77,12 @@ class PandaPickCube(panda.PandaBase):
     )
     self._post_init(obj_name="box", keyframe="home")
     self._sample_orientation = sample_orientation
+
+    # Contact sensor IDs.
+    self._floor_hand_found_sensor = [
+        self._mj_model.sensor(f"{geom}_floor_found").id
+        for geom in ["left_finger_pad", "right_finger_pad", "hand_capsule"]
+    ]
 
   def reset(self, rng: jax.Array) -> State:
     rng, rng_box, rng_target = jax.random.split(rng, 3)
@@ -117,11 +124,14 @@ class PandaPickCube(panda.PandaBase):
         .at[self._obj_qposadr : self._obj_qposadr + 3]
         .set(box_pos)
     )
-    data = mjx_env.init(
-        self._mjx_model,
-        init_q,
-        jp.zeros(self._mjx_model.nv, dtype=float),
+    data = mjx_env.make_data(
+        self._mj_model,
+        qpos=init_q,
+        qvel=jp.zeros(self._mjx_model.nv, dtype=float),
         ctrl=self._init_ctrl,
+        impl=self._mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
 
     # set target mocap position
@@ -189,12 +199,8 @@ class PandaPickCube(panda.PandaBase):
 
     # Check for collisions with the floor
     hand_floor_collision = [
-        collision.geoms_colliding(data, self._floor_geom, g)
-        for g in [
-            self._left_finger_geom,
-            self._right_finger_geom,
-            self._hand_geom,
-        ]
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._floor_hand_found_sensor
     ]
     floor_collision = sum(hand_floor_collision) > 0
     no_floor_collision = (1 - floor_collision).astype(float)

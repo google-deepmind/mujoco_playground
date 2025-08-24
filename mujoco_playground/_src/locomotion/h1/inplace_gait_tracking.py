@@ -22,7 +22,6 @@ from ml_collections import config_dict
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.h1 import base as h1_base
@@ -65,6 +64,9 @@ def default_config() -> config_dict.ConfigDict:
       gait_frequency=[0.5, 4.0],
       gaits=["walk", "jump"],
       foot_height=[0.08, 0.4],
+      impl="jax",
+      nconmax=8 * 8192,
+      njmax=19 + 8 * 4,
   )
 
 
@@ -151,9 +153,15 @@ class InplaceGaitTracking(h1_base.H1Env):
         rng, 5
     )
 
-    data = mjx_env.init(
-        self.mjx_model, qpos=self._init_q, qvel=jp.zeros(self.mjx_model.nv)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=self._init_q,
+        qvel=jp.zeros(self.mjx_model.nv),
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
+    data = mjx.forward(self.mjx_model, data)
 
     # Initialize history buffers.
     qpos_error_history = jp.zeros(self._config.history_len * 19)
@@ -196,12 +204,12 @@ class InplaceGaitTracking(h1_base.H1Env):
       metrics[f"reward/{k}"] = jp.zeros(())
 
     left_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._left_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._left_foot_floor_found_sensor
     ])
     right_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._right_feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._right_foot_floor_found_sensor
     ])
     contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
     info["left_contact"] = jp.any(left_feet_contact)
@@ -221,12 +229,12 @@ class InplaceGaitTracking(h1_base.H1Env):
     state.info["motor_targets"] = motor_targets
 
     left_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._left_feet_geom_id
+        data.sensordata[sensorid] > 0
+        for sensorid in self._left_foot_floor_found_sensor
     ])
     right_feet_contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._right_feet_geom_id
+        data.sensordata[sensorid] > 0
+        for sensorid in self._right_foot_floor_found_sensor
     ])
     contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
     p_f = data.site_xpos[self._feet_site_id]

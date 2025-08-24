@@ -41,6 +41,9 @@ def default_config() -> config_dict.ConfigDict:
               no_table_collision=0.3,
           ),
       ),
+      impl='jax',
+      nconmax=24 * 8192,
+      njmax=88,
   )
 
 
@@ -99,11 +102,14 @@ class HandOver(aloha_base.AlohaEnv):
     ])
     init_q = self._init_q.at[self._box_qadr : self._box_qadr + 2].add(box_xy)
 
-    data = mjx_env.init(
-        self._mjx_model,
-        init_q,
-        jp.zeros(self._mjx_model.nv, dtype=float),
+    data = mjx_env.make_data(
+        self._mj_model,
+        qpos=init_q,
+        qvel=jp.zeros(self._mjx_model.nv, dtype=float),
         ctrl=self._init_ctrl,
+        impl=self._mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
 
     rng, rng_target = jax.random.split(rng)

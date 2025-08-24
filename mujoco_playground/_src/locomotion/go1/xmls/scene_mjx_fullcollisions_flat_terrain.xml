@@ -23,6 +23,9 @@
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" priority="1" friction="0.6" condim="3" contype="1" conaffinity="0"/>
   </worldbody>
 
+  <include file="sensor_feet.xml"/>
+  <include file="sensor_fullcollision.xml"/>
+
   <keyframe>
     <key name="home" qpos="
     0 0 0.278

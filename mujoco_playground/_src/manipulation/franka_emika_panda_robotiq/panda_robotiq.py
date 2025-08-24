@@ -78,7 +78,7 @@ class PandaRobotiqBase(mjx_env.MjxEnv):
     mj_model.opt.timestep = self.sim_dt
 
     self._mj_model = mj_model
-    self._mjx_model = mjx.put_model(mj_model)
+    self._mjx_model = mjx.put_model(mj_model, impl=self._config.impl)
 
   def _post_init(self, obj_name: str, keyframe: str):
     all_joints = ARM_JOINTS + FINGER_JOINTS
@@ -125,6 +125,23 @@ class PandaRobotiqBase(mjx_env.MjxEnv):
         [0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3]
     )
     self._max_torque = 8.0
+    self._gripper_obj_normal_sensor = [
+        self.mj_model.sensor(geom + "_" + obj_name + "_normal").id
+        for geom in GRIPPER_GEOMS
+    ]
+    hand_geoms = [
+        "left_finger_pad",
+        "right_finger_pad",
+        "hand_capsule",
+    ]
+    self._hand_wall_found_sensor = [
+        self.mj_model.sensor("wall_" + hand_geom + "_found").id
+        for hand_geom in hand_geoms
+    ]
+    self._hand_floor_found_sensor = [
+        self.mj_model.sensor("floor_" + hand_geom + "_found").id
+        for hand_geom in hand_geoms
+    ]
 
   def jnt_range(self):
     # TODO(siholt): Use joint limits from XML.

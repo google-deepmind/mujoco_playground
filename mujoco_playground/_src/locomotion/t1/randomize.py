@@ -75,13 +75,6 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
     actuator_gainprm = model.actuator_gainprm.at[:, 0].set(kp)
     actuator_biasprm = model.actuator_biasprm.at[:, 1].set(-kp)
 
-    # Joint damping: *U(0.9, 1.1).
-    rng, key = jax.random.split(rng)
-    kd = model.dof_damping[6:] * jax.random.uniform(
-        key, (23,), minval=0.9, maxval=1.1
-    )
-    dof_damping = model.dof_damping.at[6:].set(kd)
-
     # Higher range on the ankles.
     rng, key = jax.random.split(rng)
     kd = model.dof_damping[ANKLE_JOINT_IDS] * jax.random.uniform(

@@ -23,7 +23,6 @@ from mujoco import mjx
 from mujoco.mjx._src import math
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.go1 import base as go1_base
 from mujoco_playground._src.locomotion.go1 import go1_constants as consts
@@ -90,6 +89,9 @@ def default_config() -> config_dict.ConfigDict:
           # Probability of not zeroing out new command.
           b=[0.9, 0.25, 0.5],
       ),
+      impl="jax",
+      nconmax=4 * 8192,
+      njmax=40,
   )
 
 
@@ -102,6 +104,9 @@ class Joystick(go1_base.Go1Env):
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
+    if task.startswith("rough"):
+      config.nconmax = 100 * 8192
+      config.njmax = 12 + 100 * 4
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
         config=config,
@@ -162,7 +167,16 @@ class Joystick(go1_base.Go1Env):
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=qpos,
+        qvel=qvel,
+        ctrl=qpos[7:],
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     rng, key1, key2, key3 = jax.random.split(rng, 4)
     time_until_next_pert = jax.random.uniform(
@@ -242,8 +256,8 @@ class Joystick(go1_base.Go1Env):
     )
 
     contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
+        for sensorid in self._feet_floor_found_sensor
     ])
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt

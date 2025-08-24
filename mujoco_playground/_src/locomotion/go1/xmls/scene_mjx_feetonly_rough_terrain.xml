@@ -23,6 +23,8 @@
       friction="1.0"/>
   </worldbody>
 
+  <include file="sensor_feet.xml"/>
+
   <keyframe>
     <key name="home" qpos="
     0 0 0.35

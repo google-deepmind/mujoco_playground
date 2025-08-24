@@ -23,6 +23,15 @@
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="0"/>
   </worldbody>
 
+  <sensor>
+    <contact name="left_foot1_floor_found" geom1="left_foot1" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="left_foot2_floor_found" geom1="left_foot2" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="left_foot3_floor_found" geom1="left_foot3" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="right_foot1_floor_found" geom1="right_foot1" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="right_foot2_floor_found" geom1="right_foot2" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="right_foot3_floor_found" geom1="right_foot3" geom2="floor" reduce="mindist" num="1" data="found"/>
+  </sensor>
+
   <keyframe>
     <key name="home" qpos="
     0 0 0.97

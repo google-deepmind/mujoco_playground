@@ -58,7 +58,7 @@ class LeapHandEnv(mjx_env.MjxEnv):
     self._mj_model.vis.global_.offwidth = 3840
     self._mj_model.vis.global_.offheight = 2160
 
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._xml_path = xml_path
 
   # Sensor readings.

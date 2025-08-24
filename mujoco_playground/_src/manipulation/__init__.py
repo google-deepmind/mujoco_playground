@@ -30,8 +30,6 @@ from mujoco_playground._src.manipulation.leap_hand import reorient as leap_cube_
 from mujoco_playground._src.manipulation.leap_hand import rotate_z as leap_rotate_z
 
 
-mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
-
 _envs = {
     "AlohaHandOver": aloha_handover.HandOver,
     "AlohaSinglePegInsertion": aloha_peg.SinglePegInsertion,
@@ -110,6 +108,7 @@ def load(
   Returns:
       An instance of the environment.
   """
+  mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when environment is loaded.
   if env_name not in _envs:
     raise ValueError(
         f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}"

@@ -22,4 +22,6 @@
   <worldbody>
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="0"/>
   </worldbody>
+
+  <include file="sensor.xml"/>
 </mujoco>

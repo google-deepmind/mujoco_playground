@@ -54,6 +54,21 @@
     </body>
   </worldbody>
 
+  <sensor>
+    <contact name="left_coupler_col_1_box_normal" geom1="left_coupler_col_1" geom2="box" reduce="mindist" num="1" data="normal"/>
+    <contact name="left_coupler_col_2_box_normal" geom1="left_coupler_col_2" geom2="box" reduce="mindist" num="1" data="normal"/>
+    <contact name="left_follower_pad2_box_normal" geom1="left_follower_pad2" geom2="box" reduce="mindist" num="1" data="normal"/>
+    <contact name="right_coupler_col_1_box_normal" geom1="right_coupler_col_1" geom2="box" reduce="mindist" num="1" data="normal"/>
+    <contact name="right_coupler_col_2_box_normal" geom1="right_coupler_col_2" geom2="box" reduce="mindist" num="1" data="normal"/>
+    <contact name="right_follower_pad2_box_normal" geom1="right_follower_pad2" geom2="box" reduce="mindist" num="1" data="normal"/>
+    <contact name="wall_left_finger_pad_found" geom1="wall" geom2="left_finger_pad" reduce="mindist" num="1" data="found"/>
+    <contact name="wall_right_finger_pad_found" geom1="wall" geom2="right_finger_pad" reduce="mindist" num="1" data="found"/>
+    <contact name="wall_hand_capsule_found" geom1="wall" geom2="hand_capsule" reduce="mindist" num="1" data="found"/>
+    <contact name="floor_left_finger_pad_found" geom1="floor" geom2="left_finger_pad" reduce="mindist" num="1" data="found"/>
+    <contact name="floor_right_finger_pad_found" geom1="floor" geom2="right_finger_pad" reduce="mindist" num="1" data="found"/>
+    <contact name="floor_hand_capsule_found" geom1="floor" geom2="hand_capsule" reduce="mindist" num="1" data="found"/>
+  </sensor>
+
   <keyframe>
     <key name="home"
       qpos="-0.182772 0.146282 0.172246 -2.24238 -0.0788546 2.45127 0.0160022 0.8 0.8 0.8 0.8 0.8 0.8

@@ -22,6 +22,8 @@
     <geom name="floor" type="hfield" hfield="hfield" material="groundplane" priority="1" friction=".6" contype="1" conaffinity="2" condim="3"/>
   </worldbody>
 
+  <include file="sensor.xml"/>
+
   <keyframe>
     <key name="home"
       qpos="

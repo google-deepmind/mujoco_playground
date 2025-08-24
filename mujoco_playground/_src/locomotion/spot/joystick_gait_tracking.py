@@ -22,7 +22,6 @@ from ml_collections import config_dict
 from mujoco import mjx
 import numpy as np
 
-from mujoco_playground._src import collision
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.spot import base as spot_base
@@ -77,6 +76,9 @@ def default_config() -> config_dict.ConfigDict:
       gait_frequency=[0.5, 4.0],
       gaits=["trot", "walk", "pace", "bound", "pronk"],
       foot_height=[0.08, 0.4],
+      impl="jax",
+      nconmax=4 * 8192,
+      njmax=12 + 4 * 4,
   )
 
 
@@ -125,9 +127,15 @@ class JoystickGaitTracking(spot_base.SpotEnv):
         jax.random.split(rng, 6)
     )
 
-    data = mjx_env.init(
-        self.mjx_model, qpos=self._init_q, qvel=jp.zeros(self.mjx_model.nv)
+    data = mjx_env.make_data(
+        self.mj_model,
+        qpos=self._init_q,
+        qvel=jp.zeros(self.mjx_model.nv),
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
     )
+    data = mjx.forward(self.mjx_model, data)
 
     # Sample gait parameters.
     gait_freq = jax.random.uniform(
@@ -169,8 +177,8 @@ class JoystickGaitTracking(spot_base.SpotEnv):
     metrics["swing_peak"] = jp.zeros(())
 
     contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._feet_floor_found_sensor
     ])
 
     obs = self._get_obs(data, info, noise_rng, contact)
@@ -188,8 +196,8 @@ class JoystickGaitTracking(spot_base.SpotEnv):
     state.info["motor_targets"] = motor_targets
 
     contact = jp.array([
-        collision.geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
+        for sensor_id in self._feet_floor_found_sensor
     ])
     p_f = data.site_xpos[self._feet_site_id]
     p_fz = p_f[..., -1]

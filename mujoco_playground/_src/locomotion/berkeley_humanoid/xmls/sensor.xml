@@ -1,0 +1,6 @@
+<mujoco>
+  <sensor>
+    <contact name="l_foot1_floor_found" geom1="l_foot1" geom2="floor" reduce="mindist" num="1" data="found"/>
+    <contact name="r_foot1_floor_found" geom1="r_foot1" geom2="floor" reduce="mindist" num="1" data="found"/>
+  </sensor>
+</mujoco>

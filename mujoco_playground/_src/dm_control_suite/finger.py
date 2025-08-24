@@ -48,6 +48,9 @@ def default_config() -> config_dict.ConfigDict:
       episode_length=1000,
       action_repeat=1,
       vision=False,
+      impl="jax",
+      nconmax=25_000,
+      njmax=50,
   )
 
 
@@ -93,7 +96,7 @@ class Spin(mjx_env.MjxEnv):
     self._model_assets = common.get_assets()
     self._mj_model = _make_spin_model(_XML_PATH, self._model_assets)
     self._mj_model.opt.timestep = self.sim_dt
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._post_init()
 
   def _post_init(self) -> None:
@@ -108,7 +111,14 @@ class Spin(mjx_env.MjxEnv):
     )
     qpos = qpos.at[2].set(jax.random.uniform(rng1, minval=-jp.pi, maxval=jp.pi))
 
-    data = mjx_env.init(self.mjx_model, qpos)
+    data = mjx_env.make_data(
+        self._mj_model,
+        qpos=qpos,
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     metrics = {}
     info = {"rng": rng}
@@ -220,7 +230,7 @@ class Turn(mjx_env.MjxEnv):
         _XML_PATH, target_radius, self._model_assets
     )
     self._mj_model.opt.timestep = self.sim_dt
-    self._mjx_model = mjx.put_model(self._mj_model)
+    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._post_init()
 
   def _post_init(self) -> None:
@@ -240,7 +250,14 @@ class Turn(mjx_env.MjxEnv):
     )
     qpos = qpos.at[2].set(jax.random.uniform(rng1, minval=-jp.pi, maxval=jp.pi))
 
-    data = mjx_env.init(self.mjx_model, qpos)
+    data = mjx_env.make_data(
+        self._mj_model,
+        qpos=qpos,
+        impl=self.mjx_model.impl.value,
+        nconmax=self._config.nconmax,
+        njmax=self._config.njmax,
+    )
+    data = mjx.forward(self.mjx_model, data)
 
     target_angle = jax.random.uniform(rng2, minval=-jp.pi, maxval=jp.pi)
     hinge_x = data.xanchor[self._hinge_joint_id, 0]
