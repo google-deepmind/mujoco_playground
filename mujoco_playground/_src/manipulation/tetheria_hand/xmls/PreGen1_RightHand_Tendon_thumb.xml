@@ -13,7 +13,8 @@
   <asset>
     <material name="black" rgba="0.2 0.2 0.2 1"/>
     <material name="gray" rgba="0.5 0.5 0.5 1"/>
-    <mesh name="tetheria_mount" file="tetheria_mount.obj"/>
+    <mesh name="tetheria_mount" file="right_palm_mount_link.STL"/>
+    <mesh name="leap_mount" file="tetheria_mount.obj"/>
 
     <mesh name="right_frame_link" content_type="model/stl" file="right_frame_link.STL"/>
     <mesh name="right_pinky_prismatic_2_link" content_type="model/stl" file="right_pinky_prismatic_2_link.STL"/>
@@ -185,7 +186,8 @@
   <worldbody>
     <light name="spotlight" mode="targetbodycom" target="palm" pos="3 0 4"/>
     <body name="tetheria_mount" pos="0 0 0" quat="1 0 0 0" childclass="leap_rh">
-      <geom name="tetheria_mount_visual" pos="0 0 0" quat="1 0 0 0" class="visual" mesh="tetheria_mount"/>
+      <!-- <geom name="tetheria_mount_visual" pos="0.053 0.01 -0.021" quat="0.5 -0.5 0.5 -0.5" class="visual" mesh="tetheria_mount"/> -->
+      <geom name="tetheria_mount_visual" pos="0 0 0" quat="1 0 0 0" class="visual" mesh="leap_mount"/>
       <geom name="leap_mount_collision_0" size="0.002 0.025 0.005" pos="0.0405 0.02 0.009" quat="0.57346234 0 0.81923192 0" type="box"/>
       <geom name="leap_mount_collision_1" size="0.005 0.010 0.005" pos="0.045 0.053 0.002" quat="0.4987168 0.64994038 -0.34910175 0.45495826" type="box"/>
       <site name="grasp_site" pos="0.11 0.0 0.03" group="4"/>
@@ -249,12 +251,13 @@
             <geom name ="if_proximal_tendon2" rgba="0 1 0 1" size="0.0025 0.005" pos="0 -0.0057 0.0173" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="if_proximal_tendon0_s2" pos="0 -0.0022 0.0173" group="4" size="0.0001"/>
             <geom name ="if_proximal_tendon3" rgba="0 1 0 1" size="0.0025 0.005" pos="0 -0.0057 0.0323" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
-            <site name="if_proximal_tendon0_s3" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
+            <site name="if_proximal_tendon0_s3" pos="0 -0.0025 0.03" group="4" size="0.0001"/>
+            <site name="if_proximal_tendon0_s4" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
 
             <!-- Tendon 1 proximal part -->
             <geom name ="if_proximal_tendon1_g0" rgba="0 1 0 1" size="0.003 0.005" pos="0 -0.0018 0.043" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="if_proximal_tendon1_s0" pos="0 -0.0048 0.040" group="4" size="0.0001"/>
-            <site name="if_proximal_tendon1_s1" pos="0 0.0012 0.039" group="4" size="0.0001"/>
+            <site name="if_proximal_tendon1_s1" pos="0 0.0012 0.035" group="4" size="0.0001"/>
 
             <!-- Spring 0 proximal part -->
             <site name="if_proximal_spring0_s0" pos="0 0.0012 0.011" group="4" size="0.0005"/>
@@ -309,18 +312,18 @@
             <geom size="0.006 0.006 0.013" pos="0 -0.003 0.019" type="box" />
 
             <!-- Tendon 0 proximal part -->
-            <site name="mf_proximal_tendon0_s0" pos="0 -0.0110 0.0095" group="4" size="0.0001"/>
+            <site name="mf_proximal_tendon0_s0" pos="0 -0.0110 0.0125" group="4" size="0.0001"/>
             <geom name ="mf_proximal_tendon0_g0" rgba="0 1 0 1" size="0.0025 0.005" pos="0 -0.0075 0.0095" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="mf_proximal_tendon0_s1" pos="0 -0.0063 0.0135" group="4" size="0.0001"/>
             <geom name ="mf_proximal_tendon2" rgba="0 1 0 1" size="0.0025 0.005" pos="0 -0.0057 0.0173" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="mf_proximal_tendon0_s2" pos="0 -0.0022 0.0173" group="4" size="0.0001"/>
             <geom name ="mf_proximal_tendon3" rgba="0 1 0 1" size="0.0025 0.005" pos="0 -0.0057 0.0323" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="mf_proximal_tendon0_s3" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
-
+            <site name="mf_proximal_tendon0_s4" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
             <!-- Tendon 1 proximal part -->
             <geom name ="mf_proximal_tendon1_g0" rgba="0 1 0 1" size="0.003 0.005" pos="0 -0.0018 0.043" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="mf_proximal_tendon1_s0" pos="0 -0.0048 0.040" group="4" size="0.0001"/>
-            <site name="mf_proximal_tendon1_s1" pos="0 0.0012 0.039" group="4" size="0.0001"/>
+            <site name="mf_proximal_tendon1_s1" pos="0 0.0012 0.035" group="4" size="0.0001"/>
 
             <!-- Spring 0 proximal part -->
             <site name="mf_proximal_spring0_s0" pos="0 0.0012 0.011" group="4" size="0.0005"/>
@@ -382,11 +385,12 @@
             <site name="rf_proximal_tendon0_s2" pos="0 -0.0022 0.0173" group="4" size="0.0001"/>
             <geom name ="rf_proximal_tendon3" rgba="0 1 0 1" size="0.0025 0.005" pos="0 -0.0057 0.0323" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="rf_proximal_tendon0_s3" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
+            <site name="rf_proximal_tendon0_s4" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
 
             <!-- Tendon 1 proximal part -->
             <geom name ="rf_proximal_tendon1_g0" rgba="0 1 0 1" size="0.003 0.005" pos="0 -0.0018 0.043" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="rf_proximal_tendon1_s0" pos="0 -0.0048 0.040" group="4" size="0.0001"/>
-            <site name="rf_proximal_tendon1_s1" pos="0 0.0012 0.039" group="4" size="0.0001"/>
+            <site name="rf_proximal_tendon1_s1" pos="0 0.0012 0.035" group="4" size="0.0001"/>
 
             <!-- Spring 0 proximal part -->
             <site name="rf_proximal_spring0_s0" pos="0 0.0012 0.011" group="4" size="0.0005"/>
@@ -450,11 +454,12 @@
             <site name="pf_proximal_tendon0_s2" pos="0 -0.0022 0.0173" group="4" size="0.0001"/>
             <geom name ="pf_proximal_tendon3" rgba="0 1 0 1" size="0.0025 0.005" pos="0 -0.0057 0.0323" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="pf_proximal_tendon0_s3" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
+            <site name="pf_proximal_tendon0_s4" pos="0 -0.0025 0.0333" group="4" size="0.0001"/>
 
             <!-- Tendon 1 proximal part -->
             <geom name ="pf_proximal_tendon1_g0" rgba="0 1 0 1" size="0.003 0.005" pos="0 -0.0018 0.043" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
             <site name="pf_proximal_tendon1_s0" pos="0 -0.0048 0.040" group="4" size="0.0001"/>
-            <site name="pf_proximal_tendon1_s1" pos="0 0.0012 0.039" group="4" size="0.0001"/>
+            <site name="pf_proximal_tendon1_s1" pos="0 0.0012 0.035" group="4" size="0.0001"/>
 
             <!-- Spring 0 proximal part -->
             <site name="pf_proximal_spring0_s0" pos="0 0.0012 0.011" group="4" size="0.0005"/>
@@ -547,8 +552,10 @@
               <geom name="th_px_collision_1" size="0.008 0.006 0.012" pos="0 -0.002 0.012" type="box"/>
 
               <!-- Spring 1 proximal part -->
+              <site name="th_proximal_spring1_s0" pos="0 0.005 -0.0015" group="4" size="0.0005"/>
               <geom name ="th_proximal_spring1_g0" rgba="0 1 0 1" size="0.0045 0.005" pos="0 0 0" quat="0.707 0 -0.707 0" type="cylinder" class="visual" group="5"/>
-              <site name="th_proximal_spring1_s0" pos="0 0.006 0.006" group="4" size="0.001"/>
+              <site name="th_proximal_spring1_s1" pos="0 0.005 0.006" group="4" size="0.0005"/>
+
 
               <body name="right_thumb_distal_link" pos="0 0.00052357 0.029995">
                 <inertial pos="-0.00113926 -0.00130909 0.0133464" quat="0.698666 -0.140008 0.0513212 0.699736" mass="0.00692863" diaginertia="6.65186e-07 5.66522e-07 2.78338e-07"/>
@@ -572,16 +579,16 @@
   </worldbody>
 
   <tendon>
-    <spatial name="if_tendon0" range="0.069520 0.110387" width="0.0001" rgba="1 0 0 1">
-      <!-- <spatial name="pf_tendon0" range="0.069520 0.2" width="0.0001" rgba="0 0 1 1"> -->
+    <spatial name="if_tendon0" range="0.064520 0.110387" width="0.0001" rgba="1 0 0 1">
+      <!-- <spatial name="pf_tendon0" range="0.064520 0.2" width="0.0001" rgba="0 0 1 1"> -->
       <site site="palm_collision_1"/>
-      <site site="if_proximal_tendon0_s0"/>
-      <geom geom ="if_proximal_tendon0_g0"/>
+      <!-- <site site="if_proximal_tendon0_s0"/> -->
+      <geom geom ="if_proximal_tendon0_g0" sidesite="if_proximal_tendon0_s0"/>
       <site site="if_proximal_tendon0_s1"/>
-      <geom geom ="if_proximal_tendon2"/>
-      <site site="if_proximal_tendon0_s2"/>
-      <geom geom ="if_proximal_tendon3"/>
+      <geom geom ="if_proximal_tendon2" sidesite="if_proximal_tendon0_s2"/>
+      <!-- <site site="if_proximal_tendon0_s2"/> -->
       <site site="if_proximal_tendon0_s3"/>
+      <geom geom ="if_proximal_tendon3" sidesite="if_proximal_tendon0_s4"/>
       <site site="if_dip_tendon0_s0"/>
       <geom geom ="if_dip_tendon0_g0"/>
       <site site="if_dip_tendon0_s2"/>
@@ -589,10 +596,10 @@
 
     <spatial name="if_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
       <site site="if_dip_tendon1_s0"/>
-      <geom geom ="if_dip_tendon1_g0"/>
+      <geom geom ="if_dip_tendon1_g0" sidesite="if_dip_tendon1_s1"/>
       <site site="if_dip_tendon1_s1"/>
-      <geom geom="if_proximal_tendon1_g0"/>
-      <site site="if_proximal_tendon1_s0"/>
+      <geom geom="if_proximal_tendon1_g0" sidesite="if_proximal_tendon1_s0"/>
+      <!-- <site site="if_proximal_tendon1_s0"/> -->
       <site site="if_proximal_tendon1_s1"/>
     </spatial>
 
@@ -609,16 +616,16 @@
       <site site="if_proximal_spring1_s0"/>
     </spatial>
 
-    <spatial name="mf_tendon0" range="0.069520 0.110387" width="0.0001" rgba="1 0 0 1">
-      <!-- <spatial name="pf_tendon0" range="0.069520 0.2" width="0.0001" rgba="0 0 1 1"> -->
+    <spatial name="mf_tendon0" range="0.064520 0.110387" width="0.0001" rgba="1 0 0 1">
+      <!-- <spatial name="pf_tendon0" range="0.064520 0.2" width="0.0001" rgba="0 0 1 1"> -->
       <site site="palm_collision_2"/>
-      <site site="mf_proximal_tendon0_s0"/>
-      <geom geom ="mf_proximal_tendon0_g0"/>
+      <!-- <site site="mf_proximal_tendon0_s0"/> -->
+      <geom geom ="mf_proximal_tendon0_g0" sidesite="mf_proximal_tendon0_s0"/>
       <site site="mf_proximal_tendon0_s1"/>
-      <geom geom ="mf_proximal_tendon2"/>
-      <site site="mf_proximal_tendon0_s2"/>
-      <geom geom ="mf_proximal_tendon3"/>
+      <geom geom ="mf_proximal_tendon2" sidesite="mf_proximal_tendon0_s2"/>
+      <!-- <site site="mf_proximal_tendon0_s2"/> -->
       <site site="mf_proximal_tendon0_s3"/>
+      <geom geom ="mf_proximal_tendon3" sidesite="mf_proximal_tendon0_s4"/>
       <site site="mf_dip_tendon0_s0"/>
       <geom geom ="mf_dip_tendon0_g0"/>
       <site site="mf_dip_tendon0_s2"/>
@@ -626,10 +633,10 @@
 
     <spatial name="mf_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
       <site site="mf_dip_tendon1_s0"/>
-      <geom geom ="mf_dip_tendon1_g0"/>
+      <geom geom ="mf_dip_tendon1_g0" sidesite="mf_dip_tendon1_s1"/>
       <site site="mf_dip_tendon1_s1"/>
-      <geom geom="mf_proximal_tendon1_g0"/>
-      <site site="mf_proximal_tendon1_s0"/>
+      <geom geom="mf_proximal_tendon1_g0" sidesite="mf_proximal_tendon1_s0"/>
+      <!-- <site site="mf_proximal_tendon1_s0"/> -->
       <site site="mf_proximal_tendon1_s1"/>
     </spatial>
 
@@ -646,16 +653,16 @@
       <site site="mf_proximal_spring1_s0"/>
     </spatial>
 
-    <spatial name="rf_tendon0" range="0.069520 0.110387" width="0.0001" rgba="1 0 0 1">
-      <!-- <spatial name="pf_tendon0" range="0.069520 0.2" width="0.0001" rgba="0 0 1 1"> -->
+    <spatial name="rf_tendon0" range="0.064520 0.110387" width="0.0001" rgba="1 0 0 1">
+      <!-- <spatial name="pf_tendon0" range="0.064520 0.2" width="0.0001" rgba="0 0 1 1"> -->
       <site site="palm_collision_3"/>
-      <site site="rf_proximal_tendon0_s0"/>
-      <geom geom ="rf_proximal_tendon0_g0"/>
+      <!-- <site site="rf_proximal_tendon0_s0"/> -->
+      <geom geom ="rf_proximal_tendon0_g0" sidesite="rf_proximal_tendon0_s0"/>
       <site site="rf_proximal_tendon0_s1"/>
-      <geom geom ="rf_proximal_tendon2"/>
-      <site site="rf_proximal_tendon0_s2"/>
-      <geom geom ="rf_proximal_tendon3"/>
+      <geom geom ="rf_proximal_tendon2" sidesite="rf_proximal_tendon0_s2"/>
+      <!-- <site site="rf_proximal_tendon0_s2"/> -->
       <site site="rf_proximal_tendon0_s3"/>
+      <geom geom ="rf_proximal_tendon3" sidesite="rf_proximal_tendon0_s4"/>
       <site site="rf_dip_tendon0_s0"/>
       <geom geom ="rf_dip_tendon0_g0"/>
       <site site="rf_dip_tendon0_s2"/>
@@ -663,10 +670,10 @@
 
     <spatial name="rf_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
       <site site="rf_dip_tendon1_s0"/>
-      <geom geom ="rf_dip_tendon1_g0"/>
+      <geom geom ="rf_dip_tendon1_g0" sidesite="rf_dip_tendon1_s1"/>
       <site site="rf_dip_tendon1_s1"/>
-      <geom geom="rf_proximal_tendon1_g0"/>
-      <site site="rf_proximal_tendon1_s0"/>
+      <geom geom="rf_proximal_tendon1_g0" sidesite="rf_proximal_tendon1_s0"/>
+      <!-- <site site="rf_proximal_tendon1_s0"/> -->
       <site site="rf_proximal_tendon1_s1"/>
     </spatial>
 
@@ -683,17 +690,16 @@
       <site site="rf_proximal_spring1_s0"/>
     </spatial>
 
-    <spatial name="pf_tendon0" range="0.069520 0.110387" width="0.0001" rgba="1 0 0 1">
-      <!-- <spatial name="pf_tendon0" range="0.069520 0.2" width="0.0001" rgba="0 0 1 1"> -->
-
+    <spatial name="pf_tendon0" range="0.064520 0.110387" width="0.0001" rgba="1 0 0 1">
+      <!-- <spatial name="pf_tendon0" range="0.064520 0.2" width="0.0001" rgba="0 0 1 1"> -->
       <site site="palm_collision_3_1"/>
-      <site site="pf_proximal_tendon0_s0"/>
-      <geom geom ="pf_proximal_tendon0_g0"/>
+      <!-- <site site="if_proximal_tendon0_s0"/> -->
+      <geom geom ="pf_proximal_tendon0_g0" sidesite="pf_proximal_tendon0_s0"/>
       <site site="pf_proximal_tendon0_s1"/>
-      <geom geom ="pf_proximal_tendon2"/>
-      <site site="pf_proximal_tendon0_s2"/>
-      <geom geom ="pf_proximal_tendon3"/>
+      <geom geom ="pf_proximal_tendon2" sidesite="pf_proximal_tendon0_s2"/>
+      <!-- <site site="pf_proximal_tendon0_s2"/> -->
       <site site="pf_proximal_tendon0_s3"/>
+      <geom geom ="pf_proximal_tendon3" sidesite="pf_proximal_tendon0_s4"/>
       <site site="pf_dip_tendon0_s0"/>
       <geom geom ="pf_dip_tendon0_g0"/>
       <site site="pf_dip_tendon0_s2"/>
@@ -701,10 +707,10 @@
 
     <spatial name="pf_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
       <site site="pf_dip_tendon1_s0"/>
-      <geom geom ="pf_dip_tendon1_g0"/>
+      <geom geom ="pf_dip_tendon1_g0" sidesite="pf_dip_tendon1_s1"/>
       <site site="pf_dip_tendon1_s1"/>
-      <geom geom="pf_proximal_tendon1_g0"/>
-      <site site="pf_proximal_tendon1_s0"/>
+      <geom geom="pf_proximal_tendon1_g0" sidesite="pf_proximal_tendon1_s0"/>
+      <!-- <site site="pf_proximal_tendon1_s0"/> -->
       <site site="pf_proximal_tendon1_s1"/>
     </spatial>
 
@@ -753,18 +759,20 @@
     </spatial>
 
     <spatial name="th_spring1" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="1000">
+      <site site="th_mcp_spring1_s0"/>
+      <geom geom="th_proximal_spring1_g0"/>
       <site site="th_proximal_spring1_s0"/>
       <geom geom="th_proximal_spring1_g0"/>
-      <site site="th_mcp_spring1_s0"/>
+      <site site="th_proximal_spring1_s1"/>
     </spatial>
 
   </tendon>
 
   <actuator>
-    <position name="right_index_A_pip" tendon="if_tendon0" ctrlrange="0.069520 0.110387" kp="20000" />
-    <position name="right_middle_A_pip" tendon="mf_tendon0" ctrlrange="0.069520 0.110387" kp="20000" />
-    <position name="right_ring_A_pip" tendon="rf_tendon0" ctrlrange="0.069520 0.110387" kp="20000" />
-    <position name="right_pinky_A_pip" tendon="pf_tendon0" ctrlrange="0.069520 0.110387" kp="200000" />
+    <position name="right_index_A_pip" tendon="if_tendon0" ctrlrange="0.064520 0.110387" kp="20000" />
+    <position name="right_middle_A_pip" tendon="mf_tendon0" ctrlrange="0.064520 0.110387" kp="20000" />
+    <position name="right_ring_A_pip" tendon="rf_tendon0" ctrlrange="0.064520 0.110387" kp="20000" />
+    <position name="right_pinky_A_pip" tendon="pf_tendon0" ctrlrange="0.064520 0.110387" kp="20000" />
     <position name="right_thumb_A_mcp_abd" joint="right_thumb_cmc_abd" class="thumb_cmc" />
     <position name="right_th1_A_pip" tendon="th_tendon1" ctrlrange="0.026152 0.038389" kp="20000" />
     <position name="right_th2_A_pip" tendon="th_tendon2" ctrlrange="0.086568 0.112138" kp="20000" />
@@ -780,7 +788,7 @@
   </sensor>
 
   <equality>
-    <joint joint1="right_thumb_mcp" joint2="right_thumb_ip"/>
+    <!-- <joint joint1="right_thumb_mcp" joint2="right_thumb_ip"/> -->
     <joint joint1="right_index_pip" joint2="right_index_dip"/>
     <joint joint1="right_middle_pip" joint2="right_middle_dip"/>
     <joint joint1="right_ring_pip" joint2="right_ring_dip"/>
