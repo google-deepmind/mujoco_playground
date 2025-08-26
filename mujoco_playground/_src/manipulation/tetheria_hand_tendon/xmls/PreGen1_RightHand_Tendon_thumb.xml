@@ -1,4 +1,4 @@
-<mujoco model="Tetheria_PreGen1_RightHand_Tendon_thumb">
+<mujoco model="Tetheria_PreGen1_RightHand">
   <compiler angle="radian" meshdir="meshes/"/>
 
   <option timestep="0.01" integrator="Euler" iterations="5" ls_iterations="8">

@@ -40,6 +40,9 @@ from mujoco_playground._src.manipulation.tetheria_hand import (
 from mujoco_playground._src.manipulation.tetheria_hand import (
     rotate_z as tetheria_cube_rotate_z,
 )
+from mujoco_playground._src.manipulation.tetheria_hand_tendon import (
+    rotate_z as tetheria_cube_rotate_z_tendon,
+)
 
 
 mjx_env.ensure_menagerie_exists()  # Ensure menagerie exists when module is imported.
@@ -56,6 +59,7 @@ _envs = {
     "LeapCubeRotateZAxis": leap_rotate_z.CubeRotateZAxis,
     "TetheriaCubeReorient": tetheria_cube_reorient.CubeReorient,
     "TetheriaCubeRotateZAxis": tetheria_cube_rotate_z.CubeRotateZAxis,
+    "TetheriaCubeRotateZAxisTendon": tetheria_cube_rotate_z_tendon.CubeRotateZAxis,
 }
 
 _cfgs = {
@@ -70,6 +74,7 @@ _cfgs = {
     "LeapCubeRotateZAxis": leap_rotate_z.default_config,
     "TetheriaCubeReorient": tetheria_cube_reorient.default_config,
     "TetheriaCubeRotateZAxis": tetheria_cube_rotate_z.default_config,
+    "TetheriaCubeRotateZAxisTendon": tetheria_cube_rotate_z_tendon.default_config,
 }
 
 _randomizer = {
@@ -77,6 +82,7 @@ _randomizer = {
     "LeapCubeReorient": leap_cube_reorient.domain_randomize,
     "TetheriaCubeRotateZAxis": tetheria_cube_rotate_z.domain_randomize,
     "TetheriaCubeReorient": tetheria_cube_reorient.domain_randomize,
+    "TetheriaCubeRotateZAxisTendon": tetheria_cube_rotate_z_tendon.domain_randomize,
 }
 
 

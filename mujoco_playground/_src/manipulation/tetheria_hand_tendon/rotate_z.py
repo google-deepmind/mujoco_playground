@@ -23,9 +23,11 @@ from mujoco import mjx
 import numpy as np
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.manipulation.tetheria_hand import base as tetheria_hand_base
-from mujoco_playground._src.manipulation.tetheria_hand import (
-    tetheria_hand_constants as consts,
+from mujoco_playground._src.manipulation.tetheria_hand_tendon import (
+    base as tetheria_hand_tendon_base,
+)
+from mujoco_playground._src.manipulation.tetheria_hand_tendon import (
+    tetheria_hand_tendon_constants as consts,
 )
 
 
@@ -58,7 +60,7 @@ def default_config() -> config_dict.ConfigDict:
     )
 
 
-class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
+class CubeRotateZAxis(tetheria_hand_tendon_base.TetheriaHandEnv):
     """Rotate a cube around the z-axis as fast as possible wihout dropping it."""
 
     def __init__(
@@ -112,7 +114,7 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
         start_pos = jp.array([0.1, 0.0, 0.05]) + jax.random.uniform(
             p_rng, (3,), minval=-0.01, maxval=0.01
         )
-        start_quat = tetheria_hand_base.uniform_quat(quat_rng)
+        start_quat = tetheria_hand_tendon_base.uniform_quat(quat_rng)
         q_cube = jp.array([*start_pos, *start_quat])
         v_cube = jp.zeros(6)
 

@@ -24,14 +24,14 @@ import mujoco
 from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.manipulation.tetheria_hand import (
-    tetheria_hand_constants as consts,
+from mujoco_playground._src.manipulation.tetheria_hand_tendon import (
+    tetheria_hand_tendon_constants as consts,
 )
 
 
 def get_assets() -> Dict[str, bytes]:
     assets = {}
-    path = mjx_env.MENAGERIE_PATH / "tetheria_hand"
+    path = mjx_env.MENAGERIE_PATH / "tetheria_hand_tendon"
     mjx_env.update_assets(assets, path / "assets")
     mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml")
     mjx_env.update_assets(
