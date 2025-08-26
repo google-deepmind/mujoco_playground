@@ -131,7 +131,7 @@ def main(argv):
   # Initialize Weights & Biases if required
   if _USE_WANDB.value and not _PLAY_ONLY.value:
     wandb.tensorboard.patch(root_logdir=logdir)
-    wandb.init(project="mjxrl", entity="dextrm", name=exp_name)
+    wandb.init(project="mjxrl", name=exp_name)
     wandb.config.update(env_cfg.to_dict())
     wandb.config.update({"env_name": _ENV_NAME.value})
 
