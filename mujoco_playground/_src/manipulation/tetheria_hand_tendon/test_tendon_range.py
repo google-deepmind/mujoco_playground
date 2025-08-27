@@ -4,7 +4,7 @@ import mujoco
 import mujoco.viewer
 import glfw
 
-MODEL = "/home/nan/CodeRepos/tetheria_rl/mujoco_playground/mujoco_playground/_src/manipulation/tetheria_hand/xmls/PreGen1_RightHand_Tendon_thumb.xml"
+MODEL = "/home/nan/CodeRepos/tetheria_rl/mujoco_playground/mujoco_playground/_src/manipulation/tetheria_hand_tendon/xmls/PreGen1_RightHand_Tendon_thumb.xml"
 
 m = mujoco.MjModel.from_xml_path(MODEL)
 d = mujoco.MjData(m)
@@ -25,6 +25,7 @@ with mujoco.viewer.launch_passive(m, d) as viewer:
     min_len, max_len = float("inf"), float("-inf")
 
     while viewer.is_running():
+        d.ctrl
         mujoco.mj_step(m, d)
         viewer.sync()
 
