@@ -25,110 +25,27 @@ NU = 7
 
 JOINT_NAMES = [
     # index
-    # "right_index_mcp_abd",
     "right_index_mcp_flex",
     "right_index_pip",
     "right_index_dip",
-    # "if_dip",
     # middle
-    # "right_middle_mcp_abd",
     "right_middle_mcp_flex",
     "right_middle_pip",
     "right_middle_dip",
-    # "mf_dip",
     # ring
-    # "right_ring_mcp_abd",
     "right_ring_mcp_flex",
     "right_ring_pip",
     "right_ring_dip",
-    # "rf_dip",
     # pinky
-    # "right_pinky_mcp_abd",
     "right_pinky_mcp_flex",
     "right_pinky_pip",
     "right_pinky_dip",
-    # "th_dip",
     # thumb
     "right_thumb_cmc_abd",
     "right_thumb_cmc_flex",
     "right_thumb_mcp",
     "right_thumb_ip",
-    # "th_ipl",
 ]
-
-# CONTROL_JOINT_NAMES = [
-#     # index
-#     "right_index_mcp_abd",
-#     "right_index_mcp_flex",
-#     "right_index_pip",
-#     # "right_index_dip",
-#     # "if_dip",
-#     # middle
-#     "right_middle_mcp_abd",
-#     "right_middle_mcp_flex",
-#     "right_middle_pip",
-#     # "right_middle_dip",
-#     # "mf_dip",
-#     # ring
-#     "right_ring_mcp_abd",
-#     "right_ring_mcp_flex",
-#     "right_ring_pip",
-#     # "right_ring_dip",
-#     # "rf_dip",
-#     # pinky
-#     "right_pinky_mcp_abd",
-#     "right_pinky_mcp_flex",
-#     "right_pinky_pip",
-#     # "right_pinky_dip",
-#     # "th_dip",
-#     # thumb
-#     "right_thumb_cmc_abd",
-#     "right_thumb_cmc_flex",
-#     "right_thumb_mcp",
-#     # "right_thumb_ip",
-#     # "th_ipl",
-# ]
-
-# CONTROLJOINT_NAMES = [
-#     # index
-#     "right_index_mcp_flex",
-#     "right_index_mcp_abd",
-#     "right_index_pip",
-#     # "right_index_dip",
-#     # "if_dip",
-#     # middle
-#     "right_middle_mcp_flex",
-#     "right_middle_mcp_abd",
-#     "right_middle_pip",
-#     # "right_middle_dip",
-#     # "mf_dip",
-#     # ring
-#     "right_ring_mcp_flex",
-#     "right_ring_mcp_abd",
-#     "right_ring_pip",
-#     # "right_ring_dip",
-#     # "rf_dip",
-#     # pinky
-#     "right_pinky_mcp_flex",
-#     "right_pinky_mcp_abd",
-#     "right_pinky_pip",
-#     # "right_pinky_dip",
-#     # "th_dip",
-#     # thumb
-#     "right_thumb_cmc_flex",
-#     "right_thumb_cmc_abd",
-#     # "right_thumb_mcp",
-#     "right_thumb_ip",
-#     # "th_ipl",
-# ]
-
-# ENFORCE_JOINT_PAIRS = [
-#     ("right_index_pip", "right_index_dip"),
-#     ("right_middle_pip", "right_middle_dip"),
-#     ("right_ring_pip", "right_ring_dip"),
-#     ("right_pinky_pip", "right_pinky_dip"),
-#     ("right_thumb_ip", "right_thumb_mcp"),
-# ]
 
 ACTUATOR_NAMES = [
     # index

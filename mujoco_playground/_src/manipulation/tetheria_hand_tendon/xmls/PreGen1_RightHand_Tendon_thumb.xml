@@ -594,7 +594,7 @@
       <site site="if_dip_tendon0_s2"/>
     </spatial>
 
-    <spatial name="if_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
+    <spatial name="if_tendon1" width="0.0001" rgba="0 0 1 1">
       <site site="if_dip_tendon1_s0"/>
       <geom geom ="if_dip_tendon1_g0" sidesite="if_dip_tendon1_s1"/>
       <site site="if_dip_tendon1_s1"/>
@@ -603,14 +603,14 @@
       <site site="if_proximal_tendon1_s1"/>
     </spatial>
 
-    <spatial name="if_spring0" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="if_spring0" springlength="0.021336" width="0.002" rgba="0 0.5 0.5 1" stiffness="695">
       <site site="if_proximal_spring0_s0"/>
       <site site="if_proximal_spring0_s1"/>
       <geom geom="if_proximal_tendon1_g0"/>
       <site site="if_middle_spring0_s0"/>
     </spatial>
 
-    <spatial name="if_spring1" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="if_spring1" springlength="0.011176" width="0.002" rgba="0 0.5 0.5 1" stiffness="352">
       <site site="if_f_spring1_s1"/>
       <geom geom="if_f_spring1_g0"/>
       <site site="if_proximal_spring1_s0"/>
@@ -631,7 +631,7 @@
       <site site="mf_dip_tendon0_s2"/>
     </spatial>
 
-    <spatial name="mf_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
+    <spatial name="mf_tendon1" width="0.0001" rgba="0 0 1 1">
       <site site="mf_dip_tendon1_s0"/>
       <geom geom ="mf_dip_tendon1_g0" sidesite="mf_dip_tendon1_s1"/>
       <site site="mf_dip_tendon1_s1"/>
@@ -640,14 +640,14 @@
       <site site="mf_proximal_tendon1_s1"/>
     </spatial>
 
-    <spatial name="mf_spring0" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="mf_spring0" springlength="0.021336" width="0.002" rgba="0 0.5 0.5 1" stiffness="695">
       <site site="mf_proximal_spring0_s0"/>
       <site site="mf_proximal_spring0_s1"/>
       <geom geom="mf_proximal_tendon1_g0"/>
       <site site="mf_middle_spring0_s0"/>
     </spatial>
 
-    <spatial name="mf_spring1" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="mf_spring1" springlength="0.011176" width="0.002" rgba="0 0.5 0.5 1" stiffness="352">
       <site site="mf_f_spring1_s1"/>
       <geom geom="mf_f_spring1_g0"/>
       <site site="mf_proximal_spring1_s0"/>
@@ -668,7 +668,7 @@
       <site site="rf_dip_tendon0_s2"/>
     </spatial>
 
-    <spatial name="rf_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
+    <spatial name="rf_tendon1" width="0.0001" rgba="0 0 1 1">
       <site site="rf_dip_tendon1_s0"/>
       <geom geom ="rf_dip_tendon1_g0" sidesite="rf_dip_tendon1_s1"/>
       <site site="rf_dip_tendon1_s1"/>
@@ -677,14 +677,14 @@
       <site site="rf_proximal_tendon1_s1"/>
     </spatial>
 
-    <spatial name="rf_spring0" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="rf_spring0" springlength="0.021336" width="0.002" rgba="0 0.5 0.5 1" stiffness="695">
       <site site="rf_proximal_spring0_s0"/>
       <site site="rf_proximal_spring0_s1"/>
       <geom geom="rf_proximal_tendon1_g0"/>
       <site site="rf_middle_spring0_s0"/>
     </spatial>
 
-    <spatial name="rf_spring1" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="rf_spring1" springlength="0.011176" width="0.002" rgba="0 0.5 0.5 1" stiffness="352">
       <site site="rf_f_spring1_s1"/>
       <geom geom="rf_f_spring1_g0"/>
       <site site="rf_proximal_spring1_s0"/>
@@ -705,7 +705,7 @@
       <site site="pf_dip_tendon0_s2"/>
     </spatial>
 
-    <spatial name="pf_tendon1" springlength="0.044283" width="0.0001" rgba="0 0 1 1">
+    <spatial name="pf_tendon1" width="0.0001" rgba="0 0 1 1">
       <site site="pf_dip_tendon1_s0"/>
       <geom geom ="pf_dip_tendon1_g0" sidesite="pf_dip_tendon1_s1"/>
       <site site="pf_dip_tendon1_s1"/>
@@ -714,14 +714,14 @@
       <site site="pf_proximal_tendon1_s1"/>
     </spatial>
 
-    <spatial name="pf_spring0" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="pf_spring0" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="695">
       <site site="pf_proximal_spring0_s0"/>
       <site site="pf_proximal_spring0_s1"/>
       <geom geom="pf_proximal_tendon1_g0"/>
       <site site="pf_middle_spring0_s0"/>
     </spatial>
 
-    <spatial name="pf_spring1" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="4500">
+    <spatial name="pf_spring1" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="352">
       <site site="pf_f_spring1_s1"/>
       <geom geom="pf_f_spring1_g0"/>
       <site site="pf_proximal_spring1_s0"/>
@@ -753,12 +753,12 @@
       <site site="th_tendon1_ip_s1"/>
     </spatial>
 
-    <spatial name="th_spring0" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="1000">
+    <spatial name="th_spring0" springlength="0.011938" width="0.002" rgba="0 0.5 0.5 1" stiffness="1897">
       <site site="th_t_spring0_s0"/>
       <site site="th_mcp_spring0_s0"/>
     </spatial>
 
-    <spatial name="th_spring1" springlength="0.01" width="0.002" rgba="0 0.5 0.5 1" stiffness="1000">
+    <spatial name="th_spring1" springlength="0.021336" width="0.002" rgba="0 0.5 0.5 1" stiffness="695">
       <site site="th_mcp_spring1_s0"/>
       <geom geom="th_proximal_spring1_g0"/>
       <site site="th_proximal_spring1_s0"/>
@@ -784,11 +784,16 @@
 
 
   <sensor>
-    <tendonpos name="len_t1" tendon="th_tendon2"/>
+    <tendonpos name="len_if" tendon="if_tendon0"/>
+    <tendonpos name="len_mf" tendon="mf_tendon0"/>
+    <tendonpos name="len_rf" tendon="rf_tendon0"/>
+    <tendonpos name="len_pf" tendon="pf_tendon0"/>
+    <tendonpos name="len_th1" tendon="th_tendon1"/>
+    <tendonpos name="len_th2" tendon="th_tendon2"/>
   </sensor>
 
   <equality>
-    <!-- <joint joint1="right_thumb_mcp" joint2="right_thumb_ip"/> -->
+    <joint joint1="right_thumb_ip" joint2="right_thumb_mcp"/>
     <joint joint1="right_index_pip" joint2="right_index_dip"/>
     <joint joint1="right_middle_pip" joint2="right_middle_dip"/>
     <joint joint1="right_ring_pip" joint2="right_ring_dip"/>
