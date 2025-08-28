@@ -103,7 +103,7 @@ def default_config() -> config_dict.ConfigDict:
       ang_vel_yaw=[-1.0, 1.0],
       impl="jax",
       nconmax=8 * 8192,
-      njmax=29 + 8 * 4,
+      njmax=29 * 2 + 8 * 4,
   )
 
 
@@ -118,7 +118,7 @@ class Joystick(g1_base.G1Env):
   ):
     if task.startswith("rough"):
       config.nconmax = 100 * 8192
-      config.njmax = 29 + 100 * 4
+      config.njmax = 29 * 2 + 100 * 4
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
         config=config,

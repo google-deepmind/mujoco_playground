@@ -166,16 +166,16 @@ _TRAINING_METRICS_STEPS = flags.DEFINE_integer(
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
   if env_name in mujoco_playground.manipulation._envs:
     if _VISION.value:
-      return manipulation_params.brax_vision_ppo_config(env_name)
-    return manipulation_params.brax_ppo_config(env_name)
+      return manipulation_params.brax_vision_ppo_config(env_name, _IMPL.value)
+    return manipulation_params.brax_ppo_config(env_name, _IMPL.value)
   elif env_name in mujoco_playground.locomotion._envs:
-    if _VISION.value:
-      return locomotion_params.brax_vision_ppo_config(env_name)
-    return locomotion_params.brax_ppo_config(env_name)
+    return locomotion_params.brax_ppo_config(env_name, _IMPL.value)
   elif env_name in mujoco_playground.dm_control_suite._envs:
     if _VISION.value:
-      return dm_control_suite_params.brax_vision_ppo_config(env_name)
-    return dm_control_suite_params.brax_ppo_config(env_name)
+      return dm_control_suite_params.brax_vision_ppo_config(
+          env_name, _IMPL.value
+      )
+    return dm_control_suite_params.brax_ppo_config(env_name, _IMPL.value)
 
   raise ValueError(f"Env {env_name} not found in {registry.ALL_ENVS}.")
 

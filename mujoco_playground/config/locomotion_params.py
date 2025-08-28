@@ -14,12 +14,14 @@
 # ==============================================================================
 """RL config for Locomotion envs."""
 
+from typing import Optional
 from ml_collections import config_dict
-
 from mujoco_playground._src import locomotion
 
 
-def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
+def brax_ppo_config(
+    env_name: str, impl: Optional[str] = None
+) -> config_dict.ConfigDict:
   """Returns tuned Brax PPO config for the given environment."""
   env_config = locomotion.get_default_config(env_name)
 
@@ -45,12 +47,12 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
           policy_obs_key="state",
           value_obs_key="state",
       ),
+      num_resets_per_eval=10,
   )
 
   if env_name in ("Go1JoystickFlatTerrain", "Go1JoystickRoughTerrain"):
     rl_config.num_timesteps = 200_000_000
     rl_config.num_evals = 10
-    rl_config.num_resets_per_eval = 1
     rl_config.network_factory = config_dict.create(
         policy_hidden_layer_sizes=(512, 256, 128),
         value_hidden_layer_sizes=(512, 256, 128),
@@ -109,7 +111,6 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
     rl_config.num_timesteps = 150_000_000
     rl_config.num_evals = 15
     rl_config.clipping_epsilon = 0.2
-    rl_config.num_resets_per_eval = 1
     rl_config.entropy_cost = 0.005
     rl_config.network_factory = config_dict.create(
         policy_hidden_layer_sizes=(512, 256, 128),
@@ -163,7 +164,9 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
   return rl_config
 
 
-def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
+def rsl_rl_config(
+    env_name: str, unused_impl: Optional[str] = None
+) -> config_dict.ConfigDict:
   """Returns tuned RSL-RL PPO config for the given environment."""
 
   rl_config = config_dict.create(

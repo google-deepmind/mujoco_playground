@@ -48,7 +48,7 @@ def default_config() -> config_dict.ConfigDict:
               peg_insertion_reward=8,
           )
       ),
-      impl='jax',
+      impl="jax",
       nconmax=24 * 8192,
       njmax=256,
   )

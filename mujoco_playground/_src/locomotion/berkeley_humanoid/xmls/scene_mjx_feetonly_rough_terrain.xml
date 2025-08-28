@@ -15,7 +15,7 @@
     <!-- https://polyhaven.com/a/rock_face -->
     <texture type="2d" name="groundplane" file="assets/rocky_texture.png"/>
     <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance=".8"/>
-    <hfield name="hfield" file="assets/hfield.png" size="10 10 .05 0.1"/>
+    <hfield name="hfield" file="assets/hfield.png" size="10 10 .05 1.0"/>
   </asset>
 
   <worldbody>
