@@ -511,8 +511,8 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
     obj_quat_w_noise = math.quat_mul(rand_quat, obj_quat)
     obj_pos = data.xpos[self._obj_body]
     obj_pos_w_noise = obj_pos + jax.random.uniform(
-        key3, minval=0, maxval=self._config.noise_config.noise_scales.obj_pos
-    )
+        key3, (3,), minval=-1, maxval=1
+    ) * self._config.noise_config.noise_scales.obj_pos
 
     # Add noise to robot proprio observation.
     info["rng"], key1, key2, key3, key4 = jax.random.split(info["rng"], 5)
