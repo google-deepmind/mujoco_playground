@@ -59,8 +59,8 @@ def step_response_real(model, data, viewer, tendon_name, real_ctrl, real_output,
             mujoco.mj_step(model, data)           # the control signal is processed during each simulation step
         viewer.sync()
         ysim.append(float(data.ten_length[tendon_id]))
-        output = np.interp(real_output, [min(real_output), max(real_output)], [hi, lo])
-        yreal.append(output[0])
+        output = np.interp(real_output[i], [min(real_output), max(real_output)], [hi, lo])
+        yreal.append(output)
     return (ysim, yreal)
 
 
