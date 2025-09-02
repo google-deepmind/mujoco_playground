@@ -38,7 +38,7 @@ def find_position_actuator_for_tendon(m, tid):
     return None
 
 
-def step_response_real(model, data, viewer, tendon_name, real_ctrl, resolution=25):  # real_ctr is from the real motor
+def step_response_real(model, data, viewer, tendon_name, real_ctrl, real_output, resolution=25):  # real_ctr is from the real motor
     tendon_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_TENDON, tendon_name)
 
     if tendon_id == -1:
@@ -46,7 +46,8 @@ def step_response_real(model, data, viewer, tendon_name, real_ctrl, resolution=2
     actuator_id = find_position_actuator_for_tendon(model, tendon_id)
     if actuator_id is None:
         raise RuntimeError(f"{tendon_name}: No <position tendon=...> actuator found")
-    y = []
+    ysim = []
+    yreal = []
     mujoco.mj_resetData(model, data)
     data.ctrl[:] = 0
     lo, hi = model.actuator_ctrlrange[actuator_id]
@@ -57,8 +58,10 @@ def step_response_real(model, data, viewer, tendon_name, real_ctrl, resolution=2
         for _ in range(resolution):               # this can solve the problem of different sampling frequency between sim (0.01) and real (0.2)    
             mujoco.mj_step(model, data)           # the control signal is processed during each simulation step
         viewer.sync()
-        y.append(float(data.ten_length[tendon_id]))
-    return y
+        ysim.append(float(data.ten_length[tendon_id]))
+        output = np.interp(real_output, [min(real_output), max(real_output)], [hi, lo])
+        yreal.append(output[0])
+    return (ysim, yreal)
 
 
 def step_response(model, data, viewer, tendon_name, data_len=5, resolution=25, edge_margin=0.1):
@@ -97,24 +100,26 @@ def main(DATA_PATH):
     model = mujoco.MjModel.from_xml_path(MODEL)
     data = mujoco.MjData(model)
     curves = []
-
+  
     with mujoco.viewer.launch_passive(model, data) as viewer:
         for tendon_name in TENDON_NAMES_ID_MAP.keys():
             tendon_id = TENDON_NAMES_ID_MAP[tendon_name]
-            y1 = step_response_real(model, data, viewer, tendon_name, real_ctrl[f'tendon_{tendon_id}_sent'])  # read/sent, real means control from the real motor 
-            y2 = step_response(model, data, viewer, tendon_name, data_len=5, resolution=25, edge_margin=0.1) 
-            curves.append((tendon_name, y1, y2))
+            ysim, yreal = step_response_real(model, data, viewer, tendon_name, real_ctrl[f'tendon_{tendon_id}_sent'], real_ctrl[f'tendon_{tendon_id}_read'])  # read/sent, real means control from the real motor 
+            #y2 = step_response(model, data, viewer, tendon_name, data_len=5, resolution=25, edge_margin=0.1) 
+            print("hahahahaha", yreal)
+            curves.append((tendon_name, ysim, yreal))
         if curves:
             n = len(curves)
             ncols = 2
             nrows = (n + ncols - 1) // ncols
             fig, axes = plt.subplots(nrows, ncols, figsize=(10, 2.6 * nrows))
             axes = axes.flatten()
-            for ax, (tendon_name, y1, y2) in zip(axes, curves):
-                ax.plot(y1, label='real')
-                ax.plot(y2, label='sim')
-                y1_min, y1_max = min(y1), max(y1)
-                y2_min, y2_max = min(y2), max(y2)
+            for ax, (tendon_name, ysim, yreal) in zip(axes, curves):
+                ax.plot(ysim, label='sim')
+                #ax.plot(y2, label='sim')
+                ax.plot(yreal, label='real')
+                y1_min, y1_max = min(yreal), max(yreal)
+                y2_min, y2_max = min(ysim), max(ysim)
                 ax.set_title(f'{tendon_name}: real:({y1_min:.2f}, {y1_max:.2f}), sim:({y2_min:.2f}, {y2_max:.2f})')
                 ax.set_xlabel("Time (s)")
                 ax.set_ylabel("Tendon length (m)")
