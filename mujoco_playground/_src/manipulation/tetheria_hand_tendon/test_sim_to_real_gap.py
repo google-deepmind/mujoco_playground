@@ -106,7 +106,6 @@ def main(DATA_PATH):
             tendon_id = TENDON_NAMES_ID_MAP[tendon_name]
             ysim, yreal = step_response_real(model, data, viewer, tendon_name, real_ctrl[f'tendon_{tendon_id}_sent'], real_ctrl[f'tendon_{tendon_id}_read'])  # read/sent, real means control from the real motor 
             #y2 = step_response(model, data, viewer, tendon_name, data_len=5, resolution=25, edge_margin=0.1) 
-            print("hahahahaha", yreal)
             curves.append((tendon_name, ysim, yreal))
         if curves:
             n = len(curves)
