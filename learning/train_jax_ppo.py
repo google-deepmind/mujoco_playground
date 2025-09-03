@@ -205,6 +205,7 @@ def main(argv):
 
   # Load environment configuration
   env_cfg = registry.get_default_config(_ENV_NAME.value)
+  env_cfg["impl"] = _IMPL.value
 
   ppo_params = get_rl_config(_ENV_NAME.value)
 
@@ -396,12 +397,9 @@ def main(argv):
         )
 
   # Load evaluation environment.
-  config_overrides = {"impl": _IMPL.value}
   eval_env = None
   if not _VISION.value:
-    eval_env = registry.load(
-        _ENV_NAME.value, config=env_cfg, config_overrides=config_overrides
-    )
+    eval_env = registry.load(_ENV_NAME.value, config=env_cfg)
   num_envs = 1
   if _VISION.value:
     num_envs = env_cfg.vision_config.render_batch_size
@@ -412,9 +410,7 @@ def main(argv):
     from rscope import brax as rscope_utils
 
     if not _VISION.value:
-      rscope_env = registry.load(
-          _ENV_NAME.value, config=env_cfg, config_overrides=config_overrides
-      )
+      rscope_env = registry.load(_ENV_NAME.value, config=env_cfg)
       rscope_env = wrapper.wrap_for_brax_training(
           rscope_env,
           episode_length=ppo_params.episode_length,
