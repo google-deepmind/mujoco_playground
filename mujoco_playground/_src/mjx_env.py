@@ -137,7 +137,7 @@ def make_data(
     impl: Optional[str] = None,
     nconmax: Optional[int] = None,
     njmax: Optional[int] = None,
-    device: Optional[jax.Device] = None,
+    device: Optional[jax.Device] = None, # type: ignore
 ) -> mjx.Data:
   """Initialize MJX Data."""
   data = mjx.make_data(
