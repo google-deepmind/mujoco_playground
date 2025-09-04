@@ -125,6 +125,9 @@ class TrotAnymal(AnymalEnv):
         self._init_q = jp.array(self._mj_model.keyframe("standing").qpos.copy())
         self._default_ap_pose = jp.array(self._mj_model.keyframe("standing").qpos[7:].copy())
 
+        # actions limits
+        self.lowers, self.uppers = self.mj_model.jnt_range[1:].T
+
         # 动作中心与缩放（3 joints per leg）
         self.action_loc = jp.array(self._default_ap_pose)
         self.action_scale = jp.array(self._config.env.action_scale)
@@ -134,6 +137,7 @@ class TrotAnymal(AnymalEnv):
         self.err_threshold = 0.4
         self.reward_config = self._config.rewards
         self.feet_inds = jp.array([21, 28, 35, 42])  # LF, RF, LH, RH
+        self.base_id = mujoco.mj_name2id(self.mj_model, mujoco.mjtObj.mjOBJ_BODY, "base")
 
         # imitation reference
         step_k = int(getattr(self._config.env, "step_k", 25))
@@ -233,7 +237,7 @@ class TrotAnymal(AnymalEnv):
         obs = self._get_obs(data, state.info)
 
         # 结束条件
-        base_z = data.xpos[1, 2]
+        base_z = data.xpos[self.base_id, 2]
         done = jp.where(base_z < self.termination_height, 1.0, 0.0)
         R_base = quaternion_to_matrix(data.xquat[1])
         up = jp.array([0.0, 0.0, 1.0])
@@ -258,8 +262,12 @@ class TrotAnymal(AnymalEnv):
             state.metrics[k] = reward_tuple[k]
 
         err = (((data.xpos[1:] - ref_data.xpos[1:]) ** 2).sum(-1) ** 0.5).mean()
-        to_ref = jp.where(err > self.err_threshold, 1.0, 0.0)
-        data_blend = jax.tree_util.tree_map(lambda a, b: (1 - to_ref) * a + to_ref * b, data, ref_data)
+        # to_ref = jp.where(err > self.err_threshold, 1.0, 0.0)
+        # data_blend = jax.tree_util.tree_map(lambda a, b: (1 - to_ref) * a + to_ref * b, data, ref_data)
+        to_ref = err > self.err_threshold
+        def safe_select(a, b):
+            return jp.where(to_ref, b, a)
+        data_blend = jax.tree_util.tree_map(safe_select, data, ref_data)
 
         obs = self._get_obs(data_blend, state.info)
         state.info["steps"] = state.info["steps"] + 1.0
