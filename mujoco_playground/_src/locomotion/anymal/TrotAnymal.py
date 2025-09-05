@@ -1,17 +1,9 @@
-import os
-os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.8" # 0.9 causes too much lag. 
-os.environ['MUJOCO_GL'] = 'egl'
-
 from typing import Any, Dict, Optional, Union
-
+import os
 # Math
 import jax.numpy as jp
 import numpy as np
 import jax
-from jax import config # Analytical gradients work much better with double precision.
-config.update("jax_debug_nans", True)
-config.update("jax_enable_x64", True)
-config.update('jax_default_matmul_precision', 'high')
 
 from mujoco_playground._src.locomotion.anymal.TrotUtil import (
     cos_wave, dcos_wave, make_kinematic_ref,
