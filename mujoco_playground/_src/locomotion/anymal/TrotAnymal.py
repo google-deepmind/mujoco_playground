@@ -69,6 +69,7 @@ def default_config() -> config_dict.ConfigDict:
     cfg.Kp = 230.0          # PD 控制器的比例增益
     cfg.sim_dt = 0.002          # 物理仿真步长（s）
     cfg.ctrl_dt = 0.02          # 控制步长（s） => n_frames = ctrl_dt / sim_dt = 10
+    cfg.episode_length=1000
     # 环境超参
     cfg.env = config_dict.ConfigDict()
     cfg.env.termination_height = 0.25
