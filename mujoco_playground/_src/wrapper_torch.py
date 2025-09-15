@@ -32,7 +32,10 @@ except ImportError:
   torch = None
 
 from mujoco_playground._src import wrapper
-from tensordict import TensorDict
+try:
+  from tensordict import TensorDict
+except ImportError:
+  TensorDict = None
 
 
 def _jax_to_torch(tensor):
