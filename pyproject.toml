@@ -35,7 +35,6 @@ dependencies = [
     "orbax-checkpoint>=0.11.22",
     "tqdm",
     "warp-lang>=1.9.0.dev",
-    "wandb",
 ]
 keywords = ["mjx", "mujoco", "sim2real", "reinforcement learning"]
 
@@ -75,9 +74,14 @@ dev = [
     "pylint",
     "pytest-xdist",
 ]
+learning = [
+    "rsl-rl-lib>=3.0.0",
+    "wandb",
+]
 all = [
     "playground[dev]",
     "playground[notebooks]",
+    "playground[learning]",
 ]
 
 [tool.hatch.metadata]
