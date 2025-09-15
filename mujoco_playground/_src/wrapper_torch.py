@@ -17,7 +17,7 @@
 from collections import deque
 import functools
 import os
-from typing import Any, cast
+from typing import Any
 
 import jax
 import numpy as np
@@ -191,7 +191,7 @@ class RSLRLBraxWrapper(VecEnv):
       if k not in info_ret["log"]:
         info_ret["log"][k] = _jax_to_torch(v).float().mean().item()
 
-    obs = TensorDict(cast(dict[str, Any], obs), batch_size=[self.num_envs])
+    obs = TensorDict(obs, batch_size=[self.num_envs])
     return obs, reward, done, info_ret
 
   def reset(self):
@@ -205,7 +205,7 @@ class RSLRLBraxWrapper(VecEnv):
     else:
       obs = _jax_to_torch(self.env_state.obs)
       obs = {"state": obs}
-    return TensorDict(cast(dict[str, Any], obs), batch_size=[self.num_envs])
+    return TensorDict(obs, batch_size=[self.num_envs])
 
   def get_observations(self):
    return self.reset()
