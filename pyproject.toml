@@ -36,6 +36,7 @@ dependencies = [
     "tqdm",
     "warp-lang>=1.9.0.dev",
     "wandb",
+    "rsl-rl-lib>=3.0.0",
 ]
 keywords = ["mjx", "mujoco", "sim2real", "reinforcement learning"]
 
