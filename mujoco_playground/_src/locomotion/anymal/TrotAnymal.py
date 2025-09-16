@@ -80,8 +80,9 @@ def default_config() -> config_dict.ConfigDict:
     cfg.rewards = config_dict.ConfigDict()
     cfg.rewards.scales = config_dict.ConfigDict()
     cfg.rewards.scales.min_reference_tracking = -2.5 * 3e-3
-    cfg.rewards.scales.reference_tracking = -1.0
-    cfg.rewards.scales.feet_height = -1.0
+    cfg.rewards.scales.reference_tracking = -10.0
+    cfg.rewards.scales.feet_height = -10.0
+    cfg.rewards.scales.base_tracking = -1.0
     # 其他
     cfg.impl = "jax"
     cfg.nconmax = 4 * 8192
@@ -127,7 +128,7 @@ class TrotAnymal(AnymalEnv):
 
         # 其他参数
         self.termination_height = float(getattr(self._config.env, "termination_height", 0.25))
-        self.err_threshold = 0.4
+        self.err_threshold = self._config.env.err_threshold
         self.reward_config = self._config.rewards
         self.feet_inds = jp.array([21, 28, 35, 42])  # LF, RF, LH, RH
         self.base_id = mujoco.mj_name2id(self.mj_model, mujoco.mjtObj.mjOBJ_BODY, "base")
@@ -187,7 +188,8 @@ class TrotAnymal(AnymalEnv):
             'reward_tuple': {
                 'reference_tracking': 0.0,
                 'min_reference_tracking': 0.0,
-                'feet_height': 0.0
+                'feet_height': 0.0,
+                'base_tracking': 0.0
             },
             'last_action': jp.zeros(self.mjx_model.nu),  # 12 通道动作
             'kinematic_ref': jp.zeros(19),
@@ -239,14 +241,21 @@ class TrotAnymal(AnymalEnv):
 
         # 奖励
         reward_tuple = dict(
-            reference_tracking=self._reward_reference_tracking(data, ref_data) * self.reward_config.scales.reference_tracking,
+            reference_tracking=self._reward_reference_tracking(data, ref_data) 
+            * self.reward_config.scales.reference_tracking,
             min_reference_tracking=self._reward_min_reference_tracking(ref_qpos, ref_qvel, data)
             * self.reward_config.scales.min_reference_tracking,
-            feet_height=self._reward_feet_height(
-                data.geom_xpos[self.feet_inds][:, 2], ref_data.geom_xpos[self.feet_inds][:, 2]
-            )
+            feet_height=self._reward_feet_height(data.geom_xpos[self.feet_inds][:, 2], ref_data.geom_xpos[self.feet_inds][:, 2])
             * self.reward_config.scales.feet_height,
+            base_tracking=self._reward_base_tracking(data, ref_data)
+            * self.reward_config.scales.base_tracking,
         )
+
+        err = (((data.xpos[1:] - ref_data.xpos[1:]) ** 2).sum(-1) ** 0.5).mean()
+        to_ref = err > self.err_threshold
+
+        # reward_tuple['reference_tracking'] *= jax.numpy.where(to_ref, 100.0, 1.0)
+        # reward_tuple['base_tracking'] *= jax.numpy.where(to_ref, 100.0, 1.0)
         reward = sum(reward_tuple.values())
 
         state.info["reward_tuple"] = reward_tuple
@@ -254,10 +263,10 @@ class TrotAnymal(AnymalEnv):
         for k in reward_tuple.keys():
             state.metrics[k] = reward_tuple[k]
 
-        err = (((data.xpos[1:] - ref_data.xpos[1:]) ** 2).sum(-1) ** 0.5).mean()
+        # err = (((data.xpos[1:] - ref_data.xpos[1:]) ** 2).sum(-1) ** 0.5).mean()
         # to_ref = jp.where(err > self.err_threshold, 1.0, 0.0)
         # data_blend = jax.tree_util.tree_map(lambda a, b: (1 - to_ref) * a + to_ref * b, data, ref_data)
-        to_ref = err > self.err_threshold
+        # to_ref = err > self.err_threshold
         def safe_select(a, b):
             return jp.where(to_ref, b, a)
         data_blend = jax.tree_util.tree_map(safe_select, data, ref_data)
@@ -302,6 +311,17 @@ class TrotAnymal(AnymalEnv):
 
     def _reward_feet_height(self, feet_z, feet_z_ref):
         return jp.sum(jp.abs(feet_z - feet_z_ref))
+    
+    def _reward_base_tracking(self, data, ref_data):
+        pos_err = jp.linalg.norm(data.xpos[1] - ref_data.xpos[1])
+        q = data.xquat[1]
+        q_ref = ref_data.xquat[1]
+        dot = jp.abs(jp.dot(q, q_ref))  # q and -q are same rotation
+        dot = jp.clip(dot, -1.0, 1.0)
+        rot_err = jp.arccos(2 * dot**2 - 1)
+        vel_err = jp.linalg.norm(data.cvel[1] - ref_data.cvel[1])
+        return pos_err + 0.5 * rot_err + 0.1 * vel_err
+
 
 # # ----------------- 注册到 playground -----------------
 # locomotion.register_environment(

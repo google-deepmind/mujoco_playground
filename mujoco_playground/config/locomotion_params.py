@@ -196,10 +196,10 @@ def brax_ppo_config(
     rl_config.num_timesteps = 10_000_000
     rl_config.num_evals = 10
     rl_config.reward_scaling=0.1
-    rl_config.episode_length=1000
+    rl_config.episode_length=240
     rl_config.normalize_observations=True
     rl_config.action_repeat=1
-    rl_config.unroll_length=10
+    rl_config.unroll_length=32
     rl_config.num_minibatches=32
     rl_config.num_updates_per_batch=8
     rl_config.discounting=0.97
