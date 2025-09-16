@@ -54,6 +54,10 @@ _ENV_NAME = flags.DEFINE_string(
         f"{', '.join(mujoco_playground.registry.ALL_ENVS)}"
     ),
 )
+_IMPL = flags.DEFINE_enum("impl", "jax", ["jax", "warp"], "MJX implementation")
+_NJMAX = flags.DEFINE_integer(
+    "njmax", None, "The maximum number of constraints per world."
+)
 _LOAD_RUN_NAME = flags.DEFINE_string(
     "load_run_name", None, "Run name to load from (for checkpoint restoration)."
 )
@@ -108,6 +112,9 @@ def main(argv):
 
   # Load default config from registry
   env_cfg = registry.get_default_config(_ENV_NAME.value)
+  env_cfg.impl = _IMPL.value
+  if _NJMAX.present:
+    env_cfg.njmax = _NJMAX.value
   print(f"Environment config:\n{env_cfg}")
 
   # Generate unique experiment name
