@@ -55,8 +55,10 @@ _ENV_NAME = flags.DEFINE_string(
     ),
 )
 _IMPL = flags.DEFINE_enum("impl", "jax", ["jax", "warp"], "MJX implementation")
-_NJMAX = flags.DEFINE_integer(
-    "njmax", None, "The maximum number of constraints per world."
+_PLAYGROUND_CONFIG_OVERRIDES = flags.DEFINE_string(
+    "playground_config_overrides",
+    None,
+    "Overrides for the playground env config.",
 )
 _LOAD_RUN_NAME = flags.DEFINE_string(
     "load_run_name", None, "Run name to load from (for checkpoint restoration)."
@@ -113,10 +115,13 @@ def main(argv):
   # Load default config from registry
   env_cfg = registry.get_default_config(_ENV_NAME.value)
   env_cfg.impl = _IMPL.value
-  if _NJMAX.present:
-    env_cfg.njmax = _NJMAX.value
   print(f"Environment config:\n{env_cfg}")
 
+  env_cfg_overrides = {}
+  if _PLAYGROUND_CONFIG_OVERRIDES.value is not None:
+    env_cfg_overrides = json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value)
+    print(f"Environment config overrides:\n{env_cfg_overrides}\n")
+  
   # Generate unique experiment name
   now = datetime.now()
   timestamp = now.strftime("%Y%m%d-%H%M%S")
@@ -159,7 +164,9 @@ def main(argv):
     render_trajectory.append(state)
 
   # Create the environment
-  raw_env = registry.load(_ENV_NAME.value, config=env_cfg)
+  raw_env = registry.load(
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+  )
   brax_env = wrapper_torch.RSLRLBraxWrapper(
       raw_env,
       num_envs,
@@ -213,7 +220,9 @@ def main(argv):
   policy = runner.get_inference_policy(device=device)
 
   # Example: run a single rollout
-  eval_env = registry.load(_ENV_NAME.value, config=env_cfg)
+  eval_env = registry.load(
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+  )
   jit_reset = jax.jit(eval_env.reset)
   jit_step = jax.jit(eval_env.step)
 
