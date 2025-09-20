@@ -68,6 +68,11 @@ _ENV_NAME = flags.DEFINE_string(
     f"Name of the environment. One of {', '.join(registry.ALL_ENVS)}",
 )
 _IMPL = flags.DEFINE_enum("impl", "jax", ["jax", "warp"], "MJX implementation")
+_PLAYGROUND_CONFIG_OVERRIDES = flags.DEFINE_string(
+    "playground_config_overrides",
+    None,
+    "Overrides for the playground env config.",
+)
 _VISION = flags.DEFINE_boolean("vision", False, "Use vision input")
 _LOAD_CHECKPOINT_PATH = flags.DEFINE_string(
     "load_checkpoint_path", None, "Path to load checkpoint from"
@@ -260,7 +265,12 @@ def main(argv):
   if _VISION.value:
     env_cfg.vision = True
     env_cfg.vision_config.render_batch_size = ppo_params.num_envs
-  env = registry.load(_ENV_NAME.value, config=env_cfg)
+  env_cfg_overrides = {}
+  if _PLAYGROUND_CONFIG_OVERRIDES.value is not None:
+    env_cfg_overrides = json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value)
+  env = registry.load(
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+  )
   if _RUN_EVALS.present:
     ppo_params.run_evals = _RUN_EVALS.value
   if _LOG_TRAINING_METRICS.present:
@@ -269,6 +279,8 @@ def main(argv):
     ppo_params.training_metrics_steps = _TRAINING_METRICS_STEPS.value
 
   print(f"Environment Config:\n{env_cfg}")
+  if env_cfg_overrides:
+    print(f"Environment Config Overrides:\n{env_cfg_overrides}\n")
   print(f"PPO Training Parameters:\n{ppo_params}")
 
   # Generate unique experiment name
@@ -399,7 +411,9 @@ def main(argv):
   # Load evaluation environment.
   eval_env = None
   if not _VISION.value:
-    eval_env = registry.load(_ENV_NAME.value, config=env_cfg)
+    eval_env = registry.load(
+        _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+    )
   num_envs = 1
   if _VISION.value:
     num_envs = env_cfg.vision_config.render_batch_size
@@ -410,7 +424,9 @@ def main(argv):
     from rscope import brax as rscope_utils
 
     if not _VISION.value:
-      rscope_env = registry.load(_ENV_NAME.value, config=env_cfg)
+      rscope_env = registry.load(
+          _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+      )
       rscope_env = wrapper.wrap_for_brax_training(
           rscope_env,
           episode_length=ppo_params.episode_length,
