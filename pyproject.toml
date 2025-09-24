@@ -75,9 +75,14 @@ dev = [
     "pylint",
     "pytest-xdist",
 ]
+learning = [
+    "rsl-rl-lib>=3.0.0",
+    "wandb",
+]
 all = [
     "playground[dev]",
     "playground[notebooks]",
+    "playground[learning]",
 ]
 
 [tool.hatch.metadata]
