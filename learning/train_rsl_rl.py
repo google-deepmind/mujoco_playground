@@ -167,6 +167,12 @@ def main(argv):
   # Build RSL-RL config
   train_cfg = get_rl_config(_ENV_NAME.value)
 
+  obs_size = raw_env.observation_size
+  if isinstance(obs_size, dict):
+    train_cfg.obs_groups = {"policy": ["state"], "critic": ["privileged_state"]}
+  else:
+    train_cfg.obs_groups = {"policy": ["state"], "critic": ["state"]}
+
   # Overwrite default config with flags
   train_cfg.seed = _SEED.value
   train_cfg.run_name = exp_name
