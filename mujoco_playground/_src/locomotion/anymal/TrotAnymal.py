@@ -76,6 +76,7 @@ def default_config() -> config_dict.ConfigDict:
     cfg.env.step_k = 13         # 每条腿抬起/落下的子步数量
     cfg.env.err_threshold = 0.4
     cfg.env.action_scale = [0.2, 0.8, 0.8] * 4  # 每条腿3个关节，共4条腿
+    cfg.env.reset2ref = True
     # 奖励权重
     cfg.rewards = config_dict.ConfigDict()
     cfg.rewards.scales = config_dict.ConfigDict()
@@ -148,6 +149,8 @@ class TrotAnymal(AnymalEnv):
         ref_qvels[:, 6:] = np.array(kinematic_ref_qvel)
         self.kinematic_ref_qvel = jp.array(ref_qvels)
 
+        self.reset2ref = self._config.env.reset2ref
+
     # -------- Envs API: reset/step ----------
     def reset(self, rng: jax.Array) -> mjx_env.State:
         # Deterministic init
@@ -184,7 +187,7 @@ class TrotAnymal(AnymalEnv):
         # state_info 保持和原版一致
         state_info = {
             'rng': rng,
-            'steps': 0.0,
+            'step': 0.0,
             'reward_tuple': {
                 'reference_tracking': 0.0,
                 'min_reference_tracking': 0.0,
@@ -220,7 +223,7 @@ class TrotAnymal(AnymalEnv):
             self.mjx_model, state.data, ctrl, self.n_substeps
         )
 
-        step_idx = jp.array(state.info["steps"] % self.l_cycle, int)
+        step_idx = jp.array(state.info["step"] % self.l_cycle, int)
         ref_qpos = self.kinematic_ref_qpos[step_idx]
         ref_qvel = self.kinematic_ref_qvel[step_idx]
 
@@ -267,14 +270,20 @@ class TrotAnymal(AnymalEnv):
         # to_ref = jp.where(err > self.err_threshold, 1.0, 0.0)
         # data_blend = jax.tree_util.tree_map(lambda a, b: (1 - to_ref) * a + to_ref * b, data, ref_data)
         # to_ref = err > self.err_threshold
-        def safe_select(a, b):
-            return jp.where(to_ref, b, a)
-        data_blend = jax.tree_util.tree_map(safe_select, data, ref_data)
 
-        obs = self._get_obs(data_blend, state.info)
-        state.info["steps"] = state.info["steps"] + 1.0
+        if self.reset2ref:
+            def safe_select(a, b):
+                return jp.where(to_ref, b, a)
+            data_blend = jax.tree_util.tree_map(safe_select, data, ref_data)
 
-        return state.replace(data=data_blend, obs=obs, reward=reward, done=done)
+            obs = self._get_obs(data_blend, state.info)
+            state.info["step"] = state.info["step"] + 1.0
+
+            return state.replace(data=data_blend, obs=obs, reward=reward, done=done)
+        else:
+            state.info["step"] = state.info["step"] + 1.0
+
+            return state.replace(data=data, obs=obs, reward=reward, done=done)
 
     # -------- obs & reward helpers ----------
     def _get_obs(self, data, state_info: Dict[str, Any]):
@@ -284,7 +293,7 @@ class TrotAnymal(AnymalEnv):
         g_local = rotate_inv(g_world, data.xquat[1])
         angles = data.qpos[7:19]
         last_action = state_info["last_action"]
-        step_idx = jp.array(state_info["steps"] % self.l_cycle, int)
+        step_idx = jp.array(state_info["step"] % self.l_cycle, int)
         kin_ref = self.kinematic_ref_qpos[step_idx][7:]
         obs_list = [jp.array([yaw_rate]) * 0.25, g_local, angles - jp.array(self._default_ap_pose), last_action, kin_ref]
         obs = jp.clip(jp.concatenate(obs_list), -100.0, 100.0)
