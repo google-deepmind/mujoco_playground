@@ -40,9 +40,13 @@ from mujoco_playground._src.locomotion.spot import joystick as spot_joystick
 from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spot_joystick_gait_tracking
 from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
+from mujoco_playground._src.locomotion.anymal import TrotAnymal as anymal_trot
 
 
 _envs = {
+    "AnymalTrot": functools.partial(
+        anymal_trot.TrotAnymal, task=None
+    ),
     "ApolloJoystickFlatTerrain": functools.partial(
         apollo_joystick.Joystick, task="flat_terrain"
     ),
@@ -87,6 +91,7 @@ _envs = {
 }
 
 _cfgs = {
+    "AnymalTrot": anymal_trot.default_config,
     "ApolloJoystickFlatTerrain": apollo_joystick.default_config,
     "BarkourJoystick": barkour_joystick.default_config,
     "BerkeleyHumanoidJoystickFlatTerrain": (

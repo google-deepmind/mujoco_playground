@@ -5,3 +5,5 @@ __pycache__
 MUJOCO_LOG.TXT
 mujoco_menagerie
 checkpoints/
+mujoco_playground/experimental/learning/wandb/
+logs

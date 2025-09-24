@@ -18,6 +18,50 @@ from typing import Optional
 from ml_collections import config_dict
 from mujoco_playground._src import locomotion
 
+def brax_apg_config(
+    env_name: str, unused_impl: Optional[str] = None
+) -> config_dict.ConfigDict:
+  """Returns tuned Brax APG config for the given environment."""
+  rl_config = config_dict.create(
+      num_evals=10,
+      episode_length=240,
+      policy_updates=499,
+      horizon_length=32,
+      num_eval_envs=64,
+      use_float64=True,
+      normalize_observations=True,
+      action_repeat=1,
+      learning_rate=3e-4,
+      # entropy_cost=1e-2, # TODO add it later
+      num_envs=8192,
+      max_gradient_norm=1e9,
+      network_factory=config_dict.create(
+          policy_hidden_layer_sizes=(128, 128, 128, 128),
+          value_hidden_layer_sizes=(256, 256, 256, 256, 256),
+          policy_obs_key="state",
+          value_obs_key="state",
+      ),
+  )
+
+  if env_name in ("AnymalTrot",):
+    rl_config.episode_length=240
+    rl_config.policy_updates=499
+    rl_config.horizon_length=32
+    rl_config.num_envs=64
+    rl_config.learning_rate=1e-4
+    rl_config.num_eval_envs=64
+    rl_config.num_evals=10 + 1
+    rl_config.use_float64=True
+    rl_config.normalize_observations=True
+    rl_config.network_factory = config_dict.create(
+        hidden_layer_sizes=(256, 128),
+    )
+
+  else:
+    raise ValueError(f"Unsupported env: {env_name}")
+
+  return rl_config
+
 
 def brax_ppo_config(
     env_name: str, impl: Optional[str] = None
@@ -147,7 +191,30 @@ def brax_ppo_config(
       policy_obs_key="state",
       value_obs_key="privileged_state",
     )
+  
+  elif env_name in ("AnymalTrot",):
+    rl_config.num_timesteps = 10_000_000
+    rl_config.num_evals = 10
+    rl_config.reward_scaling=0.1
+    rl_config.episode_length=240
+    rl_config.normalize_observations=True
+    rl_config.action_repeat=1
+    rl_config.unroll_length=32
+    rl_config.num_minibatches=32
+    rl_config.num_updates_per_batch=8
+    rl_config.discounting=0.97
+    rl_config.learning_rate=3e-4
+    rl_config.entropy_cost = 1e-3
+    rl_config.num_envs=1024
+    rl_config.batch_size=1024
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(256, 128),
+        value_hidden_layer_sizes=(512, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="state",
+    )
 
+  
   elif env_name in (
       "BarkourJoystick",
       "H1InplaceGaitTracking",
