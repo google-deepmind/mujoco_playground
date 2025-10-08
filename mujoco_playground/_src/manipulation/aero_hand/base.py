@@ -16,7 +16,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Base classes for tetheria hand."""
+"""Base classes for TetherIA Aero Hand Open."""
 
 from typing import Any, Dict, Optional, Union
 
@@ -28,12 +28,12 @@ import mujoco
 from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.manipulation.tetheria_hand import tetheria_hand_constants as consts
+from mujoco_playground._src.manipulation.aero_hand import aero_hand_constants as consts
 
 
 def get_assets() -> Dict[str, bytes]:
   assets = {}
-  path = mjx_env.MENAGERIE_PATH / "tetheria_hand"
+  path = mjx_env.MENAGERIE_PATH / "aero_hand"
   mjx_env.update_assets(assets, path / "assets")
   mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml")
   mjx_env.update_assets(
@@ -43,8 +43,8 @@ def get_assets() -> Dict[str, bytes]:
   return assets
 
 
-class TetheriaHandEnv(mjx_env.MjxEnv):
-  """Base class for Tetheria hand environments."""
+class AeroHandEnv(mjx_env.MjxEnv):
+  """Base class for Aero Hand environments."""
 
   def __init__(
       self,

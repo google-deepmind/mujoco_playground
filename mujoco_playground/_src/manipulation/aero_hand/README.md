@@ -2,7 +2,7 @@
 
 This directory introduces a tendon-driven manipulation example that extends MuJoCo Playground with support for tendon-level control and observation in reinforcement learning tasks.
 
-The model is adapted from the Tetheria Aero Hand Open, featuring a physically accurate tendon system that emulates cable-driven actuation. In this setup, both the policy inputs and observations are defined in the tendon space, providing a complete example of training and deploying tendon-driven controllers in MuJoCo.
+The model is adapted from the [Tetheria Aero Hand Open](https://docs.tetheria.ai/), featuring a physically accurate tendon system that emulates cable-driven actuation. In this setup, both the policy inputs and observations are defined in the tendon space, providing a complete example of training and deploying tendon-driven controllers and under-actuated fingers in MuJoCo.
  
 An overview of the hand is shown below:
 
@@ -122,6 +122,7 @@ Sim2real deployment on Tetheria Aero Hand Open:
 
 ![Z-Axis Rotation Demo](imgs/output.gif)
 
+*Note: The finger markers are **not** used.*
 
 ## File Structure
 

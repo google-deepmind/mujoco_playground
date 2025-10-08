@@ -15,7 +15,9 @@
 """RL config for Manipulation envs."""
 
 from typing import Optional
+
 from ml_collections import config_dict
+
 from mujoco_playground._src import manipulation
 
 
@@ -166,7 +168,7 @@ def brax_ppo_config(
         value_obs_key="privileged_state",
     )
     rl_config.num_resets_per_eval = 1
-  elif env_name == "TetheriaCubeRotateZAxis":
+  elif env_name == "AeroCubeRotateZAxis":
     rl_config.num_timesteps = 300_000_000
     rl_config.num_evals = 10
     rl_config.num_minibatches = 32
