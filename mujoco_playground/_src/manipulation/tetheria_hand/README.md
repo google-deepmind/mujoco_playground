@@ -71,6 +71,26 @@ To train policies for the Tetheria Hand:
 python learning/train_jax_ppo.py --env_name TetheriaCubeRotateZAxis
 ```
 
+Although the reward curves from different training runs may vary due to stochasticity in the learning process, they consistently **converge toward a positive reward**.  
+The plots below show an example set of reward curves obtained from training with the **PPO algorithm**.
+
+
+Overall Reward:
+
+![overall](imgs/reward_overall.png)
+
+Angular Velocity Reward
+
+![reward_angvel](imgs/reward_angvel.png)
+
+Action-Rate Penalty:
+
+![penalty_action_rate](imgs/penalty_action_rate.png)
+
+Termination Penalty
+
+![penalty_termination](imgs/penalty_termination.png)
+
 ## 3. Running a pretrained policy
 
 
