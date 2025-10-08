@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__
+*.egg-info
+.venv
+MUJOCO_LOG.TXT
+mujoco_menagerie
+checkpoints/
+logs
