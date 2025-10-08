@@ -54,8 +54,8 @@ These are fine-tuned to satisfy both similar joint behaviors in simulation and t
 We introduce a **z-axis rotation task** for the **Tetheria Aero Hand Open**, optimized using the following reward formulation:
 
 $$
-\text{reward} = 1.0 \times \text{angular\_velocity}
-               - 1.0 \times \text{action\_rate}
+\text{reward} = 1.0 \times \text{angular velocity}
+               - 1.0 \times \text{action rate}
                + \text{termination} (-100.0)
 $$
 
