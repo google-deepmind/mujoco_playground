@@ -6,3 +6,6 @@ MUJOCO_LOG.TXT
 mujoco_menagerie
 checkpoints/
 logs
+
+# ignore local CAD CSV
+mujoco_playground/_src/manipulation/tetheria_hand/xmls/meshes/URDF_09_19_25.SLDASM.csv
