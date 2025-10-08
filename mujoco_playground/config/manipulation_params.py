@@ -15,9 +15,7 @@
 """RL config for Manipulation envs."""
 
 from typing import Optional
-
 from ml_collections import config_dict
-
 from mujoco_playground._src import manipulation
 
 
