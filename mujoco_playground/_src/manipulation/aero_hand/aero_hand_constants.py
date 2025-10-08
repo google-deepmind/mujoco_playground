@@ -53,17 +53,17 @@ JOINT_NAMES = [
 
 ACTUATOR_NAMES = [
     # index
-    "right_index_A_pip",
+    "right_index_A_tendon",
     # middle
-    "right_middle_A_pip",
+    "right_middle_A_tendon",
     # ring
-    "right_ring_A_pip",
+    "right_ring_A_tendon",
     # pinky
-    "right_pinky_A_pip",
+    "right_pinky_A_tendon",
     # thumb
     "right_thumb_A_cmc_abd",
-    "right_th1_A_pip",
-    "right_th2_A_pip",
+    "right_th1_A_tendon",
+    "right_th2_A_tendon",
 ]
 
 FINGERTIP_NAMES = [
