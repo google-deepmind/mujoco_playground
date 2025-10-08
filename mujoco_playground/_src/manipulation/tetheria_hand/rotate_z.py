@@ -1,4 +1,7 @@
-# Copyright 2025 DeepMind Technologies Limited
+# Copyright 2025 TetherIA Inc.
+# Copyright 2023 DeepMind Technologies Limited
+#
+# Author: Nan Wang (TetherIA Inc.)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 """Rotate-z with tetheria hand."""
 
 from typing import Any, Dict, Optional, Union
@@ -31,7 +35,7 @@ def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.05,
       sim_dt=0.01,
-      action_scale=0.6,
+      action_scale=[0.02, 0.02, 0.02, 0.02, 0.7, 0.003, 0.012],
       action_repeat=1,
       episode_length=500,
       early_termination=True,
@@ -85,7 +89,6 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
     self._default_pose = self._init_q[self._hand_qids]
     self._lowers, self._uppers = self.mj_model.jnt_range[self._hand_qids].T
 
-    # self._tendon_qids = mjx_env.get_qpos_ids(self.mj_model, consts.ACTUATOR_NAMES)
     self._init_tendon = jp.array(home_key.ctrl)
     self._default_tendon = self._init_tendon
 
@@ -114,7 +117,7 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
         self.mjx_model,
         qpos=qpos,
         qvel=qvel,
-        ctrl=self._default_tendon,  # Change: only use the control joints
+        ctrl=self._default_tendon,  # Change: only use the control tendons
         mocap_pos=jp.array([-100, -100, -100]),  # Hide goal for this task.
     )
 
@@ -138,9 +141,7 @@ class CubeRotateZAxis(tetheria_hand_base.TetheriaHandEnv):
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
 
-    action_scale_custom = jp.array(
-        [0.02, 0.02, 0.02, 0.02, 0.7, 0.003, 0.012], dtype=jp.float32
-    )
+    action_scale_custom = jp.array(self._config.action_scale, dtype=jp.float32)
     motor_targets = self._default_tendon + action * action_scale_custom
     # NOTE: no clipping.
     data = mjx_env.step(

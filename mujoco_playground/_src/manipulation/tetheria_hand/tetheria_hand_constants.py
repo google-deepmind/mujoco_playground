@@ -1,4 +1,7 @@
-# Copyright 2025 DeepMind Technologies Limited
+# Copyright 2025 TetherIA Inc.
+# Copyright 2023 DeepMind Technologies Limited
+#
+# Author: Nan Wang (TetherIA Inc.)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 """Constants for tetheria hand."""
 
 from mujoco_playground._src import mjx_env
