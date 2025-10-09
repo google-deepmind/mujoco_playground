@@ -1,7 +1,5 @@
 # Copyright 2025 TetherIA Inc.
-# Copyright 2023 DeepMind Technologies Limited
-#
-# Author: Nan Wang (TetherIA Inc.)
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +31,7 @@ from mujoco_playground._src.manipulation.aero_hand import aero_hand_constants as
 
 def get_assets() -> Dict[str, bytes]:
   assets = {}
-  path = mjx_env.MENAGERIE_PATH / "aero_hand"
+  path = mjx_env.MENAGERIE_PATH / "tetheria_aero_hand_open"
   mjx_env.update_assets(assets, path / "assets")
   mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml")
   mjx_env.update_assets(

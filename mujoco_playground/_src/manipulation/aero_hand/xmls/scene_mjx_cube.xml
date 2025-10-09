@@ -1,5 +1,4 @@
 <mujoco model="tetheria_scene">
-  <!-- <include file="leap_rh_mjx.xml"/> -->
   <include file="right_hand.xml"/>
   <include file="reorientation_cube.xml"/>
 
@@ -63,6 +62,4 @@
     0.09 
     0.75 0.035 0.1" mpos="0.25 0.16 0" mquat="1 0 0 0"/>
   </keyframe>
-
-  <!-- <key qpos='1.5713 0.392613 0.393217 1.57129 0.431615 0.432216 1.5713 0.374458 0.375063 1.5713 0.521928 0.522523 0.492084 0.30301 0.992673 0.993467'/> -->
 </mujoco>

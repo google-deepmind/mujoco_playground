@@ -1,7 +1,5 @@
 # Copyright 2025 TetherIA Inc.
-# Copyright 2023 DeepMind Technologies Limited
-#
-# Author: Nan Wang (TetherIA Inc.)
+# Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

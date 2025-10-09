@@ -72,24 +72,6 @@ python learning/train_jax_ppo.py --env_name TetheriaCubeRotateZAxis
 ```
 
 Although the reward curves from different training runs may vary due to stochasticity in the learning process, they consistently **converge toward a positive reward**.  
-The plots below show an example set of reward curves obtained from training with the **PPO algorithm**.
-
-
-Overall Reward:
-
-![overall](imgs/reward_overall.png)
-
-Angular Velocity Reward
-
-![reward_angvel](imgs/reward_angvel.png)
-
-Action-Rate Penalty:
-
-![penalty_action_rate](imgs/penalty_action_rate.png)
-
-Termination Penalty
-
-![penalty_termination](imgs/penalty_termination.png)
 
 ## 3. Running a pretrained policy
 
@@ -105,24 +87,6 @@ This will:
 - Load the trained policy
 - Run episodes in the MuJoCo simulation
 - Display the hand performing manipulation tasks
-
-Seed = 0:
-
-![seed = 0](imgs/cube_rotation.gif)
-
-Seed = 1:
-
-![seed = 1](imgs/cube_rotation1.gif)
-
-Seed = 14:
-
-![seed = 14](imgs/cube_rotation14.gif)
-
-Sim2real deployment on Tetheria Aero Hand Open:
-
-![Z-Axis Rotation Demo](imgs/output.gif)
-
-*Note: The finger markers are **not** used.*
 
 ## File Structure
 
