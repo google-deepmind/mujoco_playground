@@ -1,5 +1,5 @@
 <mujoco model="Tetheria_Aero_Hand_Open_RightHand">
-  <compiler angle="radian" meshdir="meshes/"/>
+  <compiler angle="radian" meshdir="assets/"/>
 
   <option timestep="0.01" integrator="Euler" iterations="5" ls_iterations="8">
     <flag eulerdamp="disable"/>
