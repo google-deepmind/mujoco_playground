@@ -56,6 +56,9 @@ def default_config() -> config_dict.ConfigDict:
               action_rate=-1.0,
           ),
       ),
+      impl="jax",
+      nconmax=30 * 8192,
+      njmax=128,
   )
 
 
