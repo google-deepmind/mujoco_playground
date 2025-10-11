@@ -6,10 +6,6 @@
   </default>
 
   <asset>
-    <texture name="colorcube" type="cube" fileup="reorientation_cube_textures/fileup.png" fileback="reorientation_cube_textures/fileback.png" filedown="reorientation_cube_textures/filedown.png" filefront="reorientation_cube_textures/filefront.png" fileleft="reorientation_cube_textures/fileleft.png" fileright="reorientation_cube_textures/fileright.png"/>
-    <material name="colorcube" texture="colorcube"/>
-    <texture name="graycube" type="cube" fileup="reorientation_cube_textures/grayup.png" fileback="reorientation_cube_textures/grayback.png" filedown="reorientation_cube_textures/graydown.png" filefront="reorientation_cube_textures/grayfront.png" fileleft="reorientation_cube_textures/grayleft.png" fileright="reorientation_cube_textures/grayright.png"/>
-    <material name="graycube" texture="graycube"/>
     <texture name="dexcube" type="2d" file="reorientation_cube_textures/dex_cube.png"/>
     <material name="dexcube" texture="dexcube"/>
     <mesh name="cube_mesh" file="dex_cube.obj" scale="0.025 0.025 0.025"/>
