@@ -80,7 +80,7 @@ def default_config() -> config_dict.ConfigDict:
     cfg.env = config_dict.ConfigDict()
     cfg.env.termination_height = 0.1
     cfg.env.step_k = 13         # 每条腿抬起/落下的子步数量
-    cfg.env.err_threshold = 0.4
+    cfg.env.err_threshold = 0.1
     cfg.env.action_scale = [0.2, 0.8, 0.8] * 4  # 每条腿3个关节，共4条腿
     cfg.env.reset2ref = True
     # 奖励权重
@@ -262,24 +262,19 @@ class TrotGo2(Go2Env):
             * self.reward_config.scales.base_tracking,
         )
 
-        err = (((data.xpos[1:] - ref_data.xpos[1:]) ** 2).sum(-1) ** 0.5).mean()
-        to_ref = err > self.err_threshold
-
-        # reward_tuple['reference_tracking'] *= jax.numpy.where(to_ref, 100.0, 1.0)
-        # reward_tuple['base_tracking'] *= jax.numpy.where(to_ref, 100.0, 1.0)
-        reward = sum(reward_tuple.values())
-
-        state.info["reward_tuple"] = reward_tuple
         state.info["last_action"] = ctrl
-        for k in reward_tuple.keys():
-            state.metrics[k] = reward_tuple[k]
-
-        # err = (((data.xpos[1:] - ref_data.xpos[1:]) ** 2).sum(-1) ** 0.5).mean()
-        # to_ref = jp.where(err > self.err_threshold, 1.0, 0.0)
-        # data_blend = jax.tree_util.tree_map(lambda a, b: (1 - to_ref) * a + to_ref * b, data, ref_data)
-        # to_ref = err > self.err_threshold
 
         if self.reset2ref:
+            err = (((data.xpos[1:] - ref_data.xpos[1:]) ** 2).sum(-1) ** 0.5).mean()
+            to_ref = err > self.err_threshold
+
+            reward_tuple['reference_tracking'] *= jax.numpy.where(to_ref, 10.0, 1.0)
+            reward_tuple['base_tracking'] *= jax.numpy.where(to_ref, 10.0, 1.0)
+            reward = sum(reward_tuple.values())
+            for k in reward_tuple.keys():
+                state.metrics[k] = reward_tuple[k]
+            state.info["reward_tuple"] = reward_tuple
+
             def safe_select(a, b):
                 return jp.where(to_ref, b, a)
             data_blend = jax.tree_util.tree_map(safe_select, data, ref_data)
@@ -288,7 +283,13 @@ class TrotGo2(Go2Env):
             state.info["step"] = state.info["step"] + 1.0
 
             return state.replace(data=data_blend, obs=obs, reward=reward, done=done)
+        
         else:
+            reward = sum(reward_tuple.values())
+            state.info["reward_tuple"] = reward_tuple
+            for k in reward_tuple.keys():
+                state.metrics[k] = reward_tuple[k]
+
             state.info["step"] = state.info["step"] + 1.0
 
             return state.replace(data=data, obs=obs, reward=reward, done=done)
