@@ -1,6 +1,9 @@
 <mujoco model="Wolves_Robot_Orin_Export">
   <compiler angle="radian" />
 
+
+<!-- TODO remove collisions from everything except the feet! -->
+
   <visual>
     <headlight ambient="1 1 1" diffuse="1 1 1" specular="1 1 1" />
   </visual>

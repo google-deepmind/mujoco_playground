@@ -18,19 +18,19 @@ from etils import epath
 
 from mujoco_playground._src import mjx_env
 
-ROOT_PATH = mjx_env.ROOT_PATH / "locomotion" / "wolfgang"
+ROOT_PATH = mjx_env.ROOT_PATH / "locomotion" / "x02"
 FEET_ONLY_FLAT_TERRAIN_XML = (
-    ROOT_PATH / "xmls" / "scene_mjx_feetonly_flat_terrain.xml"
+    ROOT_PATH / "xmls" / "scene.xml"
 )
-FEET_ONLY_ROUGH_TERRAIN_XML = (
-    ROOT_PATH / "xmls" / "scene_mjx_feetonly_rough_terrain.xml"
-)
+#FEET_ONLY_ROUGH_TERRAIN_XML = (
+#    ROOT_PATH / "xmls" / "scene_mjx_feetonly_rough_terrain.xml"
+#)
 
 
 def task_to_xml(task_name: str) -> epath.Path:
   return {
       "flat_terrain": FEET_ONLY_FLAT_TERRAIN_XML,
-      "rough_terrain": FEET_ONLY_ROUGH_TERRAIN_XML,
+      #"rough_terrain": FEET_ONLY_ROUGH_TERRAIN_XML,
   }[task_name]
 
 
@@ -40,18 +40,18 @@ FEET_SITES = [
 ]
 
 LEFT_FEET_GEOMS = [
-    "l_foot1",
+    "l_foot_bb",
 ]
 
 RIGHT_FEET_GEOMS = [
-    "r_foot1",
+    "r_foot_bb",
 ]
 
 FEET_GEOMS = LEFT_FEET_GEOMS + RIGHT_FEET_GEOMS
 
 FEET_POS_SENSOR = [f"{site}_pos" for site in FEET_SITES]
 
-ROOT_BODY = "torso"
+ROOT_BODY = "pelvis_link"
 
 GRAVITY_SENSOR = "upvector"
 GLOBAL_LINVEL_SENSOR = "global_linvel"
