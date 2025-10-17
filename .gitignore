@@ -5,4 +5,5 @@ __pycache__
 MUJOCO_LOG.TXT
 mujoco_menagerie
 checkpoints/
+**/wandb/**
 logs

@@ -26,6 +26,8 @@ from mujoco_playground._src.locomotion.apollo import joystick as apollo_joystick
 from mujoco_playground._src.locomotion.barkour import joystick as barkour_joystick
 from mujoco_playground._src.locomotion.berkeley_humanoid import joystick as berkeley_humanoid_joystick
 from mujoco_playground._src.locomotion.berkeley_humanoid import randomize as berkeley_humanoid_randomize
+from mujoco_playground._src.locomotion.wolfgang import joystick as wolfgang_joystick
+from mujoco_playground._src.locomotion.wolfgang import randomize as wolfgang_randomize
 from mujoco_playground._src.locomotion.g1 import joystick as g1_joystick
 from mujoco_playground._src.locomotion.g1 import randomize as g1_randomize
 from mujoco_playground._src.locomotion.go1 import getup as go1_getup
@@ -40,6 +42,8 @@ from mujoco_playground._src.locomotion.spot import joystick as spot_joystick
 from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spot_joystick_gait_tracking
 from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
+from mujoco_playground._src.locomotion.x02 import joystick as x02_joystick
+from mujoco_playground._src.locomotion.x02 import randomize as x02_randomize
 
 
 _envs = {
@@ -52,6 +56,12 @@ _envs = {
     ),
     "BerkeleyHumanoidJoystickRoughTerrain": functools.partial(
         berkeley_humanoid_joystick.Joystick, task="rough_terrain"
+    ),
+    "WolfgangJoystickFlatTerrain": functools.partial(
+        wolfgang_joystick.Joystick, task="flat_terrain"
+    ),
+    "WolfgangJoystickRoughTerrain": functools.partial(
+        wolfgang_joystick.Joystick, task="rough_terrain"
     ),
     "G1JoystickFlatTerrain": functools.partial(
         g1_joystick.Joystick, task="flat_terrain"
@@ -84,6 +94,12 @@ _envs = {
     "T1JoystickRoughTerrain": functools.partial(
         t1_joystick.Joystick, task="rough_terrain"
     ),
+    "X02JoystickFlatTerrain": functools.partial(
+        x02_joystick.Joystick, task="flat_terrain"
+    ),
+    "X02JoystickRoughTerrain": functools.partial(
+        x02_joystick.Joystick, task="rough_terrain"
+    ),
 }
 
 _cfgs = {
@@ -94,6 +110,12 @@ _cfgs = {
     ),
     "BerkeleyHumanoidJoystickRoughTerrain": (
         berkeley_humanoid_joystick.default_config
+    ),
+    "WolfgangJoystickFlatTerrain": (
+        wolfgang_joystick.default_config
+    ),
+    "WolfgangJoystickRoughTerrain": (
+        wolfgang_joystick.default_config
     ),
     "G1JoystickFlatTerrain": g1_joystick.default_config,
     "G1JoystickRoughTerrain": g1_joystick.default_config,
@@ -109,15 +131,22 @@ _cfgs = {
     "SpotGetup": spot_getup.default_config,
     "SpotJoystickGaitTracking": spot_joystick_gait_tracking.default_config,
     "T1JoystickFlatTerrain": t1_joystick.default_config,
-    "T1JoystickRoughTerrain": t1_joystick.default_config,
+    "T1JoystickRoughTerrain": t1_joystick.default_config,    
+    "X02JoystickFlatTerrain": x02_joystick.default_config,
+    "X02JoystickRoughTerrain": x02_joystick.default_config,
 }
-
 _randomizer = {
     "BerkeleyHumanoidJoystickFlatTerrain": (
         berkeley_humanoid_randomize.domain_randomize
     ),
     "BerkeleyHumanoidJoystickRoughTerrain": (
         berkeley_humanoid_randomize.domain_randomize
+    ),
+    "WolfgangJoystickFlatTerrain": (
+        wolfgang_randomize.domain_randomize
+    ),
+    "WolfgangJoystickRoughTerrain": (
+        wolfgang_randomize.domain_randomize
     ),
     "G1JoystickFlatTerrain": g1_randomize.domain_randomize,
     "G1JoystickRoughTerrain": g1_randomize.domain_randomize,
@@ -128,6 +157,8 @@ _randomizer = {
     "Go1Footstand": go1_randomize.domain_randomize,
     "T1JoystickFlatTerrain": t1_randomize.domain_randomize,
     "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
+    "X02JoystickFlatTerrain": x02_randomize.domain_randomize,
+    "X02JoystickRoughTerrain": x02_randomize.domain_randomize,
 }
 
 

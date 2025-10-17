@@ -1,0 +1,39 @@
+<mujoco model="x2 scene">
+
+  <statistic center="0 0 0.1" extent="0.8" meansize="0.04"/>
+  
+
+  <visual>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
+    <rgba force="1 0 0 1"/>
+    <global azimuth="120" elevation="-20"/>
+    <map force="0.01"/>
+    <scale forcewidth="0.3" contactwidth="0.5" contactheight="0.2"/>
+    <quality shadowsize="8192"/>
+  </visual>
+
+  <asset>
+    <!-- https://polyhaven.com/a/rock_face -->
+    <texture type="2d" name="groundplane" file="assets/rocky_texture.png"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance=".8"/>
+    <hfield name="hfield" file="assets/hfield.png" size="10 10 .05 0.1"/>
+  </asset>
+
+  <worldbody>
+    <geom name="floor" type="hfield" hfield="hfield" material="groundplane" contype="1" conaffinity="0" priority="1"
+      friction="1.0"/>
+  </worldbody>
+
+  <include file="x2_feetonly.xml"/>
+  <keyframe>
+    <key name="home"
+      qpos="
+    0 0 0.85
+    0.9987503 0 0.0499792 0
+    0.0 0.00 0.4 -0.8 0.4
+    0.0 0.00 0.4 -0.8 0.4"
+      ctrl="
+    0.0 0.00 0.4 -0.8 0.4
+    0.0 0.00 0.4 -0.8 0.4"/>
+  </keyframe>
+</mujoco>
