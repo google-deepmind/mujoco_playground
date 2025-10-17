@@ -1,0 +1,42 @@
+<mujoco model="x2 scene">
+  <include file="x2_feetonly.xml"/>
+
+  <statistic center="1.0 0.7 1.0" extent="0.8"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.1 0.1 0.1" specular="0.9 0.9 0.9"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="-140" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="flat" rgb1="0 0 0" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <worldbody>
+    <light pos="1 0 3.5" dir="0 0 -1" directional="true"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
+<!--    <geom pos="3.2 0.0 0.04" type="box"  size="0.05 2 0.04" quat="1.0 0 0 0"/>-->
+<!--    <geom pos="3.6 0.0 0.04" type="box"  size="0.05 2 0.04" quat="1.0 0 0 0"/>-->
+<!--    <geom pos="5.3 0.0 0.02" type="box"  size="0.20 2 0.1" quat="1.0 0 0 0"/>-->
+<!--    <geom pos="5.6 0.0 0.02" type="box"  size="0.22 2 0.2" quat="1.0 0 0 0"/>-->
+<!--    <geom pos="5.8 0.0 0.02" type="box"  size="0.23 2 0.3" quat="1.0 0 0 0"/>-->
+<!--    <geom pos="6.0 0.0 0.02" type="box"  size="0.24 2 0.4" quat="1.0 0 0 0"/>-->
+<!--    <geom pos="6.2 0.0 0.02" type="box"  size="0.25 2 0.5" quat="1.0 0 0 0"/>-->
+<!--    <geom pos="6.4 0.0 0.02" type="box"  size="0.26 2 0.6" quat="1.0 0 0 0"/>-->
+  </worldbody>
+
+  <keyframe>
+    <key name="home"
+      qpos="
+    0 0 0.91
+    1 0 0 0
+    0.0 0.0 0.0 0.0 0.0 
+    0.0 0.0 0.0 0.0 0.0"
+      ctrl="
+    0.0 0.0 0.0 0.0 0.0
+    0.0 0.0 0.0 0.0 0.0"/>
+  </keyframe>
+</mujoco>
