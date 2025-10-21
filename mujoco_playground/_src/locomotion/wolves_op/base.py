@@ -48,16 +48,17 @@ class WolfgangEnv(mjx_env.MjxEnv):
   ) -> None:
     super().__init__(config, config_overrides)
 
-    self._mj_model = mujoco.MjModel.from_xml_string(
+    self._mj_model = mujoco.MjModel.from_xml_string(              #Hier wird zu dem normalen Model hinzugefügt
         epath.Path(xml_path).read_text(), assets=get_assets()
     )
-    self._mj_model.opt.timestep = self.sim_dt
+    self._mj_model.opt.timestep = self.sim_dt                     #Hier wird zu dem normalen Model hinzugefügt
 
-    self._mj_model.vis.global_.offwidth = 3840
-    self._mj_model.vis.global_.offheight = 2160
+    self._mj_model.vis.global_.offwidth = 3840                    #Hier wird zu dem normalen Model hinzugefügt
+    self._mj_model.vis.global_.offheight = 2160                   #Hier wird zu dem normalen Model hinzugefügt
 
-    self._mjx_model = mjx.put_model(self._mj_model)
-    self._xml_path = xml_path
+    self._mjx_model = mjx.put_model(self._mj_model)               #Und hier wird dann das MJX Format gespeichert, 
+    self._xml_path = xml_path                                     #mjx_data = mjx.make_data(mjx_model), wird 
+                                                                  # innerhalb einer @jax.vmap Annotation gemacht
 
   # Sensor readings.
 
