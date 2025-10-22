@@ -1,6 +1,7 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 import os
 import mediapy as media
+import tqdm
 # Math
 import jax.numpy as jp
 import numpy as np
@@ -83,6 +84,13 @@ def default_config() -> config_dict.ConfigDict:
     cfg.env.err_threshold = 0.1
     cfg.env.action_scale = [0.2, 0.8, 0.8] * 4  # 每条腿3个关节，共4条腿
     cfg.env.reset2ref = True
+    cfg.env.reference_state_init = False # RSI: Deepmimic
+    # 扰动配置
+    cfg.pert_config = config_dict.ConfigDict()
+    cfg.pert_config.enable = False
+    cfg.pert_config.velocity_kick = [0.0, 3.0]
+    cfg.pert_config.kick_durations = [0.05, 0.2]
+    cfg.pert_config.kick_wait_times = [1.0, 3.0]
     # 奖励权重
     cfg.rewards = config_dict.ConfigDict()
     cfg.rewards.scales = config_dict.ConfigDict()
@@ -137,10 +145,10 @@ class TrotGo2(Go2Env):
         self.termination_height = float(getattr(self._config.env, "termination_height", 0.1))
         self.err_threshold = self._config.env.err_threshold
         self.reward_config = self._config.rewards
-        # self.feet_inds = jp.array([21, 28, 35, 42])  # LF, RF, LH, RH
         self.feet_inds = jp.array( [self._mj_model.geom(name).id for name in consts.FEET_GEOMS] )
         # print("Feet geom ids:", self.feet_inds)
         self.base_id = mujoco.mj_name2id(self.mj_model, mujoco.mjtObj.mjOBJ_BODY, "base")
+        self.base_mass = self.mj_model.body("base").mass
 
         # imitation reference
         step_k = int(getattr(self._config.env, "step_k", 25))
@@ -158,12 +166,21 @@ class TrotGo2(Go2Env):
         self.kinematic_ref_qvel = jp.array(ref_qvels)
 
         self.reset2ref = self._config.env.reset2ref
+        self.reference_state_init = self._config.env.reference_state_init
 
     # -------- Envs API: reset/step ----------
     def reset(self, rng: jax.Array) -> mjx_env.State:
-        # Deterministic init
-        qpos = self._init_q
-        qvel = jp.zeros(self.mjx_model.nv)
+        # RSI
+        if self.reference_state_init:
+            rng, step_rng = jax.random.split(rng)
+            init_step = jax.random.randint(step_rng, (), 0, self.l_cycle)
+            qpos = self.kinematic_ref_qpos[init_step]
+            qvel = self.kinematic_ref_qvel[init_step]
+        else:
+            # Deterministic init
+            init_step = 0
+            qpos = self._init_q
+            qvel = jp.zeros(self.mjx_model.nv)
 
         # 创建 mjx data
         data = make_data(
@@ -178,7 +195,7 @@ class TrotGo2(Go2Env):
         data = mjx.forward(self.mjx_model, data)
 
         # 将机器人放到地面上（和原始 reset 一样）
-        pen = jp.min(data._impl.contact.dist)
+        pen = jp.where(data.ncon > 0, jp.min(data._impl.contact.dist), 0.0)
         qpos = qpos.at[2].set(qpos[2] - pen)
 
         data = make_data(
@@ -192,10 +209,33 @@ class TrotGo2(Go2Env):
         )
         data = mjx.forward(self.mjx_model, data)
 
+        rng, key1, key2, key3 = jax.random.split(rng, 4)
+        time_until_next_pert = jax.random.uniform(
+            key1,
+            minval=self._config.pert_config.kick_wait_times[0],
+            maxval=self._config.pert_config.kick_wait_times[1],
+        )
+        steps_until_next_pert = jp.round(time_until_next_pert / self.dt).astype(
+            jp.int32
+        )
+        pert_duration_seconds = jax.random.uniform(
+            key2,
+            minval=self._config.pert_config.kick_durations[0],
+            maxval=self._config.pert_config.kick_durations[1],
+        )
+        pert_duration_steps = jp.round(pert_duration_seconds / self.dt).astype(
+            jp.int32
+        )
+        pert_mag = jax.random.uniform(
+            key3,
+            minval=self._config.pert_config.velocity_kick[0],
+            maxval=self._config.pert_config.velocity_kick[1],
+        )
+
         # state_info 保持和原版一致
         state_info = {
             'rng': rng,
-            'step': 0.0,
+            'step': jp.array(init_step, dtype=jp.float32),
             'reward_tuple': {
                 'reference_tracking': 0.0,
                 'min_reference_tracking': 0.0,
@@ -203,7 +243,15 @@ class TrotGo2(Go2Env):
                 'base_tracking': 0.0
             },
             'last_action': jp.zeros(self.mjx_model.nu),  # 12 通道动作
-            'kinematic_ref': jp.zeros(19),
+            'kinematic_ref': qpos,
+
+            "steps_until_next_pert": steps_until_next_pert,
+            "pert_duration_seconds": pert_duration_seconds,
+            "pert_duration": pert_duration_steps,
+            "steps_since_last_pert": 0,
+            "pert_steps": 0,
+            "pert_dir": jp.zeros(3),
+            "pert_mag": pert_mag,
         }
 
         # 生成 obs
@@ -221,8 +269,8 @@ class TrotGo2(Go2Env):
 
     def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
         # TODO 扰动
-        # if self._config.pert_config.enable:
-        #     state = self._maybe_apply_perturbation(state)
+        if self._config.pert_config.enable:
+            state = self._maybe_apply_perturbation(state)
     
         action = jp.clip(action, -1, 1)
         ctrl = self.action_loc + (action * self.action_scale)
@@ -306,11 +354,8 @@ class TrotGo2(Go2Env):
         """
         print("Playing reference motion...")
 
-        # 1️⃣ reset 环境得到初始 state
         rng = jax.random.PRNGKey(seed)
         state = self.reset(rng)
-
-        # 直接引用其中的 data，后续复用
         data = state.data
 
         traj = []
@@ -318,11 +363,8 @@ class TrotGo2(Go2Env):
             qpos = self.kinematic_ref_qpos[i]
             qvel = self.kinematic_ref_qvel[i]
 
-            # 2️⃣ 替换 qpos / qvel（不重新创建 data）
             data = data.replace(qpos=qpos, qvel=qvel)
             data = mjx.forward(self.mjx_model, data)
-
-            # 3️⃣ 构造一个新的 state（结构一致，但轻量）
             ref_state = state.replace(
                 data=data,
                 obs=None,
@@ -330,10 +372,8 @@ class TrotGo2(Go2Env):
                 done=0.0,
                 info={"step": float(i)},
             )
-
             traj.append(ref_state)
 
-        # 4️⃣ 渲染
         fps = 1.0 / (self.dt * render_every)
         frames = self.render(traj, height=480, width=640)
         media.show_video(frames, fps=fps, loop=True)
@@ -387,6 +427,63 @@ class TrotGo2(Go2Env):
         rot_err = jp.arccos(2 * dot**2 - 1)
         vel_err = jp.linalg.norm(data.cvel[1] - ref_data.cvel[1])
         return pos_err + 0.5 * rot_err + 0.1 * vel_err
+    
+    # ----------------- Disturbance -----------------
+    def _maybe_apply_perturbation(self, state: mjx_env.State) -> mjx_env.State:
+        def gen_dir(rng: jax.Array) -> jax.Array:
+            angle = jax.random.uniform(rng, minval=0.0, maxval=jp.pi * 2)
+            return jp.array([jp.cos(angle), jp.sin(angle), 0.0])
+
+        def apply_pert(state: mjx_env.State) -> mjx_env.State:
+            t = state.info["pert_steps"] * self.dt
+            u_t = 0.5 * jp.sin(jp.pi * t / state.info["pert_duration_seconds"])
+            # kg * m/s * 1/s = m/s^2 = kg * m/s^2 (N).
+            force = (
+                u_t  # (unitless)
+                * self.base_mass  # kg
+                * state.info["pert_mag"]  # m/s
+                / state.info["pert_duration_seconds"]  # 1/s
+            )
+            xfrc_applied = jp.zeros((self.mjx_model.nbody, 6))
+            xfrc_applied = xfrc_applied.at[self.base_id, :3].set(
+                force * state.info["pert_dir"]
+            )
+            data = state.data.replace(xfrc_applied=xfrc_applied)
+            state = state.replace(data=data)
+            state.info["steps_since_last_pert"] = jp.where(
+                state.info["pert_steps"] >= state.info["pert_duration"],
+                0,
+                state.info["steps_since_last_pert"],
+            )
+            state.info["pert_steps"] += 1
+            return state
+
+        def wait(state: mjx_env.State) -> mjx_env.State:
+            state.info["rng"], rng = jax.random.split(state.info["rng"])
+            state.info["steps_since_last_pert"] += 1
+            xfrc_applied = jp.zeros((self.mjx_model.nbody, 6))
+            data = state.data.replace(xfrc_applied=xfrc_applied)
+            state.info["pert_steps"] = jp.where(
+                state.info["steps_since_last_pert"]
+                >= state.info["steps_until_next_pert"],
+                0,
+                state.info["pert_steps"],
+            )
+            state.info["pert_dir"] = jp.where(
+                state.info["steps_since_last_pert"]
+                >= state.info["steps_until_next_pert"],
+                gen_dir(rng),
+                state.info["pert_dir"],
+            )
+            return state.replace(data=data)
+
+        return jax.lax.cond(
+            state.info["steps_since_last_pert"]
+            >= state.info["steps_until_next_pert"],
+            apply_pert,
+            wait,
+            state,
+        )
 
 
 # # ----------------- 注册到 playground -----------------
