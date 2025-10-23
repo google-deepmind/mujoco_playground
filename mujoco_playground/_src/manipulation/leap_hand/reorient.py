@@ -67,9 +67,6 @@ def default_config() -> config_dict.ConfigDict:
           pert_duration_steps=[1, 100],
           pert_wait_steps=[60, 150],
       ),
-      impl='jax',
-      nconmax=30 * 8192,
-      njmax=128,
   )
 
 
@@ -90,9 +87,9 @@ class CubeReorient(leap_hand_base.LeapHandEnv):
 
   def _post_init(self) -> None:
     home_key = self._mj_model.keyframe("home")
-    self._init_q = jp.array(home_key.qpos, dtype=float)
-    self._init_mpos = jp.array(home_key.mpos, dtype=float)
-    self._init_mquat = jp.array(home_key.mquat, dtype=float)
+    self._init_q = jp.array(home_key.qpos)
+    self._init_mpos = jp.array(home_key.mpos)
+    self._init_mquat = jp.array(home_key.mquat)
     self._lowers = self._mj_model.actuator_ctrlrange[:, 0]
     self._uppers = self._mj_model.actuator_ctrlrange[:, 1]
     self._hand_qids = mjx_env.get_qpos_ids(self.mj_model, consts.JOINT_NAMES)
@@ -129,16 +126,13 @@ class CubeReorient(leap_hand_base.LeapHandEnv):
 
     qpos = jp.concatenate([q_hand, q_cube])
     qvel = jp.concatenate([v_hand, v_cube])
-    data = mjx_env.make_data(
-        self._mj_model,
+    data = mjx_env.init(
+        self.mjx_model,
         qpos=qpos,
         ctrl=q_hand,
         qvel=qvel,
         mocap_pos=self._init_mpos,
         mocap_quat=goal_quat,
-        impl=self._mjx_model.impl.value,
-        nconmax=self._config.nconmax,
-        njmax=self._config.njmax,
     )
 
     rng, pert1, pert2, pert3 = jax.random.split(rng, 4)
@@ -511,7 +505,13 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
 
   @jax.vmap
   def rand(rng):
+    # Cube friction: =U(0.1, 0.5).
     rng, key = jax.random.split(rng)
+    cube_friction = jax.random.uniform(key, (1,), minval=0.1, maxval=0.5)
+    geom_friction = model.geom_friction.at[
+        cube_geom_id : cube_geom_id + 1, 0
+    ].set(cube_friction)
+
     # Fingertip friction: =U(0.5, 1.0).
     fingertip_friction = jax.random.uniform(key, (1,), minval=0.5, maxval=1.0)
     geom_friction = model.geom_friction.at[fingertip_geom_ids, 0].set(
@@ -521,6 +521,8 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
     # Scale cube mass: *U(0.8, 1.2).
     rng, key1, key2 = jax.random.split(rng, 3)
     dmass = jax.random.uniform(key1, minval=0.8, maxval=1.2)
+    cube_mass = model.body_mass[cube_body_id]
+    body_mass = model.body_mass.at[cube_body_id].set(cube_mass * dmass)
     body_inertia = model.body_inertia.at[cube_body_id].set(
         model.body_inertia[cube_body_id] * dmass
     )

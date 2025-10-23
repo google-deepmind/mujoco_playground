@@ -23,8 +23,10 @@ from mujoco import mjx
 from mujoco.mjx._src import math
 import numpy as np
 
+from mujoco_playground._src import collision
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
+from mujoco_playground._src.collision import geoms_colliding
 from mujoco_playground._src.locomotion.g1 import base as g1_base
 from mujoco_playground._src.locomotion.g1 import g1_constants as consts
 
@@ -101,9 +103,6 @@ def default_config() -> config_dict.ConfigDict:
       lin_vel_x=[-1.0, 1.0],
       lin_vel_y=[-0.5, 0.5],
       ang_vel_yaw=[-1.0, 1.0],
-      impl="jax",
-      nconmax=8 * 8192,
-      njmax=29 * 2 + 8 * 4,
   )
 
 
@@ -116,9 +115,6 @@ class Joystick(g1_base.G1Env):
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
-    if task.startswith("rough"):
-      config.nconmax = 100 * 8192
-      config.njmax = 29 * 2 + 100 * 4
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
         config=config,
@@ -235,26 +231,6 @@ class Joystick(g1_base.G1Env):
     self._left_thigh_geom_id = self._mj_model.geom("left_thigh").id
     self._right_thigh_geom_id = self._mj_model.geom("right_thigh").id
 
-    self._feet_floor_found_sensor = [
-        self._mj_model.sensor(foot_geom + "_floor_found").id
-        for foot_geom in ["left_foot", "right_foot"]
-    ]
-    self._right_foot_left_foot_found_sensor = self._mj_model.sensor(
-        "right_foot_left_foot_found"
-    ).id
-    self._left_foot_right_shin_found_sensor = self._mj_model.sensor(
-        "left_foot_right_shin_found"
-    ).id
-    self._right_foot_left_shin_found_sensor = self._mj_model.sensor(
-        "right_foot_left_shin_found"
-    ).id
-    self._left_hand_left_thigh_found_sensor = self._mj_model.sensor(
-        "left_hand_left_thigh_found"
-    ).id
-    self._right_hand_right_thigh_found_sensor = self._mj_model.sensor(
-        "right_hand_right_thigh_found"
-    ).id
-
   def reset(self, rng: jax.Array) -> mjx_env.State:
     qpos = self._init_q
     qvel = jp.zeros(self.mjx_model.nv)
@@ -281,16 +257,7 @@ class Joystick(g1_base.G1Env):
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-    data = mjx_env.make_data(
-        self.mj_model,
-        qpos=qpos,
-        qvel=qvel,
-        ctrl=qpos[7:],
-        impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
-        njmax=self._config.njmax,
-    )
-    data = mjx.forward(self.mjx_model, data)
+    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
 
     # Phase, freq=U(1.0, 1.5)
     rng, key = jax.random.split(rng)
@@ -335,8 +302,8 @@ class Joystick(g1_base.G1Env):
     metrics["swing_peak"] = jp.zeros(())
 
     contact = jp.array([
-        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
-        for sensorid in self._feet_floor_found_sensor
+        geoms_colliding(data, geom_id, self._floor_geom_id)
+        for geom_id in self._feet_geom_id
     ])
     obs = self._get_obs(data, info, contact)
     reward, done = jp.zeros(2)
@@ -370,8 +337,8 @@ class Joystick(g1_base.G1Env):
     state.info["motor_targets"] = motor_targets
 
     contact = jp.array([
-        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
-        for sensorid in self._feet_floor_found_sensor
+        geoms_colliding(data, geom_id, self._floor_geom_id)
+        for geom_id in self._feet_geom_id
     ])
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt
@@ -428,15 +395,21 @@ class Joystick(g1_base.G1Env):
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:
     fall_termination = self.get_gravity(data, "torso")[-1] < 0.0
-    contact_termination = data.sensordata[
-        self._mj_model.sensor_adr[self._right_foot_left_foot_found_sensor]
-    ] > 0
-    contact_termination |= data.sensordata[
-        self._mj_model.sensor_adr[self._left_foot_right_shin_found_sensor]
-    ] > 0
-    contact_termination |= data.sensordata[
-        self._mj_model.sensor_adr[self._right_foot_left_shin_found_sensor]
-    ] > 0
+    contact_termination = collision.geoms_colliding(
+        data,
+        self._right_foot_geom_id,
+        self._left_foot_geom_id,
+    )
+    contact_termination |= collision.geoms_colliding(
+        data,
+        self._left_foot_geom_id,
+        self._right_shin_geom_id,
+    )
+    contact_termination |= collision.geoms_colliding(
+        data,
+        self._right_foot_geom_id,
+        self._left_shin_geom_id,
+    )
     return (
         fall_termination
         | contact_termination
@@ -619,17 +592,11 @@ class Joystick(g1_base.G1Env):
     return cost
 
   def _cost_collision(self, data: mjx.Data) -> jax.Array:
-    c = (
-        data.sensordata[
-            self._mj_model.sensor_adr[self._left_hand_left_thigh_found_sensor]
-        ]
-        > 0
+    c = collision.geoms_colliding(
+        data, self._left_hand_geom_id, self._left_thigh_geom_id
     )
-    c |= (
-        data.sensordata[
-            self._mj_model.sensor_adr[self._right_hand_right_thigh_found_sensor]
-        ]
-        > 0
+    c |= collision.geoms_colliding(
+        data, self._right_hand_geom_id, self._right_thigh_geom_id
     )
     return jp.any(c)
 

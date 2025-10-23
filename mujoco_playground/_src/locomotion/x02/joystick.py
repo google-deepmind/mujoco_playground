@@ -63,7 +63,7 @@ def default_config() -> config_dict.ConfigDict:
               orientation=-1.0,
               base_height=0.0,
               # Energy related rewards.
-              torques=-2.5e-5,
+              torques=-2.5e-4,
               action_rate=-0.01,
               energy=0.0,
               # Feet related rewards.
@@ -72,6 +72,10 @@ def default_config() -> config_dict.ConfigDict:
               feet_slip=-0.25,
               feet_height=0.0,
               feet_phase=1.0,
+              flat_foot=0.25,
+              horizontal_foot_clearance=0.25,
+              foot_in_contact_reward=1.0,
+              #feet contact force
               # Other rewards.
               stand_still=0.0,
               alive=0.0,
@@ -84,7 +88,8 @@ def default_config() -> config_dict.ConfigDict:
           ),
           tracking_sigma=0.5,
           max_foot_height=0.1,
-          base_height_target=0.5,
+          base_height_target=0.7, # does not do anything without base height reward scalar
+          minimal_horizontal_foot_clearance=0.1, # meters
       ),
       push_config=config_dict.create(
           enable=True,
@@ -92,8 +97,8 @@ def default_config() -> config_dict.ConfigDict:
           magnitude_range=[0.1, 2.0],
       ),
       lin_vel_x=[-1.0, 1.0],
-      lin_vel_y=[-1.0, 1.0],
-      ang_vel_yaw=[-1.0, 1.0],
+      lin_vel_y=[-0.25, 0.25],
+      ang_vel_yaw=[-2.0, 2.0],
   )
 
 
@@ -140,8 +145,8 @@ class Joystick(x02_base.X02Base):
 
     # fmt: off
     self._weights = jp.array([
-        1.0, 1.0, 0.01, 0.01, 1.0,  # left leg.
-        1.0, 1.0, 0.01, 0.01, 1.0,  # right leg.
+        1.0, 1.0, 0.01, 0.01, 0.01,  # left leg.
+        1.0, 1.0, 0.01, 0.01, 0.01,  # right leg.
     ])
     # fmt: on
 
@@ -153,9 +158,15 @@ class Joystick(x02_base.X02Base):
         [self._mj_model.site(name).id for name in consts.FEET_SITES]
     )
     self._floor_geom_id = self._mj_model.geom("floor").id
-    self._feet_geom_id = np.array(
-        [self._mj_model.geom(name).id for name in consts.FEET_GEOMS]
+    
+    self._left_feet_geom_id = np.array(
+        [self._mj_model.geom(name).id for name in consts.LEFT_FEET_GEOMS]
     )
+    self._right_feet_geom_id = np.array(
+        [self._mj_model.geom(name).id for name in consts.RIGHT_FEET_GEOMS]
+    )
+    self._feet_geom_id = np.concatenate([self._left_feet_geom_id, self._right_feet_geom_id])
+    
 
     foot_linvel_sensor_adr = []
     for site in consts.FEET_SITES:
@@ -208,7 +219,7 @@ class Joystick(x02_base.X02Base):
 
     # Phase, freq=U(1.0, 1.5)
     rng, key = jax.random.split(rng)
-    gait_freq = jax.random.uniform(key, (1,), minval=1.25, maxval=1.5)
+    gait_freq = jax.random.uniform(key, (1,), minval=1.0, maxval=1.5)
     phase_dt = 2 * jp.pi * self.dt * gait_freq
     phase = jp.array([0, jp.pi])
 
@@ -223,6 +234,9 @@ class Joystick(x02_base.X02Base):
         maxval=self._config.push_config.interval_range[1],
     )
     push_interval_steps = jp.round(push_interval / self.dt).astype(jp.int32)
+
+    qpos_error_history = jp.zeros(self._config.history_len * 10)
+    qvel_history = jp.zeros(self._config.history_len * 10)
 
     info = {
         "rng": rng,
@@ -241,6 +255,9 @@ class Joystick(x02_base.X02Base):
         "push": jp.array([0.0, 0.0]),
         "push_step": 0,
         "push_interval_steps": push_interval_steps,
+        # History
+        "qpos_error_history": qpos_error_history,
+        "qvel_history": qvel_history,
     }
 
     metrics = {}
@@ -283,10 +300,16 @@ class Joystick(x02_base.X02Base):
     )
     state.info["motor_targets"] = motor_targets
 
-    contact = jp.array([
+
+    left_feet_contact = jp.array([
         geoms_colliding(data, geom_id, self._floor_geom_id)
-        for geom_id in self._feet_geom_id
+        for geom_id in self._left_feet_geom_id
     ])
+    right_feet_contact = jp.array([
+        geoms_colliding(data, geom_id, self._floor_geom_id)
+        for geom_id in self._right_feet_geom_id
+    ])
+    contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
     contact_filt = contact | state.info["last_contact"]
     first_contact = (state.info["feet_air_time"] > 0.0) * contact_filt
     state.info["feet_air_time"] += self.dt
@@ -385,19 +408,32 @@ class Joystick(x02_base.X02Base):
 
     linvel = self.get_local_linvel(data)
     info["rng"], noise_rng = jax.random.split(info["rng"])
-    noisy_linvel = (
-        linvel
-        + (2 * jax.random.uniform(noise_rng, shape=linvel.shape) - 1)
-        * self._config.noise_config.level
-        * self._config.noise_config.scales.linvel
+    #noisy_linvel = (
+    #    linvel
+    #    + (2 * jax.random.uniform(noise_rng, shape=linvel.shape) - 1)
+    #    * self._config.noise_config.level
+    #    * self._config.noise_config.scales.linvel
+    #)
+
+    # TODO noisy history
+    # Update history.
+    qvel_history = jp.roll(info["qvel_history"], 10).at[:10].set(data.qvel[6:]) 
+    qpos_error_history = (
+        jp.roll(info["qpos_error_history"], 10)
+        .at[:10]
+        .set(data.qpos[7:] - info["motor_targets"]) # 7: because 3 pos, 4 quat rotation, twist is only 6
     )
+    info["qvel_history"] = qvel_history
+    info["qpos_error_history"] = qpos_error_history
 
     state = jp.hstack([
-        noisy_linvel,  # 3
+        #noisy_linvel,  # 3
+        qvel_history, # 10*history_len
+        qpos_error_history, # 10*history_len
         noisy_gyro,  # 3
         noisy_gravity,  # 3
         info["command"],  # 3
-        noisy_joint_angles - self._default_pose,  # 12
+        noisy_joint_angles - self._default_pose,  # 10
         noisy_joint_vel,  # 12
         info["last_act"],  # 12
         phase,
@@ -419,7 +455,9 @@ class Joystick(x02_base.X02Base):
         joint_vel,
         root_height,  # 1
         data.actuator_force,  # 12
-        contact,  # 2
+        jp.any(contact[:12]),
+        jp.any(contact[12:]),  # 2
+        #contact,  # 2
         feet_vel,  # 4*3
         info["feet_air_time"],  # 2
     ])
@@ -474,6 +512,8 @@ class Joystick(x02_base.X02Base):
             self._config.reward_config.max_foot_height,
             info["command"],
         ),
+        "flat_foot": self._reward_flat_foot(data),
+        "horizontal_foot_clearance": self._reward_horizontal_foot_clearance(data),
         # Other rewards.
         "alive": self._reward_alive(),
         "termination": self._cost_termination(done),
@@ -486,6 +526,35 @@ class Joystick(x02_base.X02Base):
         "dof_pos_limits": self._cost_joint_pos_limits(data.qpos[7:]),
         "pose": self._cost_pose(data.qpos[7:]),
     }
+    #return {
+    #      # Tracking rewards.
+    #      "tracking_lin_vel": jp.zeros_like(data.qpos[2]),
+    #      "tracking_ang_vel": jp.zeros_like(data.qpos[2]),
+    #      # Base-related rewards.
+    #      "lin_vel_z": jp.zeros_like(data.qpos[2]),
+    #      "ang_vel_xy": jp.zeros_like(data.qpos[2]),
+    #      "orientation": jp.zeros_like(data.qpos[2]), #self._cost_orientation(self.get_gravity(data)),
+    #      "base_height": jp.zeros_like(data.qpos[2]), #self._cost_base_height(data.qpos[2]),
+    #      # Energy related rewards.
+    #      "torques": jp.zeros_like(data.qpos[2]),
+    #      "action_rate": jp.zeros_like(data.qpos[2]),
+    #      "energy": jp.zeros_like(data.qpos[2]),
+    #      # Feet related rewards.
+    #      "feet_slip": jp.zeros_like(data.qpos[2]),
+    #      "feet_clearance": jp.zeros_like(data.qpos[2]),
+    #      "feet_height": jp.zeros_like(data.qpos[2]),
+    #      "feet_air_time": jp.zeros_like(data.qpos[2]),
+    #      "feet_phase": jp.zeros_like(data.qpos[2]),
+    #      # Other rewards.
+    #      "alive": jp.ones_like(data.qpos[2]),#self._reward_alive(),
+    #      "termination": jp.zeros_like(data.qpos[2]),
+    #      "stand_still": jp.zeros_like(data.qpos[2]),
+    #      # Pose related rewards.
+    #      "joint_deviation_hip": jp.zeros_like(data.qpos[2]),
+    #      "joint_deviation_knee": jp.zeros_like(data.qpos[2]),
+    #      "dof_pos_limits": jp.zeros_like(data.qpos[2]),
+    #      "pose": jp.zeros_like(data.qpos[2]),
+    #  }
 
   # Tracking rewards.
 
@@ -645,6 +714,22 @@ class Joystick(x02_base.X02Base):
     # cmd_norm = jp.linalg.norm(commands)
     # reward *= cmd_norm > 0.1  # No reward for zero commands.
     return reward
+
+  def _reward_flat_foot(
+      self,
+      data: mjx.Data
+  ) -> jax.Array:
+    foot_xmat = data.site_xmat[self._feet_site_id]
+    foot_zaxis = foot_xmat[:, 2, :]
+    zaxis_error = jp.sum(jp.square(foot_zaxis - jp.array([0, 0, 1])), axis=-1)
+    return jp.sum(jp.exp(-zaxis_error / 0.1))
+
+  def _reward_horizontal_foot_clearance(self, data: mjx.Data) -> jax.Array:
+    foot_pos = data.site_xpos[self._feet_site_id]
+    foot_xy = foot_pos[:, :2]
+    horizontal_foot_distance = jp.sum(jp.square(foot_xy), axis=-1)
+    too_close = horizontal_foot_distance < self._config.reward_config.minimal_horizontal_foot_clearance
+    return -jp.sum(too_close * (self._config.reward_config.minimal_horizontal_foot_clearance - horizontal_foot_distance))
 
   def sample_command(self, rng: jax.Array) -> jax.Array:
     rng1, rng2, rng3, rng4 = jax.random.split(rng, 4)

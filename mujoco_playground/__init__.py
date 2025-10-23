@@ -20,6 +20,7 @@ from mujoco_playground._src import registry
 from mujoco_playground._src import wrapper
 from mujoco_playground._src import wrapper_torch
 # pylint: disable=g-importing-member
+from mujoco_playground._src.mjx_env import init
 from mujoco_playground._src.mjx_env import MjxEnv
 from mujoco_playground._src.mjx_env import render_array
 from mujoco_playground._src.mjx_env import State
@@ -29,6 +30,7 @@ from mujoco_playground._src.mjx_env import step
 
 __all__ = [
     "dm_control_suite",
+    "init",
     "locomotion",
     "manipulation",
     "MjxEnv",

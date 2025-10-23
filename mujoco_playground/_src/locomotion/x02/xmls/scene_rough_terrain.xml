@@ -1,9 +1,10 @@
-<mujoco model="wolves-op feet only rough terrain scene">
-  <include file="wolvesop_mjx_feetonly.xml"/>
+<mujoco model="x2 scene">
 
   <statistic center="0 0 0.1" extent="0.8" meansize="0.04"/>
+  
 
   <visual>
+    <headlight diffuse=".8 .8 .8" ambient=".2 .2 .2" specular="1 1 1"/>
     <rgba force="1 0 0 1"/>
     <global azimuth="120" elevation="-20"/>
     <map force="0.01"/>
@@ -23,15 +24,16 @@
       friction="1.0"/>
   </worldbody>
 
+  <include file="x2_feetonly.xml"/>
   <keyframe>
     <key name="home"
       qpos="
-    0 0 0.56
-    1 0 0 0
-    0.023628265148262724 -0.10401795710581162 -0.7352626990449959 -1.3228415184260092 0.5495038397740458 -0.12913515511895796 
-    -0.016441795868928723 0.07253788412595062 0.7420808433462046 1.334527650998329 -0.5537397918567754 0.07437380704149316"
+    0 0 0.85
+    0.9987503 0 0.0499792 0
+    0.0 0.00 0.4 -0.8 0.4
+    0.0 0.00 0.4 -0.8 0.4"
       ctrl="
-    0 0 0 0 0 0
-    0 0 0 0 0 0"/>
+    0.0 0.00 0.4 -0.8 0.4
+    0.0 0.00 0.4 -0.8 0.4"/>
   </keyframe>
 </mujoco>

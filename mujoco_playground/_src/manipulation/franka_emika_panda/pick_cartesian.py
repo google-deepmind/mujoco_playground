@@ -25,6 +25,7 @@ import mujoco
 from mujoco import mjx
 import numpy as np
 
+from mujoco_playground._src import collision
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.franka_emika_panda import panda
 from mujoco_playground._src.manipulation.franka_emika_panda import panda_kinematics
@@ -74,9 +75,6 @@ def default_config():
       box_init_range=0.05,
       success_threshold=0.05,
       action_history_length=1,
-      impl='jax',
-      nconmax=12 * 8192,
-      njmax=128,
   )
   return config
 
@@ -117,20 +115,11 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     mj_model.opt.timestep = config.sim_dt
 
     self._mj_model = mj_model
-    self._mjx_model = mjx.put_model(mj_model, impl=self._config.impl)
+    self._mjx_model = mjx.put_model(mj_model)
 
     # Set gripper in sight of camera
     self._post_init(obj_name='box', keyframe='low_home')
     self._box_geom = self._mj_model.geom('box').id
-
-    # Contact sensor ID.
-    self._box_hand_found_sensor = self._mj_model.sensor('box_hand_found').id
-
-    # Contact sensor IDs.
-    self._floor_hand_found_sensor = [
-        self._mj_model.sensor(f"{geom}_floor_found").id
-        for geom in ["left_finger_pad", "right_finger_pad", "hand_capsule"]
-    ]
 
     if self._vision:
       try:
@@ -203,14 +192,11 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
         .at[self._obj_qposadr : self._obj_qposadr + 3]
         .set(box_pos)
     )
-    data = mjx_env.make_data(
-        self._mj_model,
-        qpos=init_q,
-        qvel=jp.zeros(self._mjx_model.nv, dtype=float),
+    data = mjx_env.init(
+        self._mjx_model,
+        init_q,
+        jp.zeros(self._mjx_model.nv, dtype=float),
         ctrl=self._init_ctrl,
-        impl=self._mjx_model.impl.value,
-        nconmax=self._config.nconmax,
-        njmax=self._config.njmax,
     )
 
     target_quat = jp.array([1.0, 0.0, 0.0, 0.0], dtype=float)
@@ -230,8 +216,6 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
             f'reward/{k}': 0.0
             for k in self._config.reward_config.reward_scales.keys()
         },
-        'reward/success': jp.array(0.0),
-        'reward/lifted': jp.array(0.0),
     }
 
     info = {
@@ -306,10 +290,8 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     swapped_data = state.data.replace(
         qpos=self._guide_q, ctrl=self._guide_ctrl
     )  # help hit the terminal sparse reward.
-    data = jax.tree_util.tree_map_with_path(
-        lambda path, x, y: ((1 - to_sample) * x + to_sample * y).astype(x.dtype)
-        if len(path) == 1
-        else x,
+    data = jax.tree_util.tree_map(
+        lambda x, y: (1 - to_sample) * x + to_sample * y,
         state.data,
         swapped_data,
     )
@@ -337,10 +319,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     }
 
     # Penalize collision with box.
-    hand_box = (
-        data.sensordata[self._mj_model.sensor_adr[self._box_hand_found_sensor]]
-        > 0
-    )
+    hand_box = collision.geoms_colliding(data, self._box_geom, self._hand_geom)
     raw_rewards['no_box_collision'] = jp.where(hand_box, 0.0, 1.0)
 
     total_reward = jp.clip(sum(rewards.values()), -1e4, 1e4)
@@ -354,8 +333,9 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
 
     # Sparse rewards
     box_pos = data.xpos[self._obj_body]
-    lifted = (box_pos[2] > 0.05) * self._config.reward_config.lifted_reward
-    total_reward += lifted
+    total_reward += (
+        box_pos[2] > 0.05
+    ) * self._config.reward_config.lifted_reward
     success = self._get_success(data, state.info)
     total_reward += success * self._config.reward_config.success_reward
 
@@ -372,10 +352,6 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     out_of_bounds |= box_pos[2] < 0.0
     state.metrics.update(out_of_bounds=out_of_bounds.astype(float))
     state.metrics.update({f'reward/{k}': v for k, v in raw_rewards.items()})
-    state.metrics.update({
-        'reward/lifted': lifted.astype(float),
-        'reward/success': success.astype(float),
-    })
 
     done = (
         out_of_bounds

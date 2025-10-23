@@ -22,15 +22,15 @@ ROOT_PATH = mjx_env.ROOT_PATH / "locomotion" / "x02"
 FEET_ONLY_FLAT_TERRAIN_XML = (
     ROOT_PATH / "xmls" / "scene.xml"
 )
-#FEET_ONLY_ROUGH_TERRAIN_XML = (
-#    ROOT_PATH / "xmls" / "scene_mjx_feetonly_rough_terrain.xml"
-#)
+FEET_ONLY_ROUGH_TERRAIN_XML = (
+   ROOT_PATH / "xmls" / "scene_rough_terrain.xml"
+)
 
 
 def task_to_xml(task_name: str) -> epath.Path:
   return {
       "flat_terrain": FEET_ONLY_FLAT_TERRAIN_XML,
-      #"rough_terrain": FEET_ONLY_ROUGH_TERRAIN_XML,
+      "rough_terrain": FEET_ONLY_ROUGH_TERRAIN_XML,
   }[task_name]
 
 
@@ -40,11 +40,33 @@ FEET_SITES = [
 ]
 
 LEFT_FEET_GEOMS = [
-    "l_foot_bb",
+    "l_foot00",
+    #"l_foot01",
+    #"l_foot02",
+    #"l_foot03",
+    #"l_foot04",
+    #"l_foot05",
+    #"l_foot06",
+    #"l_foot07",
+    #"l_foot08",
+    #"l_foot09",
+    #"l_foot10",
+    #"l_foot11",
 ]
 
 RIGHT_FEET_GEOMS = [
-    "r_foot_bb",
+    "r_foot00",
+    #"r_foot01",
+    #"r_foot02",
+    #"r_foot03",
+    #"r_foot04",
+    #"r_foot05",
+    #"r_foot06",
+    #"r_foot07",
+    #"r_foot08",
+    #"r_foot09",
+    #"r_foot10",
+    #"r_foot11",
 ]
 
 FEET_GEOMS = LEFT_FEET_GEOMS + RIGHT_FEET_GEOMS

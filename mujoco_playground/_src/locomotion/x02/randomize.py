@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Domain randomization for the Berkeley Humanoid environment."""
+"""Domain randomization for the X02 environment."""
 
 import jax
 from mujoco import mjx
@@ -66,11 +66,55 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
         + jax.random.uniform(key, shape=(10,), minval=-0.05, maxval=0.05)
     )
 
+    # Scale damping: *U(0.95, 1.05).
+    rng, key = jax.random.split(rng)
+    damping = model.dof_damping[6:] * jax.random.uniform(
+        key, shape=(10,), minval=0.95, maxval=1.05
+    )
+    dof_damping = model.dof_damping.at[6:].set(damping)
+
+    # Scale actuator kp: *U(0.5, 5.0).
+    rng, key = jax.random.split(rng)
+    noise = jax.random.uniform(
+        key, shape=(10,), minval=0.5, maxval=5.0
+    )
+    actuator_gain = model.actuator_gainprm.at[:, 0].set(model.actuator_gainprm[:, 0] * noise)
+    actuator_bias = model.actuator_biasprm.at[:, 1].set(model.actuator_biasprm[:, 1] * noise)
+
+    # Scale actuator kv: *U(0.5, 2.0).
+    rng, key = jax.random.split(rng)
+    noise = jax.random.uniform(
+        key, shape=(10,), minval=0.5, maxval=2.0
+    )
+    actuator_bias = actuator_bias.at[:, 2].set(actuator_bias[:,2] * noise)
+
+    # Randomize com of torso: +U(-0.07, 0.07).
+    rng, key = jax.random.split(rng)
+    com_offset = jax.random.uniform(
+        key, shape=(3,), minval=-0.07, maxval=0.07
+    )
+    body_com = model.body_ipos.at[TORSO_BODY_ID].set(
+        model.body_ipos[TORSO_BODY_ID] + com_offset
+    )
+
+    # Randomize all coms: +U(-0.01, 0.01).
+    rng, key = jax.random.split(rng)
+    com_offset = jax.random.uniform(
+        key, shape=(model.nbody, 3), minval=-0.01, maxval=0.01
+    )
+    body_com = body_com.at[:].set(
+        body_com + com_offset
+    )
+
     return (
         geom_friction,
         dof_frictionloss,
         dof_armature,
+        dof_damping,
+        actuator_gain,
+        actuator_bias,
         body_mass,
+        body_com,
         qpos0,
     )
 
@@ -78,7 +122,11 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
       friction,
       frictionloss,
       armature,
+      damping,
+      actuator_gain,
+      actuator_bias,
       body_mass,
+      body_com,
       qpos0,
   ) = rand_dynamics(rng)
 
@@ -87,7 +135,11 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
       "geom_friction": 0,
       "dof_frictionloss": 0,
       "dof_armature": 0,
+      "dof_damping": 0,
+      "actuator_gainprm": 0,
+      "actuator_biasprm": 0,
       "body_mass": 0,
+      "body_ipos": 0,
       "qpos0": 0,
   })
 
@@ -95,7 +147,11 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
       "geom_friction": friction,
       "dof_frictionloss": frictionloss,
       "dof_armature": armature,
+      "dof_damping": damping,
+      "actuator_gainprm": actuator_gain,
+      "actuator_biasprm": actuator_bias,
       "body_mass": body_mass,
+      "body_ipos": body_com,
       "qpos0": qpos0,
   })
 

@@ -14,14 +14,12 @@
 # ==============================================================================
 """RL config for Manipulation envs."""
 
-from typing import Optional
 from ml_collections import config_dict
+
 from mujoco_playground._src import manipulation
 
 
-def brax_ppo_config(
-    env_name: str, impl: Optional[str] = None
-) -> config_dict.ConfigDict:
+def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
   """Returns tuned Brax PPO config for the given environment."""
   env_config = manipulation.get_default_config(env_name)
 
@@ -36,11 +34,10 @@ def brax_ppo_config(
           policy_obs_key="state",
           value_obs_key="state",
       ),
-      num_resets_per_eval=10,
   )
   if env_name == "AlohaHandOver":
     rl_config.num_timesteps = 100_000_000
-    rl_config.num_evals = 25
+    rl_config.num_evals = int(rl_config.num_timesteps / 4_000_000)
     rl_config.unroll_length = 15
     rl_config.num_minibatches = 32
     rl_config.num_updates_per_batch = 8
@@ -64,9 +61,6 @@ def brax_ppo_config(
     rl_config.num_envs = 1024
     rl_config.batch_size = 512
     rl_config.network_factory.policy_hidden_layer_sizes = (256, 256, 256, 256)
-    if impl == "warp":
-      rl_config.num_timesteps *= 3
-      rl_config.num_evals *= 3
   elif env_name == "PandaOpenCabinet":
     rl_config.num_timesteps = 40_000_000
     rl_config.num_evals = 4
@@ -79,6 +73,7 @@ def brax_ppo_config(
     rl_config.num_envs = 2048
     rl_config.batch_size = 512
     rl_config.network_factory.policy_hidden_layer_sizes = (32, 32, 32, 32)
+    rl_config.num_resets_per_eval = 1
   elif env_name == "PandaPickCubeCartesian":
     rl_config.num_timesteps = 5_000_000
     rl_config.num_evals = 5
@@ -94,9 +89,6 @@ def brax_ppo_config(
     rl_config.network_factory.policy_hidden_layer_sizes = (256, 256)
     rl_config.num_resets_per_eval = 1
     rl_config.max_grad_norm = 1.0
-    if impl == "warp":
-      rl_config.num_timesteps *= 4
-      rl_config.num_evals *= 4
   elif env_name.startswith("PandaPickCube"):
     rl_config.num_timesteps = 20_000_000
     rl_config.num_evals = 4
@@ -109,9 +101,6 @@ def brax_ppo_config(
     rl_config.num_envs = 2048
     rl_config.batch_size = 512
     rl_config.network_factory.policy_hidden_layer_sizes = (32, 32, 32, 32)
-    if impl == "warp":
-      rl_config.num_timesteps *= 4
-      rl_config.num_evals *= 4
   elif env_name == "PandaRobotiqPushCube":
     rl_config.num_timesteps = 1_800_000_000
     rl_config.num_evals = 10
@@ -126,10 +115,6 @@ def brax_ppo_config(
     rl_config.num_resets_per_eval = 1
     rl_config.num_eval_envs = 32
     rl_config.network_factory.policy_hidden_layer_sizes = (64, 64, 64, 64)
-    if impl == "warp":
-      rl_config.num_resets_per_eval = 10
-      rl_config.num_timesteps = int(rl_config.num_timesteps * 1.5)
-      rl_config.num_evals = int(rl_config.num_evals * 1.5)
   elif env_name == "LeapCubeRotateZAxis":
     rl_config.num_timesteps = 100_000_000
     rl_config.num_evals = 10
@@ -172,9 +157,7 @@ def brax_ppo_config(
   return rl_config
 
 
-def brax_vision_ppo_config(
-    env_name: str, unused_impl: Optional[str] = None
-) -> config_dict.ConfigDict:
+def brax_vision_ppo_config(env_name: str) -> config_dict.ConfigDict:
   """Returns tuned Brax Vision PPO config for the given environment."""
   env_config = manipulation.get_default_config(env_name)
 
@@ -188,7 +171,6 @@ def brax_vision_ppo_config(
       network_factory=config_dict.create(
           policy_hidden_layer_sizes=(32, 32, 32, 32)
       ),
-      num_resets_per_eval=10,
   )
 
   if env_name == "PandaPickCubeCartesian":
@@ -210,7 +192,7 @@ def brax_vision_ppo_config(
   return rl_config
 
 
-def rsl_rl_config(env_name: str, unused_impl: Optional[str] = None) -> config_dict.ConfigDict:  # pylint: disable=unused-argument
+def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:  # pylint: disable=unused-argument
   """Returns tuned RSL-RL PPO config for the given environment."""
 
   rl_config = config_dict.create(
