@@ -63,15 +63,9 @@ class Go1Env(mjx_env.MjxEnv):
     self._mj_model.vis.global_.offwidth = 3840
     self._mj_model.vis.global_.offheight = 2160
 
-    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
+    self._mjx_model = mjx.put_model(self._mj_model)
     self._xml_path = xml_path
     self._imu_site_id = self._mj_model.site("imu").id
-
-    # Contact sensor ids.
-    self._feet_floor_found_sensor = [
-        self._mj_model.sensor(f"{geom}_floor_found").id
-        for geom in consts.FEET_GEOMS
-    ]
 
   # Sensor readings.
 

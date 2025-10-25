@@ -25,6 +25,7 @@ import numpy as np
 
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
+from mujoco_playground._src.collision import geoms_colliding
 from mujoco_playground._src.locomotion.t1 import base as t1_base
 from mujoco_playground._src.locomotion.t1 import t1_constants as consts
 
@@ -94,9 +95,6 @@ def default_config() -> config_dict.ConfigDict:
       lin_vel_x=[-1.0, 1.0],
       lin_vel_y=[-0.8, 0.8],
       ang_vel_yaw=[-1.0, 1.0],
-      impl="jax",
-      nconmax=8 * 8192,
-      njmax=80,
   )
 
 
@@ -109,9 +107,6 @@ class Joystick(t1_base.T1Env):
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
-    if task.startswith("rough"):
-      config.nconmax = 100 * 8192
-      config.njmax = 500
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
         config=config,
@@ -185,19 +180,6 @@ class Joystick(t1_base.T1Env):
     self._left_foot_box_geom_id = self._mj_model.geom("left_foot").id
     self._right_foot_box_geom_id = self._mj_model.geom("right_foot").id
 
-    # Contact sensor IDs.
-    self._left_foot_floor_found_sensor = [
-        self._mj_model.sensor(f"left_foot_{i}_floor_found").id
-        for i in range(1, 5)
-    ]
-    self._right_foot_floor_found_sensor = [
-        self._mj_model.sensor(f"right_foot_{i}_floor_found").id
-        for i in range(1, 5)
-    ]
-    self._left_foot_right_foot_found_sensor = self._mj_model.sensor(
-        "left_foot_right_foot_found"
-    ).id
-
   def _reset_if_outside_bounds(self, state: mjx_env.State) -> mjx_env.State:
     qpos = state.data.qpos
     new_x = jp.where(jp.abs(qpos[0]) > 9.5, 0.0, qpos[0])
@@ -232,16 +214,7 @@ class Joystick(t1_base.T1Env):
         jax.random.uniform(key, (6,), minval=-0.5, maxval=0.5)
     )
 
-    data = mjx_env.make_data(
-        self.mj_model,
-        qpos=qpos,
-        qvel=qvel,
-        ctrl=qpos[7:],
-        impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
-        njmax=self._config.njmax,
-    )
-    data = mjx.forward(self.mjx_model, data)
+    data = mjx_env.init(self.mjx_model, qpos=qpos, qvel=qvel, ctrl=qpos[7:])
 
     # Phase, freq=U(1.25, 1.75)
     rng, key = jax.random.split(rng)
@@ -288,12 +261,12 @@ class Joystick(t1_base.T1Env):
     metrics["swing_peak"] = jp.zeros(())
 
     left_feet_contact = jp.array([
-        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
-        for sensorid in self._left_foot_floor_found_sensor
+        geoms_colliding(data, geom_id, self._floor_geom_id)
+        for geom_id in self._left_feet_geom_id
     ])
     right_feet_contact = jp.array([
-        data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
-        for sensorid in self._right_foot_floor_found_sensor
+        geoms_colliding(data, geom_id, self._floor_geom_id)
+        for geom_id in self._right_feet_geom_id
     ])
     contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
 
@@ -340,12 +313,12 @@ class Joystick(t1_base.T1Env):
     )
 
     left_feet_contact = jp.array([
-        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
-        for sensor_id in self._left_foot_floor_found_sensor
+        geoms_colliding(data, geom_id, self._floor_geom_id)
+        for geom_id in self._left_feet_geom_id
     ])
     right_feet_contact = jp.array([
-        data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
-        for sensor_id in self._right_foot_floor_found_sensor
+        geoms_colliding(data, geom_id, self._floor_geom_id)
+        for geom_id in self._right_feet_geom_id
     ])
     contact = jp.hstack([jp.any(left_feet_contact), jp.any(right_feet_contact)])
     contact_filt = contact | state.info["last_contact"]
@@ -640,11 +613,8 @@ class Joystick(t1_base.T1Env):
     return jp.array(1.0)
 
   def _cost_collision(self, data: mjx.Data) -> jax.Array:
-    return jp.array(
-        data.sensordata[
-            self._mj_model.sensor_adr[self._left_foot_right_foot_found_sensor]
-        ]
-        > 0
+    return geoms_colliding(
+        data, self._left_foot_box_geom_id, self._right_foot_box_geom_id
     )
 
   # Pose-related rewards.

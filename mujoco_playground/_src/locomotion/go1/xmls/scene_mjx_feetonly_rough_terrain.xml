@@ -15,15 +15,13 @@
     <!-- https://polyhaven.com/a/rock_face -->
     <texture type="2d" name="groundplane" file="assets/rocky_texture.png"/>
     <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance=".8"/>
-    <hfield name="hfield" file="assets/hfield.png" size="10 10 .05 1.0"/>
+    <hfield name="hfield" file="assets/hfield.png" size="10 10 .05 0.1"/>
   </asset>
 
   <worldbody>
     <geom name="floor" type="hfield" hfield="hfield" material="groundplane" contype="1" conaffinity="0" priority="1"
       friction="1.0"/>
   </worldbody>
-
-  <include file="sensor_feet.xml"/>
 
   <keyframe>
     <key name="home" qpos="

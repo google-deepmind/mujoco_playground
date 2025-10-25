@@ -17,7 +17,6 @@
 from collections import deque
 import functools
 import os
-from typing import Any
 
 import jax
 import numpy as np
@@ -32,10 +31,6 @@ except ImportError:
   torch = None
 
 from mujoco_playground._src import wrapper
-try:
-  from tensordict import TensorDict  # pytype: disable=import-error
-except ImportError:
-  TensorDict = None
 
 
 def _jax_to_torch(tensor):
@@ -163,10 +158,8 @@ class RSLRLBraxWrapper(VecEnv):
     if self.asymmetric_obs:
       obs = _jax_to_torch(self.env_state.obs["state"])
       critic_obs = _jax_to_torch(self.env_state.obs["privileged_state"])
-      obs = {"state": obs, "privileged_state": critic_obs}
     else:
       obs = _jax_to_torch(self.env_state.obs)
-      obs = {"state": obs}
     reward = _jax_to_torch(self.env_state.reward)
     done = _jax_to_torch(self.env_state.done)
     info = self.env_state.info
@@ -194,7 +187,6 @@ class RSLRLBraxWrapper(VecEnv):
       if k not in info_ret["log"]:
         info_ret["log"][k] = _jax_to_torch(v).float().mean().item()
 
-    obs = TensorDict(obs, batch_size=[self.num_envs])
     return obs, reward, done, info_ret
 
   def reset(self):
@@ -203,15 +195,23 @@ class RSLRLBraxWrapper(VecEnv):
 
     if self.asymmetric_obs:
       obs = _jax_to_torch(self.env_state.obs["state"])
-      critic_obs = _jax_to_torch(self.env_state.obs["privileged_state"])
-      obs = {"state": obs, "privileged_state": critic_obs}
+      # critic_obs = jax_to_torch(self.env_state.obs["privileged_state"])
     else:
       obs = _jax_to_torch(self.env_state.obs)
-      obs = {"state": obs}
-    return TensorDict(obs, batch_size=[self.num_envs])
+    return obs
+
+  def reset_with_critic_obs(self):
+    self.env_state = self.reset_fn(self.key_reset)
+    obs = _jax_to_torch(self.env_state.obs["state"])
+    critic_obs = _jax_to_torch(self.env_state.obs["privileged_state"])
+    return obs, critic_obs
 
   def get_observations(self):
-   return self.reset()
+    if self.asymmetric_obs:
+      obs, critic_obs = self.reset_with_critic_obs()
+      return obs, {"observations": {"critic": critic_obs}}
+    else:
+      return self.reset(), {"observations": {}}
 
   def render(self, mode="human"):  # pylint: disable=unused-argument
     if self.render_callback is not None:

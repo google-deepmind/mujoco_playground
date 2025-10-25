@@ -14,14 +14,12 @@
 # ==============================================================================
 """RL config for DM Control Suite."""
 
-from typing import Optional
 from ml_collections import config_dict
+
 from mujoco_playground._src import dm_control_suite
 
 
-def brax_ppo_config(
-    env_name: str, impl: Optional[str] = None
-) -> config_dict.ConfigDict:
+def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
   """Returns tuned Brax PPO config for the given environment."""
   env_config = dm_control_suite.get_default_config(env_name)
 
@@ -40,7 +38,6 @@ def brax_ppo_config(
       entropy_cost=1e-2,
       num_envs=2048,
       batch_size=1024,
-      num_resets_per_eval=10,
   )
 
   if env_name.startswith("AcrobotSwingup"):
@@ -60,9 +57,7 @@ def brax_ppo_config(
   return rl_config
 
 
-def brax_vision_ppo_config(
-    env_name: str, unused_impl: Optional[str] = None
-) -> config_dict.ConfigDict:
+def brax_vision_ppo_config(env_name: str) -> config_dict.ConfigDict:
   """Returns tuned Brax Vision PPO config for the given environment."""
   env_config = dm_control_suite.get_default_config(env_name)
 
@@ -85,7 +80,6 @@ def brax_vision_ppo_config(
       num_eval_envs=1024,
       batch_size=256,
       max_grad_norm=1.0,
-      num_resets_per_eval=10,
   )
 
   if env_name != "CartpoleBalance":
@@ -94,9 +88,7 @@ def brax_vision_ppo_config(
   return rl_config
 
 
-def brax_sac_config(
-    env_name: str, unused_impl: Optional[str] = None
-) -> config_dict.ConfigDict:
+def brax_sac_config(env_name: str) -> config_dict.ConfigDict:
   """Returns tuned Brax SAC config for the given environment."""
   env_config = dm_control_suite.get_default_config(env_name)
 
@@ -117,7 +109,6 @@ def brax_sac_config(
       network_factory=config_dict.create(
           q_network_layer_norm=True,
       ),
-      num_resets_per_eval=10,
   )
 
   if env_name == "PendulumSwingUp":
