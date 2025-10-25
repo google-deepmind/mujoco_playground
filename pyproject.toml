@@ -23,16 +23,14 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "brax>=0.12.5",
+    "brax>=0.12.1",
     "etils",
     "flax",
     "jax",
     "lxml",
-    "mediapy",
     "ml_collections",
-    "mujoco-mjx>=3.3.6.dev",
-    "mujoco>=3.3.6.dev",
-    "orbax-checkpoint>=0.11.22",
+    "mujoco-mjx>=3.2.7",
+    "mujoco>=3.2.7",
     "tqdm",
     "mediapy>=1.2.4",
     "wandb>=0.20.1",
@@ -42,25 +40,7 @@ dependencies = [
 ]
 keywords = ["mjx", "mujoco", "sim2real", "reinforcement learning"]
 
-[[tool.uv.index]]
-name = "mujoco"
-url = "https://py.mujoco.org"
-explicit = true
-
-[[tool.uv.index]]
-name = "nvidia"
-url = "https://pypi.nvidia.com"
-explicit = true
-
-[tool.uv.sources]
-mujoco = { index = "mujoco" }
-warp-lang = { index = "nvidia" }
-mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "main", subdirectory = "mjx" }
-
 [project.optional-dependencies]
-warp = [
-    "warp-lang>=1.9.0.dev",
-]
 test = [
     "absl-py",
     "dm_control",
@@ -69,7 +49,9 @@ test = [
 ]
 notebooks = [
     "matplotlib",
+    "mediapy",
     "jupyter",
+    "wandb",
 ]
 dev = [
     "playground[test]",
@@ -81,19 +63,10 @@ dev = [
     "pylint",
     "pytest-xdist",
 ]
-learning = [
-    "rsl-rl-lib>=3.0.0",
-    "wandb",
-]
 all = [
     "playground[dev]",
-    "playground[warp]",
     "playground[notebooks]",
-    "playground[learning]",
 ]
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["mujoco_playground"]
