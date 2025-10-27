@@ -10,7 +10,7 @@ from mujoco import mjx
 from mujoco_playground._src import mjx_env
 
 class Go2Env(mjx_env.MjxEnv):
-    """Base class for Spot environments."""
+    """Base class for Go2 environments."""
 
     def __init__(
         self,
