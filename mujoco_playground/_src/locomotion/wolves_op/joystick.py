@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Joystick task for Berkeley Humanoid."""
+"""Joystick task for WolvesOP Humanoid."""
 
 from typing import Any, Dict, Optional, Union
 
@@ -26,8 +26,8 @@ import numpy as np
 from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.collision import geoms_colliding
-from mujoco_playground._src.locomotion.wolfgang import base as wolfgang_base
-from mujoco_playground._src.locomotion.wolfgang import wolfgang_constants as consts
+from mujoco_playground._src.locomotion.wolves_op import base as wolvesop_base
+from mujoco_playground._src.locomotion.wolves_op import wolvesop_constants as consts
 
 
 def default_config() -> config_dict.ConfigDict:
@@ -97,7 +97,7 @@ def default_config() -> config_dict.ConfigDict:
   )
 
 
-class Joystick(wolfgang_base.WolfgangEnv):
+class Joystick(wolvesop_base.WolvesOPEnv):
   """Track a joystick command."""
 
   def __init__(

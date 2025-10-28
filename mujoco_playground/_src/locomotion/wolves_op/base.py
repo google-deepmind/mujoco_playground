@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Base classes for Berkeley Humanoid."""
+"""Base classes for WolvesOP Humanoid."""
 
 from typing import Any, Dict, Optional, Union
 
@@ -24,21 +24,21 @@ import mujoco
 from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.locomotion.wolfgang import wolfgang_constants as consts
+from mujoco_playground._src.locomotion.wolves_op import wolvesop_constants as consts
 
 
 def get_assets() -> Dict[str, bytes]:
   assets = {}
   mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml")
   mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls" / "assets")
-  path = mjx_env.MENAGERIE_PATH / "wolfgang"
+  path = mjx_env.MENAGERIE_PATH / "wolvesop"
   mjx_env.update_assets(assets, path, "*.xml")
   mjx_env.update_assets(assets, path / "assets")
   return assets
 
 
-class WolfgangEnv(mjx_env.MjxEnv):
-  """Base class for Wolfgang environments."""
+class WolvesOPEnv(mjx_env.MjxEnv):
+  """Base class for WolvesOP environments."""
 
   def __init__(
       self,
