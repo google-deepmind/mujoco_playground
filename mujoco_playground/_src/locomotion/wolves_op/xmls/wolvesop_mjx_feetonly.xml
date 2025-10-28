@@ -2,7 +2,39 @@
   <compiler angle="radian" />
 
 
-<!-- TODO remove collisions from everything except the feet! -->
+  <option iterations="3" ls_iterations="5" timestep="0.002" integrator="Euler">
+    <flag eulerdamp="disable"/>
+  </option>
+
+
+  <!-- TODO remove collisions from everything except the feet! -->
+
+  <default>
+    <default class="humanoid">
+
+      <default class="collision">
+        <geom group="3" contype="1" conaffinity="1" />
+      </default>
+      <default class="visual">
+        <geom contype="0" conaffinity="0" group="2" />
+      </default>
+
+      <!-- Motorklassen mit unterschiedlichen Stärken ! -->
+      <default class="mx106">
+        <joint damping="1.7" armature="0.025" frictionloss="0.1" />
+        <position kp="21.0" ctrlrange="-3.141592 3.141592" forcerange="-8.4 8.4" />
+      </default>
+      <default class="mx64">
+        <joint damping="0.66" armature="0.012" frictionloss="0.09" />
+        <position kp="12.5" ctrlrange="-3.141592 3.141592" forcerange="-6 6" />
+      </default>
+      <default class="xh-540">
+        <joint damping="1.7" armature="0.025" frictionloss="0.1" />
+        <position kp="21.0" ctrlrange="-3.141592 3.141592" forcerange="-8.4 8.4" />
+      </default>
+      <site size="0.01" rgba="1 0 0 1" group="4"/>
+    </default>
+  </default>
 
   <visual>
     <headlight ambient="1 1 1" diffuse="1 1 1" specular="1 1 1" />
@@ -10,404 +42,219 @@
 
   <asset>
     <mesh name="base_link" content_type="model/stl" file="stls/base_link.stl" scale="0.001 0.001 0.001" />
-    <mesh name="25_Orin_Baseplate_v14_1" content_type="model/stl" file="stls/25_Orin_Baseplate_v14_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="08_upper_body_cage_v2_1" content_type="model/stl" file="stls/08_upper_body_cage_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="09_lower_body_cage_v2_1" content_type="model/stl" file="stls/09_lower_body_cage_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="30_Powerboard_Holder_v31_1" content_type="model/stl"
-      file="stls/30_Powerboard_Holder_v31_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2__6__1" content_type="model/stl"
-      file="stls/MX64_body_modified_v2__6__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2__7__1" content_type="model/stl"
-      file="stls/MX64_body_modified_v2__7__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2__1__1" content_type="model/stl"
-      file="stls/MX64_body_modified_v2__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="12a_hip_servo_spacer_v1_1" content_type="model/stl"
-      file="stls/12a_hip_servo_spacer_v1_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="12a_hip_servo_spacer_v1__1__1" content_type="model/stl"
-      file="stls/12a_hip_servo_spacer_v1__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="12a_hip_servo_spacer_v1__3__1" content_type="model/stl"
-      file="stls/12a_hip_servo_spacer_v1__3__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="12a_hip_servo_spacer_v1__2__1" content_type="model/stl"
-      file="stls/12a_hip_servo_spacer_v1__2__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__4__1" content_type="model/stl" file="stls/MX-106_v2__4__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__5__1" content_type="model/stl" file="stls/MX-106_v2__5__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="17_knee_joint_connector_new_v2__2__1" content_type="model/stl"
-      file="stls/17_knee_joint_connector_new_v2__2__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="17_knee_joint_connector_new_v2__3__1" content_type="model/stl"
-      file="stls/17_knee_joint_connector_new_v2__3__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="17_knee_joint_connector_new_v2_1" content_type="model/stl"
-      file="stls/17_knee_joint_connector_new_v2_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__11__1" content_type="model/stl" file="stls/MX-106_v2__11__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__12__1" content_type="model/stl" file="stls/HN05-i1_v1__12__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__12__1" content_type="model/stl" file="stls/HN05-N101_v1__12__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__13__1" content_type="model/stl" file="stls/HN05-i1_v1__13__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__13__1" content_type="model/stl" file="stls/HN05-N101_v1__13__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="18_lower_leg_v2__1__1" content_type="model/stl" file="stls/18_lower_leg_v2__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="18_lower_leg_v2__3__1" content_type="model/stl" file="stls/18_lower_leg_v2__3__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="upper_leg_spacer_short_X_v1_1" content_type="model/stl"
-      file="stls/upper_leg_spacer_short_X_v1_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="upper_leg_spacer_short_X_v1__1__1" content_type="model/stl"
-      file="stls/upper_leg_spacer_short_X_v1__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="19_lower_leg_front_spacer_v2__1__1" content_type="model/stl"
-      file="stls/19_lower_leg_front_spacer_v2__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="19_lower_leg_front_spacer_v2_1" content_type="model/stl"
-      file="stls/19_lower_leg_front_spacer_v2_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="18_lower_leg_v2_1" content_type="model/stl" file="stls/18_lower_leg_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="18_lower_leg_v2__2__1" content_type="model/stl" file="stls/18_lower_leg_v2__2__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__15__1" content_type="model/stl" file="stls/HN05-N101_v1__15__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__14__1" content_type="model/stl" file="stls/HN05-N101_v1__14__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1_1" content_type="model/stl" file="stls/HN05-i1_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__1__1" content_type="model/stl" file="stls/HN05-i1_v1__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__9__1" content_type="model/stl" file="stls/MX-106_v2__9__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__8__1" content_type="model/stl" file="stls/MX-106_v2__8__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1_1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1__1__1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1__3__1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1__3__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1__2__1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1__2__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2_1" content_type="model/stl" file="stls/MX-106_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__1__1" content_type="model/stl" file="stls/MX-106_v2__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1_1" content_type="model/stl" file="stls/HN05-N101_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__1__1" content_type="model/stl" file="stls/HN05-N101_v1__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="13_thrust_bearing_v2_1" content_type="model/stl" file="stls/13_thrust_bearing_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="13_thrust_bearing_v2__1__1" content_type="model/stl"
-      file="stls/13_thrust_bearing_v2__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__2__1" content_type="model/stl" file="stls/HN05-i1_v1__2__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__3__1" content_type="model/stl" file="stls/HN05-i1_v1__3__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="21_ankle_bend_v2_1" content_type="model/stl" file="stls/21_ankle_bend_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="21_ankle_bend_v2__1__1" content_type="model/stl" file="stls/21_ankle_bend_v2__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="23_foot_plate_right_v2_1" content_type="model/stl"
-      file="stls/23_foot_plate_right_v2_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="22_foot_plate_left_v2_1" content_type="model/stl" file="stls/22_foot_plate_left_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__2__1" content_type="model/stl" file="stls/HN05-N101_v1__2__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__3__1" content_type="model/stl" file="stls/HN05-N101_v1__3__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__4__1" content_type="model/stl" file="stls/HN05-N101_v1__4__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2_1" content_type="model/stl" file="stls/MX64_body_modified_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__5__1" content_type="model/stl" file="stls/HN05-N101_v1__5__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__14__1" content_type="model/stl" file="stls/HN05-i1_v1__14__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="kopf_V2_v1_1" content_type="model/stl" file="stls/kopf_V2_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="hals_V2_v1_1" content_type="model/stl" file="stls/hals_V2_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2__5__1" content_type="model/stl"
-      file="stls/MX64_body_modified_v2__5__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2__4__1" content_type="model/stl"
-      file="stls/MX64_body_modified_v2__4__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="02a_shoulder_servo_connector_v1__1__1" content_type="model/stl"
-      file="stls/02a_shoulder_servo_connector_v1__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="02a_shoulder_servo_connector_v1__2__1" content_type="model/stl"
-      file="stls/02a_shoulder_servo_connector_v1__2__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="02a_shoulder_servo_connector_v1_1" content_type="model/stl"
-      file="stls/02a_shoulder_servo_connector_v1_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="02a_shoulder_servo_connector_v1__3__1" content_type="model/stl"
-      file="stls/02a_shoulder_servo_connector_v1__3__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="04_upper_arm_new_v2__2__1" content_type="model/stl"
-      file="stls/04_upper_arm_new_v2__2__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="04_upper_arm_new_v2_1" content_type="model/stl" file="stls/04_upper_arm_new_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="04_upper_arm_new_v2__1__1" content_type="model/stl"
-      file="stls/04_upper_arm_new_v2__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="04_upper_arm_new_v2__3__1" content_type="model/stl"
-      file="stls/04_upper_arm_new_v2__3__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="x-frame-arm-rechts_v1_1" content_type="model/stl" file="stls/x-frame-arm-rechts_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="x-frame-left_v1_1" content_type="model/stl" file="stls/x-frame-left_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2__2__1" content_type="model/stl"
-      file="stls/MX64_body_modified_v2__2__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__9__1" content_type="model/stl" file="stls/HN05-i1_v1__9__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX64_body_modified_v2__3__1" content_type="model/stl"
-      file="stls/MX64_body_modified_v2__3__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__8__1" content_type="model/stl" file="stls/HN05-i1_v1__8__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="06_lower_arm_v3__1__1" content_type="model/stl" file="stls/06_lower_arm_v3__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="06_lower_arm_v3_1" content_type="model/stl" file="stls/06_lower_arm_v3_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="06_lower_arm_v3__3__1" content_type="model/stl" file="stls/06_lower_arm_v3__3__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="06_lower_arm_v3__2__1" content_type="model/stl" file="stls/06_lower_arm_v3__2__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="07_lower_arm_handrail_X_v2__1__1" content_type="model/stl"
-      file="stls/07_lower_arm_handrail_X_v2__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="07_lower_arm_handrail_X_v2_1" content_type="model/stl"
-      file="stls/07_lower_arm_handrail_X_v2_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__10__1" content_type="model/stl" file="stls/HN05-i1_v1__10__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__11__1" content_type="model/stl" file="stls/HN05-i1_v1__11__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="02_shoulder_mount_v1__1__1" content_type="model/stl"
-      file="stls/02_shoulder_mount_v1__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="02_shoulder_mount_v1_1" content_type="model/stl" file="stls/02_shoulder_mount_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__16__1" content_type="model/stl" file="stls/HN05-N101_v1__16__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__11__1" content_type="model/stl" file="stls/HN05-N101_v1__11__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__17__1" content_type="model/stl" file="stls/HN05-N101_v1__17__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__10__1" content_type="model/stl" file="stls/HN05-N101_v1__10__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="01_neck_servo_connector_v1_1" content_type="model/stl"
-      file="stls/01_neck_servo_connector_v1_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="16_upper_leg_spacer_v6_1" content_type="model/stl"
-      file="stls/16_upper_leg_spacer_v6_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="15_upper_leg_v2__3__1" content_type="model/stl" file="stls/15_upper_leg_v2__3__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="17_knee_joint_connector_new_v2__1__1" content_type="model/stl"
-      file="stls/17_knee_joint_connector_new_v2__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__10__1" content_type="model/stl" file="stls/MX-106_v2__10__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="16_upper_leg_spacer_v6__1__1" content_type="model/stl"
-      file="stls/16_upper_leg_spacer_v6__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="15_upper_leg_v2_1" content_type="model/stl" file="stls/15_upper_leg_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1__4__1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1__4__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1__5__1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1__5__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__6__1" content_type="model/stl" file="stls/MX-106_v2__6__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1__6__1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1__6__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="14_motor_joint_connector_v1__7__1" content_type="model/stl"
-      file="stls/14_motor_joint_connector_v1__7__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__3__1" content_type="model/stl" file="stls/MX-106_v2__3__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="13_thrust_bearing_v2__2__1" content_type="model/stl"
-      file="stls/13_thrust_bearing_v2__2__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__5__1" content_type="model/stl" file="stls/HN05-i1_v1__5__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__4__1" content_type="model/stl" file="stls/HN05-i1_v1__4__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__7__1" content_type="model/stl" file="stls/HN05-N101_v1__7__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__6__1" content_type="model/stl" file="stls/HN05-N101_v1__6__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__7__1" content_type="model/stl" file="stls/MX-106_v2__7__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="13_thrust_bearing_v2__3__1" content_type="model/stl"
-      file="stls/13_thrust_bearing_v2__3__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__6__1" content_type="model/stl" file="stls/HN05-i1_v1__6__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-i1_v1__7__1" content_type="model/stl" file="stls/HN05-i1_v1__7__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__8__1" content_type="model/stl" file="stls/HN05-N101_v1__8__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__9__1" content_type="model/stl" file="stls/HN05-N101_v1__9__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="MX-106_v2__2__1" content_type="model/stl" file="stls/MX-106_v2__2__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="15_upper_leg_v2__2__1" content_type="model/stl" file="stls/15_upper_leg_v2__2__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="15_upper_leg_v2__1__1" content_type="model/stl" file="stls/15_upper_leg_v2__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__19__1" content_type="model/stl" file="stls/HN05-N101_v1__19__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="HN05-N101_v1__18__1" content_type="model/stl" file="stls/HN05-N101_v1__18__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="12_hip_u_profile_v1__1__1" content_type="model/stl"
-      file="stls/12_hip_u_profile_v1__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="12_hip_u_profile_v1_1" content_type="model/stl" file="stls/12_hip_u_profile_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="35_TPU_Bumper_BitB_v6_1" content_type="model/stl" file="stls/35_TPU_Bumper_BitB_v6_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="35_TPU_Bumper_BitB_right_v3_1" content_type="model/stl"
-      file="stls/35_TPU_Bumper_BitB_right_v3_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="35_TPU_Bumper_BitB_v6__1__1" content_type="model/stl"
-      file="stls/35_TPU_Bumper_BitB_v6__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="35_TPU_Bumper_BitB_right_v3__1__1" content_type="model/stl"
-      file="stls/35_TPU_Bumper_BitB_right_v3__1__1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="Pwr_and_Logicboard_Dummy_v2_1" content_type="model/stl"
-      file="stls/Pwr_and_Logicboard_Dummy_v2_1.stl" scale="0.001 0.001 0.001" />
-    <mesh name="33_tpu_sea_v1__1__1" content_type="model/stl" file="stls/33_tpu_sea_v1__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="31_SEA_Metal_v2__1__1" content_type="model/stl" file="stls/31_SEA_Metal_v2__1__1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="33_tpu_sea_v1_1" content_type="model/stl" file="stls/33_tpu_sea_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="31_SEA_Metal_v2_1" content_type="model/stl" file="stls/31_SEA_Metal_v2_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="Battery_4S_5Ah_v1_1" content_type="model/stl" file="stls/Battery_4S_5Ah_v1_1.stl"
-      scale="0.001 0.001 0.001" />
-    <mesh name="camera_link_1" content_type="model/stl" file="stls/camera_link_1.stl"
-      scale="0.001 0.001 0.001" />
+    <mesh name="25_Orin_Baseplate_v14_1" content_type="model/stl" file="stls/25_Orin_Baseplate_v14_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="08_upper_body_cage_v2_1" content_type="model/stl" file="stls/08_upper_body_cage_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="09_lower_body_cage_v2_1" content_type="model/stl" file="stls/09_lower_body_cage_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="30_Powerboard_Holder_v31_1" content_type="model/stl" file="stls/30_Powerboard_Holder_v31_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2__6__1" content_type="model/stl" file="stls/MX64_body_modified_v2__6__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2__7__1" content_type="model/stl" file="stls/MX64_body_modified_v2__7__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2__1__1" content_type="model/stl" file="stls/MX64_body_modified_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="12a_hip_servo_spacer_v1_1" content_type="model/stl" file="stls/12a_hip_servo_spacer_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="12a_hip_servo_spacer_v1__1__1" content_type="model/stl" file="stls/12a_hip_servo_spacer_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="12a_hip_servo_spacer_v1__3__1" content_type="model/stl" file="stls/12a_hip_servo_spacer_v1__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="12a_hip_servo_spacer_v1__2__1" content_type="model/stl" file="stls/12a_hip_servo_spacer_v1__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__4__1" content_type="model/stl" file="stls/MX-106_v2__4__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__5__1" content_type="model/stl" file="stls/MX-106_v2__5__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="17_knee_joint_connector_new_v2__2__1" content_type="model/stl" file="stls/17_knee_joint_connector_new_v2__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="17_knee_joint_connector_new_v2__3__1" content_type="model/stl" file="stls/17_knee_joint_connector_new_v2__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="17_knee_joint_connector_new_v2_1" content_type="model/stl" file="stls/17_knee_joint_connector_new_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__11__1" content_type="model/stl" file="stls/MX-106_v2__11__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__12__1" content_type="model/stl" file="stls/HN05-i1_v1__12__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__12__1" content_type="model/stl" file="stls/HN05-N101_v1__12__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__13__1" content_type="model/stl" file="stls/HN05-i1_v1__13__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__13__1" content_type="model/stl" file="stls/HN05-N101_v1__13__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="18_lower_leg_v2__1__1" content_type="model/stl" file="stls/18_lower_leg_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="18_lower_leg_v2__3__1" content_type="model/stl" file="stls/18_lower_leg_v2__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="upper_leg_spacer_short_X_v1_1" content_type="model/stl" file="stls/upper_leg_spacer_short_X_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="upper_leg_spacer_short_X_v1__1__1" content_type="model/stl" file="stls/upper_leg_spacer_short_X_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="19_lower_leg_front_spacer_v2__1__1" content_type="model/stl" file="stls/19_lower_leg_front_spacer_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="19_lower_leg_front_spacer_v2_1" content_type="model/stl" file="stls/19_lower_leg_front_spacer_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="18_lower_leg_v2_1" content_type="model/stl" file="stls/18_lower_leg_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="18_lower_leg_v2__2__1" content_type="model/stl" file="stls/18_lower_leg_v2__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__15__1" content_type="model/stl" file="stls/HN05-N101_v1__15__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__14__1" content_type="model/stl" file="stls/HN05-N101_v1__14__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1_1" content_type="model/stl" file="stls/HN05-i1_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__1__1" content_type="model/stl" file="stls/HN05-i1_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__9__1" content_type="model/stl" file="stls/MX-106_v2__9__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__8__1" content_type="model/stl" file="stls/MX-106_v2__8__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1_1" content_type="model/stl" file="stls/14_motor_joint_connector_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1__1__1" content_type="model/stl" file="stls/14_motor_joint_connector_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1__3__1" content_type="model/stl" file="stls/14_motor_joint_connector_v1__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1__2__1" content_type="model/stl" file="stls/14_motor_joint_connector_v1__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2_1" content_type="model/stl" file="stls/MX-106_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__1__1" content_type="model/stl" file="stls/MX-106_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1_1" content_type="model/stl" file="stls/HN05-N101_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__1__1" content_type="model/stl" file="stls/HN05-N101_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="13_thrust_bearing_v2_1" content_type="model/stl" file="stls/13_thrust_bearing_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="13_thrust_bearing_v2__1__1" content_type="model/stl" file="stls/13_thrust_bearing_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__2__1" content_type="model/stl" file="stls/HN05-i1_v1__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__3__1" content_type="model/stl" file="stls/HN05-i1_v1__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="21_ankle_bend_v2_1" content_type="model/stl" file="stls/21_ankle_bend_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="21_ankle_bend_v2__1__1" content_type="model/stl" file="stls/21_ankle_bend_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="23_foot_plate_right_v2_1" content_type="model/stl" file="stls/23_foot_plate_right_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="22_foot_plate_left_v2_1" content_type="model/stl" file="stls/22_foot_plate_left_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__2__1" content_type="model/stl" file="stls/HN05-N101_v1__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__3__1" content_type="model/stl" file="stls/HN05-N101_v1__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__4__1" content_type="model/stl" file="stls/HN05-N101_v1__4__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2_1" content_type="model/stl" file="stls/MX64_body_modified_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__5__1" content_type="model/stl" file="stls/HN05-N101_v1__5__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__14__1" content_type="model/stl" file="stls/HN05-i1_v1__14__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="kopf_V2_v1_1" content_type="model/stl" file="stls/kopf_V2_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="hals_V2_v1_1" content_type="model/stl" file="stls/hals_V2_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2__5__1" content_type="model/stl" file="stls/MX64_body_modified_v2__5__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2__4__1" content_type="model/stl" file="stls/MX64_body_modified_v2__4__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="02a_shoulder_servo_connector_v1__1__1" content_type="model/stl" file="stls/02a_shoulder_servo_connector_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="02a_shoulder_servo_connector_v1__2__1" content_type="model/stl" file="stls/02a_shoulder_servo_connector_v1__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="02a_shoulder_servo_connector_v1_1" content_type="model/stl" file="stls/02a_shoulder_servo_connector_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="02a_shoulder_servo_connector_v1__3__1" content_type="model/stl" file="stls/02a_shoulder_servo_connector_v1__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="04_upper_arm_new_v2__2__1" content_type="model/stl" file="stls/04_upper_arm_new_v2__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="04_upper_arm_new_v2_1" content_type="model/stl" file="stls/04_upper_arm_new_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="04_upper_arm_new_v2__1__1" content_type="model/stl" file="stls/04_upper_arm_new_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="04_upper_arm_new_v2__3__1" content_type="model/stl" file="stls/04_upper_arm_new_v2__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="x-frame-arm-rechts_v1_1" content_type="model/stl" file="stls/x-frame-arm-rechts_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="x-frame-left_v1_1" content_type="model/stl" file="stls/x-frame-left_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2__2__1" content_type="model/stl" file="stls/MX64_body_modified_v2__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__9__1" content_type="model/stl" file="stls/HN05-i1_v1__9__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX64_body_modified_v2__3__1" content_type="model/stl" file="stls/MX64_body_modified_v2__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__8__1" content_type="model/stl" file="stls/HN05-i1_v1__8__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="06_lower_arm_v3__1__1" content_type="model/stl" file="stls/06_lower_arm_v3__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="06_lower_arm_v3_1" content_type="model/stl" file="stls/06_lower_arm_v3_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="06_lower_arm_v3__3__1" content_type="model/stl" file="stls/06_lower_arm_v3__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="06_lower_arm_v3__2__1" content_type="model/stl" file="stls/06_lower_arm_v3__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="07_lower_arm_handrail_X_v2__1__1" content_type="model/stl" file="stls/07_lower_arm_handrail_X_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="07_lower_arm_handrail_X_v2_1" content_type="model/stl" file="stls/07_lower_arm_handrail_X_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__10__1" content_type="model/stl" file="stls/HN05-i1_v1__10__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__11__1" content_type="model/stl" file="stls/HN05-i1_v1__11__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="02_shoulder_mount_v1__1__1" content_type="model/stl" file="stls/02_shoulder_mount_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="02_shoulder_mount_v1_1" content_type="model/stl" file="stls/02_shoulder_mount_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__16__1" content_type="model/stl" file="stls/HN05-N101_v1__16__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__11__1" content_type="model/stl" file="stls/HN05-N101_v1__11__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__17__1" content_type="model/stl" file="stls/HN05-N101_v1__17__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__10__1" content_type="model/stl" file="stls/HN05-N101_v1__10__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="01_neck_servo_connector_v1_1" content_type="model/stl" file="stls/01_neck_servo_connector_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="16_upper_leg_spacer_v6_1" content_type="model/stl" file="stls/16_upper_leg_spacer_v6_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="15_upper_leg_v2__3__1" content_type="model/stl" file="stls/15_upper_leg_v2__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="17_knee_joint_connector_new_v2__1__1" content_type="model/stl" file="stls/17_knee_joint_connector_new_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__10__1" content_type="model/stl" file="stls/MX-106_v2__10__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="16_upper_leg_spacer_v6__1__1" content_type="model/stl" file="stls/16_upper_leg_spacer_v6__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="15_upper_leg_v2_1" content_type="model/stl" file="stls/15_upper_leg_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1__4__1" content_type="model/stl" file="stls/14_motor_joint_connector_v1__4__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1__5__1" content_type="model/stl" file="stls/14_motor_joint_connector_v1__5__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__6__1" content_type="model/stl" file="stls/MX-106_v2__6__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1__6__1" content_type="model/stl" file="stls/14_motor_joint_connector_v1__6__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="14_motor_joint_connector_v1__7__1" content_type="model/stl" file="stls/14_motor_joint_connector_v1__7__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__3__1" content_type="model/stl" file="stls/MX-106_v2__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="13_thrust_bearing_v2__2__1" content_type="model/stl" file="stls/13_thrust_bearing_v2__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__5__1" content_type="model/stl" file="stls/HN05-i1_v1__5__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__4__1" content_type="model/stl" file="stls/HN05-i1_v1__4__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__7__1" content_type="model/stl" file="stls/HN05-N101_v1__7__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__6__1" content_type="model/stl" file="stls/HN05-N101_v1__6__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__7__1" content_type="model/stl" file="stls/MX-106_v2__7__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="13_thrust_bearing_v2__3__1" content_type="model/stl" file="stls/13_thrust_bearing_v2__3__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__6__1" content_type="model/stl" file="stls/HN05-i1_v1__6__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-i1_v1__7__1" content_type="model/stl" file="stls/HN05-i1_v1__7__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__8__1" content_type="model/stl" file="stls/HN05-N101_v1__8__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__9__1" content_type="model/stl" file="stls/HN05-N101_v1__9__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="MX-106_v2__2__1" content_type="model/stl" file="stls/MX-106_v2__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="15_upper_leg_v2__2__1" content_type="model/stl" file="stls/15_upper_leg_v2__2__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="15_upper_leg_v2__1__1" content_type="model/stl" file="stls/15_upper_leg_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__19__1" content_type="model/stl" file="stls/HN05-N101_v1__19__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="HN05-N101_v1__18__1" content_type="model/stl" file="stls/HN05-N101_v1__18__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="12_hip_u_profile_v1__1__1" content_type="model/stl" file="stls/12_hip_u_profile_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="12_hip_u_profile_v1_1" content_type="model/stl" file="stls/12_hip_u_profile_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="35_TPU_Bumper_BitB_v6_1" content_type="model/stl" file="stls/35_TPU_Bumper_BitB_v6_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="35_TPU_Bumper_BitB_right_v3_1" content_type="model/stl" file="stls/35_TPU_Bumper_BitB_right_v3_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="35_TPU_Bumper_BitB_v6__1__1" content_type="model/stl" file="stls/35_TPU_Bumper_BitB_v6__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="35_TPU_Bumper_BitB_right_v3__1__1" content_type="model/stl" file="stls/35_TPU_Bumper_BitB_right_v3__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="Pwr_and_Logicboard_Dummy_v2_1" content_type="model/stl" file="stls/Pwr_and_Logicboard_Dummy_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="33_tpu_sea_v1__1__1" content_type="model/stl" file="stls/33_tpu_sea_v1__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="31_SEA_Metal_v2__1__1" content_type="model/stl" file="stls/31_SEA_Metal_v2__1__1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="33_tpu_sea_v1_1" content_type="model/stl" file="stls/33_tpu_sea_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="31_SEA_Metal_v2_1" content_type="model/stl" file="stls/31_SEA_Metal_v2_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="Battery_4S_5Ah_v1_1" content_type="model/stl" file="stls/Battery_4S_5Ah_v1_1.stl" scale="0.001 0.001 0.001" />
+    <mesh name="camera_link_1" content_type="model/stl" file="stls/camera_link_1.stl" scale="0.001 0.001 0.001" />
   </asset>
 
   <worldbody>
 
-    <!--<geom name="floor" type="plane" pos="0 0 -0.55" size="5 5 0.1" rgba="0.9 0.9 0.95 1" /> -->
-
-    <body name="torso" pos="0 0 0.6">
+    <body name="torso" pos="0 0 0.535" childclass="humanoid">
       <freejoint />
+      <site name="imu"/>
+      <geom class="visual" type="mesh" rgba="0 0 0.54 1" mesh="base_link" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="25_Orin_Baseplate_v14_1" />
+      <geom class="visual" type="mesh" rgba="0.7 0.7 0.7 1" mesh="08_upper_body_cage_v2_1" />
+      <geom class="visual" type="mesh" rgba="0.7 0.7 0.7 1" mesh="09_lower_body_cage_v2_1" />
+      <geom class="visual" type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1_1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__4__1" />
+      <geom class="visual" type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1__1__1" />
+      <geom class="visual" type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1__3__1" />
+      <geom class="visual" type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1__2__1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__5__1" />
+      <geom class="visual" type="mesh" rgba="0 0 0.54 1" mesh="Battery_4S_5Ah_v1_1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="30_Powerboard_Holder_v31_1" />
+      <geom class="visual" type="mesh" rgba="0 0 0.54 1" mesh="Pwr_and_Logicboard_Dummy_v2_1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__6__1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__7__1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__1__1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_v6_1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_right_v3_1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_v6__1__1" />
+      <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_right_v3__1__1" />
 
-      <geom type="mesh" rgba="0 0 0.54 1" mesh="base_link" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="25_Orin_Baseplate_v14_1" />
-      <geom type="mesh" rgba="0.7 0.7 0.7 1" mesh="08_upper_body_cage_v2_1" />
-      <geom type="mesh" rgba="0.7 0.7 0.7 1" mesh="09_lower_body_cage_v2_1" />
-      <geom type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1_1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__4__1" />
-      <geom type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1__1__1" />
-      <geom type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1__3__1" />
-      <geom type="mesh" rgba="0.7 0.7 0.7 1" mesh="12a_hip_servo_spacer_v1__2__1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__5__1" />
-      <geom type="mesh" rgba="0 0 0.54 1" mesh="Battery_4S_5Ah_v1_1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="30_Powerboard_Holder_v31_1" />
-      <geom type="mesh" rgba="0 0 0.54 1" mesh="Pwr_and_Logicboard_Dummy_v2_1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__6__1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__7__1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__1__1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_v6_1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_right_v3_1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_v6__1__1" />
-      <geom type="mesh" rgba="0.1 0.1 0.1 1" mesh="35_TPU_Bumper_BitB_right_v3__1__1" />
 
-
-      <body name="HN05-N101_v1__18__1" pos="0.059842 -0.008192 -0.1063">
-        <inertial pos="0.0111451 -0.0106311 -0.010234" quat="0.507948 0.498695 0.50158 0.49164"
-          mass="0.203434" diaginertia="0.000326518 0.000319046 6.65929e-05" />
-        <joint name="hip_yaw_r" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159"
-          actuatorfrcrange="-8.4 8.4" />
-        <geom pos="-0.059842 0.008192 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__18__1" />
-        <geom pos="-0.059842 0.008192 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="12_hip_u_profile_v1_1" />
-        <geom pos="-0.059842 0.008192 0.1063" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__9__1" />
+      <body childclass="mx106" name="HN05-N101_v1__18__1" pos="0.059842 -0.008192 -0.1063">
+        <inertial pos="0.0111451 -0.0106311 -0.010234" quat="0.507948 0.498695 0.50158 0.49164" mass="0.203434" diaginertia="0.000326518 0.000319046 6.65929e-05" />
+        <joint name="hip_yaw_r" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159" actuatorfrcrange="-8.4 8.4" />
+        <geom class="visual" pos="-0.059842 0.008192 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__18__1" />
+        <geom class="visual" pos="-0.059842 0.008192 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="12_hip_u_profile_v1_1" />
+        <geom class="visual" pos="-0.059842 0.008192 0.1063" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__9__1" />
         <body name="MX-106_v2__2__1" pos="-0.0476 0 -0.040769">
-          <inertial pos="0.0485619 0.00282148 -0.0146211" quat="0.607379 0.420415 0.560583 0.374284"
-            mass="0.367473" diaginertia="0.000372144 0.000335821 0.000187223" />
-          <joint name="hip_roll_r" pos="0 0 0" axis="1 0 0" range="-1.8326 1.8326"
-            actuatorfrcrange="-8.4 8.4" />
-          <geom pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="MX-106_v2__2__1" />
-          <geom pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="14_motor_joint_connector_v1__6__1" />
-          <geom pos="-0.012242 0.008192 0.147069" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="MX-106_v2__3__1" />
-          <geom pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="13_thrust_bearing_v2__3__1" />
-          <geom pos="-0.012242 0.008192 0.147069" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-i1_v1__6__1" />
-          <geom pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-i1_v1__7__1" />
-          <geom pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="14_motor_joint_connector_v1__7__1" />
+          <inertial pos="0.0485619 0.00282148 -0.0146211" quat="0.607379 0.420415 0.560583 0.374284" mass="0.367473" diaginertia="0.000372144 0.000335821 0.000187223" />
+          <joint name="hip_roll_r" pos="0 0 0" axis="1 0 0" range="-1.8326 1.8326" actuatorfrcrange="-8.4 8.4" />
+          <geom class="visual" pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__2__1" />
+          <geom class="visual" pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__6__1" />
+          <geom class="visual" pos="-0.012242 0.008192 0.147069" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__3__1" />
+          <geom class="visual" pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="13_thrust_bearing_v2__3__1" />
+          <geom class="visual" pos="-0.012242 0.008192 0.147069" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__6__1" />
+          <geom class="visual" pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__7__1" />
+          <geom class="visual" pos="-0.012242 0.008192 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__7__1" />
           <body name="HN05-N101_v1__8__1" pos="0.0709 0.0268 0">
-            <inertial pos="-0.0465443 -0.00017565 -0.0947079"
-              quat="0.665928 0.0274169 0.234208 0.707768" mass="0.294708"
-              diaginertia="0.00248974 0.00211634 0.000524403" />
-            <joint name="hip_pitch_r" pos="0 0 0" axis="0 1 0" range="-0.959931 2.18166"
-              actuatorfrcrange="-8.4 8.4" />
-            <geom pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-              mesh="HN05-N101_v1__8__1" />
-            <geom pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.13 0.16 0.21 1" mesh="15_upper_leg_v2__1__1" />
-            <geom pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-              mesh="17_knee_joint_connector_new_v2__3__1" />
-            <geom pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-              mesh="16_upper_leg_spacer_v6__1__1" />
-            <geom pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-              mesh="15_upper_leg_v2_1" />
-            <geom pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-              mesh="17_knee_joint_connector_new_v2__2__1" />
-            <geom pos="-0.083142 -0.018608 0.147069" type="mesh" rgba="0.1 0.1 0.1 1"
-              mesh="MX-106_v2__11__1" />
-            <geom pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-              mesh="HN05-i1_v1__13__1" />
+            <inertial pos="-0.0465443 -0.00017565 -0.0947079" quat="0.665928 0.0274169 0.234208 0.707768" mass="0.294708" diaginertia="0.00248974 0.00211634 0.000524403" />
+            <joint name="hip_pitch_r" pos="0 0 0" axis="0 1 0" range="-0.959931 2.18166" actuatorfrcrange="-8.4 8.4" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__8__1" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="15_upper_leg_v2__1__1" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="17_knee_joint_connector_new_v2__3__1" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="16_upper_leg_spacer_v6__1__1" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="15_upper_leg_v2_1" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="17_knee_joint_connector_new_v2__2__1" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__11__1" />
+            <geom class="visual" pos="-0.083142 -0.018608 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__13__1" />
             <body name="HN05-N101_v1__13__1" pos="-0.004024 -0.0005 -0.169218">
-              <inertial pos="0.0522553 -0.00620218 -0.0591075"
-                quat="0.739764 -0.220223 -0.236812 0.590061" mass="0.0625396"
-                diaginertia="0.000280218 0.000226988 0.000102206" />
-              <joint name="knee_r" pos="0 0 0" axis="0 1 0" range="-0.785398 2.53073"
-                actuatorfrcrange="-8.4 8.4" />
-              <geom pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.7 0.7 0.7 1"
-                mesh="HN05-N101_v1__13__1" />
-              <geom pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2__1__1" />
-              <geom pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.7 0.7 0.7 1"
-                mesh="upper_leg_spacer_short_X_v1_1" />
-              <geom pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2_1" />
-              <geom pos="-0.079118 -0.018108 0.316287" type="mesh" rgba="0.7 0.7 0.7 1"
-                mesh="19_lower_leg_front_spacer_v2__1__1" />
-              <geom pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.7 0.7 0.7 1"
-                mesh="HN05-N101_v1__14__1" />
+              <inertial pos="0.0522553 -0.00620218 -0.0591075" quat="0.739764 -0.220223 -0.236812 0.590061" mass="0.0625396" diaginertia="0.000280218 0.000226988 0.000102206" />
+              <joint name="knee_r" pos="0 0 0" axis="0 1 0" range="-0.785398 2.53073" actuatorfrcrange="-8.4 8.4" />
+              <geom class="visual" pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__13__1" />
+              <geom class="visual" pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2__1__1" />
+              <geom class="visual" pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="upper_leg_spacer_short_X_v1_1" />
+              <geom class="visual" pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2_1" />
+              <geom class="visual" pos="-0.079118 -0.018108 0.316287" type="mesh" rgba="0.7 0.7 0.7 1" mesh="19_lower_leg_front_spacer_v2__1__1" />
+              <geom class="visual" pos="-0.079118 -0.018108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__14__1" />
               <body name="MX-106_v2__8__1" pos="0.058143 0.003969 -0.159748">
-                <inertial pos="-0.00202502 -0.0409479 0.0106299"
-                  quat="0.963667 -0.136081 -0.125531 -0.192537" mass="0.367473"
-                  diaginertia="0.000226536 0.000195076 0.000151094" />
-                <joint name="ankle_pitch_r" pos="0 0 0" axis="0 -1 0" range="-0.785398 2.53073"
-                  actuatorfrcrange="-8.4 8.4" />
-                <geom pos="-0.137261 -0.022077 0.476035" type="mesh" rgba="0.1 0.1 0.1 1"
-                  mesh="MX-106_v2__8__1" />
-                <geom pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1_1" />
-                <geom pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1_1" />
-                <geom pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__1__1" />
-                <geom pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__1__1" />
-                <geom pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="13_thrust_bearing_v2_1" />
-                <geom pos="-0.137261 -0.022077 0.476035" type="mesh" rgba="0.7 0.7 0.7 1"
-                  mesh="HN05-i1_v1__2__1" />
+                <inertial pos="-0.00202502 -0.0409479 0.0106299" quat="0.963667 -0.136081 -0.125531 -0.192537" mass="0.367473" diaginertia="0.000226536 0.000195076 0.000151094" />
+                <joint name="ankle_pitch_r" pos="0 0 0" axis="0 -1 0" range="-0.785398 2.53073" actuatorfrcrange="-8.4 8.4" />
+                <geom class="visual" pos="-0.137261 -0.022077 0.476035" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__8__1" />
+                <geom class="visual" pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1_1" />
+                <geom class="visual" pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1_1" />
+                <geom class="visual" pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__1__1" />
+                <geom class="visual" pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__1__1" />
+                <geom class="visual" pos="-0.137261 -0.022077 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="13_thrust_bearing_v2_1" />
+                <geom class="visual" pos="-0.137261 -0.022077 0.476035" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__2__1" />
                 <body name="HN05-N101_v1__1__1" pos="-0.067518 -0.0308 -0.018091">
-                  <inertial pos="9.24654e-05 -0.00548271 0.0401626"
-                    quat="0.325768 0.615343 0.586461 0.413874" mass="0.102019"
-                    diaginertia="0.000600771 0.000495021 0.000211066" />
-                  <joint name="ankle_roll_r" pos="0 0 0" axis="-0.965926 0 -0.258819"
-                    range="-1.65806 1.65806" actuatorfrcrange="-8.4 8.4" />
-                  <geom pos="-0.069743 0.008723 0.494126" type="mesh" rgba="0.7 0.7 0.7 1"
-                    mesh="HN05-N101_v1__1__1" />
-                  <geom pos="-0.069743 0.008723 0.494126" quat="1 0 0 0" type="mesh"
-                    rgba="0.7 0.7 0.7 1" mesh="21_ankle_bend_v2_1" />
-                  <geom pos="-0.069743 0.008723 0.494126" quat="1 0 0 0" type="mesh"
-                    rgba="0.13 0.16 0.21 1" mesh="23_foot_plate_right_v2_1" />
+                  <inertial pos="9.24654e-05 -0.00548271 0.0401626" quat="0.325768 0.615343 0.586461 0.413874" mass="0.102019" diaginertia="0.000600771 0.000495021 0.000211066" />
+                  <joint name="ankle_roll_r" pos="0 0 0" axis="-0.965926 0 -0.258819" range="-1.65806 1.65806" actuatorfrcrange="-8.4 8.4" />
+                  <geom class="visual" pos="-0.069743 0.008723 0.494126" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__1__1" />
+                  <geom class="visual" pos="-0.069743 0.008723 0.494126" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="21_ankle_bend_v2_1" />
+                  <geom class="collision" pos="-0.069743 0.008723 0.494126" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="23_foot_plate_right_v2_1"/>
+                  <site name="foot_right" pos="0 0 0" size="0.01" rgba="0 1 0 1"/>
                 </body>
               </body>
             </body>
@@ -415,280 +262,141 @@
         </body>
       </body>
 
-      <body name="HN05-N101_v1__19__1" pos="0.059842 0.101808 -0.1063">
-        <inertial pos="0.0111451 -0.0106311 -0.010234" quat="0.507948 0.498695 0.50158 0.49164"
-          mass="0.203434" diaginertia="0.000326518 0.000319046 6.65929e-05" />
-        <joint name="hip_yaw_l" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159"
-          actuatorfrcrange="-8.4 8.4" />
-        <geom pos="-0.059842 -0.101808 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__19__1" />
-        <geom pos="-0.059842 -0.101808 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="12_hip_u_profile_v1__1__1" />
-        <geom pos="-0.059842 -0.101808 0.1063" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__7__1" />
+      <body childclass="mx106" name="HN05-N101_v1__19__1" pos="0.059842 0.101808 -0.1063">
+        <inertial pos="0.0111451 -0.0106311 -0.010234" quat="0.507948 0.498695 0.50158 0.49164" mass="0.203434" diaginertia="0.000326518 0.000319046 6.65929e-05" />
+        <joint name="hip_yaw_l" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159" actuatorfrcrange="-8.4 8.4" />
+        <geom class="visual" pos="-0.059842 -0.101808 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__19__1" />
+        <geom class="visual" pos="-0.059842 -0.101808 0.1063" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="12_hip_u_profile_v1__1__1" />
+        <geom class="visual" pos="-0.059842 -0.101808 0.1063" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__7__1" />
         <body name="MX-106_v2__7__1" pos="-0.0476 0 -0.040769">
-          <inertial pos="0.0484165 0.00196003 -0.0147803" quat="0.581481 0.493626 0.490889 0.421"
-            mass="0.367473" diaginertia="0.000392508 0.000338487 0.000192366" />
-          <joint name="hip_roll_l" pos="0 0 0" axis="1 0 0" range="-1.8326 1.8326"
-            actuatorfrcrange="-8.4 8.4" />
-          <geom pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="MX-106_v2__7__1" />
-          <geom pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="14_motor_joint_connector_v1__4__1" />
-          <geom pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="14_motor_joint_connector_v1__5__1" />
-          <geom pos="-0.012242 -0.101808 0.147069" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="MX-106_v2__6__1" />
-          <geom pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="13_thrust_bearing_v2__2__1" />
-          <geom pos="-0.012242 -0.101808 0.147069" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-i1_v1__5__1" />
-          <geom pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-i1_v1__4__1" />
+          <inertial pos="0.0484165 0.00196003 -0.0147803" quat="0.581481 0.493626 0.490889 0.421" mass="0.367473" diaginertia="0.000392508 0.000338487 0.000192366" />
+          <joint name="hip_roll_l" pos="0 0 0" axis="1 0 0" range="-1.8326 1.8326" actuatorfrcrange="-8.4 8.4" />
+          <geom class="visual" pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__7__1" />
+          <geom class="visual" pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__4__1" />
+          <geom class="visual" pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__5__1" />
+          <geom class="visual" pos="-0.012242 -0.101808 0.147069" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__6__1" />
+          <geom class="visual" pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="13_thrust_bearing_v2__2__1" />
+          <geom class="visual" pos="-0.012242 -0.101808 0.147069" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__5__1" />
+          <geom class="visual" pos="-0.012242 -0.101808 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__4__1" />
           <body name="HN05-N101_v1__6__1" pos="0.0709 -0.0268 0">
-            <inertial pos="-0.0523064 0.035181 -0.0920254"
-              quat="0.493402 0.0270529 0.189658 0.848441"
-              mass="0.294708" diaginertia="0.00251271 0.0022863 0.000516746" />
-            <joint name="hip_pitch_l" pos="0 0 0" axis="0 -1 0" range="-2.18166 0.959931"
-              actuatorfrcrange="-8.4 8.4" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="HN05-N101_v1__6__1" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.13 0.16 0.21 1" mesh="15_upper_leg_v2__2__1" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="17_knee_joint_connector_new_v2_1" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="MX-106_v2__10__1" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="HN05-i1_v1__12__1" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="17_knee_joint_connector_new_v2__1__1" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="16_upper_leg_spacer_v6_1" />
-            <geom pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh"
-              rgba="0.13 0.16 0.21 1" mesh="15_upper_leg_v2__3__1" />
+            <inertial pos="-0.0523064 0.035181 -0.0920254" quat="0.493402 0.0270529 0.189658 0.848441" mass="0.294708" diaginertia="0.00251271 0.0022863 0.000516746" />
+            <joint name="hip_pitch_l" pos="0 0 0" axis="0 -1 0" range="-2.18166 0.959931" actuatorfrcrange="-8.4 8.4" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__6__1" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="15_upper_leg_v2__2__1" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="17_knee_joint_connector_new_v2_1" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="MX-106_v2__10__1" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__12__1" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="17_knee_joint_connector_new_v2__1__1" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="16_upper_leg_spacer_v6_1" />
+            <geom class="visual" pos="-0.083142 -0.075008 0.147069" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="15_upper_leg_v2__3__1" />
             <body name="HN05-N101_v1__12__1" pos="-0.004024 -0.0009 -0.169218">
-              <inertial pos="0.0208154 0.0118453 -0.0685904"
-                quat="0.695892 -0.200456 -0.126854 0.677834" mass="0.0625396"
-                diaginertia="0.000293351 0.000211729 0.000122117" />
-              <joint name="knee_l" pos="0 0 0" axis="0 -1 0" range="-2.53073 0.785398"
-                actuatorfrcrange="-8.4 8.4" />
-              <geom pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.7 0.7 0.7 1"
-                mesh="HN05-N101_v1__12__1" />
-              <geom pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2__3__1" />
-              <geom pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.7 0.7 0.7 1"
-                mesh="upper_leg_spacer_short_X_v1__1__1" />
-              <geom pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2__2__1" />
-              <geom pos="-0.079118 -0.074108 0.316287" type="mesh" rgba="0.7 0.7 0.7 1"
-                mesh="19_lower_leg_front_spacer_v2_1" />
-              <geom pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh"
-                rgba="0.7 0.7 0.7 1"
-                mesh="HN05-N101_v1__15__1" />
+              <inertial pos="0.0208154 0.0118453 -0.0685904" quat="0.695892 -0.200456 -0.126854 0.677834" mass="0.0625396" diaginertia="0.000293351 0.000211729 0.000122117" />
+              <joint name="knee_l" pos="0 0 0" axis="0 -1 0" range="-2.53073 0.785398" actuatorfrcrange="-8.4 8.4" />
+              <geom class="visual" pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__12__1" />
+              <geom class="visual" pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2__3__1" />
+              <geom class="visual" pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="upper_leg_spacer_short_X_v1__1__1" />
+              <geom class="visual" pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="18_lower_leg_v2__2__1" />
+              <geom class="visual" pos="-0.079118 -0.074108 0.316287" type="mesh" rgba="0.7 0.7 0.7 1" mesh="19_lower_leg_front_spacer_v2_1" />
+              <geom class="visual" pos="-0.079118 -0.074108 0.316287" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__15__1" />
               <body name="MX-106_v2__9__1" pos="0.058143 -0.004 -0.159748">
-                <inertial pos="-0.017278 0.00439619 0.00825957"
-                  quat="0.608052 0.733214 -0.297266 -0.0655939" mass="0.367473"
-                  diaginertia="0.000458238 0.000407862 0.000161429" />
-                <joint name="ankle_pitch_l" pos="0 0 0" axis="0 1 0" range="-2.53073 0.785398"
-                  actuatorfrcrange="-8.4 8.4" />
-                <geom pos="-0.137261 -0.070108 0.476035" type="mesh" rgba="0.1 0.1 0.1 1"
-                  mesh="MX-106_v2__9__1" />
-                <geom pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__1__1" />
-                <geom pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__3__1" />
-                <geom pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.1 0.1 0.1 1" mesh="MX-106_v2_1" />
-                <geom pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__2__1" />
-                <geom pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh"
-                  rgba="0.7 0.7 0.7 1" mesh="13_thrust_bearing_v2__1__1" />
-                <geom pos="-0.137261 -0.070108 0.476035" type="mesh" rgba="0.7 0.7 0.7 1"
-                  mesh="HN05-i1_v1__3__1" />
+                <inertial pos="-0.017278 0.00439619 0.00825957" quat="0.608052 0.733214 -0.297266 -0.0655939" mass="0.367473" diaginertia="0.000458238 0.000407862 0.000161429" />
+                <joint name="ankle_pitch_l" pos="0 0 0" axis="0 1 0" range="-2.53073 0.785398" actuatorfrcrange="-8.4 8.4" />
+                <geom class="visual" pos="-0.137261 -0.070108 0.476035" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2__9__1" />
+                <geom class="visual" pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__1__1" />
+                <geom class="visual" pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__3__1" />
+                <geom class="visual" pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX-106_v2_1" />
+                <geom class="visual" pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="14_motor_joint_connector_v1__2__1" />
+                <geom class="visual" pos="-0.137261 -0.070108 0.476035" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="13_thrust_bearing_v2__1__1" />
+                <geom class="visual" pos="-0.137261 -0.070108 0.476035" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__3__1" />
                 <body name="HN05-N101_v1_1" pos="-0.067518 0.0308 -0.018091">
-                  <inertial pos="4.65839e-05 0.00515985 0.0401978"
-                    quat="0.416192 0.585099 0.616669 0.322744" mass="0.102103"
-                    diaginertia="0.000601888 0.000495808 0.000211297" />
-                  <joint name="ankle_roll_l" pos="0 0 0" axis="-0.965926 0 -0.258819"
-                    range="-1.65806 1.65806" actuatorfrcrange="-8.4 8.4" />
-                  <geom pos="-0.069743 -0.100908 0.494126" type="mesh" rgba="0.7 0.7 0.7 1"
-                    mesh="HN05-N101_v1_1" />
-                  <geom pos="-0.069743 -0.100908 0.494126" quat="1 0 0 0" type="mesh"
-                    rgba="0.7 0.7 0.7 1" mesh="21_ankle_bend_v2__1__1" />
-                  <geom pos="-0.069743 -0.100908 0.494126" quat="1 0 0 0" type="mesh"
-                    rgba="0.13 0.16 0.21 1" mesh="22_foot_plate_left_v2_1" />
+                  <inertial pos="4.65839e-05 0.00515985 0.0401978" quat="0.416192 0.585099 0.616669 0.322744" mass="0.102103" diaginertia="0.000601888 0.000495808 0.000211297" />
+                  <joint name="ankle_roll_l" pos="0 0 0" axis="-0.965926 0 -0.258819" range="-1.65806 1.65806" actuatorfrcrange="-8.4 8.4" />
+                  <geom class="visual" pos="-0.069743 -0.100908 0.494126" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1_1" />
+                  <geom class="visual" pos="-0.069743 -0.100908 0.494126" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="21_ankle_bend_v2__1__1" />
+                  <geom class="collision" pos="-0.069743 -0.100908 0.494126" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="22_foot_plate_left_v2_1" />
+                  <site name="foot_left" pos="0 0 0" size="0.01" rgba="0 1 0 1"/>
                 </body>
               </body>
             </body>
           </body>
         </body>
       </body>
-      <body name="HN05-N101_v1__4__1" pos="0.050342 0.046808 0.129001">
-        <inertial pos="-0.00185248 3.22687e-05 0.0293142"
-          quat="0.997626 0.00874559 0.0682661 -0.00240162" mass="0.174097"
-          diaginertia="7.01678e-05 6.54632e-05 3.92859e-05" />
-        <joint name="head_pan" pos="0 0 0" axis="0 0 1" range="-2.61799 2.61799"
-          actuatorfrcrange="-6 6" />
-        <geom pos="-0.050342 -0.046808 -0.129001" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__4__1" />
-        <geom pos="-0.050342 -0.046808 -0.129001" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="01_neck_servo_connector_v1_1" />
-        <geom pos="-0.050342 -0.046808 -0.129001" type="mesh" rgba="0.1 0.1 0.1 1"
-          mesh="MX64_body_modified_v2_1" />
-        <geom pos="-0.050342 -0.046808 -0.129001" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-i1_v1__14__1" />
+
+      <body childclass="mx64" name="HN05-N101_v1__4__1" pos="0.050342 0.046808 0.129001">
+        <inertial pos="-0.00185248 3.22687e-05 0.0293142" quat="0.997626 0.00874559 0.0682661 -0.00240162" mass="0.174097" diaginertia="7.01678e-05 6.54632e-05 3.92859e-05" />
+        <!-- <joint name="head_pan" pos="0 0 0" axis="0 0 1" range="-2.61799 2.61799" actuatorfrcrange="-6 6" /> -->
+        <geom class="visual" pos="-0.050342 -0.046808 -0.129001" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__4__1" />
+        <geom class="visual" pos="-0.050342 -0.046808 -0.129001" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="01_neck_servo_connector_v1_1" />
+        <geom class="visual" pos="-0.050342 -0.046808 -0.129001" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2_1" />
+        <geom class="visual" pos="-0.050342 -0.046808 -0.129001" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__14__1" />
         <body name="HN05-N101_v1__5__1" pos="0 -0.024001 0.0479">
-          <inertial pos="0.00507039 -0.0387545 0.0476861"
-            quat="0.863912 0.500006 0.0548457 -0.0253465" mass="0.0790742"
-            diaginertia="0.000222506 0.000203624 3.09705e-05" />
-          <joint name="head_tilt" pos="0 0 0" axis="0 -1 0" range="-1.91986 1.91986"
-            actuatorfrcrange="-6 6" />
-          <geom pos="-0.050342 -0.022807 -0.176901" quat="1 0 0 0" type="mesh"
-            rgba="0.7 0.7 0.7 1"
-            mesh="HN05-N101_v1__5__1" />
-          <geom pos="-0.050342 -0.022807 -0.176901" quat="1 0 0 0" type="mesh"
-            rgba="0.1 0.1 0.1 1"
-            mesh="hals_V2_v1_1" />
-          <geom pos="-0.050342 -0.022807 -0.176901" quat="1 0 0 0" type="mesh"
-            rgba="0.1 0.1 0.1 1"
-            mesh="kopf_V2_v1_1" />
-          <geom pos="-0.050342 -0.022807 -0.176901" type="mesh" rgba="0 0 0.54 1"
-            mesh="camera_link_1" />
+          <inertial pos="0.00507039 -0.0387545 0.0476861" quat="0.863912 0.500006 0.0548457 -0.0253465" mass="0.0790742" diaginertia="0.000222506 0.000203624 3.09705e-05" />
+          <!-- <joint name="head_tilt" pos="0 0 0" axis="0 -1 0" range="-1.91986 1.91986" actuatorfrcrange="-6 6" /> -->
+          <geom class="visual" pos="-0.050342 -0.022807 -0.176901" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__5__1" />
+          <geom class="visual" pos="-0.050342 -0.022807 -0.176901" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="hals_V2_v1_1" />
+          <geom class="visual" pos="-0.050342 -0.022807 -0.176901" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="kopf_V2_v1_1" />
+          <geom class="visual" pos="-0.050342 -0.022807 -0.176901" type="mesh" rgba="0 0 0.54 1" mesh="camera_link_1" />
         </body>
       </body>
-      <body name="HN05-N101_v1__2__1" pos="0.058342 0.123309 0.098">
-        <inertial pos="0.00912772 0.0263311 0.0070626" quat="-0.0514549 0.678967 0.343859 0.64662"
-          mass="0.11869" diaginertia="0.000122249 0.000114626 4.52046e-05" />
-        <joint name="shoulder_pitch_l" pos="0 0 0" axis="0 1 0" range="-3.14159 3.14159"
-          actuatorfrcrange="-6 6" />
-        <geom pos="-0.058342 -0.123309 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__2__1" />
-        <geom pos="-0.058342 -0.123309 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="02_shoulder_mount_v1__1__1" />
-        <geom pos="-0.058342 -0.123309 -0.098" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__17__1" />
-        <geom pos="-0.058342 -0.123309 -0.098" type="mesh" rgba="0.1 0.1 0.1 1"
-          mesh="33_tpu_sea_v1__1__1" />
-        <geom pos="-0.058342 -0.123309 -0.098" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="31_SEA_Metal_v2__1__1" />
+
+      <body childclass="mx64" name="HN05-N101_v1__2__1" pos="0.058342 0.123309 0.098">
+        <inertial pos="0.00912772 0.0263311 0.0070626" quat="-0.0514549 0.678967 0.343859 0.64662" mass="0.11869" diaginertia="0.000122249 0.000114626 4.52046e-05" />
+        <!-- <joint name="shoulder_pitch_l" pos="0 0 0" axis="0 1 0" range="-3.14159 3.14159" actuatorfrcrange="-6 6" /> -->
+        <geom class="visual" pos="-0.058342 -0.123309 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__2__1" />
+        <geom class="visual" pos="-0.058342 -0.123309 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="02_shoulder_mount_v1__1__1" />
+        <geom class="visual" pos="-0.058342 -0.123309 -0.098" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__17__1" />
+        <geom class="visual" pos="-0.058342 -0.123309 -0.098" type="mesh" rgba="0.1 0.1 0.1 1" mesh="33_tpu_sea_v1__1__1" />
+        <geom class="visual" pos="-0.058342 -0.123309 -0.098" type="mesh" rgba="0.7 0.7 0.7 1" mesh="31_SEA_Metal_v2__1__1" />
         <body name="MX64_body_modified_v2__4__1" pos="0.01345 0.041369 0">
-          <inertial pos="-0.0181507 0.017269 -0.0239063"
-            quat="0.706372 0.166869 -0.258575 0.637442"
-            mass="0.239132" diaginertia="0.000397541 0.000329843 0.000111668" />
-          <joint name="shoulder_roll_l" pos="0 0 0" axis="1 0 0" range="-0.785398 3.14159"
-            actuatorfrcrange="-6 6" />
-          <geom pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="MX64_body_modified_v2__4__1" />
-          <geom pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="02a_shoulder_servo_connector_v1_1" />
-          <geom pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh"
-            rgba="0.13 0.16 0.21 1"
-            mesh="04_upper_arm_new_v2__3__1" />
-          <geom pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="x-frame-left_v1_1" />
-          <geom pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-N101_v1__10__1" />
-          <geom pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="02a_shoulder_servo_connector_v1__3__1" />
-          <geom pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh"
-            rgba="0.13 0.16 0.21 1"
-            mesh="04_upper_arm_new_v2__1__1" />
-          <geom pos="-0.071792 -0.164678 -0.098" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-i1_v1__10__1" />
+          <inertial pos="-0.0181507 0.017269 -0.0239063" quat="0.706372 0.166869 -0.258575 0.637442" mass="0.239132" diaginertia="0.000397541 0.000329843 0.000111668" />
+          <!-- <joint name="shoulder_roll_l" pos="0 0 0" axis="1 0 0" range="-0.785398 3.14159" actuatorfrcrange="-6 6" /> -->
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__4__1" />
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="02a_shoulder_servo_connector_v1_1" />
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="04_upper_arm_new_v2__3__1" />
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="x-frame-left_v1_1" />
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__10__1" />
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="02a_shoulder_servo_connector_v1__3__1" />
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="04_upper_arm_new_v2__1__1" />
+          <geom class="visual" pos="-0.071792 -0.164678 -0.098" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__10__1" />
           <body name="MX64_body_modified_v2__3__1" pos="-0.020501 0.116396 -0.087361">
-            <inertial pos="0.0223179 0.0186259 0.00505534"
-              quat="0.268533 0.768062 -0.493142 0.307867"
-              mass="0.206795" diaginertia="0.00147841 0.00117305 0.000476908" />
-            <joint name="elbow_l" pos="0 0 0" axis="0 -0.707107 -0.707107"
-              range="-0.872665 3.14159"
-              actuatorfrcrange="-6 6" />
-            <geom pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="MX64_body_modified_v2__3__1" />
-            <geom pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="HN05-i1_v1__9__1" />
-            <geom pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="06_lower_arm_v3__3__1" />
-            <geom pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="06_lower_arm_v3__2__1" />
-            <geom pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="07_lower_arm_handrail_X_v2_1" />
+            <inertial pos="0.0223179 0.0186259 0.00505534" quat="0.268533 0.768062 -0.493142 0.307867" mass="0.206795" diaginertia="0.00147841 0.00117305 0.000476908" />
+            <!-- <joint name="elbow_l" pos="0 0 0" axis="0 -0.707107 -0.707107" range="-0.872665 3.14159" actuatorfrcrange="-6 6" /> -->
+            <geom class="visual" pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__3__1" />
+            <geom class="visual" pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__9__1" />
+            <geom class="visual" pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="06_lower_arm_v3__3__1" />
+            <geom class="visual" pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="06_lower_arm_v3__2__1" />
+            <geom class="visual" pos="-0.051291 -0.281074 -0.010639" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="07_lower_arm_handrail_X_v2_1" />
           </body>
         </body>
       </body>
-      <body name="HN05-N101_v1__3__1" pos="0.058342 -0.029693 0.098">
-        <inertial pos="0.00912773 -0.0225056 0.0017974"
-          quat="0.375341 0.758423 0.0154889 0.532611"
-          mass="0.11869" diaginertia="0.000149794 0.000116285 7.53091e-05" />
-        <joint name="shoulder_pitch_r" pos="0 0 0" axis="0 -1 0" range="-3.14159 3.14159"
-          actuatorfrcrange="-6 6" />
-        <geom pos="-0.058342 0.029693 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__3__1" />
-        <geom pos="-0.058342 0.029693 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="02_shoulder_mount_v1_1" />
-        <geom pos="-0.058342 0.029693 -0.098" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="HN05-N101_v1__16__1" />
-        <geom pos="-0.058342 0.029693 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-          mesh="33_tpu_sea_v1_1" />
-        <geom pos="-0.058342 0.029693 -0.098" type="mesh" rgba="0.7 0.7 0.7 1"
-          mesh="31_SEA_Metal_v2_1" />
+
+      <body childclass="mx64" name="HN05-N101_v1__3__1" pos="0.058342 -0.029693 0.098">
+        <inertial pos="0.00912773 -0.0225056 0.0017974" quat="0.375341 0.758423 0.0154889 0.532611" mass="0.11869" diaginertia="0.000149794 0.000116285 7.53091e-05" />
+        <!-- <joint name="shoulder_pitch_r" pos="0 0 0" axis="0 -1 0" range="-3.14159 3.14159" actuatorfrcrange="-6 6" /> -->
+        <geom class="visual" pos="-0.058342 0.029693 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__3__1" />
+        <geom class="visual" pos="-0.058342 0.029693 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="02_shoulder_mount_v1_1" />
+        <geom class="visual" pos="-0.058342 0.029693 -0.098" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__16__1" />
+        <geom class="visual" pos="-0.058342 0.029693 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="33_tpu_sea_v1_1" />
+        <geom class="visual" pos="-0.058342 0.029693 -0.098" type="mesh" rgba="0.7 0.7 0.7 1" mesh="31_SEA_Metal_v2_1" />
         <body name="MX64_body_modified_v2__5__1" pos="0.01345 -0.0414 0">
-          <inertial pos="-0.00723321 -0.0217977 -0.0173683"
-            quat="0.264277 0.731029 -0.542237 0.318958" mass="0.239138"
-            diaginertia="0.000514202 0.000378748 0.000275644" />
-          <joint name="shoulder_roll_r" pos="0 0 0" axis="1 0 0" range="-2.53073 0.785398"
-            actuatorfrcrange="-6 6" />
-          <geom pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="MX64_body_modified_v2__5__1" />
-          <geom pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="02a_shoulder_servo_connector_v1__1__1" />
-          <geom pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1"
-            mesh="04_upper_arm_new_v2_1" />
-          <geom pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="02a_shoulder_servo_connector_v1__2__1" />
-          <geom pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1"
-            mesh="04_upper_arm_new_v2__2__1" />
-          <geom pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1"
-            mesh="x-frame-arm-rechts_v1_1" />
-          <geom pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-N101_v1__11__1" />
-          <geom pos="-0.071792 0.071093 -0.098" type="mesh" rgba="0.7 0.7 0.7 1"
-            mesh="HN05-i1_v1__11__1" />
+          <inertial pos="-0.00723321 -0.0217977 -0.0173683" quat="0.264277 0.731029 -0.542237 0.318958" mass="0.239138" diaginertia="0.000514202 0.000378748 0.000275644" />
+          <!-- <joint name="shoulder_roll_r" pos="0 0 0" axis="1 0 0" range="-2.53073 0.785398" actuatorfrcrange="-6 6" /> -->
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__5__1" />
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="02a_shoulder_servo_connector_v1__1__1" />
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="04_upper_arm_new_v2_1" />
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="02a_shoulder_servo_connector_v1__2__1" />
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.13 0.16 0.21 1" mesh="04_upper_arm_new_v2__2__1" />
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="x-frame-arm-rechts_v1_1" />
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-N101_v1__11__1" />
+          <geom class="visual" pos="-0.071792 0.071093 -0.098" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__11__1" />
           <body name="MX64_body_modified_v2__2__1" pos="-0.020579 -0.108265 -0.097133">
-            <inertial pos="0.0213462 0.0380469 -0.0305015"
-              quat="0.554886 0.399099 -0.184663 0.706202"
-              mass="0.206795" diaginertia="0.00137493 0.00112024 0.00036315" />
-            <joint name="elbow_r" pos="0 0 0" axis="0 0.766044 -0.642788"
-              range="-3.14159 0.872665"
-              actuatorfrcrange="-6 6" />
-            <geom pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="MX64_body_modified_v2__2__1" />
-            <geom pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh"
-              rgba="0.7 0.7 0.7 1"
-              mesh="HN05-i1_v1__8__1" />
-            <geom pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="06_lower_arm_v3__1__1" />
-            <geom pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="07_lower_arm_handrail_X_v2__1__1" />
-            <geom pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh"
-              rgba="0.1 0.1 0.1 1"
-              mesh="06_lower_arm_v3_1" />
+            <inertial pos="0.0213462 0.0380469 -0.0305015" quat="0.554886 0.399099 -0.184663 0.706202" mass="0.206795" diaginertia="0.00137493 0.00112024 0.00036315" />
+            <!-- <joint name="elbow_r" pos="0 0 0" axis="0 0.766044 -0.642788" range="-3.14159 0.872665" actuatorfrcrange="-6 6" /> -->
+            <geom class="visual" pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="MX64_body_modified_v2__2__1" />
+            <geom class="visual" pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh" rgba="0.7 0.7 0.7 1" mesh="HN05-i1_v1__8__1" />
+            <geom class="visual" pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="06_lower_arm_v3__1__1" />
+            <geom class="visual" pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="07_lower_arm_handrail_X_v2__1__1" />
+            <geom class="visual" pos="-0.051213 0.179358 -0.000867" quat="1 0 0 0" type="mesh" rgba="0.1 0.1 0.1 1" mesh="06_lower_arm_v3_1" />
           </body>
         </body>
       </body>
@@ -697,36 +405,41 @@
   </worldbody>
 
   <actuator>
-    <!-- Right Leg -->
-    <motor name="m_hip_yaw_r" joint="hip_yaw_r" gear="1" ctrlrange="-1 1" />
-    <motor name="m_hip_roll_r" joint="hip_roll_r" gear="1" ctrlrange="-1 1" />
-    <motor name="m_hip_pitch_r" joint="hip_pitch_r" gear="1" ctrlrange="-1 1" />
-    <motor name="m_knee_r" joint="knee_r" gear="1" ctrlrange="-1 1" />
-    <motor name="m_ankle_pitch_r" joint="ankle_pitch_r" gear="1" ctrlrange="-1 1" />
-    <motor name="m_ankle_roll_r" joint="ankle_roll_r" gear="1" ctrlrange="-1 1" />
 
-    <!-- Left Leg -->
-    <motor name="m_hip_yaw_l" joint="hip_yaw_l" gear="1" ctrlrange="-1 1" />
-    <motor name="m_hip_roll_l" joint="hip_roll_l" gear="1" ctrlrange="-1 1" />
-    <motor name="m_hip_pitch_l" joint="hip_pitch_l" gear="1" ctrlrange="-1 1" />
-    <motor name="m_knee_l" joint="knee_l" gear="1" ctrlrange="-1 1" />
-    <motor name="m_ankle_pitch_l" joint="ankle_pitch_l" gear="1" ctrlrange="-1 1" />
-    <motor name="m_ankle_roll_l" joint="ankle_roll_l" gear="1" ctrlrange="-1 1" />
+    <!-- Right leg (Positionsregler) -->
+    <position name="m_hip_yaw_r" joint="hip_yaw_r" class="mx106"/>
+    <position name="m_hip_roll_r" joint="hip_roll_r" class="mx106"/>
+    <position name="m_hip_pitch_r" joint="hip_pitch_r" class="mx106"/>
+    <position name="m_knee_r" joint="knee_r" class="mx106"/>
+    <position name="m_ankle_pitch_r" joint="ankle_pitch_r" class="mx106"/>
+    <position name="m_ankle_roll_r" joint="ankle_roll_r" class="mx106"/>
 
-    <!-- Neck -->
-    <motor name="m_head_pan" joint="head_pan" gear="1" ctrlrange="-1 1" />
-    <motor name="m_head_tilt" joint="head_tilt" gear="1" ctrlrange="-1 1" />
-
-    <!-- Left Arm -->
-    <motor name="m_shoulder_pitch_l" joint="shoulder_pitch_l" gear="1" ctrlrange="-1 1" />
-    <motor name="m_shoulder_roll_l" joint="shoulder_roll_l" gear="1" ctrlrange="-1 1" />
-    <motor name="m_elbow_l" joint="elbow_l" gear="1" ctrlrange="-1 1" />
-
-    <!-- Right Arm -->
-    <motor name="m_shoulder_pitch_r" joint="shoulder_pitch_r" gear="1" ctrlrange="-1 1" />
-    <motor name="m_shoulder_roll_r" joint="shoulder_roll_r" gear="1" ctrlrange="-1 1" />
-    <motor name="m_elbow_r" joint="elbow_r" gear="1" ctrlrange="-1 1" />
+    <!-- Left leg (Positionsregler) -->
+    <position name="m_hip_yaw_l" joint="hip_yaw_l" class="mx106"/>
+    <position name="m_hip_roll_l" joint="hip_roll_l" class="mx106"/>
+    <position name="m_hip_pitch_l" joint="hip_pitch_l" class="mx106"/>
+    <position name="m_knee_l" joint="knee_l" class="mx106"/>
+    <position name="m_ankle_pitch_l" joint="ankle_pitch_l" class="mx106"/>
+    <position name="m_ankle_roll_l" joint="ankle_roll_l" class="mx106"/>
   </actuator>
 
+  <sensor>
+    <gyro site="imu" name="gyro"/>
+    <velocimeter site="imu" name="local_linvel"/>
+    <accelerometer site="imu" name="accelerometer"/>
+    <framezaxis objtype="site" objname="imu" name="upvector"/>
+    <framexaxis objtype="site" objname="imu" name="forwardvector"/>
+    <framelinvel objtype="site" objname="imu" name="global_linvel"/>
+    <frameangvel objtype="site" objname="imu" name="global_angvel"/>
+    <framepos objtype="site" objname="imu" name="position"/>
+    <framequat objtype="site" objname="imu" name="orientation"/>
+
+    <framelinvel objtype="site" objname="foot_left" name="l_foot_global_linvel"/>
+    <framelinvel objtype="site" objname="foot_right" name="r_foot_global_linvel"/>
+    <framexaxis objtype="site" objname="foot_left" name="l_foot_upvector"/>
+    <framexaxis objtype="site" objname="foot_right" name="r_foot_upvector"/>
+    <framepos objtype="site" objname="foot_left" name="l_foot_pos"/>
+    <framepos objtype="site" objname="foot_right" name="r_foot_pos"/>
+  </sensor>
 
 </mujoco>
