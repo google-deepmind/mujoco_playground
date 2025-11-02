@@ -298,6 +298,7 @@ class Joystick(op3_base.Op3Env):
       local_vel: jax.Array,
   ) -> jax.Array:
     # Tracking of linear velocity commands (xy axes).
+    local_vel = local_vel.at[0].set(-local_vel[0])  #------------------------------------- x-Achse invertieren
     lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
     reward = jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
     return reward
