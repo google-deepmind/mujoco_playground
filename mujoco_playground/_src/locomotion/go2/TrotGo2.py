@@ -116,11 +116,11 @@ class TrotGo2(Go2Env):
                  task: str = None, 
                  config: config_dict.ConfigDict = default_config(), 
                  config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None):
-        CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-        default_xml = os.path.normpath(
-            os.path.join(CURRENT_DIR, "xmls", "scene_mjx_collision_free.xml")
-        )
-
+        # CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+        # default_xml = os.path.normpath(
+        #     os.path.join(CURRENT_DIR, "xmls", "scene_mjx_collision_free.xml")
+        # )
+        default_xml = consts.MJX_XML_PATH.as_posix()
         super().__init__(
             xml_path=default_xml,
             config=config,
