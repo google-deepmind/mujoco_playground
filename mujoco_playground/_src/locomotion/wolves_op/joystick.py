@@ -493,6 +493,7 @@ class Joystick(wolvesop_base.WolvesOPEnv):
       commands: jax.Array,
       local_vel: jax.Array,
   ) -> jax.Array:
+    local_vel = local_vel.at[0].set(-local_vel[0])
     lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
     return jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
 
