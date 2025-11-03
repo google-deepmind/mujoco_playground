@@ -41,8 +41,8 @@ def default_config() -> config_dict.ConfigDict:
       obs_noise=0.05,
       obs_history_size=3,
       max_foot_height=0.07,
-      lin_vel_x=[0.0, 1.5], #von -0,6 auf 0 ändern, um Rückwärtsbewegungen zu verhindern
-      lin_vel_y=[-0.8, 0.8],
+      lin_vel_x=[2.0, 0.0], #von -0,6 auf 0 ändern, um Rückwärtsbewegungen zu verhindern [-0.6, 1.5]
+      lin_vel_y=[-0.0, 0.0],#von -0,8 auf 0 ändern, um tests zu machen [-0.8, 0.8]
       ang_vel_yaw=[-0.7, 0.7],
       reward_config=config_dict.create(
           scales=config_dict.create(
