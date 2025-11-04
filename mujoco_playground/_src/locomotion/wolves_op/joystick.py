@@ -91,8 +91,8 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.05, 0.8],
       ),
-      lin_vel_x=[-0.5, 0.5],
-      lin_vel_y=[-0.5, 0.5],
+      lin_vel_x=[-0.5, 0.5], #ändern der Werte zum testen [-0.5, 0.5]
+      lin_vel_y=[-0.5, 0.5], #ändern der Werte zum testen [-0.5, 0.5]
       ang_vel_yaw=[-1.5, 1.5],
   )
 
@@ -493,6 +493,7 @@ class Joystick(wolvesop_base.WolvesOPEnv):
       commands: jax.Array,
       local_vel: jax.Array,
   ) -> jax.Array:
+    local_vel = local_vel.at[0].set(-local_vel[0])#-----------------------------------------------------------------
     lin_vel_error = jp.sum(jp.square(commands[:2] - local_vel[:2]))
     return jp.exp(-lin_vel_error / self._config.reward_config.tracking_sigma)
 

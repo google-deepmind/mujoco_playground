@@ -41,7 +41,7 @@ def default_config() -> config_dict.ConfigDict:
       obs_noise=0.05,
       obs_history_size=3,
       max_foot_height=0.07,
-      lin_vel_x=[-0.6, 1.5],
+      lin_vel_x=[-0.6, 1.5], 
       lin_vel_y=[-0.8, 0.8],
       ang_vel_yaw=[-0.7, 0.7],
       reward_config=config_dict.create(
