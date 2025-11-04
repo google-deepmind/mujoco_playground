@@ -91,8 +91,8 @@ def default_config() -> config_dict.ConfigDict:
           interval_range=[5.0, 10.0],
           magnitude_range=[0.05, 0.8],
       ),
-      lin_vel_x=[0.0, 0.0], #ändern der Werte zum testen [-0.5, 0.5]
-      lin_vel_y=[0.0, 0.0], #ändern der Werte zum testen [-0.5, 0.5]
+      lin_vel_x=[-0.5, 0.5], #ändern der Werte zum testen [-0.5, 0.5]
+      lin_vel_y=[-0.5, 0.5], #ändern der Werte zum testen [-0.5, 0.5]
       ang_vel_yaw=[-1.5, 1.5],
   )
 
