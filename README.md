@@ -1,114 +1,49 @@
-# MuJoCo Playground
+# Doku für Jaywalker-Mujoco-Playground Adaptation
 
-[![Build](https://img.shields.io/github/actions/workflow/status/google-deepmind/mujoco_playground/ci.yml?branch=main)](https://github.com/google-deepmind/mujoco_playground/actions)
-[![PyPI version](https://img.shields.io/pypi/v/playground)](https://pypi.org/project/playground/)
-![Banner for playground](https://github.com/google-deepmind/mujoco_playground/blob/main/assets/banner.png?raw=true)
+## Entwicklungsumgebung einrichten/Sachen die wir auf dem Server machen mussten
 
-A comprehensive suite of GPU-accelerated environments for robot learning research and sim-to-real, built with [MuJoCo MJX](https://github.com/google-deepmind/mujoco/tree/main/mjx).
+ - [uv](https://docs.astral.sh/uv/getting-started/installation/) installieren
+ - ssh-Key für den Zugriff auf Github (läuft aktuell auf Privataccount) eingerichtet
+ - [Projekt-Repo](https://github.com/BigSmoke908/mujoco_playground) in das Homeverzeichnis gecloned
+ - `cd mujoco_playground`
+ - `uv venv --python 3.11`, lokale von uv verwaltete Python Umgebung erstellen
+ - `source .venv/bin/activate`, die Umgebung aktivieren
+ - `uv pip install -U "jax[cuda12]"`
+ - JAX/CUDA-Installation testen: `python -c "import jax; print(jax.default_backend())"`  (sollte `gpu` ausgeben)
+ - `uv pip install -e ".[all]"`, alle anderen Dependencies für Mujoco-Playground installieren
+ - komplette Installation verifizieren: `python -c "import mujoco_playground"`  (sollte ohne Fehler durchlaufen)
 
-Features include:
 
-- Classic control environments from `dm_control` reimplemented in MJX.
-- Quadruped and bipedal locomotion environments.
-- Non-prehensile and dexterous manipulation environments.
-- Vision-based support available via [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx).
+## Mujoco-Simulation öffnen
+> Hierfür muss Mujoco installiert sein. Am einfachsten geht das, indem man die obige Installationanleitung für den Playground befolgt.
 
-For more details, check out the project [website](https://playground.mujoco.org/).
+ - `cd mujoco_playground`, in den lokalen Projekt-Clon wechseln
+ - `source .venv/bin/activate`, die lokale Python Umgebung aktivieren
+ - `python`
+ - `import mujoco.viewer as m`
+ - `m.launch()`  -> ein Fenster mit der Mujoco-Simulation öffnet sich
 
-## Installation
 
-You can install MuJoCo Playground directly from PyPI:
+## Training
+> Über das Script [train_jax_ppo.py](./learning/train_jax_ppo.py) wird aktuell das Training ausgeführt
 
-```sh
-pip install playground
-```
+ - `cd jaywalker_mujoco_playground`  -> hier den lokalen Clon vom Repository wechseln
+ - `source ./venv/activate`  um die lokale Python Umgebung zu aktivieren (muss pro Terminal-Session nur einmal durchgeführt werden)
+ - `python learning/train_jax_ppo.py --env_name=WolvesOPJoystickFlatTerrain`, Standardaufruf für das Training
 
-### From Source
 
-> [!IMPORTANT]
-> Requires Python 3.10 or later.
+### einige Optionale Trainingsparameter
 
-1. `git clone git@github.com:google-deepmind/mujoco_playground.git && cd mujoco_playground`
-2. [Install uv](https://docs.astral.sh/uv/getting-started/installation/), a faster alternative to `pip`
-3. Create a virtual environment: `uv venv --python 3.11`
-4. Activate it: `source .venv/bin/activate`
-5. Install CUDA 12 jax: `uv pip install -U "jax[cuda12]"`
-    * Verify GPU backend: `python -c "import jax; print(jax.default_backend())"` should print gpu
-6. Install playground: `uv pip install -e ".[all]"`
-7. Verify installation (and download Menagerie): `python -c "import mujoco_playground"`
+> Parameter sind über `flags.DEFINE_...`-Aufrufe in [train_jax_ppo.py](./learning/train_jax_ppo.py) definiert.
 
-#### Madrona-MJX (optional)
+ - `--help`, Liste mit allen Parametern + Erklärung ausgeben
+ - `--play_only=true`, es wird kein Training ausgeführt sondern nur ein Video erstellt
+ - `--domain_randomization=false`, Domain-Randomization togglen
+ - `--load_checkpoint_path={path}`, Skript mit einem bestimmten Trainingsstand laden (um nochmal ein Video zu erzeugen oder das Training fortzusetzen)
+ - `--use_tb=true`, Loggingdirectory für Tensorboard erstellen
+ - `--num_evals=10`, wie viele Zwischenstände sollen während dem Training gespeichert werden
+ - `--num_timesteps=150000000`, wie viele Episoden(?) sollen trainiert werden -> grobes Maß für wie lange trainiert werden soll
 
-For vision-based environments, please refer to the installation instructions in the [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx?tab=readme-ov-file#installation) repository.
 
-## Getting started
 
-### Basic Tutorials
-| Colab | Description |
-|-------|-------------|
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/dm_control_suite.ipynb) | Introduction to the Playground with DM Control Suite |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/locomotion.ipynb) | Locomotion Environments |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/manipulation.ipynb) | Manipulation Environments |
 
-### Vision-Based Tutorials (GPU Colab)
-| Colab | Description |
-|-------|-------------|
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/training_vision_1_t4.ipynb) | Training CartPole from Vision (T4 Instance) |
-
-### Local Runtime Tutorials
-*Requires local Madrona-MJX installation*
-
-| Colab | Description |
-|-------|-------------|
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/training_vision_1.ipynb) | Training CartPole from Vision |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/training_vision_2.ipynb) | Robotic Manipulation from Vision |
-
-## Running from CLI
-> [!IMPORTANT]
-> Assumes installation from source.
-
-For basic usage, navigate to the repo's directory and run:
-```bash
-python learning/train_jax_ppo.py --env_name CartpoleBalance
-```
-
-### Training Visualization
-
-To interactively view trajectories throughout training with [rscope](https://github.com/Andrew-Luo1/rscope/tree/main), install it (`pip install rscope`) and run:
-
-```
-python learning/train_jax_ppo.py --env_name PandaPickCube --rscope_envs 16 --run_evals=False --deterministic_rscope=True
-# In a separate terminal
-python -m rscope
-```
-
-## FAQ
-
-### How can I contribute?
-
-Get started by installing the library and exploring its features! Found a bug? Report it in the issue tracker. Interested in contributing? If you are a developer with robotics experience, we would love your help—check out the [contribution guidelines](CONTRIBUTING.md) for more details.
-
-### Reproducibility / GPU Precision Issues
-Users with NVIDIA Ampere architecture GPUs (e.g., RTX 30 and 40 series) may experience reproducibility [issues](https://github.com/google-deepmind/mujoco_playground/issues/86) in mujoco_playground due to JAX’s default use of TF32 for matrix multiplications. This lower precision can adversely affect RL training stability. To ensure consistent behavior with systems using full float32 precision (as on Turing GPUs), please run `export JAX_DEFAULT_MATMUL_PRECISION=highest` in your terminal before starting your experiments (or add it to the end of `~/.bashrc`).
-
-## Citation
-
-If you use Playground in your scientific works, please cite it as follows:
-
-```bibtex
-@misc{mujoco_playground_2025,
-  title = {MuJoCo Playground: An open-source framework for GPU-accelerated robot learning and sim-to-real transfer.},
-  author = {Zakka, Kevin and Tabanpour, Baruch and Liao, Qiayuan and Haiderbhai, Mustafa and Holt, Samuel and Luo, Jing Yuan and Allshire, Arthur and Frey, Erik and Sreenath, Koushil and Kahrs, Lueder A. and Sferrazza, Carlo and Tassa, Yuval and Abbeel, Pieter},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/google-deepmind/mujoco_playground}
-}
-```
-
-## License and Disclaimer
-
-The texture used in the rough terrain for the locomotion environments is from [Polyhaven](https://polyhaven.com/a/rock_face) and licensed under [CC0](https://creativecommons.org/public-domain/cc0/).
-
-All other content in this repository is licensed under the Apache License, Version 2.0. A copy of this license is provided in the top-level [LICENSE](LICENSE) file in this repository. You can also obtain it from https://www.apache.org/licenses/LICENSE-2.0.
-
-This is not an officially supported Google product.
