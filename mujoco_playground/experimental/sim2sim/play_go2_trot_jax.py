@@ -13,7 +13,10 @@ import os
 
 # 导入 Go2 常量与工具函数
 from mujoco_playground._src.locomotion.go2 import go2_constants as consts
-from mujoco_playground._src.locomotion.go2.TrotUtil import cos_wave, make_kinematic_ref, rotate_inv
+from mujoco_playground._src.locomotion.go2.TrotUtil import (
+    cos_wave, make_kinematic_ref, rotate_inv,
+    dcos_wave, quaternion_to_rotation_6d
+)
 
 # 从你的训练代码导入模块
 from mujoco_playground import registry
@@ -28,6 +31,8 @@ from brax.envs.wrappers import training as brax_training
 import mediapy as media
 
 _HERE = epath.Path(__file__).parent
+
+total_rewards = 0.0
 
 # ---------------------------------------------------------------------
 # Normalize Definition
@@ -57,6 +62,7 @@ class Go2JaxController:
         demo_cfg['env']['reset2ref'] = False
         demo_cfg['env']['reference_state_init'] = False
         demo_cfg['pert_config']['enable'] = False
+        self.reward_scales = demo_cfg['rewards']['scales']
 
         demo_env = registry.load(env_name, demo_cfg)
         demo_env = brax_training.VmapWrapper(demo_env)
@@ -115,10 +121,14 @@ class Go2JaxController:
         # gait 参考轨迹
         step_k = 13
         kin_q = make_kinematic_ref(cos_wave, step_k, scale=0.3, dt=ctrl_dt)
+        kin_qvel = make_kinematic_ref(dcos_wave, step_k, scale=0.3, dt=ctrl_dt)
         kin_q = np.array(kin_q) + np.array(self._default_angles)
         self._kinematic_ref_qpos = kin_q
+        self._kinematic_ref_qvel = kin_qvel
         self._step_idx = 0
         self._l_cycle = int(kin_q.shape[0])
+        self._feet_ids = np.array([demo_env._mj_model.geom(name).id for name in consts.FEET_GEOMS])
+        # print("Shape of kinematic ref qpos:", self._kinematic_ref_qpos.shape)
 
     # ----------------- 提取观测 -----------------
     def get_obs(self, model, data) -> np.ndarray:
@@ -169,6 +179,31 @@ class Go2JaxController:
             ctrl = self._default_angles + act * self._action_scale
             data.ctrl[:] = ctrl
             self._last_action = ctrl.copy()
+            
+            ref_qpos = self._default_qpos.copy()
+            ref_qpos[7:] = self._kinematic_ref_qpos[self._step_idx]
+            ref_qvel = np.zeros_like(data.qvel)
+            ref_qvel[6:] = self._kinematic_ref_qvel[self._step_idx]
+            ref_data = mujoco.MjData(model)
+            ref_data.qpos[:] = ref_qpos
+            ref_data.qvel[:] = ref_qvel
+
+            mujoco.set_mjcb_control(None)
+            mujoco.mj_forward(model, ref_data)
+            mujoco.set_mjcb_control(self.get_control)
+
+            r1 = self._reward_reference_tracking(data, ref_data) * self.reward_scales['reference_tracking']
+            r2 = self._reward_min_reference_tracking(ref_data.qpos, ref_data.qvel, data) * self.reward_scales['min_reference_tracking']
+            r3 = self._reward_feet_height(
+                data.geom_xpos[self._feet_ids, 2],
+                ref_data.geom_xpos[self._feet_ids, 2],
+            ) * self.reward_scales['feet_height']
+            r4 = self._reward_base_tracking(data, ref_data) * self.reward_scales['base_tracking']
+            step_reward = r1 + r2 + r3 + r4
+
+            global total_rewards
+            total_rewards += step_reward
+
             self._step_idx = (self._step_idx + 1) % self._l_cycle
 
         ##########################
@@ -180,6 +215,40 @@ class Go2JaxController:
         #     self._step_idx = (self._step_idx + 1) % self._l_cycle
 
         self._counter += 1
+
+    # ----------------- Reward functions -----------------
+    def _reward_reference_tracking(self, data, ref_data):
+        f = lambda a, b: np.mean(np.sum((a - b) ** 2, axis=-1))
+        mse_pos = f(data.xpos[1:], ref_data.xpos[1:])
+        mse_rot = f(quaternion_to_rotation_6d(data.xquat[1:]), 
+                    quaternion_to_rotation_6d(ref_data.xquat[1:]))
+        vel = data.cvel[1:, 3:]
+        ang = data.cvel[1:, :3]
+        ref_vel = ref_data.cvel[1:, 3:]
+        ref_ang = ref_data.cvel[1:, :3]
+        mse_vel = f(vel, ref_vel)
+        mse_ang = f(ang, ref_ang)
+        return mse_pos + 0.1 * mse_rot + 0.01 * mse_vel + 0.001 * mse_ang
+
+    def _reward_min_reference_tracking(self, ref_qpos, ref_qvel, data):
+        pos = np.concatenate([data.qpos[:3], data.qpos[7:]])
+        pos_targ = np.concatenate([ref_qpos[:3], ref_qpos[7:]])
+        pos_err = np.linalg.norm(pos_targ - pos)
+        vel_err = np.linalg.norm(data.qvel - ref_qvel)
+        return pos_err + vel_err
+
+    def _reward_feet_height(self, feet_z, feet_z_ref):
+        return np.sum(np.abs(feet_z - feet_z_ref))
+
+    def _reward_base_tracking(self, data, ref_data):
+        pos_err = np.linalg.norm(data.xpos[1] - ref_data.xpos[1])
+        q = data.xquat[1]
+        q_ref = ref_data.xquat[1]
+        dot = abs(np.dot(q, q_ref))
+        dot = np.clip(dot, -1.0, 1.0)
+        rot_err = np.arccos(2 * dot**2 - 1)
+        vel_err = np.linalg.norm(data.cvel[1] - ref_data.cvel[1])
+        return pos_err + 0.5 * rot_err + 0.1 * vel_err
 
 
 # ---------------------------------------------------------------------
@@ -243,6 +312,8 @@ if __name__ == "__main__":
              print(f"Time: {data.time:.2f}/{run_time} s, Frames collected: {len(frames)}")
 
     print(f"Simulation finished. Total frames: {len(frames)}")
+    print("Total reward collected:", total_rewards)
+    print()
     media.write_video("go2_trot_server.mp4", frames, fps=int(1/model.opt.timestep))
     print("Video saved as go2_trot_server.mp4")
 

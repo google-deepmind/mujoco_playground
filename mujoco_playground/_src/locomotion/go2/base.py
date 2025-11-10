@@ -22,6 +22,7 @@ class Go2Env(mjx_env.MjxEnv):
         self._xml_path = xml_path
         self._mj_model = mujoco.MjModel.from_xml_path(self._xml_path)
         self._mj_model.opt.timestep = config.sim_dt
+        self._mj_model.opt.impratio = config.env.impratio
         # Modify PD gains.
         self._mj_model.dof_damping[6:] = config.Kd
         self._mj_model.actuator_gainprm[:, 0] = config.Kp
