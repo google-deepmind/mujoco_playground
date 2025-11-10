@@ -10,6 +10,7 @@ from mujoco import viewer, Renderer
 from etils import epath
 import functools
 import os
+os.environ['MUJOCO_GL'] = 'egl'
 
 # 导入 Go2 常量与工具函数
 from mujoco_playground._src.locomotion.go2 import go2_constants as consts
@@ -132,39 +133,61 @@ class Go2JaxController:
 
     # ----------------- 提取观测 -----------------
     def get_obs(self, model, data) -> np.ndarray:
-        # # sensor
-        # gyro = data.sensor("gyro").data
-        # yaw_rate = gyro[2] * 0.25
+        # ----------------- sensor -----------------
+        gyro = data.sensor("gyro").data
+        yaw_rate = gyro[2] * 0.25
 
-        # quat = data.sensor("orientation").data
-        # g_world = np.array([0.0, 0.0, -1.0])
-        # g_local = rotate_inv(g_world, quat)
+        quat = data.sensor("orientation").data
+        g_world = np.array([0.0, 0.0, -1.0])
+        g_local = rotate_inv(g_world, quat)
 
-        # joint_angle_names = [
-        #     "abduction_front_left_pos", "hip_front_left_pos", "knee_front_left_pos",
-        #     "abduction_hind_left_pos", "hip_hind_left_pos", "knee_hind_left_pos",
-        #     "abduction_front_right_pos", "hip_front_right_pos", "knee_front_right_pos",
-        #     "abduction_hind_right_pos", "hip_hind_right_pos", "knee_hind_right_pos",
-        # ]
-        # angles = np.array([data.sensor(name).data[0] for name in joint_angle_names])
+        joint_angle_names = [
+            # FL
+            "abduction_front_left_pos", "hip_front_left_pos", "knee_front_left_pos",
+            # FR
+            "abduction_front_right_pos", "hip_front_right_pos", "knee_front_right_pos",
+            # RL
+            "abduction_hind_left_pos", "hip_hind_left_pos", "knee_hind_left_pos",
+            # RR
+            "abduction_hind_right_pos", "hip_hind_right_pos", "knee_hind_right_pos",
+        ]
 
-        # kin_ref = self._kinematic_ref_qpos[self._step_idx]
+        # for i, name in enumerate(joint_angle_names):
+        #     print(i, name, model.joint(i).name)
 
-        # data
-        local_omega = data.cvel[1, :3]
-        yaw_rate = local_omega[2] * 0.25
-        g_world = jnp.array([0.0, 0.0, -1.0])
-        g_local = rotate_inv(g_world, data.xquat[1])
-        angles = data.qpos[7:19]
+        angles = np.array([data.sensor(name).data[0] for name in joint_angle_names])
         kin_ref = self._kinematic_ref_qpos[self._step_idx]
 
-        obs = np.concatenate([
+        sensor_obs = np.concatenate([
             [yaw_rate],
             g_local,
             angles - self._default_angles,
             self._last_action,
             kin_ref,
         ])
+
+        obs = sensor_obs
+
+        # # ----------------- data -----------------
+        # local_omega = data.cvel[1, :3]
+        # yaw_rate = local_omega[2] * 0.25
+        # g_world = jnp.array([0.0, 0.0, -1.0])
+        # g_local = rotate_inv(g_world, data.xquat[1])
+        # angles = data.qpos[7:19]
+        # kin_ref = self._kinematic_ref_qpos[self._step_idx]
+
+        # obs = np.concatenate([
+        #     [yaw_rate],
+        #     g_local,
+        #     angles - self._default_angles,
+        #     self._last_action,
+        #     kin_ref,
+        # ])
+
+        # diff = np.abs(sensor_obs - obs)
+        # if diff.max() > 1e-6:
+        #     print("Observation difference detected! Max diff:", diff.max())
+
         return np.clip(obs, -100.0, 100.0).astype(np.float32)
 
     # ----------------- 控制接口 -----------------
@@ -276,14 +299,14 @@ def load_callback(model=None, data=None):
 
     controller = Go2JaxController(
         env_name="Go2Trot",
-        # policy_path="/tmp/trotting_apg_2hz_policy",
-        policy_path="/tmp/trotting_ppo_2hz_policy",
+        policy_path="/tmp/trotting_apg_2hz_policy",
+        # policy_path="/tmp/trotting_ppo_2hz_policy",
         default_qpos=np.array(model.keyframe("home").qpos),
         ctrl_dt=ctrl_dt,
         n_substeps=n_substeps,
         action_scale=np.array([0.2, 0.8, 0.8] * 4),
-        # alg_name='apg'
-        alg_name='ppo'
+        alg_name='apg'
+        # alg_name='ppo'
     )
 
     mujoco.set_mjcb_control(controller.get_control)

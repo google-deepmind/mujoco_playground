@@ -210,30 +210,47 @@
   </actuator>
 
   <sensor>
+    <!-- FL -->
     <jointpos joint="FL_hip_joint" name="abduction_front_left_pos"/>
     <jointpos joint="FL_thigh_joint" name="hip_front_left_pos"/>
     <jointpos joint="FL_calf_joint" name="knee_front_left_pos"/>
-    <jointpos joint="RL_hip_joint" name="abduction_hind_left_pos"/>
-    <jointpos joint="RL_thigh_joint" name="hip_hind_left_pos"/>
-    <jointpos joint="RL_calf_joint" name="knee_hind_left_pos"/>
+
+    <!-- FR -->
     <jointpos joint="FR_hip_joint" name="abduction_front_right_pos"/>
     <jointpos joint="FR_thigh_joint" name="hip_front_right_pos"/>
     <jointpos joint="FR_calf_joint" name="knee_front_right_pos"/>
+
+    <!-- RL -->
+    <jointpos joint="RL_hip_joint" name="abduction_hind_left_pos"/>
+    <jointpos joint="RL_thigh_joint" name="hip_hind_left_pos"/>
+    <jointpos joint="RL_calf_joint" name="knee_hind_left_pos"/>
+
+    <!-- RR -->
     <jointpos joint="RR_hip_joint" name="abduction_hind_right_pos"/>
     <jointpos joint="RR_thigh_joint" name="hip_hind_right_pos"/>
     <jointpos joint="RR_calf_joint" name="knee_hind_right_pos"/>
+
+    <!-- FL -->
     <jointvel joint="FL_hip_joint" name="abduction_front_left_vel"/>
     <jointvel joint="FL_thigh_joint" name="hip_front_left_vel"/>
     <jointvel joint="FL_calf_joint" name="knee_front_left_vel"/>
-    <jointvel joint="RL_hip_joint" name="abduction_hind_left_vel"/>
-    <jointvel joint="RL_thigh_joint" name="hip_hind_left_vel"/>
-    <jointvel joint="RL_calf_joint" name="knee_hind_left_vel"/>
+
+    <!-- FR -->
     <jointvel joint="FR_hip_joint" name="abduction_front_right_vel"/>
     <jointvel joint="FR_thigh_joint" name="hip_front_right_vel"/>
     <jointvel joint="FR_calf_joint" name="knee_front_right_vel"/>
+
+    <!-- RL -->
+    <jointvel joint="RL_hip_joint" name="abduction_hind_left_vel"/>
+    <jointvel joint="RL_thigh_joint" name="hip_hind_left_vel"/>
+    <jointvel joint="RL_calf_joint" name="knee_hind_left_vel"/>
+
+    <!-- RR -->
     <jointvel joint="RR_hip_joint" name="abduction_hind_right_vel"/>
     <jointvel joint="RR_thigh_joint" name="hip_hind_right_vel"/>
     <jointvel joint="RR_calf_joint" name="knee_hind_right_vel"/>
+    
+    <!-- IMU -->
     <gyro site="imu" name="gyro"/>
     <accelerometer site="imu" name="accelerometer"/>
     <framequat objtype="site" objname="imu" name="orientation"/>
