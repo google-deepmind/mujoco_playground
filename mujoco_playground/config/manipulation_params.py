@@ -64,9 +64,6 @@ def brax_ppo_config(
     rl_config.num_envs = 1024
     rl_config.batch_size = 512
     rl_config.network_factory.policy_hidden_layer_sizes = (256, 256, 256, 256)
-    if impl == "warp":
-      rl_config.num_timesteps *= 3
-      rl_config.num_evals *= 3
   elif env_name == "PandaOpenCabinet":
     rl_config.num_timesteps = 40_000_000
     rl_config.num_evals = 4
@@ -94,9 +91,6 @@ def brax_ppo_config(
     rl_config.network_factory.policy_hidden_layer_sizes = (256, 256)
     rl_config.num_resets_per_eval = 1
     rl_config.max_grad_norm = 1.0
-    if impl == "warp":
-      rl_config.num_timesteps *= 4
-      rl_config.num_evals *= 4
   elif env_name.startswith("PandaPickCube"):
     rl_config.num_timesteps = 20_000_000
     rl_config.num_evals = 4
@@ -109,9 +103,6 @@ def brax_ppo_config(
     rl_config.num_envs = 2048
     rl_config.batch_size = 512
     rl_config.network_factory.policy_hidden_layer_sizes = (32, 32, 32, 32)
-    if impl == "warp":
-      rl_config.num_timesteps *= 4
-      rl_config.num_evals *= 4
   elif env_name == "PandaRobotiqPushCube":
     rl_config.num_timesteps = 1_800_000_000
     rl_config.num_evals = 10
@@ -126,10 +117,6 @@ def brax_ppo_config(
     rl_config.num_resets_per_eval = 1
     rl_config.num_eval_envs = 32
     rl_config.network_factory.policy_hidden_layer_sizes = (64, 64, 64, 64)
-    if impl == "warp":
-      rl_config.num_resets_per_eval = 10
-      rl_config.num_timesteps = int(rl_config.num_timesteps * 1.5)
-      rl_config.num_evals = int(rl_config.num_evals * 1.5)
   elif env_name == "LeapCubeRotateZAxis":
     rl_config.num_timesteps = 100_000_000
     rl_config.num_evals = 10
