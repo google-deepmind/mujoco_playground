@@ -216,18 +216,18 @@ def rsl_rl_config(env_name: str, unused_impl: Optional[str] = None) -> config_di
           value_loss_coef=1.0,
           use_clipped_value_loss=True,
           clip_param=0.2,
-          entropy_coef=0.001,
-          num_learning_epochs=5,
+          entropy_coef=0.01,
+          num_learning_epochs=4,
           # mini batch size = num_envs*nsteps / nminibatches
-          num_mini_batches=4,
-          learning_rate=3.0e-4,  # 5.e-4
+          num_mini_batches=8,
+          learning_rate=1e-3,
           schedule="adaptive",  # could be adaptive, fixed
-          gamma=0.99,
+          gamma=0.97,
           lam=0.95,
           desired_kl=0.01,
           max_grad_norm=1.0,
       ),
-      num_steps_per_env=24,  # per iteration
+      num_steps_per_env=40,  # per iteration
       max_iterations=100000,  # number of policy updates
       empirical_normalization=True,
       # logging
