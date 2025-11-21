@@ -34,7 +34,8 @@ class Go2OnnxController:
         self._action_scale = action_scale
 
         # last_action should be raw action ∈ [-1,1], not the ctrl
-        self._last_action = np.zeros_like(self._default_angles, dtype=np.float32)
+        # self._last_action = np.zeros_like(self._default_angles, dtype=np.float32)
+        self._last_action = self._default_angles.copy()
 
         self._counter = 0
         self._n_substeps = n_substeps
