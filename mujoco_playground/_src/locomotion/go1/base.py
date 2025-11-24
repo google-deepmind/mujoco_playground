@@ -53,6 +53,7 @@ class Go1Env(mjx_env.MjxEnv):
         epath.Path(xml_path).read_text(), assets=self._model_assets
     )
     self._mj_model.opt.timestep = self._config.sim_dt
+    self._mj_model.opt.ccd_iterations = 10
 
     # Modify PD gains.
     self._mj_model.dof_damping[6:] = config.Kd
