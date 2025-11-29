@@ -179,7 +179,7 @@
     <light name="spotlight" mode="targetbodycom" target="torso" pos="3 0 4"/>
     <body name="torso" pos="0 0 0.535" childclass="humanoid">
       <freejoint />
-      <site name="imu" pos="0.06 0.045 0.05"/>
+      <site name="imu" pos="0.06 0.045 0.000"/>
       <geom class="visual" type="mesh" rgba="0 0 0.54 1" mesh="base_link" />
       <geom class="visual" type="mesh" rgba="0.1 0.1 0.1 1" mesh="25_Orin_Baseplate_v14_1" />
       <geom class="visual" type="mesh" rgba="0.7 0.7 0.7 1" mesh="08_upper_body_cage_v2_1" />
