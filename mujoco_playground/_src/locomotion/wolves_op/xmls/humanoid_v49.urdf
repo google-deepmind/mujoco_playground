@@ -1,0 +1,3818 @@
+<?xml version="1.0" ?>
+<robot name="Wolves_Robot_Orin_Export">
+
+<material name="silver">
+  <color rgba="0.700 0.700 0.700 1.000"/>
+</material>
+
+<material name="blue">
+  <color rgba="0.0 0.0 0.540 1.000"/>
+</material>
+
+<material name="black">
+  <color rgba="0.1 0.1 0.1 1.000"/>
+</material>
+
+<material name="carbon_black">
+  <color rgba="0.13 0.16 0.21 1.000"/>
+</material>
+
+<link name="base_link">
+  <inertial>
+    <origin xyz="0.057384590975022284 0.04670864742021264 0.02549790043174114" rpy="0 0 0"/>
+    <mass value="1.1132502654824572"/>
+    <inertia ixx="0.001318989063353931" iyy="0.0013188927318269683" izz="0.002245182344120197" ixy="-1.8383684331768624e-12" iyz="1.7716999531087324e-08" ixz="-1.3514690891999054e-09"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="blue"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="25_Orin_Baseplate_v14_1">
+  <inertial>
+    <origin xyz="-0.045882647675387515 0.03286984784708719 -0.016158519082884872" rpy="0 0 0"/>
+    <mass value="0.2505976143716258"/>
+    <inertia ixx="0.0004521322090622949" iyy="0.0003505194531403914" izz="0.0007937049245445799" ixy="-2.377268195059715e-06" iyz="-2.819871445931924e-06" ixz="4.0608281638959253e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.103387 -0.014708 -0.0015" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/25_Orin_Baseplate_v14_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.103387 -0.014708 -0.0015" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/25_Orin_Baseplate_v14_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="08_upper_body_cage_v2_1">
+  <inertial>
+    <origin xyz="-0.05507343857011122 -0.06698827181477238 0.06820636908042174" rpy="0 0 0"/>
+    <mass value="0.30749586336515305"/>
+    <inertia ixx="0.002241407439923176" iyy="0.001435955062468722" izz="0.0017752581580942665" ixy="1.535972597140403e-07" iyz="1.7423809464103737e-07" ixz="4.0489034019036176e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.112842 -0.113808 0.0175" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/08_upper_body_cage_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.112842 -0.113808 0.0175" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/08_upper_body_cage_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="09_lower_body_cage_v2_1">
+  <inertial>
+    <origin xyz="-0.05491594194441414 -0.06700002988418714 -0.04127463711573485" rpy="0 0 0"/>
+    <mass value="0.14814511010198889"/>
+    <inertia ixx="0.0005159103600554791" iyy="0.0005010881813661786" izz="0.0006519745584047294" ixy="-4.005205455487326e-15" iyz="1.2995399027715404e-13" ixz="2.007255179251738e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.112842 -0.113808 0.0225" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/09_lower_body_cage_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.112842 -0.113808 0.0225" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/09_lower_body_cage_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="30_Powerboard_Holder_v31_1">
+  <inertial>
+    <origin xyz="-0.057577849561278836 0.07175856466645798 -0.013300607194261585" rpy="0 0 0"/>
+    <mass value="0.18067765875382674"/>
+    <inertia ixx="0.0005223258166404279" iyy="0.0002215666152418571" izz="0.0007322182555824423" ixy="5.232548601775424e-06" iyz="1.0023948837779677e-06" ixz="2.111800224315042e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.117842 0.023192 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/30_Powerboard_Holder_v31_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.117842 0.023192 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/30_Powerboard_Holder_v31_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2__6__1">
+  <inertial>
+    <origin xyz="-0.0024107810986832845 -0.01730002973100271 -0.017108369253590855" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="3.196956103948111e-05" iyy="5.687099504650449e-05" izz="4.864541189820255e-05" ixy="-4.741500703349388e-13" iyz="3.715630234046863e-13" ixz="5.269560224138367e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.068342 -0.064108 -0.1225" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.068342 -0.064108 -0.1225" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2__7__1">
+  <inertial>
+    <origin xyz="-0.0024107810986836314 -0.017108399113401035 -0.017300000128778387" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="3.196956103948111e-05" iyy="4.8645411898202116e-05" izz="5.687099504650449e-05" ixy="5.269560224138367e-07" iyz="-3.715625897238173e-13" ixz="4.741497992843957e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.076342 -0.116808 -0.1153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.076342 -0.116808 -0.1153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2__1__1">
+  <inertial>
+    <origin xyz="-0.0024107810986827433 0.01710833939381017 -0.01729999987118834" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="3.196956103948068e-05" iyy="4.8645411898202984e-05" izz="5.687099504650482e-05" ixy="-5.269560224138232e-07" iyz="-3.7156241354096425e-13" ixz="-4.741500161248302e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.076342 0.023192 -0.1153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.076342 0.023192 -0.1153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="12a_hip_servo_spacer_v1_1">
+  <inertial>
+    <origin xyz="-1.9294726778806837e-07 -2.985984134951103e-08 0.0015000000000205266" rpy="0 0 0"/>
+    <mass value="0.00417867657751849"/>
+    <inertia ixx="1.0099729166902218e-08" iyy="9.26767193468555e-07" izz="9.305989077692164e-07" ixy="-5.082197683525802e-21" iyz="1.6940658945086007e-21" ixz="6.776263578034403e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.077842 0.025492 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.077842 0.025492 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="12a_hip_servo_spacer_v1__1__1">
+  <inertial>
+    <origin xyz="-1.9294726802399076e-07 -2.9859841148283106e-08 0.001500000000020249" rpy="0 0 0"/>
+    <mass value="0.00417867657751849"/>
+    <inertia ixx="1.009972916691577e-08" iyy="9.26767193468555e-07" izz="9.305989077692097e-07" ixy="-5.929230630780102e-21" iyz="8.470329472543003e-22" ixz="-6.776263578034403e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.077842 -0.009108 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.077842 -0.009108 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="12a_hip_servo_spacer_v1__3__1">
+  <inertial>
+    <origin xyz="-1.929472686484912e-07 -2.9859840988688546e-08 0.0015000000000205266" rpy="0 0 0"/>
+    <mass value="0.00417867657751849"/>
+    <inertia ixx="1.0099729166895442e-08" iyy="9.26767193468555e-07" izz="9.305989077692029e-07" ixy="-1.0164395367051604e-20" iyz="-6.776263578034403e-21" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.077842 -0.084508 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.077842 -0.084508 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="12a_hip_servo_spacer_v1__2__1">
+  <inertial>
+    <origin xyz="-1.9294726884278024e-07 -2.985984089154403e-08 0.0015000000000203878" rpy="0 0 0"/>
+    <mass value="0.00417867657751849"/>
+    <inertia ixx="1.0099729166908994e-08" iyy="9.267671934685414e-07" izz="9.305989077692232e-07" ixy="0.0" iyz="-6.776263578034403e-21" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.077842 -0.119108 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.077842 -0.119108 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12a_hip_servo_spacer_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__4__1">
+  <inertial>
+    <origin xyz="-0.0020075759383560987 0.017296280265214688 0.01694664401006092" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="4.426007467366413e-05" iyy="8.014182272797748e-05" izz="6.43578748818238e-05" ixy="-3.447985638988676e-09" iyz="4.364988737985882e-09" ixz="-1.0181420542656854e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.077842 0.025492 0.0965" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.077842 0.025492 0.0965" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__5__1">
+  <inertial>
+    <origin xyz="-0.0020075759383569314 -0.017303719734785075 0.0169466440100602" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="4.426007467366391e-05" iyy="8.014182272797661e-05" izz="6.435787488182337e-05" ixy="-3.4479856389751234e-09" iyz="4.36498873829759e-09" ixz="-1.018142054266119e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.077842 -0.119108 0.0965" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.077842 -0.119108 0.0965" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="17_knee_joint_connector_new_v2__2__1">
+  <inertial>
+    <origin xyz="-0.007176288043244439 0.0023358589260545765 -0.012429798715389018" rpy="0 0 0"/>
+    <mass value="0.007953320738431182"/>
+    <inertia ixx="9.741459136964302e-07" iyy="2.299115193331097e-06" izz="1.407222533168076e-06" ixy="1.8421339755066466e-08" iyz="3.1907061782889424e-08" ixz="3.7505991588293315e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.102642 0.033992 0.275542" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.102642 0.033992 0.275542" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="17_knee_joint_connector_new_v2__3__1">
+  <inertial>
+    <origin xyz="-0.007176259335233151 -0.0023359186457485234 -0.012429815289966839" rpy="0 0 0"/>
+    <mass value="0.007953320738431182"/>
+    <inertia ixx="9.741419632041531e-07" iyy="2.2991151933313136e-06" izz="1.4072264836602718e-06" ixy="-1.8421656186553396e-08" iyz="-3.1906879091096415e-08" ixz="3.750576350652001e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.102642 -0.018008 0.275542" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.102642 -0.018008 0.275542" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="17_knee_joint_connector_new_v2_1">
+  <inertial>
+    <origin xyz="-0.007176288043243689 0.0023358589260631807 -0.012429798715389406" rpy="0 0 0"/>
+    <mass value="0.007953320738431182"/>
+    <inertia ixx="9.741459136964302e-07" iyy="2.299115193331097e-06" izz="1.4072225331680625e-06" ixy="1.8421339755063078e-08" iyz="3.1907061782889424e-08" ixz="3.7505991588293315e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.102642 -0.075608 0.275542" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.102642 -0.075608 0.275542" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__11__1">
+  <inertial>
+    <origin xyz="-0.02698249256764418 0.017053326130112734 -0.012142726002669302" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="7.117437175754686e-05" iyy="6.435787488182076e-05" izz="5.322752564408738e-05" ixy="5.128512182673249e-07" iyz="8.795543892866644e-07" ixz="-1.5535528680795004e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.1141 0.025692 0.290296" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__11__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.1141 0.025692 0.290296" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__11__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__12__1">
+  <inertial>
+    <origin xyz="3.4029317974582085e-09 0.0024189746075814894 1.0633183389341383e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591105712812e-08" iyy="1.379563036950479e-07" izz="6.978591037844128e-08" ixy="4.62479989200848e-19" iyz="-2.710505431213761e-19" ixz="-5.877358333090249e-16"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.079118 -0.122908 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__12__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.079118 -0.122908 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__12__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__12__1">
+  <inertial>
+    <origin xyz="6.574349106780453e-09 0.001722951359876282 1.1313406228508072e-07" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183121194755853e-08" iyy="1.410682300596205e-07" izz="7.18321222811143e-08" ixy="-1.9982050682067903e-13" iyz="-4.285163871420479e-13" ixz="5.424466418039141e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.079118 -0.074108 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__12__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.079118 -0.074108 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__12__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__13__1">
+  <inertial>
+    <origin xyz="3.402005288588583e-09 -0.002419034327266336 1.0633236863233364e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591105707391e-08" iyy="1.379563036950208e-07" izz="6.978591037844466e-08" ixy="4.637505386217294e-19" iyz="-2.642742795433417e-19" ixz="-5.877426095726029e-16"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.079118 0.030692 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__13__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.079118 0.030692 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__13__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__13__1">
+  <inertial>
+    <origin xyz="6.574228231248647e-09 -0.0017230110795612638 1.1313411935054418e-07" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183121194755853e-08" iyy="1.410682300597018e-07" izz="7.18321222811143e-08" ixy="1.998204543046363e-13" iyz="4.2851641340006926e-13" ixz="5.424466418039141e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.079118 -0.018108 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__13__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.079118 -0.018108 0.316287" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__13__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="18_lower_leg_v2__1__1">
+  <inertial>
+    <origin xyz="0.033796881073407364 0.0009997201401527947 -0.06994864315594168" rpy="0 0 0"/>
+    <mass value="0.019295560666105917"/>
+    <inertia ixx="5.913343180852671e-05" iyy="6.643848043857373e-05" izz="7.317912337157059e-06" ixy="4.0657581468206416e-20" iyz="-2.710505431213761e-19" ixz="1.7254884256085964e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.074469 -0.017477 0.326256" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.074469 -0.017477 0.326256" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="18_lower_leg_v2__3__1">
+  <inertial>
+    <origin xyz="0.03379688107340863 -0.0010000298598364515 -0.06994864315594213" rpy="0 0 0"/>
+    <mass value="0.019295560666105917"/>
+    <inertia ixx="5.9133431808525844e-05" iyy="6.64384804385733e-05" izz="7.317912337157276e-06" ixy="-4.0657581468206416e-19" iyz="1.0842021724855044e-18" ixz="1.7254884256085964e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.074469 -0.074708 0.326256" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.074469 -0.074708 0.326256" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="upper_leg_spacer_short_X_v1_1">
+  <inertial>
+    <origin xyz="-0.088277 -0.017477 0.375639" rpy="0 0 0"/>
+    <mass value="0.0"/>
+    <inertia ixx="0.0" iyy="0.0" izz="0.0" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.088277 -0.017477 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/upper_leg_spacer_short_X_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.088277 -0.017477 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/upper_leg_spacer_short_X_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="upper_leg_spacer_short_X_v1__1__1">
+  <inertial>
+    <origin xyz="-0.088277 -0.074708 0.375639" rpy="0 0 0"/>
+    <mass value="0.0"/>
+    <inertia ixx="0.0" iyy="0.0" izz="0.0" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.088277 -0.074708 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/upper_leg_spacer_short_X_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.088277 -0.074708 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/upper_leg_spacer_short_X_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="19_lower_leg_front_spacer_v2__1__1">
+  <inertial>
+    <origin xyz="0.007882879808326568 -0.026000279859846168 -0.010874322816228188" rpy="0 0 0"/>
+    <mass value="0.02104817246504187"/>
+    <inertia ixx="2.1370979863881163e-05" iyy="1.4678381040923814e-05" izz="8.713493459034088e-06" ixy="3.5575383784680614e-19" iyz="8.131516293641283e-20" ixz="3.508127240324445e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.11365 -0.017477 0.362147" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/19_lower_leg_front_spacer_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.11365 -0.017477 0.362147" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/19_lower_leg_front_spacer_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="19_lower_leg_front_spacer_v2_1">
+  <inertial>
+    <origin xyz="0.007882879808327706 0.025999970140163822 -0.010874322816228743" rpy="0 0 0"/>
+    <mass value="0.02104817246504187"/>
+    <inertia ixx="2.1370979863881163e-05" iyy="1.4678381040924247e-05" izz="8.713493459034088e-06" ixy="2.710505431213761e-19" iyz="2.168404344971009e-19" ixz="3.5081272403245534e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.11365 -0.074708 0.362147" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/19_lower_leg_front_spacer_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.11365 -0.074708 0.362147" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/19_lower_leg_front_spacer_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="18_lower_leg_v2_1">
+  <inertial>
+    <origin xyz="0.01998888107340739 -0.0010002798598472903 -0.020565643155941393" rpy="0 0 0"/>
+    <mass value="0.019295560666105917"/>
+    <inertia ixx="5.913343180852758e-05" iyy="6.643848043857157e-05" izz="7.317912337157059e-06" ixy="4.0657581468206416e-20" iyz="-2.710505431213761e-19" ixz="1.7254884256085855e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.088277 0.034523 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.088277 0.034523 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="18_lower_leg_v2__2__1">
+  <inertial>
+    <origin xyz="0.019988881073408432 0.0009999701401635641 -0.020565643155941005" rpy="0 0 0"/>
+    <mass value="0.019295560666105917"/>
+    <inertia ixx="5.913343180852628e-05" iyy="6.643848043857243e-05" izz="7.317912337157059e-06" ixy="-3.2526065174565133e-19" iyz="9.75781955236954e-19" ixz="1.7254884256085747e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.088277 -0.126708 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.088277 -0.126708 0.375639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/18_lower_leg_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__15__1">
+  <inertial>
+    <origin xyz="-0.0037625747990235603 0.0011229513598789154 0.010336367851066675" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183112466749471e-08" iyy="1.4106823005951208e-07" izz="7.183220956097483e-08" ixy="1.6171241151447923e-13" iyz="-4.443012730187372e-13" ixz="-4.551667880494173e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.141024 -0.074708 0.486371" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__15__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.141024 -0.074708 0.486371" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__15__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__14__1">
+  <inertial>
+    <origin xyz="-0.0037625747991489045 -0.0011232610795619546 0.010336367851021988" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183112466765734e-08" iyy="1.410682300596205e-07" izz="7.183220956097822e-08" ixy="-1.617124648775549e-13" iyz="4.4430125946621005e-13" ixz="-4.551668016019444e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.141024 -0.017477 0.486371" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__14__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.141024 -0.017477 0.486371" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__14__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1_1">
+  <inertial>
+    <origin xyz="4.2776731501437126e-07 -0.002419284327267096 3.6079835719071696e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591130554594e-08" iyy="1.37956303695075e-07" izz="6.978591013002684e-08" ixy="5.175371307723775e-19" iyz="1.3891340334970526e-19" ixz="3.393146224064947e-16"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.137261 0.030723 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.137261 0.030723 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__1__1">
+  <inertial>
+    <origin xyz="4.2776834710545053e-07 0.002418974607583904 3.607986337472724e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591130549173e-08" iyy="1.379563036950208e-07" izz="6.978591013003362e-08" ixy="5.183841637196318e-19" iyz="1.3552527156068805e-19" ixz="3.393417274608068e-16"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.137261 -0.122908 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.137261 -0.122908 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__9__1">
+  <inertial>
+    <origin xyz="-0.0041423302406061735 0.030746614150204715 0.01544708758743124" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="7.773992536725532e-05" iyy="6.435787488182076e-05" izz="4.6661972034386934e-05" ixy="2.677308096176584e-07" iyz="-9.823199628288676e-07" ixz="8.967450970424548e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.137261 -0.070108 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__9__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.137261 -0.070108 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__9__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__8__1">
+  <inertial>
+    <origin xyz="-0.004135201949598266 -0.03074692386988792 0.015448997607250825" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="7.77364773816222e-05" iyy="6.435787488183464e-05" izz="4.666542002002569e-05" ixy="-2.59298298910406e-07" iyz="9.845794472634894e-07" ixz="8.973423056730934e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.137261 -0.022077 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__8__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.137261 -0.022077 0.476035" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__8__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1_1">
+  <inertial>
+    <origin xyz="0.00037483375314495415 -0.0012009661778491047 -0.011287817182983106" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.040249442968142e-07" iyy="6.990970459865367e-07" izz="1.3254948890541803e-07" ixy="1.1918967024256193e-08" iyz="3.1936775887980804e-09" ixz="1.3610324054287798e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.110198 0.025723 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.110198 0.025723 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1__1__1">
+  <inertial>
+    <origin xyz="0.0003748337531380985 0.0012004064581540661 -0.011287817182957238" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.040249442965974e-07" iyy="6.990970459858862e-07" izz="1.3254948890560777e-07" ixy="-1.1918967024276522e-08" iyz="-3.1936775887303178e-09" ixz="1.3610324054331166e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.110198 -0.008277 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.110198 -0.008277 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1__3__1">
+  <inertial>
+    <origin xyz="0.0003748337531459811 -0.0012007161778381514 -0.011287817182983995" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.040249442961637e-07" iyy="6.990970459858862e-07" izz="1.3254948890543158e-07" ixy="1.1918967024286686e-08" iyz="3.1936775888793956e-09" ixz="1.361032405429322e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.110198 -0.083908 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.110198 -0.083908 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1__2__1">
+  <inertial>
+    <origin xyz="0.00037483375313789036 0.0012006564581651114 -0.011287817182957183" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.040249442963806e-07" iyy="6.990970459856694e-07" izz="1.3254948890554e-07" ixy="-1.1918967024300239e-08" iyz="-3.1936775887709754e-09" ixz="1.3610324054331166e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.110198 -0.117908 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.110198 -0.117908 0.441875" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2_1">
+  <inertial>
+    <origin xyz="-0.010258707136849538 0.017303660015107858 -0.02760286779294957" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="6.352064857510081e-05" iyy="8.014182272797488e-05" izz="4.5097300980385165e-05" ixy="-5.108659704468332e-09" iyz="2.200756160641859e-09" ixz="4.1427131683841045e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.101698 -0.083608 0.444153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.101698 -0.083608 0.444153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__1__1">
+  <inertial>
+    <origin xyz="-0.010258707136850675 -0.017296589984903434 -0.027602867792949237" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="6.352064857509387e-05" iyy="8.014182272798182e-05" izz="4.509730098038538e-05" ixy="-5.108659703953336e-09" iyz="2.2007561597744973e-09" ixz="4.142713168386707e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.101698 -0.008577 0.444153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.101698 -0.008577 0.444153" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1_1">
+  <inertial>
+    <origin xyz="0.001664482626079558 -2.9859901967688174e-08 0.000445857149278861" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="1.3643054361993454e-07" iyy="7.183095900048118e-08" izz="7.647006166771158e-08" ixy="2.541098841762901e-20" iyz="1.3552527156068805e-20" ixz="1.7308554237603895e-08"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.069743 -0.100908 0.494126" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.069743 -0.100908 0.494126" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__1__1">
+  <inertial>
+    <origin xyz="0.0016644826260784895 -2.798599135316049e-07 0.00044585714927913855" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="1.3643054361993454e-07" iyy="7.183095900037276e-08" izz="7.647006166771242e-08" ixy="2.795208725939191e-20" iyz="8.470329472543003e-21" ixz="1.7308554237603895e-08"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.069743 0.008723 0.494126" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.069743 0.008723 0.494126" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="13_thrust_bearing_v2_1">
+  <inertial>
+    <origin xyz="0.0038806933642830665 -0.01250027985982504 -0.014839671165507273" rpy="0 0 0"/>
+    <mass value="0.009412924781662377"/>
+    <inertia ixx="1.237994158123732e-06" iyy="5.801654119671346e-07" izz="7.758244237623631e-07" ixy="-4.54009659728305e-19" iyz="4.607859233063394e-19" ixz="1.307429128413664e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.149313 -0.003777 0.45417" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.149313 -0.003777 0.45417" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="13_thrust_bearing_v2__1__1">
+  <inertial>
+    <origin xyz="0.003880693364283788 0.012499970140187805 -0.014839671165507606" rpy="0 0 0"/>
+    <mass value="0.009412924781662377"/>
+    <inertia ixx="1.2379941581232984e-06" iyy="5.801654119662672e-07" izz="7.75824423762336e-07" ixy="-4.87890977618477e-19" iyz="4.87890977618477e-19" ixz="1.3074291284114956e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.149313 -0.088408 0.45417" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.149313 -0.088408 0.45417" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__2__1">
+  <inertial>
+    <origin xyz="0.002337004773683621 -2.798603821428658e-07 0.0006261251772893273" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="1.33389753213082e-07" iyy="6.978591139634787e-08" izz="7.435246052107223e-08" ixy="-5.154195484042418e-19" iyz="-1.3721933745519665e-19" ixz="1.7042598413996406e-08"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.155517 0.008723 0.471143" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.155517 0.008723 0.471143" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__3__1">
+  <inertial>
+    <origin xyz="0.00233700477368462 -2.9860369468726056e-08 0.0006261251772890497" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="1.33389753213082e-07" iyy="6.978591139640208e-08" izz="7.435246052106206e-08" ixy="-5.183841637196318e-19" iyz="-1.3552527156068805e-19" ixz="1.7042598414009958e-08"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.155517 -0.100908 0.471143" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.155517 -0.100908 0.471143" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="21_ankle_bend_v2_1">
+  <inertial>
+    <origin xyz="0.04787205998946417 -0.00018095181149933512 3.992994049217824e-05" rpy="0 0 0"/>
+    <mass value="0.05380681388750591"/>
+    <inertia ixx="2.631001166143211e-05" iyy="0.00010738151809631599" izz="0.00010418130013746215" ixy="2.240422009341296e-08" iyz="-1.0116459915238715e-07" ixz="-2.258033877718113e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.07317 0.008723 0.504596" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/21_ankle_bend_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.07317 0.008723 0.504596" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/21_ankle_bend_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="21_ankle_bend_v2__1__1">
+  <inertial>
+    <origin xyz="0.04787205998946417 -0.00018070181148494013 3.992994049117904e-05" rpy="0 0 0"/>
+    <mass value="0.05380681388750591"/>
+    <inertia ixx="2.631001166143558e-05" iyy="0.00010738151809632293" izz="0.00010418130013746247" ixy="2.240422009361625e-08" iyz="-1.0116459915219742e-07" ixz="-2.2580338777180263e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.07317 -0.100908 0.504596" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/21_ankle_bend_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.07317 -0.100908 0.504596" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/21_ankle_bend_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="23_foot_plate_right_v2_1">
+  <inertial>
+    <origin xyz="-0.006280086408642166 -0.011351165510477665 -0.002716997397294141" rpy="0 0 0"/>
+    <mass value="0.04676252343779999"/>
+    <inertia ixx="5.1306816240345374e-05" iyy="0.00014427605598923109" izz="0.00017622847205405758" ixy="-2.210606048042718e-06" iyz="-5.929476457897445e-07" ixz="-3.605957728707856e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.165608 0.008723 0.505709" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/23_foot_plate_right_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.165608 0.008723 0.505709" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/23_foot_plate_right_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="22_foot_plate_left_v2_1">
+  <inertial>
+    <origin xyz="-0.006303852503411894 0.011339008191521616 -0.00272366849162875" rpy="0 0 0"/>
+    <mass value="0.04684640697757976"/>
+    <inertia ixx="5.139820535972166e-05" iyy="0.00014452616395611503" izz="0.00017653591631890662" ixy="2.1936926041597315e-06" iyz="5.882552188028398e-07" ixz="-3.612251778500322e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.165608 -0.100908 0.505709" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/22_foot_plate_left_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.165608 -0.100908 0.505709" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/22_foot_plate_left_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__2__1">
+  <inertial>
+    <origin xyz="-1.8544208988530153e-07 -0.001723011079509798 7.67996777284452e-14" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.18323752281171e-08" iyy="1.4106823005963744e-07" izz="7.183095900053878e-08" ixy="4.728155360452218e-13" iyz="2.710505431213761e-20" ixz="1.6940658945086007e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.058342 -0.123309 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.058342 -0.123309 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__3__1">
+  <inertial>
+    <origin xyz="-1.8544208898324532e-07 0.0017229513599188485 -4.360400929215302e-14" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183237522813405e-08" iyy="1.4106823005964082e-07" izz="7.183095900054471e-08" ixy="-4.728155360452218e-13" iyz="2.371692252312041e-20" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.058342 0.029693 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.058342 0.029693 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__4__1">
+  <inertial>
+    <origin xyz="-1.8544208951060126e-07 -2.985985985554107e-08 -0.0017229812196992988" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183237522812727e-08" iyy="7.183095900054556e-08" izz="1.4106823005964082e-07" ixy="-8.470329472543003e-22" iyz="-2.879912020664621e-20" ixz="4.728155343511559e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.050342 -0.046808 -0.129001" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.050342 -0.046808 -0.129001" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2_1">
+  <inertial>
+    <origin xyz="-0.011000192818464684 -0.01439166060618819 0.029710588151442674" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="5.6870995046504925e-05" iyy="4.864541189820385e-05" izz="3.1969561039480896e-05" ixy="-3.7156296919457765e-13" iyz="5.269560224138367e-07" ixz="4.741497992843957e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.061342 -0.061308 -0.131601" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.061342 -0.061308 -0.131601" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__5__1">
+  <inertial>
+    <origin xyz="-1.9294732189062413e-07 0.001722951359920455 -7.505151528031107e-09" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183095900055572e-08" iyy="1.410682300596476e-07" izz="7.183237522813235e-08" ixy="2.922263668027336e-20" iyz="4.72815533504123e-13" ixz="-1.6940658945086007e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.050342 -0.022807 -0.176901" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.050342 -0.022807 -0.176901" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__14__1">
+  <inertial>
+    <origin xyz="-1.9294672112812883e-07 0.002418974607625704 1.479372180313021e-14" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591139643597e-08" iyy="1.379563036950208e-07" izz="6.978591003910971e-08" ixy="5.336307567702092e-19" iyz="0.0" ixz="1.6940658945086007e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.050342 -0.066308 -0.176901" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__14__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.050342 -0.066308 -0.176901" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__14__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="kopf_V2_v1_1">
+  <inertial>
+    <origin xyz="-0.012132023780147952 -0.02785002011324137 0.015656033974048328" rpy="0 0 0"/>
+    <mass value="0.05212725258073649"/>
+    <inertia ixx="5.1102238552881794e-05" iyy="1.568446090104928e-05" izz="4.3519722722934126e-05" ixy="-6.05409927918743e-13" iyz="2.310456296769625e-12" ixz="-7.535305729666764e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.065142 -0.074957 -0.214101" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/kopf_V2_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.065142 -0.074957 -0.214101" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/kopf_V2_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="hals_V2_v1_1">
+  <inertial>
+    <origin xyz="-2.510505441546962e-05 0.023699970140206226 0.012123738008785245" rpy="0 0 0"/>
+    <mass value="0.025488811362831685"/>
+    <inertia ixx="1.2148662320162927e-05" iyy="4.903704907878708e-06" izz="1.1179675809473496e-05" ixy="-6.098637220230962e-20" iyz="-1.3552527156068805e-19" ixz="6.525220838269827e-09"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.050342 -0.023407 -0.187901" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/hals_V2_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.050342 -0.023407 -0.187901" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/hals_V2_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2__5__1">
+  <inertial>
+    <origin xyz="-0.020609562200861034 -0.010020710539699398 -0.011942182400850987" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="4.8645411898202116e-05" iyy="4.658232282824318e-05" izz="4.225823325774091e-05" ixy="-3.3872051742362026e-07" iyz="-1.2261562553284077e-05" ixz="-4.036719715743613e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.071792 0.071093 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.071792 0.071093 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2__4__1">
+  <inertial>
+    <origin xyz="-0.02060956220086138 0.011023099064108172 -0.011023378741759862" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="4.8645411898202984e-05" iyy="4.4420277568843654e-05" izz="4.442027851714065e-05" ixy="3.7261443957062323e-07" iyz="1.2450717003511039e-05" ixz="-3.726139141011983e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.071792 -0.164678 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.071792 -0.164678 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="02a_shoulder_servo_connector_v1__1__1">
+  <inertial>
+    <origin xyz="0.016999807096456876 -0.007698533094845458 -0.0155491106899205" rpy="0 0 0"/>
+    <mass value="0.02126426185690464"/>
+    <inertia ixx="2.000819815781553e-06" iyy="5.410062125169393e-06" izz="4.967918569580895e-06" ixy="-5.963762469973766e-15" iyz="-8.35869735550047e-07" ixz="-4.631467735369266e-15"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.034291 0.055269 -0.089944" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.034291 0.055269 -0.089944" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="02a_shoulder_servo_connector_v1__2__1">
+  <inertial>
+    <origin xyz="-0.017000192990967777 -0.01397650358386962 -0.010280932243676627" rpy="0 0 0"/>
+    <mass value="0.02126426185690464"/>
+    <inertia ixx="2.0008198157816072e-06" iyy="5.267135115872201e-06" izz="5.1108455788781404e-06" ixy="3.5254866517439587e-15" iyz="-8.610716235611172e-07" ixz="6.677411444958037e-15"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.068291 0.081774 -0.112184" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.068291 0.081774 -0.112184" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="02a_shoulder_servo_connector_v1_1">
+  <inertial>
+    <origin xyz="-0.017000192903543397 0.014819189963170637 -0.009023744158177097" rpy="0 0 0"/>
+    <mass value="0.02126426185690464"/>
+    <inertia ixx="2.0008198157817157e-06" iyy="5.1164244029765714e-06" izz="5.261556291773824e-06" ixy="4.094055823522513e-15" iyz="8.615597074253765e-07" ixz="-6.34472400833086e-15"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.068291 -0.174082 -0.113061" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.068291 -0.174082 -0.113061" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="02a_shoulder_servo_connector_v1__3__1">
+  <inertial>
+    <origin xyz="-0.017000192990968055 0.009024464298344498 -0.014818469822977923" rpy="0 0 0"/>
+    <mass value="0.02126426185690464"/>
+    <inertia ixx="2.0008198157816072e-06" iyy="5.261556291773879e-06" izz="5.116424402976626e-06" ixy="-6.34472400833086e-15" iyz="8.61559707425485e-07" ixz="4.094055823522513e-15"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.068291 -0.149616 -0.088595" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.068291 -0.149616 -0.088595" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02a_shoulder_servo_connector_v1__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="04_upper_arm_new_v2__2__1">
+  <inertial>
+    <origin xyz="-7.843620671304369e-05 -0.04980969434105596 -0.05741591068956042" rpy="0 0 0"/>
+    <mass value="0.02187080015836204"/>
+    <inertia ixx="4.620777362092886e-05" iyy="2.996185824395066e-05" izz="2.1941918627919757e-05" ixy="-1.8973538018496328e-19" iyz="-2.2741668869433017e-05" ixz="-1.9651164376299768e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051291 0.091406 -0.111129" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051291 0.091406 -0.111129" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="04_upper_arm_new_v2_1">
+  <inertial>
+    <origin xyz="-7.843620671290491e-05 -0.047894449963581505 -0.059022684978710355" rpy="0 0 0"/>
+    <mass value="0.02187080015836204"/>
+    <inertia ixx="4.6207773620928806e-05" iyy="2.9961858243954048e-05" izz="2.1941918627916505e-05" ixy="-1.4907779871675686e-19" iyz="-2.2741668869432468e-05" ixz="-2.1006417091906648e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051291 0.054636 -0.080275" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051291 0.054636 -0.080275" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="04_upper_arm_new_v2__1__1">
+  <inertial>
+    <origin xyz="-1.9294725574908744e-07 0.05285670962892383 -0.05462388193869673" rpy="0 0 0"/>
+    <mass value="0.02187080015836204"/>
+    <inertia ixx="4.620777362092875e-05" iyy="2.595188843593514e-05" izz="2.5951888435935466e-05" ixy="5.421010862427522e-20" iyz="2.309249576871505e-05" ixz="-6.776263578034403e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051291 -0.149828 -0.078908" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051291 -0.149828 -0.078908" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="04_upper_arm_new_v2__3__1">
+  <inertial>
+    <origin xyz="-1.929472556866374e-07 0.054623602078884476 -0.05285598948876004" rpy="0 0 0"/>
+    <mass value="0.02187080015836204"/>
+    <inertia ixx="4.620777362092897e-05" iyy="2.5951888435938393e-05" izz="2.5951888435931996e-05" ixy="-1.0842021724855044e-19" iyz="2.3092495768715145e-05" ixz="8.131516293641283e-20"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051291 -0.18377 -0.112849" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051291 -0.18377 -0.112849" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/04_upper_arm_new_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="x-frame-arm-rechts_v1_1">
+  <inertial>
+    <origin xyz="0.01422435827545318 0.019724877870153118 -0.008855411605627556" rpy="0 0 0"/>
+    <mass value="0.00898897094362747"/>
+    <inertia ixx="2.8582794266207633e-06" iyy="2.5523290682503695e-06" izz="3.2899497430497913e-06" ixy="-1.7036037184090257e-07" iyz="7.3113105704555e-07" ixz="-3.442115407127646e-08"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.036363 0.140258 -0.05291" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/x-frame-arm-rechts_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.036363 0.140258 -0.05291" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/x-frame-arm-rechts_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="x-frame-left_v1_1">
+  <inertial>
+    <origin xyz="0.014225408838803237 -0.018888544830176157 -0.010547232970080672" rpy="0 0 0"/>
+    <mass value="0.008983547134406683"/>
+    <inertia ixx="2.856362777231623e-06" iyy="2.684095867860603e-06" izz="3.155765655423468e-06" ixy="1.7274080875468334e-07" iyz="-7.829250509831543e-07" ixz="-1.9676912026026037e-08"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.036441 -0.23751 -0.059109" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/x-frame-left_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.036441 -0.23751 -0.059109" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/x-frame-left_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2__2__1">
+  <inertial>
+    <origin xyz="0.015588975641859064 0.01578751500983963 -0.013247487739299662" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="3.196956103947981e-05" iyy="5.204402434446037e-05" izz="5.347238260024374e-05" ixy="-4.036720375158627e-07" iyz="4.05030896422564e-06" ixz="3.3872043883748906e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051213 0.179358 -0.000867" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051213 0.179358 -0.000867" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__9__1">
+  <inertial>
+    <origin xyz="8.53300498038223e-08 -0.0017102637452621194 -0.0017103895456582509" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.97859113964563e-08" iyy="1.0387110686705975e-07" izz="1.0387110686709575e-07" ixy="-3.6253010142484055e-19" iyz="3.408519682795978e-08" ixz="-3.6401240908253557e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051291 -0.252789 0.017646" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__9__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051291 -0.252789 0.017646" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__9__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX64_body_modified_v2__3__1">
+  <inertial>
+    <origin xyz="0.015589497177911207 -0.014572815592492738 -0.01457294157524167" rpy="0 0 0"/>
+    <mass value="0.14121970419342036"/>
+    <inertia ixx="3.1969561039480246e-05" iyy="5.275820384391524e-05" izz="5.2758203100791365e-05" ixy="3.726138415607004e-07" iyz="-4.112791574149453e-06" ixz="3.726145121106197e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051291 -0.281074 -0.010639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051291 -0.281074 -0.010639" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX64_body_modified_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__8__1">
+  <inertial>
+    <origin xyz="-4.3620741967120846e-07 0.0018534308334278438 -0.0015550939129280114" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591139644274e-08" iyy="1.0978993918167948e-07" izz="9.795227455245865e-08" ixy="-3.9132922163148676e-19" iyz="-3.356736609912104e-08" ixz="3.280135088242278e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.051213 0.148716 0.024845" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__8__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.051213 0.148716 0.024845" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__8__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="06_lower_arm_v3__1__1">
+  <inertial>
+    <origin xyz="0.0774419561452923 -0.013154346721456822 -0.014120850835529506" rpy="0 0 0"/>
+    <mass value="0.020535370064114045"/>
+    <inertia ixx="7.378514246385325e-06" iyy="7.04654278319498e-05" izz="6.918653956556318e-05" ixy="-1.8161820945055687e-06" iyz="-3.6264678872252566e-06" ixz="-2.164441535968308e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.091213 0.165556 -0.011869" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.091213 0.165556 -0.011869" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="06_lower_arm_v3_1">
+  <inertial>
+    <origin xyz="0.07744195614530451 -0.011621746769168606 -0.01540620478423912" rpy="0 0 0"/>
+    <mass value="0.020535370064114045"/>
+    <inertia ixx="7.378514246385325e-06" iyy="7.04654278319498e-05" izz="6.918653956556361e-05" ixy="-1.8161820945054603e-06" iyz="-3.6264678872252566e-06" ixz="-2.1644415359682844e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.091213 0.139511 0.009986" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.091213 0.139511 0.009986" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="06_lower_arm_v3__3__1">
+  <inertial>
+    <origin xyz="0.07744247768170541 0.012920821216687722 -0.014335165238823357" rpy="0 0 0"/>
+    <mass value="0.020535370064114045"/>
+    <inertia ixx="7.378514246385e-06" iyy="6.982598369875497e-05" izz="6.982598369875779e-05" ixy="1.9979144830446294e-06" iyz="3.6824119998375357e-06" ixz="-1.997914483022742e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.091291 -0.242324 0.003645" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.091291 -0.242324 0.003645" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="06_lower_arm_v3__2__1">
+  <inertial>
+    <origin xyz="0.07744247768171598 0.014334665339398256 -0.012920321116104425" rpy="0 0 0"/>
+    <mass value="0.020535370064114045"/>
+    <inertia ixx="7.378514246385651e-06" iyy="6.982598369875497e-05" izz="6.982598369875822e-05" ixy="1.997914483044521e-06" iyz="3.6824119998375425e-06" ixz="-1.9979144830227522e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.091291 -0.266366 -0.020396" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.091291 -0.266366 -0.020396" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/06_lower_arm_v3__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="07_lower_arm_handrail_X_v2__1__1">
+  <inertial>
+    <origin xyz="-0.03513592669152532 0.013022499262458659 -0.010927829424489622" rpy="0 0 0"/>
+    <mass value="0.02329610708524073"/>
+    <inertia ixx="2.2920968193692053e-05" iyy="3.0322524234516852e-05" izz="2.7536079467211988e-05" ixy="1.734723475976807e-18" iyz="-7.901356775085323e-06" ixz="-1.3552527156068805e-18"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.271395 0.176676 0.001383" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/07_lower_arm_handrail_X_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.271395 0.176676 0.001383" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/07_lower_arm_handrail_X_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="07_lower_arm_handrail_X_v2_1">
+  <inertial>
+    <origin xyz="-0.03513540515533434 -0.012021187049486404 -0.012021312850009833" rpy="0 0 0"/>
+    <mass value="0.02329610708524073"/>
+    <inertia ixx="2.2920968193691727e-05" iyy="2.892930185086377e-05" izz="2.8929301850864637e-05" ixy="1.0842021724855044e-18" iyz="8.023247939425766e-06" ixz="9.690056916589196e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.271473 -0.278599 -0.008164" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/07_lower_arm_handrail_X_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.271473 -0.278599 -0.008164" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/07_lower_arm_handrail_X_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__10__1">
+  <inertial>
+    <origin xyz="-0.0024191974146755314 -2.7985945921793487e-07 3.6530500846509995e-13" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="1.3795630369504113e-07" iyy="6.978591071777792e-08" izz="6.978591071777284e-08" ixy="-3.7862372742267225e-19" iyz="6.786665142626686e-16" ixz="-3.7777669447541795e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.031791 -0.164678 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__10__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.031791 -0.164678 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__10__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__11__1">
+  <inertial>
+    <origin xyz="-0.002419197414674761 -2.985942333666447e-08 -2.923911113228428e-13" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="1.3795630369503774e-07" iyy="6.978591083562562e-08" izz="6.978591059992853e-08" ixy="-4.0911691352382706e-19" iyz="-6.683530410969002e-16" ixz="3.426248271643645e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.031791 0.071093 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__11__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.031791 0.071093 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__11__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="02_shoulder_mount_v1__1__1">
+  <inertial>
+    <origin xyz="-0.01100019294723572 0.011401957878329913 9.811595980124821e-15" rpy="0 0 0"/>
+    <mass value="0.053549693334887086"/>
+    <inertia ixx="1.4557502929632513e-05" iyy="3.961883308652972e-05" izz="4.385615496826879e-05" ixy="1.2034644114589099e-17" iyz="2.168404344971009e-19" ixz="5.421010862427522e-20"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.069342 -0.122678 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02_shoulder_mount_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.069342 -0.122678 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02_shoulder_mount_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="02_shoulder_mount_v1_1">
+  <inertial>
+    <origin xyz="-0.011000192947234894 -0.011402267597920568 2.31342722756267e-14" rpy="0 0 0"/>
+    <mass value="0.053549693334887086"/>
+    <inertia ixx="1.4557502929632405e-05" iyy="3.961883308652972e-05" izz="4.385615496826863e-05" ixy="-1.179069862577986e-17" iyz="3.2526065174565133e-19" ixz="5.421010862427522e-20"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.069342 0.029093 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02_shoulder_mount_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.069342 0.029093 -0.098" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/02_shoulder_mount_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__16__1">
+  <inertial>
+    <origin xyz="-0.0011231741669695955 -0.007778035166795871 -0.007778005306881677" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="1.4106823005964082e-07" iyy="7.18316671143398e-08" izz="7.18316671143398e-08" ixy="-3.3433109220286274e-13" iyz="7.081137925508832e-13" ixz="-3.343310498512154e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.075292 0.063315 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__16__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.075292 0.063315 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__16__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__11__1">
+  <inertial>
+    <origin xyz="0.010999571298452838 0.0008599201062741424 -0.0007221224183763782" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183237522813066e-08" iyy="1.1246105750313827e-07" izz="1.0043813155703794e-07" ixy="-3.621977138378767e-13" iyz="-3.409270066819868e-08" ixz="3.0391996765948955e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.040213 0.182039 -0.003117" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__11__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.040213 0.182039 -0.003117" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__11__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__17__1">
+  <inertial>
+    <origin xyz="-0.0011231741669700673 0.007777725447111694 -0.007778005306993213" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="1.410682300596476e-07" iyy="7.183166711434319e-08" izz="7.183166711435335e-08" ixy="3.343310464630836e-13" iyz="-7.081137942449491e-13" ixz="-3.3433109389692864e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.075292 -0.1569 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__17__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.075292 -0.1569 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__17__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__10__1">
+  <inertial>
+    <origin xyz="0.011000092834505322 -0.0007719848298570753 -0.0007721106303774667" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183237522810355e-08" iyy="1.0644959453006863e-07" izz="1.0644959453010505e-07" ixy="3.343310735681379e-13" iyz="3.461863552954848e-08" ixz="3.3433107166231377e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.040291 -0.283527 -0.013092" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__10__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.040291 -0.283527 -0.013092" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__10__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="01_neck_servo_connector_v1_1">
+  <inertial>
+    <origin xyz="-0.009277306715085885 -2.985979530301108e-08 0.002925783017478145" rpy="0 0 0"/>
+    <mass value="0.03021830287348012"/>
+    <inertia ixx="1.921005968711308e-06" iyy="3.1263576338726e-06" izz="4.860506260287358e-06" ixy="4.87890977618477e-19" iyz="-8.131516293641283e-20" ixz="-3.863923242453625e-09"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.061342 -0.046808 -0.128401" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/01_neck_servo_connector_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.061342 -0.046808 -0.128401" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/01_neck_servo_connector_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="16_upper_leg_spacer_v6_1">
+  <inertial>
+    <origin xyz="-0.005996060572774353 0.025999970140160283 -0.012179664292295195" rpy="0 0 0"/>
+    <mass value="0.071046512882637"/>
+    <inertia ixx="3.699474953480948e-05" iyy="2.5179375696079455e-05" izz="4.8812149002012625e-05" ixy="0.0" iyz="-2.168404344971009e-19" ixz="2.7716006448063983e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.097453 -0.075608 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/16_upper_leg_spacer_v6_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.097453 -0.075608 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/16_upper_leg_spacer_v6_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="15_upper_leg_v2__3__1">
+  <inertial>
+    <origin xyz="-0.013390259232075888 0.0009999701401599281 -0.0024134476070304944" rpy="0 0 0"/>
+    <mass value="0.01748289451864989"/>
+    <inertia ixx="3.720208891175151e-05" iyy="4.0813360547886364e-05" izz="3.622926899147659e-06" ixy="-1.8973538018496328e-19" iyz="8.673617379884035e-19" ixz="6.280292242395703e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.097453 -0.127608 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.097453 -0.127608 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="17_knee_joint_connector_new_v2__1__1">
+  <inertial>
+    <origin xyz="-0.018634259335232384 0.00596408135426052 0.0023241847100333723" rpy="0 0 0"/>
+    <mass value="0.007953320738431182"/>
+    <inertia ixx="9.741419632042616e-07" iyy="2.2991151933312052e-06" izz="1.4072264836602582e-06" ixy="-1.842165618655509e-08" iyz="-3.190687909108286e-08" ixz="3.750576350652001e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.1141 -0.117908 0.290296" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.1141 -0.117908 0.290296" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/17_knee_joint_connector_new_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__10__1">
+  <inertial>
+    <origin xyz="-0.026988883618519893 0.016946614150202197 -0.012139036127725489" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="7.116839967124047e-05" iyy="6.43578748818173e-05" izz="5.3233497730397015e-05" ixy="-5.052908359981165e-07" iyz="-8.839193780234983e-07" ixz="-1.5538976666435063e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.1141 -0.083908 0.290296" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__10__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.1141 -0.083908 0.290296" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__10__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="16_upper_leg_spacer_v6__1__1">
+  <inertial>
+    <origin xyz="-0.005996060572774881 -0.026000029859847073 -0.012179664292295334" rpy="0 0 0"/>
+    <mass value="0.071046512882637"/>
+    <inertia ixx="3.699474953480948e-05" iyy="2.5179375696080322e-05" izz="4.8812149002012734e-05" ixy="3.3881317890172014e-20" iyz="0.0" ixz="2.7716006448061815e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.097453 -0.018008 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/16_upper_leg_spacer_v6__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.097453 -0.018008 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/16_upper_leg_spacer_v6__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="15_upper_leg_v2_1">
+  <inertial>
+    <origin xyz="-0.013390259232076762 -0.001000029859847068 -0.002413447607031105" rpy="0 0 0"/>
+    <mass value="0.01748289451864989"/>
+    <inertia ixx="3.720208891175151e-05" iyy="4.081336054788658e-05" izz="3.6229268991476047e-06" ixy="-1.3552527156068805e-20" iyz="5.421010862427522e-20" ixz="6.2802922423956485e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.097453 0.033992 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.097453 0.033992 0.212069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1__4__1">
+  <inertial>
+    <origin xyz="0.006240267961203409 0.0009006564581598431 -0.010999749999966585" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.404936976872177e-07" iyy="6.990970459862657e-07" izz="9.608073551475708e-08" ixy="-1.2339422655332382e-08" iyz="5.421010862427522e-20" ixz="2.168404344971009e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.057042 -0.119108 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.057042 -0.119108 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1__5__1">
+  <inertial>
+    <origin xyz="0.006240267961202604 -0.0009007161778433886 -0.01099974999999384" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.404936976871906e-07" iyy="6.990970459862657e-07" izz="9.608073551472997e-08" ixy="1.2339422655312053e-08" iyz="5.421010862427522e-20" ixz="-2.0328790734103208e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.057042 -0.084508 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.057042 -0.084508 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__6__1">
+  <inertial>
+    <origin xyz="0.01730349692768751 0.016946614150198616 -0.01999236700887974" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="8.014182272797748e-05" iyy="6.435787488182337e-05" izz="4.4260074673664346e-05" ixy="-4.364988737863909e-09" iyz="1.018142054266119e-06" ixz="-3.447985639191964e-09"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.065842 -0.084808 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.065842 -0.084808 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1__6__1">
+  <inertial>
+    <origin xyz="0.006240267961202507 -0.000900716177849023 -0.010999749999993202" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.404936976871906e-07" iyy="6.990970459862115e-07" izz="9.60807355147232e-08" ixy="1.2339422655317136e-08" iyz="4.0657581468206416e-20" ixz="-2.168404344971009e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.057042 0.025492 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.057042 0.025492 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="14_motor_joint_connector_v1__7__1">
+  <inertial>
+    <origin xyz="0.006240267961206254 0.0009006564581543787 -0.010999749999966196" rpy="0 0 0"/>
+    <mass value="0.00769130298816831"/>
+    <inertia ixx="6.404936976871906e-07" iyy="6.990970459862928e-07" izz="9.608073551472997e-08" ixy="-1.2339422655324759e-08" iyz="3.7269449679189215e-20" ixz="2.0328790734103208e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.057042 -0.009108 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.057042 -0.009108 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/14_motor_joint_connector_v1__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__3__1">
+  <inertial>
+    <origin xyz="0.017296117177798692 0.017053326130112574 -0.019992367008879075" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="8.014182272797661e-05" iyy="6.435787488182337e-05" izz="4.426007467366391e-05" ixy="-4.3649887375928585e-09" iyz="-1.0181420542660106e-06" ixz="3.447985638758283e-09"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.065842 0.025192 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.065842 0.025192 0.143069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="13_thrust_bearing_v2__2__1">
+  <inertial>
+    <origin xyz="-9.261061739462839e-05 -0.012500029859864356 0.015338225713188602" rpy="0 0 0"/>
+    <mass value="0.009412924781662377"/>
+    <inertia ixx="1.2724061127722874e-06" iyy="5.80165411966484e-07" izz="7.414124691138891e-07" ixy="3.1170812458958252e-19" iyz="5.692061405548898e-19" ixz="2.3157497051136573e-09"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.100442 -0.114308 0.165069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.100442 -0.114308 0.165069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__5__1">
+  <inertial>
+    <origin xyz="0.00221881152016265 -2.986037610230863e-08 2.500000199356922e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="1.3795630369502757e-07" iyy="6.978591139643597e-08" izz="6.978591003910971e-08" ixy="-5.336307567702092e-19" iyz="-3.3881317890172014e-21" ixz="-3.3881317890172014e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.102142 -0.101808 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.102142 -0.101808 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__5__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__4__1">
+  <inertial>
+    <origin xyz="-1.929467226269299e-07 0.0024189746075777008 2.5000001988018106e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591139644274e-08" iyy="1.379563036950208e-07" izz="6.978591003910971e-08" ixy="5.454892180317694e-19" iyz="-3.3881317890172014e-21" ixz="-3.3881317890172014e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.083142 -0.124108 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.083142 -0.124108 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__4__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__7__1">
+  <inertial>
+    <origin xyz="0.0011227882724579464 -2.9859775402263367e-08 -0.010999757505145952" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="1.4106823005963405e-07" iyy="7.183095900053539e-08" izz="7.183237522813405e-08" ixy="-2.922263668027336e-20" iyz="0.0" ixz="4.728155356217053e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.013842 -0.101808 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.013842 -0.101808 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__6__1">
+  <inertial>
+    <origin xyz="-1.9294732277186366e-07 0.0017229513598726043 2.4249485391925063e-07" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183095900054894e-08" iyy="1.4106823005963405e-07" izz="7.183237522813066e-08" ixy="2.371692252312041e-20" iyz="4.728155360452218e-13" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.083142 -0.075008 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.083142 -0.075008 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__7__1">
+  <inertial>
+    <origin xyz="0.02774645106278382 -3.7197347855649765e-06 -0.015992367008879738" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="6.43578748818251e-05" iyy="8.014182272797748e-05" izz="4.426007467366391e-05" ixy="4.36498873829759e-09" iyz="3.447985639191964e-09" ixz="1.0181420542656854e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.012242 -0.101808 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.012242 -0.101808 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="13_thrust_bearing_v2__3__1">
+  <inertial>
+    <origin xyz="-9.261061739462839e-05 0.012499970140130722 0.015338225713188519" rpy="0 0 0"/>
+    <mass value="0.009412924781662377"/>
+    <inertia ixx="1.2724061127723416e-06" iyy="5.801654119665382e-07" izz="7.414124691138078e-07" ixy="3.1848438816761693e-19" iyz="5.675120746603812e-19" ixz="2.3157497051407624e-09"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.100442 0.020692 0.165069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.100442 0.020692 0.165069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/13_thrust_bearing_v2__3__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__6__1">
+  <inertial>
+    <origin xyz="0.002418811520161754 -2.98603810879039e-08 2.500000201577368e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="1.3795630369502757e-07" iyy="6.978591139644952e-08" izz="6.978591003910971e-08" ixy="-5.340542732438364e-19" iyz="-2.117582368135751e-22" ixz="-3.3881317890172014e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.102142 0.008192 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.102142 0.008192 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__6__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-i1_v1__7__1">
+  <inertial>
+    <origin xyz="-1.9294779095291315e-07 -0.002219034327266469 2.5000002035202584e-07" rpy="0 0 0"/>
+    <mass value="0.0012087762615787005"/>
+    <inertia ixx="6.978591139643258e-08" iyy="1.379563036950208e-07" izz="6.978591003910802e-08" ixy="5.234663614031576e-19" iyz="0.0" ixz="-1.6940658945086007e-21"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.083142 0.030192 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.083142 0.030192 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-i1_v1__7__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__8__1">
+  <inertial>
+    <origin xyz="-1.929471913630909e-07 -0.0017230110795614442 2.424948542800731e-07" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183095900054894e-08" iyy="1.410682300596476e-07" izz="7.183237522813235e-08" ixy="2.837560373301906e-20" iyz="-4.728155364687383e-13" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.083142 -0.018608 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__8__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.083142 -0.018608 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__8__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__9__1">
+  <inertial>
+    <origin xyz="0.0011227882724590948 -2.9859775626042695e-08 -0.010999757505145535" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="1.4106823005962727e-07" iyy="7.183095900053539e-08" izz="7.183237522813262e-08" ixy="-2.898440866385809e-20" iyz="0.0" ixz="4.728155347746724e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.013842 0.008192 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__9__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.013842 0.008192 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__9__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="MX-106_v2__2__1">
+  <inertial>
+    <origin xyz="0.027746451062784807 -3.7197347891974875e-06 -0.01599236700887885" rpy="0 0 0"/>
+    <mass value="0.17012978410452487"/>
+    <inertia ixx="6.435787488182423e-05" iyy="8.014182272797574e-05" izz="4.4260074673663804e-05" ixy="4.364988740032313e-09" iyz="3.4479856385685476e-09" ixz="1.0181420542659022e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.012242 0.008192 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.012242 0.008192 0.147069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/MX-106_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="15_upper_leg_v2__2__1">
+  <inertial>
+    <origin xyz="0.0009207407679242691 -0.0010000298598399904 -0.07841344760703162" rpy="0 0 0"/>
+    <mass value="0.01748289451864989"/>
+    <inertia ixx="3.720208891175173e-05" iyy="4.08133605478868e-05" izz="3.622926899147659e-06" ixy="-1.6263032587282567e-19" iyz="8.673617379884035e-19" ixz="6.280292242395703e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.083142 -0.075608 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.083142 -0.075608 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2__2__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="15_upper_leg_v2__1__1">
+  <inertial>
+    <origin xyz="0.0009207407679233809 0.0009999701401529407 -0.0784134476070314" rpy="0 0 0"/>
+    <mass value="0.01748289451864989"/>
+    <inertia ixx="3.72020889117514e-05" iyy="4.081336054788669e-05" izz="3.622926899147632e-06" ixy="-3.3881317890172014e-21" iyz="9.486769009248164e-20" ixz="6.2802922423956485e-06"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.083142 -0.018008 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="carbon_black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.083142 -0.018008 0.136069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/15_upper_leg_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__19__1">
+  <inertial>
+    <origin xyz="-1.8544209020449065e-07 -2.985977491654079e-08 0.0017229812197343125" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183237522812388e-08" iyy="7.183095900054894e-08" izz="1.4106823005964082e-07" ixy="-1.6940658945086007e-21" iyz="-3.049318610115481e-20" ixz="-4.728155343511559e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.059842 -0.101808 0.1063" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__19__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.059842 -0.101808 0.1063" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__19__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="HN05-N101_v1__18__1">
+  <inertial>
+    <origin xyz="-1.8544208928855666e-07 -2.9859775317261916e-08 0.0017229812197350203" rpy="0 0 0"/>
+    <mass value="0.0014501529631204"/>
+    <inertia ixx="7.183237522813066e-08" iyy="7.183095900054556e-08" izz="1.4106823005964082e-07" ixy="0.0" iyz="-2.879912020664621e-20" ixz="-4.728155343511559e-13"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.059842 0.008192 0.1063" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__18__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.059842 0.008192 0.1063" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/HN05-N101_v1__18__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="12_hip_u_profile_v1__1__1">
+  <inertial>
+    <origin xyz="0.010999807052027244 -1.366461415963638e-07 -0.010314722709271973" rpy="0 0 0"/>
+    <mass value="0.20053415501292451"/>
+    <inertia ixx="6.365933522902226e-05" iyy="0.0003213361223476426" izz="0.00031149942993308243" ixy="-9.900934239137626e-16" iyz="1.9091160336631718e-10" ixz="1.2223295292601577e-15"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.048842 -0.101808 0.105669" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12_hip_u_profile_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.048842 -0.101808 0.105669" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12_hip_u_profile_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="12_hip_u_profile_v1_1">
+  <inertial>
+    <origin xyz="0.010999807052028278 -1.3664614204392245e-07 -0.010314722709271612" rpy="0 0 0"/>
+    <mass value="0.20053415501292451"/>
+    <inertia ixx="6.365933522902226e-05" iyy="0.0003213361223476439" izz="0.00031149942993308275" ixy="-9.900392138051384e-16" iyz="1.909116034747374e-10" ixz="1.2221126888256606e-15"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.048842 0.008192 0.105669" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12_hip_u_profile_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.048842 0.008192 0.105669" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/12_hip_u_profile_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="35_TPU_Bumper_BitB_v6_1">
+  <inertial>
+    <origin xyz="-0.01057484956568075 -0.008349120993348086 0.0023441051381143246" rpy="0 0 0"/>
+    <mass value="0.1788011885100406"/>
+    <inertia ixx="7.244553101851993e-05" iyy="9.08652806069785e-05" izz="2.9254806919529284e-05" ixy="1.2793367287691347e-06" iyz="8.643215298259274e-07" ixz="-2.6090896555628013e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.002158 -0.121808 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_v6_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="0.002158 -0.121808 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_v6_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="35_TPU_Bumper_BitB_right_v3_1">
+  <inertial>
+    <origin xyz="-0.010738912029060507 0.0014496671847185373 0.0014135430584893138" rpy="0 0 0"/>
+    <mass value="0.5364035655301216"/>
+    <inertia ixx="0.0002675556434828842" iyy="0.0002725958418209073" izz="0.00013968012543178474" ixy="-1.1991378813679576e-06" iyz="-9.72534068294055e-07" ixz="1.0479150281524833e-05"/>
+  </inertial>
+  <visual>
+    <origin xyz="0.002158 0.028192 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_right_v3_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="0.002158 0.028192 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_right_v3_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="35_TPU_Bumper_BitB_v6__1__1">
+  <inertial>
+    <origin xyz="0.010574463671169432 0.008349061273752935 0.002344105138123914" rpy="0 0 0"/>
+    <mass value="0.1788011885100406"/>
+    <inertia ixx="7.24455310185208e-05" iyy="9.086528060697936e-05" izz="2.9254806919529284e-05" ixy="1.2793367287691347e-06" iyz="-8.643215298349263e-07" ixz="2.6090896555535856e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.117842 0.028192 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_v6__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.117842 0.028192 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_v6__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="35_TPU_Bumper_BitB_right_v3__1__1">
+  <inertial>
+    <origin xyz="0.010574463671168488 -0.0014497269043137195 0.002344105138113492" rpy="0 0 0"/>
+    <mass value="0.5364035655301216"/>
+    <inertia ixx="0.00026840397060580445" iyy="0.0002725958418209051" izz="0.00013883179830885897" ixy="-1.2793367287679963e-06" iyz="8.643215298207232e-07" ixz="7.827268966691114e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.117842 -0.121808 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_right_v3__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.117842 -0.121808 -0.069" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/35_TPU_Bumper_BitB_right_v3__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Pwr_and_Logicboard_Dummy_v2_1">
+  <inertial>
+    <origin xyz="-0.025713926739598117 0.034986142187602466 0.008162692371931832" rpy="0 0 0"/>
+    <mass value="0.38820371985160057"/>
+    <inertia ixx="0.0003911651633695904" iyy="9.0256940149391e-05" izz="0.00045773105522654194" ixy="3.175064009224612e-05" iyz="1.2054362591541377e-05" ixz="8.239365356871656e-07"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.105846 0.009192 -0.0566" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/Pwr_and_Logicboard_Dummy_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="blue"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.105846 0.009192 -0.0566" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/Pwr_and_Logicboard_Dummy_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="33_tpu_sea_v1__1__1">
+  <inertial>
+    <origin xyz="0.004713560639536152 0.0053287079587677755 -0.005330526123626722" rpy="0 0 0"/>
+    <mass value="0.010677958537753843"/>
+    <inertia ixx="3.6812634063230197e-06" iyy="1.9208185870752217e-06" izz="1.9203920686891823e-06" ixy="-1.864163717054529e-12" iyz="3.209670016286704e-08" ixz="1.8899039641194146e-11"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.075292 -0.159021 -0.103657" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/33_tpu_sea_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.075292 -0.159021 -0.103657" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/33_tpu_sea_v1__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="31_SEA_Metal_v2__1__1">
+  <inertial>
+    <origin xyz="-0.002946169238570759 0.007883767916393225 -0.007884047776048564" rpy="0 0 0"/>
+    <mass value="0.05156214576547344"/>
+    <inertia ixx="1.6040583157752274e-05" iyy="8.109792089280735e-06" izz="8.109792122056167e-06" ixy="0.0" iyz="0.0" ixz="-3.0357660829594124e-18"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.088792 -0.1569 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/31_SEA_Metal_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.088792 -0.1569 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/31_SEA_Metal_v2__1__1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="33_tpu_sea_v1_1">
+  <inertial>
+    <origin xyz="0.004713560639536582 -0.005330555983429464 -0.005328987818537703" rpy="0 0 0"/>
+    <mass value="0.010677958537753843"/>
+    <inertia ixx="3.6812634063230197e-06" iyy="1.9203920686892094e-06" izz="1.9208185870751675e-06" ixy="1.8899039634417882e-11" iyz="-3.2096700162839937e-08" ixz="1.8641637035020017e-12"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.075292 0.065436 -0.103657" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/33_tpu_sea_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="black"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.075292 0.065436 -0.103657" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/33_tpu_sea_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="31_SEA_Metal_v2_1">
+  <inertial>
+    <origin xyz="-0.0029461692385704397 -0.007884077635983908 -0.007884047776295727" rpy="0 0 0"/>
+    <mass value="0.05156214576547344"/>
+    <inertia ixx="1.6040583157752057e-05" iyy="8.109792089280518e-06" izz="8.109792122055841e-06" ixy="-5.421010862427522e-20" iyz="0.0" ixz="3.0357660829594124e-18"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.088792 0.063315 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/31_SEA_Metal_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.088792 0.063315 -0.105778" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/31_SEA_Metal_v2_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Battery_4S_5Ah_v1_1">
+  <inertial>
+    <origin xyz="-0.013850192947756024 -2.9859756840722174e-08 0.021200000000020924" rpy="0 0 0"/>
+    <mass value="1.75562795577815"/>
+    <inertia ixx="0.0031995601071754844" iyy="0.00045768910809683254" izz="0.0031459972270878236" ixy="1.8214596497756474e-17" iyz="-8.673617379884035e-19" ixz="-8.673617379884035e-19"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.037842 -0.046808 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/Battery_4S_5Ah_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="blue"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.037842 -0.046808 0.0995" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/Battery_4S_5Ah_v1_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="camera_link_1">
+  <inertial>
+    <origin xyz="-0.0005913113532829278 -2.985979384584336e-08 1.4377388168895777e-14" rpy="0 0 0"/>
+    <mass value="7.98003667770923e-06"/>
+    <inertia ixx="1.3118763282080937e-12" iyy="1.3482047313767844e-12" izz="1.3482047315289856e-12" ixy="0.0" iyz="0.0" ixz="-1.3234889800848443e-23"/>
+  </inertial>
+  <visual>
+    <origin xyz="-0.059342 -0.047107 -0.241101" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/camera_link_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="blue"/>
+  </visual>
+  <collision>
+    <origin xyz="-0.059342 -0.047107 -0.241101" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://wolves_robot_description/meshes/v49/camera_link_1.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<joint name="Starr 230" type="fixed">
+  <origin xyz="0.103387 0.014708 0.0015" rpy="0 0 0"/>
+  <parent link="base_link"/>
+  <child link="25_Orin_Baseplate_v14_1"/>
+</joint>
+
+<joint name="Starr 231" type="fixed">
+  <origin xyz="0.009455 0.0991 -0.019" rpy="0 0 0"/>
+  <parent link="25_Orin_Baseplate_v14_1"/>
+  <child link="08_upper_body_cage_v2_1"/>
+</joint>
+
+<joint name="Starr 3" type="fixed">
+  <origin xyz="0.0 0.0 -0.005" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="09_lower_body_cage_v2_1"/>
+</joint>
+
+<joint name="Starr 232" type="fixed">
+  <origin xyz="0.005 -0.137 0.0865" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="30_Powerboard_Holder_v31_1"/>
+</joint>
+
+<joint name="Starr 6" type="fixed">
+  <origin xyz="-0.0445 -0.0497 0.14" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="MX64_body_modified_v2__6__1"/>
+</joint>
+
+<joint name="Starr 7" type="fixed">
+  <origin xyz="-0.0365 0.003 0.1328" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="MX64_body_modified_v2__7__1"/>
+</joint>
+
+<joint name="Starr 8" type="fixed">
+  <origin xyz="-0.0365 -0.137 0.1328" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="MX64_body_modified_v2__1__1"/>
+</joint>
+
+<joint name="Starr 9" type="fixed">
+  <origin xyz="-0.035 -0.1393 -0.077" rpy="0 0 0"/>
+  <parent link="09_lower_body_cage_v2_1"/>
+  <child link="12a_hip_servo_spacer_v1_1"/>
+</joint>
+
+<joint name="Starr 10" type="fixed">
+  <origin xyz="-0.035 -0.1047 -0.077" rpy="0 0 0"/>
+  <parent link="09_lower_body_cage_v2_1"/>
+  <child link="12a_hip_servo_spacer_v1__1__1"/>
+</joint>
+
+<joint name="Starr 11" type="fixed">
+  <origin xyz="-0.035 -0.0293 -0.077" rpy="0 0 0"/>
+  <parent link="09_lower_body_cage_v2_1"/>
+  <child link="12a_hip_servo_spacer_v1__3__1"/>
+</joint>
+
+<joint name="Starr 12" type="fixed">
+  <origin xyz="-0.035 0.0053 -0.077" rpy="0 0 0"/>
+  <parent link="09_lower_body_cage_v2_1"/>
+  <child link="12a_hip_servo_spacer_v1__2__1"/>
+</joint>
+
+<joint name="Starr 13" type="fixed">
+  <origin xyz="0.0 0.0 0.003" rpy="0 0 0"/>
+  <parent link="12a_hip_servo_spacer_v1_1"/>
+  <child link="MX-106_v2__4__1"/>
+</joint>
+
+<joint name="Starr 14" type="fixed">
+  <origin xyz="0.0 0.0 0.003" rpy="0 0 0"/>
+  <parent link="12a_hip_servo_spacer_v1__2__1"/>
+  <child link="MX-106_v2__5__1"/>
+</joint>
+
+<joint name="Starr 45" type="fixed">
+  <origin xyz="0.005189 0.0 -0.063473" rpy="0 0 0"/>
+  <parent link="15_upper_leg_v2_1"/>
+  <child link="17_knee_joint_connector_new_v2__2__1"/>
+</joint>
+
+<joint name="Starr 46" type="fixed">
+  <origin xyz="0.0195 0.0 -0.139473" rpy="0 0 0"/>
+  <parent link="15_upper_leg_v2__1__1"/>
+  <child link="17_knee_joint_connector_new_v2__3__1"/>
+</joint>
+
+<joint name="Starr 47" type="fixed">
+  <origin xyz="0.0195 0.0 -0.139473" rpy="0 0 0"/>
+  <parent link="15_upper_leg_v2__2__1"/>
+  <child link="17_knee_joint_connector_new_v2_1"/>
+</joint>
+
+<joint name="Starr 50" type="fixed">
+  <origin xyz="0.011458 0.0083 -0.014754" rpy="0 0 0"/>
+  <parent link="17_knee_joint_connector_new_v2__2__1"/>
+  <child link="MX-106_v2__11__1"/>
+</joint>
+
+<joint name="Starr 51" type="fixed">
+  <origin xyz="-0.034982 0.039 -0.025991" rpy="0 0 0"/>
+  <parent link="MX-106_v2__10__1"/>
+  <child link="HN05-i1_v1__12__1"/>
+</joint>
+
+<joint name="knee_l" type="revolute">
+  <origin xyz="-0.034982 -0.0098 -0.025991" rpy="0 0 0"/>
+  <parent link="MX-106_v2__10__1"/>
+  <child link="HN05-N101_v1__12__1"/>
+  <axis xyz="0.0 -1.0 -0.0"/>
+  <limit upper="0.785398" lower="-2.530727" effort="8.4" velocity="4.7"/>
+</joint>
+<transmission name="knee_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="knee_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="knee_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 53" type="fixed">
+  <origin xyz="-0.034982 -0.005 -0.025991" rpy="0 0 0"/>
+  <parent link="MX-106_v2__11__1"/>
+  <child link="HN05-i1_v1__13__1"/>
+</joint>
+
+<joint name="knee_r" type="revolute">
+  <origin xyz="-0.034982 0.0438 -0.025991" rpy="0 0 0"/>
+  <parent link="MX-106_v2__11__1"/>
+  <child link="HN05-N101_v1__13__1"/>
+  <axis xyz="0.0 1.0 -0.0"/>
+  <limit upper="2.530727" lower="-0.785398" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="knee_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="knee_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="knee_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 55" type="fixed">
+  <origin xyz="-0.004649 -0.000631 -0.009969" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__13__1"/>
+  <child link="18_lower_leg_v2__1__1"/>
+</joint>
+
+<joint name="Starr 56" type="fixed">
+  <origin xyz="-0.004649 0.0006 -0.009969" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__12__1"/>
+  <child link="18_lower_leg_v2__3__1"/>
+</joint>
+
+<joint name="Starr 63" type="fixed">
+  <origin xyz="0.013808 0.0 -0.049383" rpy="0 0 0"/>
+  <parent link="18_lower_leg_v2__1__1"/>
+  <child link="upper_leg_spacer_short_X_v1_1"/>
+</joint>
+
+<joint name="Starr 64" type="fixed">
+  <origin xyz="0.013808 0.0 -0.049383" rpy="0 0 0"/>
+  <parent link="18_lower_leg_v2__3__1"/>
+  <child link="upper_leg_spacer_short_X_v1__1__1"/>
+</joint>
+
+<joint name="Starr 65" type="fixed">
+  <origin xyz="0.039181 0.0 -0.035891" rpy="0 0 0"/>
+  <parent link="18_lower_leg_v2__1__1"/>
+  <child link="19_lower_leg_front_spacer_v2__1__1"/>
+</joint>
+
+<joint name="Starr 66" type="fixed">
+  <origin xyz="0.039181 0.0 -0.035891" rpy="0 0 0"/>
+  <parent link="18_lower_leg_v2__3__1"/>
+  <child link="19_lower_leg_front_spacer_v2_1"/>
+</joint>
+
+<joint name="Starr 67" type="fixed">
+  <origin xyz="0.0 -0.052 0.0" rpy="0 0 0"/>
+  <parent link="upper_leg_spacer_short_X_v1_1"/>
+  <child link="18_lower_leg_v2_1"/>
+</joint>
+
+<joint name="Starr 68" type="fixed">
+  <origin xyz="0.0 0.052 0.0" rpy="0 0 0"/>
+  <parent link="upper_leg_spacer_short_X_v1__1__1"/>
+  <child link="18_lower_leg_v2__2__1"/>
+</joint>
+
+<joint name="Starr 69" type="fixed">
+  <origin xyz="0.066555 0.0 -0.160115" rpy="0 0 0"/>
+  <parent link="18_lower_leg_v2__3__1"/>
+  <child link="HN05-N101_v1__15__1"/>
+</joint>
+
+<joint name="Starr 70" type="fixed">
+  <origin xyz="0.066555 0.0 -0.160115" rpy="0 0 0"/>
+  <parent link="18_lower_leg_v2__1__1"/>
+  <child link="HN05-N101_v1__14__1"/>
+</joint>
+
+<joint name="Starr 71" type="fixed">
+  <origin xyz="0.0 -0.0528 0.0" rpy="0 0 0"/>
+  <parent link="MX-106_v2__8__1"/>
+  <child link="HN05-i1_v1_1"/>
+</joint>
+
+<joint name="Starr 72" type="fixed">
+  <origin xyz="0.0 0.0528 0.0" rpy="0 0 0"/>
+  <parent link="MX-106_v2__9__1"/>
+  <child link="HN05-i1_v1__1__1"/>
+</joint>
+
+<joint name="ankle_pitch_l" type="revolute">
+  <origin xyz="-0.003763 -0.0046 0.010336" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__15__1"/>
+  <child link="MX-106_v2__9__1"/>
+  <axis xyz="-0.0 1.0 0.0"/>
+  <limit upper="0.785398" lower="-2.530727" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="ankle_pitch_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="ankle_pitch_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="ankle_pitch_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="ankle_pitch_r" type="revolute">
+  <origin xyz="-0.003763 0.0046 0.010336" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__14__1"/>
+  <child link="MX-106_v2__8__1"/>
+  <axis xyz="-0.0 -1.0 0.0"/>
+  <limit upper="2.530727" lower="-0.785398" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="ankle_pitch_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="ankle_pitch_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="ankle_pitch_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 75" type="fixed">
+  <origin xyz="-0.027063 -0.0478 0.03416" rpy="0 0 0"/>
+  <parent link="MX-106_v2__8__1"/>
+  <child link="14_motor_joint_connector_v1_1"/>
+</joint>
+
+<joint name="Starr 76" type="fixed">
+  <origin xyz="-0.027063 -0.0138 0.03416" rpy="0 0 0"/>
+  <parent link="MX-106_v2__8__1"/>
+  <child link="14_motor_joint_connector_v1__1__1"/>
+</joint>
+
+<joint name="Starr 77" type="fixed">
+  <origin xyz="-0.027063 0.0138 0.03416" rpy="0 0 0"/>
+  <parent link="MX-106_v2__9__1"/>
+  <child link="14_motor_joint_connector_v1__3__1"/>
+</joint>
+
+<joint name="Starr 78" type="fixed">
+  <origin xyz="-0.027063 0.0478 0.03416" rpy="0 0 0"/>
+  <parent link="MX-106_v2__9__1"/>
+  <child link="14_motor_joint_connector_v1__2__1"/>
+</joint>
+
+<joint name="Starr 79" type="fixed">
+  <origin xyz="-0.0085 -0.0003 -0.002278" rpy="0 0 0"/>
+  <parent link="14_motor_joint_connector_v1__3__1"/>
+  <child link="MX-106_v2_1"/>
+</joint>
+
+<joint name="Starr 80" type="fixed">
+  <origin xyz="-0.0085 0.0003 -0.002278" rpy="0 0 0"/>
+  <parent link="14_motor_joint_connector_v1__1__1"/>
+  <child link="MX-106_v2__1__1"/>
+</joint>
+
+<joint name="ankle_roll_l" type="revolute">
+  <origin xyz="-0.031955 0.0173 -0.049973" rpy="0 0 0"/>
+  <parent link="MX-106_v2_1"/>
+  <child link="HN05-N101_v1_1"/>
+  <axis xyz="-0.965926 0.0 -0.258819"/>
+  <limit upper="1.658063" lower="-1.658063" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="ankle_roll_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="ankle_roll_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="ankle_roll_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="ankle_roll_r" type="revolute">
+  <origin xyz="-0.031955 -0.0173 -0.049973" rpy="0 0 0"/>
+  <parent link="MX-106_v2__1__1"/>
+  <child link="HN05-N101_v1__1__1"/>
+  <axis xyz="-0.965926 0.0 -0.258819"/>
+  <limit upper="1.658063" lower="-1.658063" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="ankle_roll_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="ankle_roll_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="ankle_roll_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 83" type="fixed">
+  <origin xyz="0.012052 -0.0183 0.021865" rpy="0 0 0"/>
+  <parent link="MX-106_v2__8__1"/>
+  <child link="13_thrust_bearing_v2_1"/>
+</joint>
+
+<joint name="Starr 84" type="fixed">
+  <origin xyz="0.012052 0.0183 0.021865" rpy="0 0 0"/>
+  <parent link="MX-106_v2__9__1"/>
+  <child link="13_thrust_bearing_v2__1__1"/>
+</joint>
+
+<joint name="Starr 85" type="fixed">
+  <origin xyz="0.006204 -0.0125 -0.016973" rpy="0 0 0"/>
+  <parent link="13_thrust_bearing_v2_1"/>
+  <child link="HN05-i1_v1__2__1"/>
+</joint>
+
+<joint name="Starr 86" type="fixed">
+  <origin xyz="0.006204 0.0125 -0.016973" rpy="0 0 0"/>
+  <parent link="13_thrust_bearing_v2__1__1"/>
+  <child link="HN05-i1_v1__3__1"/>
+</joint>
+
+<joint name="Starr 87" type="fixed">
+  <origin xyz="0.003427 0.0 -0.01047" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__1__1"/>
+  <child link="21_ankle_bend_v2_1"/>
+</joint>
+
+<joint name="Starr 88" type="fixed">
+  <origin xyz="0.003427 0.0 -0.01047" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1_1"/>
+  <child link="21_ankle_bend_v2__1__1"/>
+</joint>
+
+<joint name="Starr 89" type="fixed">
+  <origin xyz="0.092438 0.0 -0.001113" rpy="0 0 0"/>
+  <parent link="21_ankle_bend_v2_1"/>
+  <child link="23_foot_plate_right_v2_1"/>
+</joint>
+
+<joint name="Starr 90" type="fixed">
+  <origin xyz="0.092438 0.0 -0.001113" rpy="0 0 0"/>
+  <parent link="21_ankle_bend_v2__1__1"/>
+  <child link="22_foot_plate_left_v2_1"/>
+</joint>
+
+<joint name="shoulder_pitch_l" type="revolute">
+  <origin xyz="-0.018 0.006501 -0.0173" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__7__1"/>
+  <child link="HN05-N101_v1__2__1"/>
+  <axis xyz="-0.0 1.0 -0.0"/>
+  <limit upper="3.141593" lower="-3.141593" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="shoulder_pitch_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="shoulder_pitch_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="shoulder_pitch_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="shoulder_pitch_r" type="revolute">
+  <origin xyz="-0.018 -0.006501 -0.0173" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__1__1"/>
+  <child link="HN05-N101_v1__3__1"/>
+  <axis xyz="0.0 -1.0 0.0"/>
+  <limit upper="3.141593" lower="-3.141593" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="shoulder_pitch_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="shoulder_pitch_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="shoulder_pitch_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="head_pan" type="revolute">
+  <origin xyz="-0.018 -0.0173 0.006501" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__6__1"/>
+  <child link="HN05-N101_v1__4__1"/>
+  <axis xyz="0.0 -0.0 1.0"/>
+  <limit upper="2.617994" lower="-2.617994" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="head_pan_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="head_pan">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="head_pan_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 95" type="fixed">
+  <origin xyz="0.0 0.0145 0.0032" rpy="0 0 0"/>
+  <parent link="01_neck_servo_connector_v1_1"/>
+  <child link="MX64_body_modified_v2_1"/>
+</joint>
+
+<joint name="head_tilt" type="revolute">
+  <origin xyz="-0.011 -0.038501 0.0453" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2_1"/>
+  <child link="HN05-N101_v1__5__1"/>
+  <axis xyz="0.0 -1.0 -0.0"/>
+  <limit upper="1.919862" lower="-1.919862" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="head_tilt_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="head_tilt">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="head_tilt_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 97" type="fixed">
+  <origin xyz="-0.011 0.005 0.0453" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2_1"/>
+  <child link="HN05-i1_v1__14__1"/>
+</joint>
+
+<joint name="Starr 261" type="fixed">
+  <origin xyz="0.0148 0.05155 0.0262" rpy="0 0 0"/>
+  <parent link="hals_V2_v1_1"/>
+  <child link="kopf_V2_v1_1"/>
+</joint>
+
+<joint name="Starr 262" type="fixed">
+  <origin xyz="0.0 0.0006 0.011" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__5__1"/>
+  <child link="hals_V2_v1_1"/>
+</joint>
+
+<joint name="shoulder_roll_r" type="revolute">
+  <origin xyz="-0.0035 -0.007778 -0.007778" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__16__1"/>
+  <child link="MX64_body_modified_v2__5__1"/>
+  <axis xyz="1.0 -0.0 -0.0"/>
+  <limit upper="0.785398" lower="-2.530727" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="shoulder_roll_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="shoulder_roll_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="shoulder_roll_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="shoulder_roll_l" type="revolute">
+  <origin xyz="-0.0035 0.007778 -0.007778" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__17__1"/>
+  <child link="MX64_body_modified_v2__4__1"/>
+  <axis xyz="1.0 -0.0 -0.0"/>
+  <limit upper="3.141593" lower="-0.785398" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="shoulder_roll_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="shoulder_roll_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="shoulder_roll_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 106" type="fixed">
+  <origin xyz="-0.037501 0.015824 -0.008056" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__5__1"/>
+  <child link="02a_shoulder_servo_connector_v1__1__1"/>
+</joint>
+
+<joint name="Starr 107" type="fixed">
+  <origin xyz="-0.003501 -0.010681 0.014184" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__5__1"/>
+  <child link="02a_shoulder_servo_connector_v1__2__1"/>
+</joint>
+
+<joint name="Starr 108" type="fixed">
+  <origin xyz="-0.003501 0.009404 0.015061" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__4__1"/>
+  <child link="02a_shoulder_servo_connector_v1_1"/>
+</joint>
+
+<joint name="Starr 109" type="fixed">
+  <origin xyz="-0.003501 -0.015062 -0.009405" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__4__1"/>
+  <child link="02a_shoulder_servo_connector_v1__3__1"/>
+</joint>
+
+<joint name="Starr 110" type="fixed">
+  <origin xyz="-0.017 -0.009632 -0.001055" rpy="0 0 0"/>
+  <parent link="02a_shoulder_servo_connector_v1__2__1"/>
+  <child link="04_upper_arm_new_v2__2__1"/>
+</joint>
+
+<joint name="Starr 111" type="fixed">
+  <origin xyz="0.017 0.000633 -0.009669" rpy="0 0 0"/>
+  <parent link="02a_shoulder_servo_connector_v1__1__1"/>
+  <child link="04_upper_arm_new_v2_1"/>
+</joint>
+
+<joint name="Starr 112" type="fixed">
+  <origin xyz="-0.017 0.000212 -0.009687" rpy="0 0 0"/>
+  <parent link="02a_shoulder_servo_connector_v1__3__1"/>
+  <child link="04_upper_arm_new_v2__1__1"/>
+</joint>
+
+<joint name="Starr 113" type="fixed">
+  <origin xyz="-0.017 0.009688 -0.000212" rpy="0 0 0"/>
+  <parent link="02a_shoulder_servo_connector_v1_1"/>
+  <child link="04_upper_arm_new_v2__3__1"/>
+</joint>
+
+<joint name="Starr 240" type="fixed">
+  <origin xyz="-0.014928 -0.048852 -0.058219" rpy="0 0 0"/>
+  <parent link="04_upper_arm_new_v2__2__1"/>
+  <child link="x-frame-arm-rechts_v1_1"/>
+</joint>
+
+<joint name="Starr 241" type="fixed">
+  <origin xyz="-0.01485 0.05374 -0.05374" rpy="0 0 0"/>
+  <parent link="04_upper_arm_new_v2__3__1"/>
+  <child link="x-frame-left_v1_1"/>
+</joint>
+
+<joint name="elbow_r" type="revolute">
+  <origin xyz="0.011 0.002681 -0.00225" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__11__1"/>
+  <child link="MX64_body_modified_v2__2__1"/>
+  <axis xyz="-0.0 0.766044 -0.642788"/>
+  <limit upper="0.872665" lower="-3.141593" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="elbow_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="elbow_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="elbow_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 122" type="fixed">
+  <origin xyz="0.0 -0.028285 -0.028285" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__3__1"/>
+  <child link="HN05-i1_v1__9__1"/>
+</joint>
+
+<joint name="elbow_l" type="revolute">
+  <origin xyz="0.011 -0.002453 -0.002453" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__10__1"/>
+  <child link="MX64_body_modified_v2__3__1"/>
+  <axis xyz="0.0 -0.707107 -0.707107"/>
+  <limit upper="3.141593" lower="-0.872665" effort="6.0" velocity="6.6"/>
+</joint>
+<transmission name="elbow_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="elbow_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="elbow_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 124" type="fixed">
+  <origin xyz="0.0 0.030642 -0.025712" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__2__1"/>
+  <child link="HN05-i1_v1__8__1"/>
+</joint>
+
+<joint name="Starr 125" type="fixed">
+  <origin xyz="0.04 0.013802 0.011002" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__2__1"/>
+  <child link="06_lower_arm_v3__1__1"/>
+</joint>
+
+<joint name="Starr 126" type="fixed">
+  <origin xyz="0.04 0.039847 -0.010853" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__2__1"/>
+  <child link="06_lower_arm_v3_1"/>
+</joint>
+
+<joint name="Starr 127" type="fixed">
+  <origin xyz="0.04 -0.03875 -0.014284" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__3__1"/>
+  <child link="06_lower_arm_v3__3__1"/>
+</joint>
+
+<joint name="Starr 128" type="fixed">
+  <origin xyz="0.04 -0.014708 0.009757" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__3__1"/>
+  <child link="06_lower_arm_v3__2__1"/>
+</joint>
+
+<joint name="Starr 129" type="fixed">
+  <origin xyz="0.180182 -0.01112 -0.013252" rpy="0 0 0"/>
+  <parent link="06_lower_arm_v3__1__1"/>
+  <child link="07_lower_arm_handrail_X_v2__1__1"/>
+</joint>
+
+<joint name="Starr 130" type="fixed">
+  <origin xyz="0.180182 0.012233 -0.012232" rpy="0 0 0"/>
+  <parent link="06_lower_arm_v3__2__1"/>
+  <child link="07_lower_arm_handrail_X_v2_1"/>
+</joint>
+
+<joint name="Starr 131" type="fixed">
+  <origin xyz="-0.040001 0.0 0.0" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__4__1"/>
+  <child link="HN05-i1_v1__10__1"/>
+</joint>
+
+<joint name="Starr 132" type="fixed">
+  <origin xyz="-0.040001 0.0 0.0" rpy="0 0 0"/>
+  <parent link="MX64_body_modified_v2__5__1"/>
+  <child link="HN05-i1_v1__11__1"/>
+</joint>
+
+<joint name="Starr 136" type="fixed">
+  <origin xyz="0.011 -0.000631 0.0" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__2__1"/>
+  <child link="02_shoulder_mount_v1__1__1"/>
+</joint>
+
+<joint name="Starr 137" type="fixed">
+  <origin xyz="0.011 0.0006 0.0" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__3__1"/>
+  <child link="02_shoulder_mount_v1_1"/>
+</joint>
+
+<joint name="Starr 140" type="fixed">
+  <origin xyz="0.00595 -0.034222 0.007778" rpy="0 0 0"/>
+  <parent link="02_shoulder_mount_v1_1"/>
+  <child link="HN05-N101_v1__16__1"/>
+</joint>
+
+<joint name="Starr 142" type="fixed">
+  <origin xyz="-0.011078 -0.090633 -0.108012" rpy="0 0 0"/>
+  <parent link="04_upper_arm_new_v2__2__1"/>
+  <child link="HN05-N101_v1__11__1"/>
+</joint>
+
+<joint name="Starr 143" type="fixed">
+  <origin xyz="0.00595 0.034222 0.007778" rpy="0 0 0"/>
+  <parent link="02_shoulder_mount_v1__1__1"/>
+  <child link="HN05-N101_v1__17__1"/>
+</joint>
+
+<joint name="Starr 144" type="fixed">
+  <origin xyz="-0.011 0.099757 -0.099757" rpy="0 0 0"/>
+  <parent link="04_upper_arm_new_v2__3__1"/>
+  <child link="HN05-N101_v1__10__1"/>
+</joint>
+
+<joint name="Starr 145" type="fixed">
+  <origin xyz="0.011 0.0 -0.0006" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__4__1"/>
+  <child link="01_neck_servo_connector_v1_1"/>
+</joint>
+
+<joint name="Starr 242" type="fixed">
+  <origin xyz="0.014311 0.0 -0.076" rpy="0 0 0"/>
+  <parent link="15_upper_leg_v2__2__1"/>
+  <child link="16_upper_leg_spacer_v6_1"/>
+</joint>
+
+<joint name="Starr 243" type="fixed">
+  <origin xyz="0.0 0.052 0.0" rpy="0 0 0"/>
+  <parent link="16_upper_leg_spacer_v6_1"/>
+  <child link="15_upper_leg_v2__3__1"/>
+</joint>
+
+<joint name="Starr 167" type="fixed">
+  <origin xyz="0.0 0.034 0.0" rpy="0 0 0"/>
+  <parent link="MX-106_v2__10__1"/>
+  <child link="17_knee_joint_connector_new_v2__1__1"/>
+</joint>
+
+<joint name="Starr 168" type="fixed">
+  <origin xyz="0.011458 0.0083 -0.014754" rpy="0 0 0"/>
+  <parent link="17_knee_joint_connector_new_v2_1"/>
+  <child link="MX-106_v2__10__1"/>
+</joint>
+
+<joint name="Starr 244" type="fixed">
+  <origin xyz="0.014311 0.0 -0.076" rpy="0 0 0"/>
+  <parent link="15_upper_leg_v2__1__1"/>
+  <child link="16_upper_leg_spacer_v6__1__1"/>
+</joint>
+
+<joint name="Starr 245" type="fixed">
+  <origin xyz="0.0 -0.052 0.0" rpy="0 0 0"/>
+  <parent link="16_upper_leg_spacer_v6__1__1"/>
+  <child link="15_upper_leg_v2_1"/>
+</joint>
+
+<joint name="Starr 185" type="fixed">
+  <origin xyz="0.0448 0.0173 0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__7__1"/>
+  <child link="14_motor_joint_connector_v1__4__1"/>
+</joint>
+
+<joint name="Starr 190" type="fixed">
+  <origin xyz="0.0448 -0.0173 0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__7__1"/>
+  <child link="14_motor_joint_connector_v1__5__1"/>
+</joint>
+
+<joint name="Starr 191" type="fixed">
+  <origin xyz="0.0088 0.0003 0.0" rpy="0 0 0"/>
+  <parent link="14_motor_joint_connector_v1__5__1"/>
+  <child link="MX-106_v2__6__1"/>
+</joint>
+
+<joint name="Starr 192" type="fixed">
+  <origin xyz="0.0448 -0.0173 0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__2__1"/>
+  <child link="14_motor_joint_connector_v1__6__1"/>
+</joint>
+
+<joint name="Starr 193" type="fixed">
+  <origin xyz="0.0448 0.0173 0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__2__1"/>
+  <child link="14_motor_joint_connector_v1__7__1"/>
+</joint>
+
+<joint name="Starr 194" type="fixed">
+  <origin xyz="0.0088 0.0003 0.0" rpy="0 0 0"/>
+  <parent link="14_motor_joint_connector_v1__6__1"/>
+  <child link="MX-106_v2__3__1"/>
+</joint>
+
+<joint name="Starr 198" type="fixed">
+  <origin xyz="0.0346 0.0295 -0.022" rpy="0 0 0"/>
+  <parent link="MX-106_v2__6__1"/>
+  <child link="13_thrust_bearing_v2__2__1"/>
+</joint>
+
+<joint name="Starr 199" type="fixed">
+  <origin xyz="0.0017 -0.0125 0.018" rpy="0 0 0"/>
+  <parent link="13_thrust_bearing_v2__2__1"/>
+  <child link="HN05-i1_v1__5__1"/>
+</joint>
+
+<joint name="Starr 200" type="fixed">
+  <origin xyz="0.0173 0.0393 -0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__6__1"/>
+  <child link="HN05-i1_v1__4__1"/>
+</joint>
+
+<joint name="Starr 201" type="fixed">
+  <origin xyz="-0.035 0.0 -0.0304" rpy="0 0 0"/>
+  <parent link="12_hip_u_profile_v1__1__1"/>
+  <child link="HN05-N101_v1__7__1"/>
+</joint>
+
+<joint name="hip_pitch_l" type="revolute">
+  <origin xyz="0.0173 -0.0098 -0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__6__1"/>
+  <child link="HN05-N101_v1__6__1"/>
+  <axis xyz="-0.0 -1.0 -0.0"/>
+  <limit upper="0.959931" lower="-2.181662" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="hip_pitch_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip_pitch_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip_pitch_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="hip_roll_l" type="revolute">
+  <origin xyz="-0.0016 0.0 -0.011" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__7__1"/>
+  <child link="MX-106_v2__7__1"/>
+  <axis xyz="1.0 0.0 -0.0"/>
+  <limit upper="1.832596" lower="-1.832596" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="hip_roll_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip_roll_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip_roll_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 204" type="fixed">
+  <origin xyz="0.0346 0.0045 -0.022" rpy="0 0 0"/>
+  <parent link="MX-106_v2__3__1"/>
+  <child link="13_thrust_bearing_v2__3__1"/>
+</joint>
+
+<joint name="Starr 205" type="fixed">
+  <origin xyz="0.0017 0.0125 0.018" rpy="0 0 0"/>
+  <parent link="13_thrust_bearing_v2__3__1"/>
+  <child link="HN05-i1_v1__6__1"/>
+</joint>
+
+<joint name="Starr 206" type="fixed">
+  <origin xyz="0.0173 -0.005 -0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__3__1"/>
+  <child link="HN05-i1_v1__7__1"/>
+</joint>
+
+<joint name="hip_pitch_r" type="revolute">
+  <origin xyz="0.0173 0.0438 -0.004" rpy="0 0 0"/>
+  <parent link="MX-106_v2__3__1"/>
+  <child link="HN05-N101_v1__8__1"/>
+  <axis xyz="0.0 1.0 0.0"/>
+  <limit upper="2.181662" lower="-0.959931" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="hip_pitch_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip_pitch_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip_pitch_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 208" type="fixed">
+  <origin xyz="-0.035 0.0 -0.0304" rpy="0 0 0"/>
+  <parent link="12_hip_u_profile_v1_1"/>
+  <child link="HN05-N101_v1__9__1"/>
+</joint>
+
+<joint name="hip_roll_r" type="revolute">
+  <origin xyz="-0.0016 0.0 -0.011" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__9__1"/>
+  <child link="MX-106_v2__2__1"/>
+  <axis xyz="1.0 0.0 -0.0"/>
+  <limit upper="1.832596" lower="-1.832596" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="hip_roll_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip_roll_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip_roll_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 210" type="fixed">
+  <origin xyz="0.0 0.0006 0.011" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__6__1"/>
+  <child link="15_upper_leg_v2__2__1"/>
+</joint>
+
+<joint name="Starr 211" type="fixed">
+  <origin xyz="0.0 -0.0006 0.011" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__8__1"/>
+  <child link="15_upper_leg_v2__1__1"/>
+</joint>
+
+<joint name="hip_yaw_l" type="revolute">
+  <origin xyz="-0.018 -0.0173 -0.0098" rpy="0 0 0"/>
+  <parent link="MX-106_v2__5__1"/>
+  <child link="HN05-N101_v1__19__1"/>
+  <axis xyz="0.0 -0.0 1.0"/>
+  <limit upper="3.141593" lower="-3.141593" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="hip_yaw_l_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip_yaw_l">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip_yaw_l_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="hip_yaw_r" type="revolute">
+  <origin xyz="-0.018 0.0173 -0.0098" rpy="0 0 0"/>
+  <parent link="MX-106_v2__4__1"/>
+  <child link="HN05-N101_v1__18__1"/>
+  <axis xyz="0.0 -0.0 1.0"/>
+  <limit upper="3.141593" lower="-3.141593" effort="8.4" velocity="4.71"/>
+</joint>
+<transmission name="hip_yaw_r_tran">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hip_yaw_r">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+  </joint>
+  <actuator name="hip_yaw_r_actr">
+    <hardwareInterface>PositionJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
+
+<joint name="Starr 214" type="fixed">
+  <origin xyz="-0.011 0.0 0.000631" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__19__1"/>
+  <child link="12_hip_u_profile_v1__1__1"/>
+</joint>
+
+<joint name="Starr 215" type="fixed">
+  <origin xyz="-0.011 0.0 0.000631" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__18__1"/>
+  <child link="12_hip_u_profile_v1_1"/>
+</joint>
+
+<joint name="Starr 246" type="fixed">
+  <origin xyz="-0.115 0.008 0.0865" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="35_TPU_Bumper_BitB_v6_1"/>
+</joint>
+
+<joint name="Starr 247" type="fixed">
+  <origin xyz="-0.115 -0.142 0.0865" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="35_TPU_Bumper_BitB_right_v3_1"/>
+</joint>
+
+<joint name="Starr 258" type="fixed">
+  <origin xyz="0.005 -0.142 0.0865" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="35_TPU_Bumper_BitB_v6__1__1"/>
+</joint>
+
+<joint name="Starr 259" type="fixed">
+  <origin xyz="0.005 0.008 0.0865" rpy="0 0 0"/>
+  <parent link="08_upper_body_cage_v2_1"/>
+  <child link="35_TPU_Bumper_BitB_right_v3__1__1"/>
+</joint>
+
+<joint name="Starr 263" type="fixed">
+  <origin xyz="-0.011996 0.014 -0.0124" rpy="0 0 0"/>
+  <parent link="30_Powerboard_Holder_v31_1"/>
+  <child link="Pwr_and_Logicboard_Dummy_v2_1"/>
+</joint>
+
+<joint name="Starr 253" type="fixed">
+  <origin xyz="0.0 0.002121 -0.002121" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__17__1"/>
+  <child link="33_tpu_sea_v1__1__1"/>
+</joint>
+
+<joint name="Starr 254" type="fixed">
+  <origin xyz="0.01945 0.034222 0.007778" rpy="0 0 0"/>
+  <parent link="02_shoulder_mount_v1__1__1"/>
+  <child link="31_SEA_Metal_v2__1__1"/>
+</joint>
+
+<joint name="Starr 255" type="fixed">
+  <origin xyz="0.0 -0.002121 -0.002121" rpy="0 0 0"/>
+  <parent link="HN05-N101_v1__16__1"/>
+  <child link="33_tpu_sea_v1_1"/>
+</joint>
+
+<joint name="Starr 256" type="fixed">
+  <origin xyz="0.01945 -0.034222 0.007778" rpy="0 0 0"/>
+  <parent link="02_shoulder_mount_v1_1"/>
+  <child link="31_SEA_Metal_v2_1"/>
+</joint>
+
+<joint name="Starr 257" type="fixed">
+  <origin xyz="-0.075 -0.067 -0.077" rpy="0 0 0"/>
+  <parent link="09_lower_body_cage_v2_1"/>
+  <child link="Battery_4S_5Ah_v1_1"/>
+</joint>
+
+<joint name="Starr 265" type="fixed">
+  <origin xyz="-0.0058 -0.02785 0.027" rpy="0 0 0"/>
+  <parent link="kopf_V2_v1_1"/>
+  <child link="camera_link_1"/>
+</joint>
+
+</robot>
