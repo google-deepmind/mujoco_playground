@@ -8,3 +8,5 @@ checkpoints/
 mujoco_playground/experimental/learning/wandb/
 logs
 wandb/
+*.mp4
+mujoco_playground/experimental/learning/check_points/
