@@ -85,7 +85,7 @@ def default_config() -> config_dict.ConfigDict:
     cfg.env.action_scale = [0.2, 0.8, 0.8] * 4  # 每条腿3个关节，共4条腿
     cfg.env.reset2ref = True
     cfg.env.reference_state_init = False # RSI: Deepmimic
-    cfg.env.impratio = 1
+    cfg.env.impratio = 100
     # 扰动配置
     cfg.pert_config = config_dict.ConfigDict()
     cfg.pert_config.enable = False
