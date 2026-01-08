@@ -36,8 +36,8 @@ class Wrapper(mjx_env.MjxEnv):
   def reset(self, rng: jax.Array) -> mjx_env.State:
     return self.env.reset(rng)
 
-  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    return self.env.step(state, action)
+  def step(self, state: mjx_env.State, action: jax.Array, **kwargs) -> mjx_env.State:
+    return self.env.step(state, action, **kwargs)
 
   @property
   def observation_size(self) -> mjx_env.ObservationSize:
@@ -163,7 +163,7 @@ class BraxAutoResetWrapper(Wrapper):
     )
     return state
 
-  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+  def step(self, state: mjx_env.State, action: jax.Array, **kwargs) -> mjx_env.State:
     # grab the reset state.
     reset_state = None
     rng_key = jax.vmap(jax.random.split)(state.info[f'{self._info_key}_rng'])
@@ -183,7 +183,7 @@ class BraxAutoResetWrapper(Wrapper):
       state.info.update(steps=steps)
 
     state = state.replace(done=jp.zeros_like(state.done))
-    state = self.env.step(state, action)
+    state = self.env.step(state, action, **kwargs)
 
     def where_done(x, y):
       done = state.done
@@ -207,6 +207,23 @@ class BraxAutoResetWrapper(Wrapper):
       preserve_info_key = f'{self._info_key}_preserve_info'
       if preserve_info_key in next_info:
         next_info[preserve_info_key] = state.info[preserve_info_key]
+
+      # [ADAPTIVE CURRICULUM] Inherit adaptive_state from old state to new state
+      # This ensures the curriculum scale persists across episode resets
+      # IMPORTANT: Only inherit scale, reset counters to avoid dirty data
+      if 'adaptive_state' in state.info:
+        old_adaptive = state.info['adaptive_state']
+        # Inherit scale, reset per-episode counters
+        inherited_adaptive = old_adaptive._replace(
+            success_count=jp.zeros_like(old_adaptive.success_count),
+            drop_count=jp.zeros_like(old_adaptive.drop_count)
+        )
+        next_info['adaptive_state'] = inherited_adaptive
+
+      # [GLOBAL STEP] Inherit global_step for linear curriculum schedule
+      # This counter accumulates across all episodes for warmup/rampup calculation
+      if 'global_step' in state.info:
+        next_info['global_step'] = state.info['global_step']
 
     next_info[done_count_key] += state.done.astype(int)
     next_info[f'{self._info_key}_rng'] = reset_rng
@@ -243,12 +260,12 @@ class BraxDomainRandomizationVmapWrapper(Wrapper):
     state = jax.vmap(reset, in_axes=[self._in_axes, 0])(self._mjx_model_v, rng)
     return state
 
-  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    def step(mjx_model, s, a):
+  def step(self, state: mjx_env.State, action: jax.Array, **kwargs) -> mjx_env.State:
+    def step_fn(mjx_model, s, a):
       with self.v_env_fn(mjx_model) as v_env:
-        return v_env.step(s, a)
+        return v_env.step(s, a, **kwargs)
 
-    res = jax.vmap(step, in_axes=[self._in_axes, 0, 0])(
+    res = jax.vmap(step_fn, in_axes=[self._in_axes, 0, 0])(
         self._mjx_model_v, state, action
     )
     return res
@@ -375,9 +392,9 @@ class MadronaWrapper:
     """Resets the environment to an initial state."""
     return self._env.reset(rng)
 
-  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
+  def step(self, state: mjx_env.State, action: jax.Array, **kwargs) -> mjx_env.State:
     """Run one timestep of the environment's dynamics."""
-    return self._env.step(state, action)
+    return self._env.step(state, action, **kwargs)
 
   def __getattr__(self, name):
     """Delegate attribute access to the wrapped instance."""
