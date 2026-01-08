@@ -270,5 +270,10 @@ def main(argv):
   print("Rollout video saved as 'rollout.mp4'.")
 
 
-if __name__ == "__main__":
+def run():
+  """Entry point for uv/pip script."""
   app.run(main)
+
+
+if __name__ == "__main__":
+  run()
