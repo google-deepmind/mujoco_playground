@@ -106,7 +106,7 @@ class Joystick(go1_base.Go1Env):
   ):
     if task.startswith("rough"):
       config.nconmax = 8 * 8192
-      config.njmax = 12 + 8 * 4
+      config.njmax = 12 + 48
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
         config=config,
