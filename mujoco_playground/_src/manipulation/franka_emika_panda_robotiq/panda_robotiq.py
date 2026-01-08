@@ -76,6 +76,8 @@ class PandaRobotiqBase(mjx_env.MjxEnv):
     self._model_assets = get_assets()
     mj_model = mujoco.MjModel.from_xml_string(xml, assets=self._model_assets)
     mj_model.opt.timestep = self.sim_dt
+    mj_model.opt.ccd_iterations = 10
+
 
     self._mj_model = mj_model
     self._mjx_model = mjx.put_model(mj_model, impl=self._config.impl)
