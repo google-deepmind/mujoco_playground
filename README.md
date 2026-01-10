@@ -16,7 +16,7 @@ Features include:
 For more details, check out the project [website](https://playground.mujoco.org/).
 
 > [!NOTE]
-> We now support training with both the MuJoCo MJX JAX implementation, as well as the [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) implementation at HEAD. See MuJoCo 3.3.5 [release notes](https://mujoco.readthedocs.io/en/stable/changelog.html#version-3-3-5-august-8-2025) under `MJX` for more details.
+> We now support training with both the MuJoCo MJX JAX implementation, as well as the [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) implementation at HEAD. See this [discussion post](https://github.com/google-deepmind/mujoco_playground/discussions/197) for more details.
 
 ## Installation
 
@@ -26,33 +26,49 @@ You can install MuJoCo Playground directly from PyPI:
 pip install playground
 ```
 
-> [!WARNING]
-> The `playground` release may depend on pre-release versions of `mujoco` and
-> `warp-lang`, in which case you can try `pip install playground
-> --extra-index-url=https://py.mujoco.org
-> --extra-index-url=https://pypi.nvidia.com/warp-lang/`.
-> If there are still version mismatches, please open a github issue, and install
-> from source.
+> [!IMPORTANT]
+> We recommend users to install [from source](#from-source) to get the latest features and bug fixes from MuJoCo.
 
-### From Source
+### <a id="from-source">From Source</a>
 
 > [!IMPORTANT]
 > Requires Python 3.10 or later.
 
 1. `git clone git@github.com:google-deepmind/mujoco_playground.git && cd mujoco_playground`
 2. [Install uv](https://docs.astral.sh/uv/getting-started/installation/), a faster alternative to `pip`
-3. Create a virtual environment: `uv venv --python 3.11`
+3. Create a virtual environment: `uv venv --python 3.12`
 4. Activate it: `source .venv/bin/activate`
-5. Install CUDA 12 jax: `uv pip install -U "jax[cuda12]"`
-    * Verify GPU backend: `python -c "import jax; print(jax.default_backend())"` should print gpu
-6. Install playground: `uv pip install -e ".[all]"`
-7. Verify installation (and download Menagerie): `python -c "import mujoco_playground"`
+5. Install CUDA 12 jax: `uv pip install -U "jax[cuda12]" --index-url https://pypi.org/simple`
+    * Verify GPU backend: `python -c "import jax; print(jax.default_backend())"` should print gpu. `unset LD_LIBRARY_PATH` may need to be run before running this command.
+6. Install playground from source: `uv --no-config sync --all-extras`
+7. Verify installation: `uv --no-config run python -c "import mujoco_playground; print('Success')"`
+    * **Note**: Menagerie assets will be downloaded automatically the first time you load a locomotion or manipulation environment. You can trigger this with: `uv --no-config run python -c "from mujoco_playground import locomotion; locomotion.load('G1JoystickFlatTerrain')"`
 
 #### Madrona-MJX (optional)
 
 For vision-based environments, please refer to the installation instructions in the [Madrona-MJX](https://github.com/shacklettbp/madrona_mjx?tab=readme-ov-file#installation) repository.
 
 ## Getting started
+
+### Running from CLI
+For basic usage, navigate to the repo's directory, install [from source](#from-source) with `jax[cuda12]`, and run:
+
+```bash
+train-jax-ppo --env_name CartpoleBalance
+```
+
+To train with [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp):
+
+```bash
+train-jax-ppo --env_name CartpoleBalance --impl warp
+```
+
+Or with `uv`:
+
+```bash
+uv --no-config run train-jax-ppo --env_name CartpoleBalance --impl warp
+uv --no-config run train-rsl-ppo --env_name CartpoleBalance --impl warp
+```
 
 ### Basic Tutorials
 | Colab | Description |
@@ -73,15 +89,6 @@ For vision-based environments, please refer to the installation instructions in 
 |-------|-------------|
 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/training_vision_1.ipynb) | Training CartPole from Vision |
 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/training_vision_2.ipynb) | Robotic Manipulation from Vision |
-
-## Running from CLI
-> [!IMPORTANT]
-> Assumes installation from source.
-
-For basic usage, navigate to the repo's directory and run:
-```bash
-python learning/train_jax_ppo.py --env_name CartpoleBalance
-```
 
 ### Training Visualization
 

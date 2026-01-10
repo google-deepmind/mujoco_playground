@@ -1,3 +1,4 @@
+# Copyright 2025 TetherIA Inc.
 # Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Base classes for leap hand."""
+
+"""Base classes for TetherIA Aero Hand Open."""
 
 from typing import Any, Dict, Optional, Union
 
@@ -24,23 +26,23 @@ import mujoco
 from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.manipulation.leap_hand import leap_hand_constants as consts
+from mujoco_playground._src.manipulation.aero_hand import aero_hand_constants as consts
 
 
 def get_assets() -> Dict[str, bytes]:
   assets = {}
-  path = mjx_env.MENAGERIE_PATH / "leap_hand"
+  path = mjx_env.MENAGERIE_PATH / "tetheria_aero_hand_open"
   mjx_env.update_assets(assets, path / "assets")
   mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls", "*.xml")
   mjx_env.update_assets(
       assets, consts.ROOT_PATH / "xmls" / "reorientation_cube_textures"
   )
-  mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls" / "meshes")
+  mjx_env.update_assets(assets, consts.ROOT_PATH / "xmls" / "assets")
   return assets
 
 
-class LeapHandEnv(mjx_env.MjxEnv):
-  """Base class for LEAP hand environments."""
+class AeroHandEnv(mjx_env.MjxEnv):
+  """Base class for Aero Hand environments."""
 
   def __init__(
       self,
@@ -54,12 +56,11 @@ class LeapHandEnv(mjx_env.MjxEnv):
         epath.Path(xml_path).read_text(), assets=self._model_assets
     )
     self._mj_model.opt.timestep = self._config.sim_dt
-    self._mj_model.opt.ccd_iterations = 10
 
     self._mj_model.vis.global_.offwidth = 3840
     self._mj_model.vis.global_.offheight = 2160
 
-    self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
+    self._mjx_model = mjx.put_model(self._mj_model)
     self._xml_path = xml_path
 
   # Sensor readings.

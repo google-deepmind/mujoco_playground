@@ -37,7 +37,7 @@ EXTERNAL_DEPS_PATH = epath.Path(__file__).parent.parent / "external_deps"
 # Resource paths do not have glob implemented, so we use a bare epath.Path.
 MENAGERIE_PATH = EXTERNAL_DEPS_PATH / "mujoco_menagerie"
 # Commit SHA of the menagerie repo.
-MENAGERIE_COMMIT_SHA = "14ceccf557cc47240202f2354d684eca58ff8de4"
+MENAGERIE_COMMIT_SHA = "1b86ece576591213e2b666ebf59508454200ca97"
 
 
 def _clone_with_progress(

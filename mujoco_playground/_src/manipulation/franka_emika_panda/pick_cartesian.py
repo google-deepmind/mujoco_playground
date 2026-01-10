@@ -75,7 +75,7 @@ def default_config():
       success_threshold=0.05,
       action_history_length=1,
       impl='jax',
-      nconmax=12 * 8192,
+      nconmax=12 * 1024,
       njmax=128,
   )
   return config

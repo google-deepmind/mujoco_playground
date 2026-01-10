@@ -40,7 +40,11 @@ from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
 import tensorboardX
-import wandb
+
+try:
+  import wandb
+except ImportError:
+  wandb = None
 
 
 xla_flags = os.environ.get("XLA_FLAGS", "")
@@ -298,6 +302,11 @@ def main(argv):
 
   # Initialize Weights & Biases if required
   if _USE_WANDB.value and not _PLAY_ONLY.value:
+    if wandb is None:
+      raise ImportError(
+          "wandb is required for --use_wandb. "
+          "Install via: pip install wandb"
+      )
     wandb.init(project="mjxrl", name=exp_name)
     wandb.config.update(env_cfg.to_dict())
     wandb.config.update({"env_name": _ENV_NAME.value})
@@ -530,5 +539,10 @@ def main(argv):
     print(f"Rollout video saved as 'rollout{i}.mp4'.")
 
 
-if __name__ == "__main__":
+def run():
+  """Entry point for uv/pip script."""
   app.run(main)
+
+
+if __name__ == "__main__":
+  run()

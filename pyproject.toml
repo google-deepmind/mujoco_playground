@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "playground"
-version = "0.0.5"
+version = "0.1.0"
 readme = "README.md"
 authors = [
     {name = "Google DeepMind", email = "mujoco@deepmind.com"},
@@ -23,6 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
+    "absl-py",
     "brax>=0.12.5",
     "etils",
     "flax",
@@ -30,11 +31,11 @@ dependencies = [
     "lxml",
     "mediapy",
     "ml_collections",
-    "mujoco-mjx>=3.3.6.dev",
-    "mujoco>=3.3.6.dev",
+    "mujoco-mjx>=3.4.dev",
+    "mujoco>=3.4.dev",
+    "warp-lang>=1.11",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
-    "warp-lang>=1.9.0.dev",
 ]
 keywords = ["mjx", "mujoco", "sim2real", "reinforcement learning"]
 
@@ -54,6 +55,9 @@ warp-lang = { index = "nvidia" }
 mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "main", subdirectory = "mjx" }
 
 [project.optional-dependencies]
+cuda = [
+    "jax[cuda12]",
+]
 test = [
     "absl-py",
     "dm_control",
@@ -80,6 +84,7 @@ learning = [
 ]
 all = [
     "playground[dev]",
+    "playground[cuda]",
     "playground[notebooks]",
     "playground[learning]",
 ]
@@ -88,7 +93,11 @@ all = [
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["mujoco_playground"]
+packages = ["mujoco_playground", "learning"]
+
+[project.scripts]
+train-jax-ppo = "learning.train_jax_ppo:run"
+train-rsl-ppo = "learning.train_rsl_rl:run"
 
 [tool.ruff]
 lint.select = [
@@ -173,4 +182,5 @@ include = [
     "mujoco_playground/__init__.py",
     "mujoco_playground/_src/**/*",
     "mujoco_playground/config/**/*",
+    "learning/**/*",
 ]

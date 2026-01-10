@@ -109,9 +109,6 @@ class Joystick(t1_base.T1Env):
       config: config_dict.ConfigDict = default_config(),
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
-    if task.startswith("rough"):
-      config.nconmax = 100 * 8192
-      config.njmax = 500
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
         config=config,

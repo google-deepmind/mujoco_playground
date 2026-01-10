@@ -52,6 +52,7 @@ class T1Env(mjx_env.MjxEnv):
         epath.Path(xml_path).read_text(), assets=self._model_assets
     )
     self._mj_model.opt.timestep = self.sim_dt
+    self._mj_model.opt.ccd_iterations = 10
 
     self._mj_model.vis.global_.offwidth = 3840
     self._mj_model.vis.global_.offheight = 2160

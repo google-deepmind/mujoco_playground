@@ -1,3 +1,4 @@
+# Copyright 2025 TetherIA Inc.
 # Copyright 2025 DeepMind Technologies Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Rotate-z with leap hand."""
+
+"""Rotate-z with TetherIA Aero Hand Open."""
 
 from typing import Any, Dict, Optional, Union
 
@@ -23,15 +25,15 @@ from mujoco import mjx
 import numpy as np
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src.manipulation.leap_hand import base as leap_hand_base
-from mujoco_playground._src.manipulation.leap_hand import leap_hand_constants as consts
+from mujoco_playground._src.manipulation.aero_hand import aero_hand_constants as consts
+from mujoco_playground._src.manipulation.aero_hand import base as aero_hand_base
 
 
 def default_config() -> config_dict.ConfigDict:
   return config_dict.create(
       ctrl_dt=0.05,
       sim_dt=0.01,
-      action_scale=0.6,
+      action_scale=[0.02, 0.02, 0.02, 0.02, 0.7, 0.003, 0.012],
       action_repeat=1,
       episode_length=500,
       early_termination=True,
@@ -40,6 +42,7 @@ def default_config() -> config_dict.ConfigDict:
           level=1.0,
           scales=config_dict.create(
               joint_pos=0.05,
+              tendon_length=0.005,
           ),
       ),
       reward_config=config_dict.create(
@@ -50,16 +53,13 @@ def default_config() -> config_dict.ConfigDict:
               torques=0.0,
               energy=0.0,
               termination=-100.0,
-              action_rate=0.0,
+              action_rate=-1.0,
           ),
       ),
-      impl='jax',
-      nconmax=30 * 8192,
-      njmax=160,
   )
 
 
-class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
+class CubeRotateZAxis(aero_hand_base.AeroHandEnv):
   """Rotate a cube around the z-axis as fast as possible wihout dropping it."""
 
   def __init__(
@@ -76,6 +76,7 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
 
   def _post_init(self) -> None:
     self._hand_qids = mjx_env.get_qpos_ids(self.mj_model, consts.JOINT_NAMES)
+
     self._hand_dqids = mjx_env.get_qvel_ids(self.mj_model, consts.JOINT_NAMES)
     self._cube_qids = mjx_env.get_qpos_ids(self.mj_model, ["cube_freejoint"])
     self._floor_geom_id = self._mj_model.geom("floor").id
@@ -84,7 +85,10 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
     home_key = self._mj_model.keyframe("home")
     self._init_q = jp.array(home_key.qpos)
     self._default_pose = self._init_q[self._hand_qids]
-    self._lowers, self._uppers = self.mj_model.actuator_ctrlrange.T
+    self._lowers, self._uppers = self.mj_model.jnt_range[self._hand_qids].T
+
+    self._init_tendon = jp.array(home_key.ctrl)
+    self._default_tendon = self._init_tendon
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
     # Randomize hand qpos and qvel.
@@ -101,21 +105,18 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
     start_pos = jp.array([0.1, 0.0, 0.05]) + jax.random.uniform(
         p_rng, (3,), minval=-0.01, maxval=0.01
     )
-    start_quat = leap_hand_base.uniform_quat(quat_rng)
+    start_quat = aero_hand_base.uniform_quat(quat_rng)
     q_cube = jp.array([*start_pos, *start_quat])
     v_cube = jp.zeros(6)
 
     qpos = jp.concatenate([q_hand, q_cube])
     qvel = jp.concatenate([v_hand, v_cube])
     data = mjx_env.make_data(
-        self._mj_model,
+        self.mj_model,
         qpos=qpos,
         qvel=qvel,
-        ctrl=q_hand,
-        mocap_pos=jp.array([-100.0, -100.0, -100.0]),  # Hide goal for task.
-        impl=self._mjx_model.impl.value,
-        nconmax=self._config.nconmax,
-        njmax=self._config.njmax,
+        ctrl=self._default_tendon,  # Change: only use the control tendons
+        mocap_pos=jp.array([-100, -100, -100]),  # Hide goal for this task.
     )
 
     info = {
@@ -130,13 +131,16 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
     for k in self._config.reward_config.scales.keys():
       metrics[f"reward/{k}"] = jp.zeros(())
 
-    obs_history = jp.zeros(self._config.history_len * 32)
+    # Change: 14 is the sum of the number of the tendon/joint sensors (7) and the number of the control actions (7)
+    obs_history = jp.zeros(self._config.history_len * 14)
     obs = self._get_obs(data, info, obs_history)
     reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    motor_targets = self._default_pose + action * self._config.action_scale
+
+    action_scale_custom = jp.array(self._config.action_scale, dtype=jp.float32)
+    motor_targets = self._default_tendon + action * action_scale_custom
     # NOTE: no clipping.
     data = mjx_env.step(
         self.mjx_model, state.data, motor_targets, self.n_substeps
@@ -169,7 +173,33 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
   def _get_obs(
       self, data: mjx.Data, info: dict[str, Any], obs_history: jax.Array
   ) -> Dict[str, jax.Array]:
-    joint_angles = data.qpos[self._hand_qids]
+
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+
+    # ------- tendon length sensor -------
+    tendon_lengths = jp.zeros(
+        (len(consts.SENSOR_TENDON_NAMES),), dtype=jp.float32
+    )
+    for idx, name in enumerate(consts.SENSOR_TENDON_NAMES):
+      v = mjx_env.get_sensor_data(self.mj_model, data, name)
+      v = jp.ravel(v)[0]
+      tendon_lengths = tendon_lengths.at[idx].set(v)
+
+    info["rng"], noise_rng = jax.random.split(info["rng"])
+    noisy_tendon_lengths = (
+        tendon_lengths
+        + (2 * jax.random.uniform(noise_rng, shape=tendon_lengths.shape) - 1)
+        * self._config.noise_config.level
+        * self._config.noise_config.scales.tendon_length
+    )
+
+    # ------- joint angle sensor -------
+    joint_angles = jp.zeros((len(consts.SENSOR_JOINT_NAMES),), dtype=jp.float32)
+    for idx, name in enumerate(consts.SENSOR_JOINT_NAMES):
+      v = mjx_env.get_sensor_data(self.mj_model, data, name)
+      v = jp.ravel(v)[0]
+      joint_angles = joint_angles.at[idx].set(v)
+
     info["rng"], noise_rng = jax.random.split(info["rng"])
     noisy_joint_angles = (
         joint_angles
@@ -179,9 +209,13 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
     )
 
     state = jp.concatenate([
-        noisy_joint_angles,  # 16
-        info["last_act"],  # 16
-    ])  # 48
+        noisy_tendon_lengths,
+        noisy_joint_angles,
+        info["last_act"],
+    ])
+
+    joint_angles = data.qpos[self._hand_qids]
+    info["rng"], noise_rng = jax.random.split(info["rng"])
     obs_history = jp.roll(obs_history, state.size)
     obs_history = obs_history.at[: state.size].set(state)
 
@@ -235,7 +269,7 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
         "pose": self._cost_pose(data.qpos[self._hand_qids]),
         "torques": self._cost_torques(data.actuator_force),
         "energy": self._cost_energy(
-            data.qvel[self._hand_dqids], data.actuator_force
+            data.qvel[self._hand_dqids], data.qfrc_actuator[self._hand_dqids]
         ),
     }
 
@@ -245,7 +279,9 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
   def _cost_energy(
       self, qvel: jax.Array, qfrc_actuator: jax.Array
   ) -> jax.Array:
-    return jp.sum(jp.abs(qvel) * jp.abs(qfrc_actuator))
+    return jp.sum(
+        jp.abs(qvel) * jp.abs(qfrc_actuator)
+    )  # Change: only use the control joints
 
   def _cost_linvel(self, cube_linvel: jax.Array) -> jax.Array:
     return jp.linalg.norm(cube_linvel, ord=1, axis=-1)
@@ -274,30 +310,40 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
   hand_qids = mjx_env.get_qpos_ids(mj_model, consts.JOINT_NAMES)
   hand_body_names = [
       "palm",
-      "if_bs",
-      "if_px",
-      "if_md",
-      "if_ds",
-      "mf_bs",
-      "mf_px",
-      "mf_md",
-      "mf_ds",
-      "rf_bs",
-      "rf_px",
-      "rf_md",
-      "rf_ds",
-      "th_mp",
-      "th_bs",
-      "th_px",
-      "th_ds",
+      "right_index_f_link",
+      "right_index_proximal_link",
+      "right_index_middle_link",
+      "right_index_distal_link",
+      "right_middle_f_link",
+      "right_middle_proximal_link",
+      "right_middle_middle_link",
+      "right_middle_distal_link",
+      "right_ring_f_link",
+      "right_ring_proximal_link",
+      "right_ring_middle_link",
+      "right_ring_distal_link",
+      "right_pinky_f_link",
+      "right_pinky_proximal_link",
+      "right_pinky_middle_link",
+      "right_pinky_distal_link",
+      "right_t_link",
+      "right_thumb_mcp_link",
+      "right_thumb_proximal_link",
+      "right_thumb_distal_link",
   ]
   hand_body_ids = np.array([mj_model.body(n).id for n in hand_body_names])
-  fingertip_geoms = ["th_tip", "if_tip", "mf_tip", "rf_tip"]
+  fingertip_geoms = ["if_tip", "mf_tip", "rf_tip", "pf_tip", "th_tip"]
   fingertip_geom_ids = [mj_model.geom(g).id for g in fingertip_geoms]
 
   @jax.vmap
   def rand(rng):
+    # Cube friction: =U(0.1, 0.5).
     rng, key = jax.random.split(rng)
+    cube_friction = jax.random.uniform(key, (1,), minval=0.1, maxval=0.5)
+    geom_friction = model.geom_friction.at[
+        cube_geom_id : cube_geom_id + 1, 0
+    ].set(cube_friction)
+
     # Fingertip friction: =U(0.5, 1.0).
     fingertip_friction = jax.random.uniform(key, (1,), minval=0.5, maxval=1.0)
     geom_friction = model.geom_friction.at[fingertip_geom_ids, 0].set(
@@ -308,6 +354,7 @@ def domain_randomize(model: mjx.Model, rng: jax.Array):
     rng, key1, key2 = jax.random.split(rng, 3)
     dmass = jax.random.uniform(key1, minval=0.8, maxval=1.2)
     cube_mass = model.body_mass[cube_body_id]
+    body_mass = model.body_mass.at[cube_body_id].set(cube_mass * dmass)
     body_inertia = model.body_inertia.at[cube_body_id].set(
         model.body_inertia[cube_body_id] * dmass
     )
