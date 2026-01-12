@@ -57,6 +57,12 @@ _ENV_NAME = flags.DEFINE_string(
         f"{', '.join(mujoco_playground.registry.ALL_ENVS)}"
     ),
 )
+_IMPL = flags.DEFINE_enum("impl", "jax", ["jax", "warp"], "MJX implementation")
+_PLAYGROUND_CONFIG_OVERRIDES = flags.DEFINE_string(
+    "playground_config_overrides",
+    None,
+    "Overrides for the playground env config.",
+)
 _LOAD_RUN_NAME = flags.DEFINE_string(
     "load_run_name", None, "Run name to load from (for checkpoint restoration)."
 )
@@ -118,7 +124,13 @@ def main(argv):
 
   # Load default config from registry
   env_cfg = registry.get_default_config(_ENV_NAME.value)
+  env_cfg.impl = _IMPL.value
   print(f"Environment config:\n{env_cfg}")
+
+  env_cfg_overrides = {}
+  if _PLAYGROUND_CONFIG_OVERRIDES.value is not None:
+    env_cfg_overrides = json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value)
+    print(f"Environment config overrides:\n{env_cfg_overrides}\n")
 
   # Generate unique experiment name
   now = datetime.now()
@@ -163,7 +175,7 @@ def main(argv):
 
   # Create the environment
   raw_env = registry.load(
-      _ENV_NAME.value, config=env_cfg, config_overrides={"impl": "jax"}
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
   )
   brax_env = wrapper_torch.RSLRLBraxWrapper(
       raw_env,
@@ -219,7 +231,7 @@ def main(argv):
 
   # Example: run a single rollout
   eval_env = registry.load(
-      _ENV_NAME.value, config=env_cfg, config_overrides={"impl": "jax"}
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
   )
   jit_reset = jax.jit(eval_env.reset)
   jit_step = jax.jit(eval_env.step)
