@@ -328,12 +328,11 @@ def render_array(
     hfield_data: Optional[jax.Array] = None,
 ):
   """Renders a trajectory as an array of images."""
-  renderer = mujoco.Renderer(mj_model, height=height, width=width)
-  camera = camera if camera is not None else -1
-
   if hfield_data is not None:
     mj_model.hfield_data = hfield_data.reshape(mj_model.hfield_data.shape)
-    mujoco.mjr_uploadHField(mj_model, renderer._mjr_context, 0)
+
+  renderer = mujoco.Renderer(mj_model, height=height, width=width)
+  camera = camera if camera is not None else -1
 
   def get_image(state, modify_scn_fn=None) -> np.ndarray:
     d = mujoco.MjData(mj_model)
