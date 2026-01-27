@@ -53,7 +53,7 @@ def brax_ppo_config(
     rl_config.num_timesteps = 100_000_000
   elif env_name == "FingerSpin":
     rl_config.discounting = 0.95
-  elif env_name == "PendulumSwingUp":
+  elif env_name == "PendulumSwingup":
     rl_config.action_repeat = 4
     rl_config.num_updates_per_batch = 4
 
