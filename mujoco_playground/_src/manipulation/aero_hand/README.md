@@ -7,7 +7,7 @@ The model is adapted from the [Tetheria Aero Hand Open](https://docs.tetheria.ai
 An overview of the hand is shown below:
 
 | ![Rock](imgs/rock.png) | ![Paper](imgs/paper.png) | ![Scissor](imgs/scissor.png) |
-|------------------------|------------------------|------------------------|
+| ---------------------- | ------------------------ | ---------------------------- |
 
 
 ## 1. Tendon-Driven MuJoCo Model
@@ -25,9 +25,9 @@ The springs, which are also modeled by tendon components in MuJoCo, provide the 
 #### 1.1.3 Pulleys
 The pulleys, which are modeled as cylinders, organize the cables and springs to ensure they are routed in a similar way to the real hand. Careful placement of these pulleys ensures accurate tendon routing.
 
-| front view| close-up of index|
-|------------------------|------------------------|
-| ![skeleton](imgs/skeleton.png) | ![index](imgs/index_close_up.png)
+| front view                     | close-up of index                 |
+| ------------------------------ | --------------------------------- |
+| ![skeleton](imgs/skeleton.png) | ![index](imgs/index_close_up.png) |
 
 ### 1.2 Parameters
 
@@ -68,7 +68,7 @@ To train policies for the Tetheria Hand:
 ```bash
 
 # Run the training script
-python learning/train_jax_ppo.py --env_name TetheriaCubeRotateZAxis
+python learning/train_jax_ppo.py --env_name AeroCubeRotateZAxis
 ```
 
 Although the reward curves from different training runs may vary due to stochasticity in the learning process, they consistently **converge toward a positive reward**.
@@ -80,7 +80,7 @@ To test trained policies in simulation:
 
 ```bash
 # Run the simulation rollout script
-python learning/train_jax_ppo.py   --env_name TetheriaCubeRotateZAxis   --play_only   --load_checkpoint_path path/to/checkpoints
+python learning/train_jax_ppo.py   --env_name AeroCubeRotateZAxis   --play_only   --load_checkpoint_path path/to/checkpoints
 ```
 
 This will:
@@ -91,7 +91,7 @@ This will:
 ## File Structure
 
 ### Core Implementation
-- **`tetheria_hand_tendon_constants.py`** - Constants and configuration
+- **`aero_hand_constants.py`** - Constants and configuration
 - **`rotate_z.py`** - Cube rotation task implementation
 
 ### XML Models
