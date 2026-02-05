@@ -1,0 +1,8 @@
+<include>
+  <contact>
+    <pair name="front_left_foot_ground_contact" condim="6" geom1="floor" geom2="FL_LOWER_LEG_VISUAL" friction="1 1 0.005 0.0001 0.0001"/>
+    <pair name="front_right_foot_ground_contact" condim="6" geom1="floor" geom2="FR_LOWER_LEG_VISUAL" friction="1 1 0.005 0.0001 0.0001"/>
+    <pair name="back_left_foot_ground_contact" condim="6" geom1="floor" geom2="HL_LOWER_LEG_VISUAL" friction="1 1 0.005 0.0001 0.0001"/>
+    <pair name="back_right_foot_ground_contact" condim="6" geom1="floor" geom2="HR_LOWER_LEG_VISUAL" friction="1 1 0.005 0.0001 0.0001"/>
+  </contact>
+</include>
