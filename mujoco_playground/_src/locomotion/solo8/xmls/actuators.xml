@@ -1,15 +1,12 @@
-<include>
+<mujoco>
   <actuator>
-    <position name="FL_HFE" joint="FL_HFE" kp="40" ctrlrange="-1.5 1.5"/>
-    <position name="FL_KFE" joint="FL_KFE" kp="50" ctrlrange="-1.5 1.5"/>
-
-    <position name="FR_HFE" joint="FR_HFE" kp="40" ctrlrange="-1.5 1.5"/>
-    <position name="FR_KFE" joint="FR_KFE" kp="50" ctrlrange="-1.5 1.5"/>
-
-    <position name="HL_HFE" joint="HL_HFE" kp="40" ctrlrange="-1.5 1.5"/>
-    <position name="HL_KFE" joint="HL_KFE" kp="50" ctrlrange="-1.5 1.5"/>
-
-    <position name="HR_HFE" joint="HR_HFE" kp="40" ctrlrange="-1.5 1.5"/>
-    <position name="HR_KFE" joint="HR_KFE" kp="50" ctrlrange="-1.5 1.5"/>
+    <position name="FL_HFE" joint="FL_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="FL_KFE" joint="FL_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="FR_HFE" joint="FR_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="FR_KFE" joint="FR_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HL_HFE" joint="HL_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HL_KFE" joint="HL_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HR_HFE" joint="HR_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HR_KFE" joint="HR_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
   </actuator>
-</include>
+</mujoco>
