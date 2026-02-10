@@ -117,7 +117,22 @@ def main(argv):
     print(f"Using multi-GPU: local_rank={local_rank}, device={device}")
   else:
     device = _DEVICE.value
-    device_rank = int(device.split(":")[-1]) if "cuda" in device else 0
+    # If user requested CUDA but Torch lacks CUDA support, fall back to CPU.
+    if "cuda" in device:
+      try:
+        if not torch.cuda.is_available():
+          print("Requested CUDA device but Torch has no CUDA support. Falling back to CPU.")
+          device = "cpu"
+          device_rank = None
+        else:
+          device_rank = int(device.split(":")[-1])
+      except Exception:
+        # Defensive fallback
+        print("Error checking CUDA availability; falling back to CPU.")
+        device = "cpu"
+        device_rank = None
+    else:
+      device_rank = None
 
   # If play-only, use fewer envs
   num_envs = 1 if _PLAY_ONLY.value else _NUM_ENVS.value
@@ -205,6 +220,35 @@ def main(argv):
   train_cfg.checkpoint = _CHECKPOINT_NUM.value
 
   train_cfg_dict = train_cfg.to_dict()
+  # Backwards-compatibility: convert legacy `policy` entry into `actor`/`critic` sections
+  if "policy" in train_cfg_dict and "actor" not in train_cfg_dict:
+    policy = train_cfg_dict.pop("policy")
+    # Map policy fields to actor/critic expected keys
+    actor_hidden = policy.get("actor_hidden_dims") or policy.get("actor_hidden") or policy.get("hidden_dims")
+    critic_hidden = policy.get("critic_hidden_dims") or policy.get("critic_hidden") or policy.get("hidden_dims")
+    activation = policy.get("activation", "elu")
+    init_noise = policy.get("init_noise_std", 1.0)
+    train_cfg_dict["actor"] = {
+        "class_name": "MLPModel",
+        "hidden_dims": actor_hidden,
+        "activation": activation,
+        "obs_normalization": policy.get("obs_normalization", False),
+        "stochastic": True,
+        "init_noise_std": init_noise,
+    }
+    train_cfg_dict["critic"] = {
+        "class_name": "MLPModel",
+        "hidden_dims": critic_hidden,
+        "activation": activation,
+        "obs_normalization": policy.get("obs_normalization", False),
+        "stochastic": False,
+    }
+  # Ensure obs_groups contains 'actor' for rsl_rl compatibility when only 'policy' is supplied
+  if "obs_groups" in train_cfg_dict:
+    og = train_cfg_dict["obs_groups"]
+    if "actor" not in og and "policy" in og:
+      og["actor"] = og["policy"]
+      train_cfg_dict["obs_groups"] = og
   runner = OnPolicyRunner(brax_env, train_cfg_dict, logdir, device=device)
 
   # If resume, load from checkpoint

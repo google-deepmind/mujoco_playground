@@ -98,14 +98,32 @@ class RSLRLBraxWrapper(VecEnv):
     self.batch_size = num_actors
     self.num_envs = num_actors
 
+    # Expose device string for torch code that expects `env.device`.
+    self.device = "cpu"
+
     self.key = jax.random.PRNGKey(self.seed)
 
     if device_rank is not None:
-      gpu_devices = jax.devices("gpu")
+      # Prefer explicit GPU devices if available; otherwise fall back to all devices.
+      try:
+        gpu_devices = [d for d in jax.devices() if getattr(d, "platform", None) == "gpu"]
+      except Exception:
+        gpu_devices = jax.devices()
+      if not gpu_devices:
+        gpu_devices = jax.devices()
+      if device_rank >= len(gpu_devices):
+        raise ValueError(
+            f"device_rank {device_rank} is out of range for available devices ({len(gpu_devices)})"
+        )
+      # Put PRNG key on the chosen device.
       self.key = jax.device_put(self.key, gpu_devices[device_rank])
       self.device = f"cuda:{device_rank}"
       print(f"Device -- {gpu_devices[device_rank]}")
-      print(f"Key device -- {self.key.devices()}")
+      # Print device info safely (avoid calling methods on the key object).
+      try:
+        print(f"Key device -- {gpu_devices[device_rank]}")
+      except Exception:
+        pass
 
     # split key into two for reset and randomization
     key_reset, key_randomization = jax.random.split(self.key)
@@ -126,6 +144,12 @@ class RSLRLBraxWrapper(VecEnv):
         action_repeat=action_repeat,
         randomization_fn=v_randomization_fn,
     )
+
+    # Expose environment config expected by rsl_rl runner/logger.
+    # Prefer the original env's `cfg` attribute, fallback to unwrapped env.
+    self.cfg = getattr(env, "cfg", None)
+    if self.cfg is None and hasattr(env, "unwrapped"):
+      self.cfg = getattr(env.unwrapped, "cfg", None)
 
     self.render_callback = render_callback
 
