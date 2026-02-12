@@ -115,9 +115,7 @@ def wrap_for_brax_training(
     environment did not already have batch dimensions, it is additional Vmap
     wrapped.
   """
-  if vision:
-    env = MadronaWrapper(env, num_vision_envs, randomization_fn)
-  elif randomization_fn is None:
+  if randomization_fn is None:
     env = brax_training.VmapWrapper(env)  # pytype: disable=wrong-arg-types
   else:
     env = BraxDomainRandomizationVmapWrapper(env, randomization_fn)
