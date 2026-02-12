@@ -22,6 +22,7 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
+from mujoco.mjx._src import render_util
 import numpy as np
 
 from mujoco_playground._src import mjx_env
@@ -34,11 +35,14 @@ _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "cartpole.xml"
 def default_vision_config() -> config_dict.ConfigDict:
   return config_dict.create(
       gpu_id=0,
-      render_batch_size=512,
+      render_batch_size=8192,
       render_width=64,
       render_height=64,
+      use_textures=False,
+      use_shadows=False,
+      render_rgb=True,
+      render_depth=False,
       enabled_geom_groups=[0, 1, 2],
-      use_rasterizer=False,
       history=3,
   )
 
@@ -51,20 +55,10 @@ def default_config() -> config_dict.ConfigDict:
       action_repeat=1,
       vision=False,
       vision_config=default_vision_config(),
-      impl="jax",
+      impl="warp",
       nconmax=0,
       njmax=2,
   )
-
-
-def _rgba_to_grayscale(rgba: jax.Array) -> jax.Array:
-  """
-  Intensity-weigh the colors.
-  This expects the input to have the channels in the last dim.
-  """
-  r, g, b = rgba[..., 0], rgba[..., 1], rgba[..., 2]
-  gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-  return gray
 
 
 class Balance(mjx_env.MjxEnv):
@@ -102,27 +96,12 @@ class Balance(mjx_env.MjxEnv):
     self._post_init()
 
     if self._vision:
-      try:
-        # pylint: disable=import-outside-toplevel
-        from madrona_mjx.renderer import BatchRenderer  # pytype: disable=import-error
-      except ImportError:
-        warnings.warn("Madrona MJX not installed. Cannot use vision with.")
-        return
-      self.renderer = BatchRenderer(
-          m=self._mjx_model,
-          gpu_id=self._config.vision_config.gpu_id,
-          num_worlds=self._config.vision_config.render_batch_size,
-          batch_render_view_width=self._config.vision_config.render_width,
-          batch_render_view_height=self._config.vision_config.render_height,
-          enabled_geom_groups=np.asarray(
-              self._config.vision_config.enabled_geom_groups
-          ),
-          enabled_cameras=np.asarray([
-              0,
-          ]),
-          add_cam_debug_geo=False,
-          use_rasterizer=self._config.vision_config.use_rasterizer,
-          viz_gpu_hdls=None,
+      self._rtx = mjx.create_render_context(
+        mjm=self._mj_model,
+        nworld=self._config.vision_config.render_batch_size,
+        cam_res=(self._config.vision_config.render_width, self._config.vision_config.render_height),
+        use_textures=self._config.vision_config.use_textures,
+        use_shadows=self._config.vision_config.use_shadows,
       )
 
   def _post_init(self) -> None:
@@ -190,12 +169,10 @@ class Balance(mjx_env.MjxEnv):
 
     obs = self._get_obs(data, info)
     if self._vision:
-      render_token, rgb, _ = self.renderer.init(data, self._mjx_model)
-      info.update({"render_token": render_token})
-      obs = _rgba_to_grayscale(rgb[0].astype(jp.float32)) / 255.0
-      obs_history = jp.tile(obs, (self._config.vision_config.history, 1, 1))
-      info.update({"obs_history": obs_history})
-      obs = {"pixels/view_0": obs_history.transpose(1, 2, 0)}
+      data = mjx.refit_bvh(self.mjx_model, data, self._rtx)
+      out = mjx.render(self.mjx_model, data, self._rtx)
+      rgb = mjx.get_rgb(self._rtx, out[0], 0)
+      obs = {"pixels/view_0": rgb}
 
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
@@ -205,15 +182,10 @@ class Balance(mjx_env.MjxEnv):
 
     obs = self._get_obs(data, state.info)
     if self._vision:
-      _, rgb, _ = self.renderer.render(state.info["render_token"], data)
-      # Update observation buffer
-      obs_history = state.info["obs_history"]
-      obs_history = jp.roll(obs_history, 1, axis=0)
-      obs_history = obs_history.at[0].set(
-          _rgba_to_grayscale(rgb[0].astype(jp.float32)) / 255.0
-      )
-      state.info["obs_history"] = obs_history
-      obs = {"pixels/view_0": obs_history.transpose(1, 2, 0)}
+      data = mjx.refit_bvh(self.mjx_model, data, self._rtx)
+      out = mjx.render(self.mjx_model, data, self._rtx)
+      rgb = mjx.get_rgb(self._rtx, out[0], 0)
+      obs = {"pixels/view_0": rgb}
 
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
