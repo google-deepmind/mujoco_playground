@@ -1,0 +1,14 @@
+<include>
+  <compiler angle="radian" meshdir="meshes/stl/"/>
+
+  <asset>
+    <mesh name="solo_body" file="without_foot/solo_body.stl"/>
+    <mesh name="solo_upper_leg_left_side" file="without_foot/solo_upper_leg_left_side.stl"/>
+    <mesh name="solo_upper_leg_right_side" file="without_foot/solo_upper_leg_right_side.stl"/>
+    <mesh name="solo_lower_leg_left_side" file="without_foot/solo_lower_leg_left_side.stl"/>
+    <mesh name="solo_lower_leg_right_side" file="without_foot/solo_lower_leg_right_side.stl"/>
+
+    <texture builtin="checker" height="512" name="texplane" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" type="2d" width="512"/>
+    <material name="floorplane" reflectance="0.5" texrepeat="1 1" texture="texplane" texuniform="true"/>
+  </asset>
+</include>
