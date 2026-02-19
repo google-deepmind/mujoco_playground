@@ -67,11 +67,11 @@ class Solo8Env(mjx_env.MjxEnv):
 
     self._mjx_model = mjx.put_model(self._mj_model, impl=self._config.impl)
     self._xml_path = xml_path
-    self._imu_site_id = self._mj_model.site("imu").id
+    self._imu_site_id = self._mj_model.site("imu_site").id
 
     # Contact sensor ids.
     self._feet_floor_found_sensor = [
-        self._mj_model.sensor(f"{geom}_floor_found").id
+        self._mj_model.sensor(f"{geom}_contact_sensor").id
         for geom in consts.FEET_GEOMS
     ]
 

@@ -44,9 +44,7 @@
   </asset>
 
   <worldbody>
-    <geom name="floor" pos="0 0 0" size="0 0 0.01" type="plane" material="floorplane" friction="0.6"/>
-    <light directional="true" ambient="0.2 0.2 0.2" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" castshadow="false" pos="0 0 4" dir="0 0 -1" name="light0"/>
-
+  
     <body name="robot" pos="0 0 0.27" childclass="solo8">
       <freejoint name="root"/>
       <inertial pos="0 0 0" mass="1.0" diaginertia="0.01 0.01 0.01"/>

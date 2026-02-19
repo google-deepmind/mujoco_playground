@@ -22,14 +22,14 @@
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="0" priority="1" friction="0.6" condim="3"/>
   </worldbody>
 
-  <include file="sensors.xml"/>
+    <!-- Ignoring sensor import for now -->
+  
+  <!--include file="sensors.xml"/-->
 
   <keyframe>
     <key name="home" qpos="
     0.0 0.0 0.27
     1.0 0.0 0.0 0.0
-    1.0 -1.3 1.0 -1.3 0.8 -1.5 0.8 -1.5"
-      ctrl="0.1 0.9 -1.8 -0.1 0.9 -1.8 0.1 0.9 -1.8 -0.1 0.9 -1.8"/>
-    <key name="home_higher" qpos="0 0 0.31 1 0 0 0 0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63" ctrl="0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63 0 0.82 -1.63"/>
+    1.0 -1.3 1.0 -1.3 0.8 -1.5 0.8 -1.5"/>
   </keyframe>
 </mujoco>

@@ -41,11 +41,11 @@ def default_config() -> config_dict.ConfigDict:
       ctrl_dt=0.02,
       sim_dt=0.004,
       episode_length=1000,
-      Kp=400.0,
-      Kd=10.0,
+      Kp=150.0,
+      Kd=6.0,
       early_termination=True,
       action_repeat=1,
-      action_scale=0.6,
+      action_scale=0.2,
       history_len=3,
       obs_noise=config_dict.create(
           scales=config_dict.create(
@@ -64,7 +64,7 @@ def default_config() -> config_dict.ConfigDict:
               # Costs.
               ang_vel_xy=-0.5,
               lin_vel_z=-0.5,
-              hip_splay=-0.5,
+              #hip_splay=-0.5,
           ),
           tracking_sigma=0.25,
       ),
@@ -73,10 +73,11 @@ def default_config() -> config_dict.ConfigDict:
           lin_vel_y=[-0.5, 0.5],
           ang_vel_yaw=[-1.0, 1.0],
       ),
-      gait_frequency=[0.5, 4.0],
+      fixed_vx=0.6,
+      gait_frequency=[2.0, 2.0],
       #gaits=["trot", "walk", "pace", "bound", "pronk"],
       gaits=["trot"],
-      foot_height=[0.08, 0.4],
+      foot_height=[0.12, 0.12],
       impl="jax",
       nconmax=4 * 8192,
       njmax=12 + 4 * 4,
@@ -223,11 +224,6 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     state.info["phase"] = jp.fmod(phase_tp1 + jp.pi, 2 * jp.pi) - jp.pi
 
     state.info["rng"] = rng
-    state.info["command"] = jp.where(
-        state.info["step"] > 200,
-        self.sample_command(cmd_rng),
-        state.info["command"],
-    )
     state.info["step"] = jp.where(
         done | (state.info["step"] > 200),
         0,
@@ -333,7 +329,7 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
         "lin_vel_z": self._cost_lin_vel_z(
             self.get_global_linvel(data), info["gait"]
         ),
-        "hip_splay": self._cost_hip_splay(data.qpos[7:]),
+        #"hip_splay": self._cost_hip_splay(data.qpos[7:]),
     }
     return pos, neg
 
@@ -371,28 +367,15 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     return jp.sum(jp.square(current - self._hx_default_pose))
 
   def _cost_lin_vel_z(self, global_linvel, gait: jax.Array) -> jax.Array:  # pylint: disable=redefined-outer-name
-    # Penalize z axis base linear velocity unless pronk or bound.
-    cost = jp.square(global_linvel[2])
-    return cost * (gait > 2)
+    del gait
+    return jp.square(global_linvel[2])
+
 
   def _cost_ang_vel_xy(self, global_angvel) -> jax.Array:
     # Penalize xy axes base angular velocity.
     return jp.sum(jp.square(global_angvel[:2]))
 
+  # Changed to only sample straight line
   def sample_command(self, rng: jax.Array) -> jax.Array:
-    """Samples a random command with a 10% chance of being zero."""
-    _, rng1, rng2, rng3, rng4 = jax.random.split(rng, 5)
-    cmd_config = self._config.command_config
-    lin_vel_x = jax.random.uniform(
-        rng1, minval=cmd_config.lin_vel_x[0], maxval=cmd_config.lin_vel_x[1]
-    )
-    lin_vel_y = jax.random.uniform(
-        rng2, minval=cmd_config.lin_vel_y[0], maxval=cmd_config.lin_vel_y[1]
-    )
-    ang_vel_yaw = jax.random.uniform(
-        rng3,
-        minval=cmd_config.ang_vel_yaw[0],
-        maxval=cmd_config.ang_vel_yaw[1],
-    )
-    cmd = jp.hstack([lin_vel_x, lin_vel_y, ang_vel_yaw])
-    return jp.where(jax.random.bernoulli(rng4, 0.1), jp.zeros(3), cmd)
+    del rng
+    return jp.array([self._config.fixed_vx, 0.0, 0.0])
