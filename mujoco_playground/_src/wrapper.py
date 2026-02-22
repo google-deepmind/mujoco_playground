@@ -15,7 +15,6 @@
 """Wrappers for MuJoCo Playground environments."""
 
 import contextlib
-import functools
 from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 from brax.envs.wrappers import training as brax_training
@@ -86,8 +85,6 @@ class Wrapper(mjx_env.MjxEnv):
 
 def wrap_for_brax_training(
     env: mjx_env.MjxEnv,
-    vision: bool = False,
-    num_vision_envs: int = 1,
     episode_length: int = 1000,
     action_repeat: int = 1,
     randomization_fn: Optional[
@@ -99,9 +96,6 @@ def wrap_for_brax_training(
 
   Args:
     env: environment to be wrapped
-    vision: whether the environment will be vision based
-    num_vision_envs: number of environments the renderer should generate, should
-      equal the number of batched envs
     episode_length: length of episode
     action_repeat: how many repeated actions to take per step
     randomization_fn: randomization function that produces a vectorized model
@@ -252,131 +246,3 @@ class BraxDomainRandomizationVmapWrapper(Wrapper):
     return res
 
 
-def _identity_vision_randomization_fn(
-    mjx_model: mjx.Model, num_worlds: int
-) -> Tuple[mjx.Model, mjx.Model]:
-  """Tile the necessary fields for the Madrona memory buffer copy."""
-  in_axes = jax.tree_util.tree_map(lambda x: None, mjx_model)
-  in_axes = in_axes.tree_replace({
-      'geom_rgba': 0,
-      'geom_matid': 0,
-      'geom_size': 0,
-      'light_pos': 0,
-      'light_dir': 0,
-      'light_type': 0,
-      'light_castshadow': 0,
-      'light_cutoff': 0,
-  })
-  mjx_model = mjx_model.tree_replace({
-      'geom_rgba': jp.repeat(
-          jp.expand_dims(mjx_model.geom_rgba, 0), num_worlds, axis=0
-      ),
-      'geom_matid': jp.repeat(
-          jp.expand_dims(jp.repeat(-1, mjx_model.geom_matid.shape[0], 0), 0),
-          num_worlds,
-          axis=0,
-      ),
-      'geom_size': jp.repeat(
-          jp.expand_dims(mjx_model.geom_size, 0), num_worlds, axis=0
-      ),
-      'light_pos': jp.repeat(
-          jp.expand_dims(mjx_model.light_pos, 0), num_worlds, axis=0
-      ),
-      'light_dir': jp.repeat(
-          jp.expand_dims(mjx_model.light_dir, 0), num_worlds, axis=0
-      ),
-      'light_type': jp.repeat(
-          jp.expand_dims(mjx_model.light_type, 0), num_worlds, axis=0
-      ),
-      'light_castshadow': jp.repeat(
-          jp.expand_dims(mjx_model.light_castshadow, 0), num_worlds, axis=0
-      ),
-      'light_cutoff': jp.repeat(
-          jp.expand_dims(mjx_model.light_cutoff, 0), num_worlds, axis=0
-      ),
-  })
-  return mjx_model, in_axes
-
-
-def _supplement_vision_randomization_fn(
-    mjx_model: mjx.Model,
-    randomization_fn: Callable[[mjx.Model], Tuple[mjx.Model, mjx.Model]],
-    num_worlds: int,
-) -> Tuple[mjx.Model, mjx.Model]:
-  """Tile the necessary missing fields for the Madrona memory buffer copy."""
-  mjx_model, in_axes = randomization_fn(mjx_model)
-
-  required_fields = [
-      'geom_rgba',
-      'geom_matid',
-      'geom_size',
-      'light_pos',
-      'light_dir',
-      'light_type',
-      'light_castshadow',
-      'light_cutoff',
-  ]
-
-  for field in required_fields:
-    if getattr(in_axes, field) is None:
-      in_axes = in_axes.tree_replace({field: 0})
-      val = -1 if field == 'geom_matid' else getattr(mjx_model, field)
-      mjx_model = mjx_model.tree_replace({
-          field: jp.repeat(jp.expand_dims(val, 0), num_worlds, axis=0),
-      })
-  return mjx_model, in_axes
-
-
-class MadronaWrapper:
-  """Wraps a MuJoCo Playground to be used in Brax with Madrona."""
-
-  def __init__(
-      self,
-      env: mjx_env.MjxEnv,
-      num_worlds: int,
-      randomization_fn: Optional[
-          Callable[[mjx.Model], Tuple[mjx.Model, mjx.Model]]
-      ] = None,
-  ):
-    if not randomization_fn:
-      randomization_fn = functools.partial(
-          _identity_vision_randomization_fn, num_worlds=num_worlds
-      )
-    else:
-      randomization_fn = functools.partial(
-          _supplement_vision_randomization_fn,
-          randomization_fn=randomization_fn,
-          num_worlds=num_worlds,
-      )
-    self._env = BraxDomainRandomizationVmapWrapper(env, randomization_fn)
-    self.num_worlds = num_worlds
-
-    # For user-made DR functions, ensure that the output model includes the
-    # needed in_axes and has the correct shape for madrona initialization.
-    required_fields = [
-        'geom_rgba',
-        'geom_matid',
-        'geom_size',
-        'light_pos',
-        'light_dir',
-        'light_type',
-        'light_castshadow',
-        'light_cutoff',
-    ]
-    for field in required_fields:
-      assert hasattr(self._env._in_axes, field), f'{field} not in in_axes'
-      assert (
-          getattr(self._env._mjx_model_v, field).shape[0] == num_worlds
-      ), f'{field} shape does not match num_worlds'
-
-  def reset(self, rng: jax.Array) -> mjx_env.State:
-    """Resets the environment to an initial state."""
-    return self._env.reset(rng)
-
-  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    """Run one timestep of the environment's dynamics."""
-    return self._env.step(state, action)
-
-  def __getattr__(self, name):
-    """Delegate attribute access to the wrapped instance."""
-    return getattr(self._env.unwrapped, name)

@@ -67,8 +67,6 @@ def brax_vision_ppo_config(
   env_config = dm_control_suite.get_default_config(env_name)
 
   rl_config = config_dict.create(
-      madrona_backend=True,
-      wrap_env=False,
       num_timesteps=1_000_000,
       num_evals=5,
       reward_scaling=0.1,
@@ -81,8 +79,7 @@ def brax_vision_ppo_config(
       discounting=0.97,
       learning_rate=5e-4,
       entropy_cost=5e-3,
-      num_envs=1024,
-      num_eval_envs=1024,
+      num_envs=2048,
       batch_size=256,
       max_grad_norm=1.0,
       num_resets_per_eval=10,
