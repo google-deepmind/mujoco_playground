@@ -268,10 +268,12 @@ def main(argv):
     ppo_params.network_factory.value_obs_key = _VALUE_OBS_KEY.value
   if _VISION.value:
     env_cfg.vision = True
-    env_cfg.vision_config.render_batch_size = ppo_params.num_envs
   env_cfg_overrides = {}
   if _PLAYGROUND_CONFIG_OVERRIDES.value is not None:
     env_cfg_overrides = json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value)
+
+  if _VISION.value:
+    env_cfg.vision_config.nworld = ppo_params.num_envs
   env = registry.load(
       _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
   )
@@ -363,21 +365,7 @@ def main(argv):
         _ENV_NAME.value
     )
 
-  if _VISION.value:
-    env = wrapper.wrap_for_brax_training(
-        env,
-        vision=True,
-        num_vision_envs=env_cfg.vision_config.render_batch_size,
-        episode_length=ppo_params.episode_length,
-        action_repeat=ppo_params.action_repeat,
-        randomization_fn=training_params.get("randomization_fn"),
-    )
-
-  num_eval_envs = (
-      ppo_params.num_envs
-      if _VISION.value
-      else ppo_params.get("num_eval_envs", 128)
-  )
+  num_eval_envs = ppo_params.get("num_eval_envs", 128)
 
   if "num_eval_envs" in training_params:
     del training_params["num_eval_envs"]
@@ -389,7 +377,7 @@ def main(argv):
       seed=_SEED.value,
       restore_checkpoint_path=restore_checkpoint_path,
       save_checkpoint_path=ckpt_path,
-      wrap_env_fn=None if _VISION.value else wrapper.wrap_for_brax_training,
+      wrap_env_fn=wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
   )
 
@@ -418,14 +406,10 @@ def main(argv):
         )
 
   # Load evaluation environment.
-  eval_env = None
-  if not _VISION.value:
-    eval_env = registry.load(
-        _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
-    )
-  num_envs = 1
-  if _VISION.value:
-    num_envs = env_cfg.vision_config.render_batch_size
+  env_cfg.vision_config.nworld = num_eval_envs
+  eval_env = registry.load(
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+  )
 
   policy_params_fn = lambda *args: None
   if _RSCOPE_ENVS.value:
@@ -478,6 +462,12 @@ def main(argv):
   inference_fn = make_inference_fn(params, deterministic=True)
   jit_inference_fn = jax.jit(inference_fn)
 
+  # For inference rollouts, create env with vision disabled.
+  env_cfg.vision_config.nworld = _NUM_VIDEOS.value
+  infer_env = registry.load(
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+  )
+
   # Run evaluation rollouts.
   def do_rollout(rng, state):
     empty_data = state.data.__class__(
@@ -490,7 +480,7 @@ def main(argv):
       state, rng = carry
       rng, act_key = jax.random.split(rng)
       act = jit_inference_fn(state.obs, act_key)[0]
-      state = eval_env.step(state, act)
+      state = infer_env.step(state, act)
       traj_data = empty_traj.tree_replace({
           "data.qpos": state.data.qpos,
           "data.qvel": state.data.qvel,
@@ -500,8 +490,6 @@ def main(argv):
           "data.mocap_quat": state.data.mocap_quat,
           "data.xfrc_applied": state.data.xfrc_applied,
       })
-      if _VISION.value:
-        traj_data = jax.tree_util.tree_map(lambda x: x[0], traj_data)
       return (state, rng), traj_data
 
     _, traj = jax.lax.scan(
@@ -510,9 +498,7 @@ def main(argv):
     return traj
 
   rng = jax.random.split(jax.random.PRNGKey(_SEED.value), _NUM_VIDEOS.value)
-  reset_states = jax.jit(jax.vmap(eval_env.reset))(rng)
-  if _VISION.value:
-    reset_states = jax.tree_util.tree_map(lambda x: x[0], reset_states)
+  reset_states = jax.jit(jax.vmap(infer_env.reset))(rng)
   traj_stacked = jax.jit(jax.vmap(do_rollout))(rng, reset_states)
   trajectories = [None] * _NUM_VIDEOS.value
   for i in range(_NUM_VIDEOS.value):
@@ -524,7 +510,7 @@ def main(argv):
 
   # Render and save the rollout.
   render_every = 2
-  fps = 1.0 / eval_env.dt / render_every
+  fps = 1.0 / infer_env.dt / render_every
   print(f"FPS for rendering: {fps}")
   scene_option = mujoco.MjvOption()
   scene_option.flags[mujoco.mjtVisFlag.mjVIS_TRANSPARENT] = False
@@ -532,7 +518,7 @@ def main(argv):
   scene_option.flags[mujoco.mjtVisFlag.mjVIS_CONTACTFORCE] = False
   for i, rollout in enumerate(trajectories):
     traj = rollout[::render_every]
-    frames = eval_env.render(
+    frames = infer_env.render(
         traj, height=480, width=640, scene_option=scene_option
     )
     media.write_video(f"rollout{i}.mp4", frames, fps=fps)

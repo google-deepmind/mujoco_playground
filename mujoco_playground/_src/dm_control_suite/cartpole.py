@@ -15,15 +15,12 @@
 """Cartpole environment."""
 
 from typing import Any, Dict, Optional, Union
-import warnings
 
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-from mujoco.mjx._src import render_util
-import numpy as np
 
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward
@@ -34,16 +31,14 @@ _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "cartpole.xml"
 
 def default_vision_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      gpu_id=0,
-      render_batch_size=8192,
-      render_width=64,
-      render_height=64,
+      nworld=2048,
+      cam_res=(32, 32),
       use_textures=False,
       use_shadows=False,
-      render_rgb=True,
-      render_depth=False,
+      render_rgb=(True,),
+      render_depth=(False,),
       enabled_geom_groups=[0, 1, 2],
-      history=3,
+      cam_active=(True, False), # [fixed, lookatcart]
   )
 
 
@@ -98,11 +93,7 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       self._rtx = mjx.create_render_context(
         mjm=self._mj_model,
-        nworld=self._config.vision_config.render_batch_size,
-        cam_res=(self._config.vision_config.render_width, self._config.vision_config.render_height),
-        use_textures=self._config.vision_config.use_textures,
-        use_shadows=self._config.vision_config.use_shadows,
-      )
+        **self._config.vision_config.to_dict())
 
   def _post_init(self) -> None:
     slider_jid = self._mj_model.joint("slider").id
@@ -171,7 +162,7 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       data = mjx.refit_bvh(self.mjx_model, data, self._rtx)
       out = mjx.render(self.mjx_model, data, self._rtx)
-      rgb = mjx.get_rgb(self._rtx, out[0], 0)
+      rgb = mjx.get_rgb(self._rtx, 0, out[0])
       obs = {"pixels/view_0": rgb}
 
     return mjx_env.State(data, obs, reward, done, metrics, info)
@@ -184,7 +175,7 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       data = mjx.refit_bvh(self.mjx_model, data, self._rtx)
       out = mjx.render(self.mjx_model, data, self._rtx)
-      rgb = mjx.get_rgb(self._rtx, out[0], 0)
+      rgb = mjx.get_rgb(self._rtx, 0, out[0])
       obs = {"pixels/view_0": rgb}
 
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
