@@ -19,10 +19,12 @@
     <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0"/>
   </asset>
 
+
   <worldbody>
     <geom name="floor" size="0 0 0.01" type="plane" material="groundplane" contype="1" conaffinity="0" priority="1"
       friction="0.6" condim="3"/>
   </worldbody>
+
 
   <include file="sensor_feet.xml"/>
 
