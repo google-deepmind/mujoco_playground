@@ -26,12 +26,13 @@ from mujoco_playground._src import gait
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.solo8 import base as solo8_base
 from mujoco_playground._src.locomotion.solo8 import solo8_constants as consts
+from mujoco_playground._src.locomotion.solo8 import trotting_demonstration_trajectory as demo_traj
 
-_PHASES = np.array([
-    [0, np.pi, np.pi, 0],  # trot
-    #[0, 0.5 * np.pi, np.pi, 1.5 * np.pi],  # walk
-    #[0, np.pi, 0, np.pi],  # pace
-    #[0, 0, np.pi, np.pi],  # bound
+_PHASES = jp.array([
+    [0, jp.pi, jp.pi, 0],  # trot
+    #[0, 0.5 * jp.pi, jp.pi, 1.5 * jp.pi],  # walk
+    #[0, jp.pi, 0, jp.pi],  # pace
+    #[0, 0, jp.pi, jp.pi],  # bound
     #[0, 0, 0, 0],  # pronk
 ])
 
@@ -57,14 +58,18 @@ def default_config() -> config_dict.ConfigDict:
       ),
       reward_config=config_dict.create(
           scales=config_dict.create(
-              # Rewards.
-              feet_phase=2.0,
+              # Rewards for demonstration trajectory tracking.
+              feet_height=1.0,         # reward for tracking foot height (rz)
+              feet_xy_pos=0.5,         # reward for tracking horizontal foot position
+              joint_tracking=0.3,      # reward for tracking reference joint angles
               tracking_lin_vel=0.5,
               tracking_ang_vel=0.5,
+              # Gait pattern enforcement (TROTTING)
+              flight_phase=0.5,        # reward for flight phases (all feet in air)
+              invalid_contact=-0.8,    # penalty for 1,3,4 feet contact (only 0,2 valid)
               # Costs.
               ang_vel_xy=-0.5,
               lin_vel_z=-0.5,
-              #hip_splay=-0.5,
           ),
           tracking_sigma=0.25,
       ),
@@ -75,9 +80,18 @@ def default_config() -> config_dict.ConfigDict:
       ),
       fixed_vx=0.6,
       gait_frequency=[2.0, 2.0],
-      #gaits=["trot", "walk", "pace", "bound", "pronk"],
       gaits=["trot"],
       foot_height=[0.12, 0.12],
+      # Gait trajectory parameters (match trotting_demonstration_trajectory.py)
+      demo_gait_params=config_dict.create(
+          freq=0.6,
+          swing_height=0.08,
+          ramp_time=1.0,
+          hip_amp=0.12,
+          knee_swing_amp=0.35,
+          knee_stance_amp=0.05,
+          swing_threshold=0.25,
+      ),
       impl="jax",
       nconmax=4 * 8192,
       njmax=12 + 4 * 4,
@@ -108,11 +122,11 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     self._lowers = self._mj_model.actuator_ctrlrange[:, 0]
     self._uppers = self._mj_model.actuator_ctrlrange[:, 1]
 
-    self._feet_site_id = np.array(
+    self._feet_site_id = jp.array(
         [self._mj_model.site(name).id for name in consts.FEET_SITES]
     )
     self._floor_geom_id = self._mj_model.geom("floor").id
-    self._feet_geom_id = np.array(
+    self._feet_geom_id = jp.array(
         [self._mj_model.geom(name).id for name in consts.FEET_GEOMS]
     )
     foot_linvel_sensor_adr = []
@@ -209,7 +223,7 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     obs = self._get_obs(data, state.info, noise_rng, contact)
     done = self._get_termination(data)
 
-    pos, neg = self._get_reward(data, action, state.info, state.metrics, done)
+    pos, neg = self._get_reward(data, action, state.info, state.metrics, done, contact)
     pos = {k: v * self._config.reward_config.scales[k] for k, v in pos.items()}
     neg = {k: v * self._config.reward_config.scales[k] for k, v in neg.items()}
     rewards = pos | neg
@@ -311,37 +325,155 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
       info: dict[str, Any],
       metrics: dict[str, Any],
       done: jax.Array,
+      contact: jax.Array,
   ) -> Tuple[Dict[str, jax.Array], Dict[str, jax.Array]]:
     del action, done, metrics  # Unused.
+    
+    # Get reference trajectory at current phase
+    phase = info["phase"]
+    foot_height_ref = info["foot_height"]
+    
+    # NEW: Compute reference joint angles and foot heights from demo trajectory
+    # Using the gait phases to compute reference values analytically
+    ref_dict = self._compute_reference_foot_trajectory(
+        phase=phase,
+        foot_height=foot_height_ref,
+    )
+    
     pos = {
+        "feet_height": self._reward_feet_height(
+            data, ref_dict["foot_heights_ref"]
+        ),
+        "feet_xy_pos": self._reward_feet_xy_position(
+            data, ref_dict["foot_xy_ref"]
+        ),
+        "joint_tracking": self._reward_joint_tracking(
+            data, ref_dict["ctrl_ref"]
+        ),
         "tracking_lin_vel": self._reward_tracking_lin_vel(
             info["command"], self.get_local_linvel(data)
         ),
         "tracking_ang_vel": self._reward_tracking_ang_vel(
             info["command"], self.get_gyro(data)
         ),
-        "feet_phase": self._reward_feet_phase(
-            data, info["phase"], info["foot_height"]
-        ),
+        "flight_phase": self._reward_flight_phase(contact),
     }
     neg = {
         "ang_vel_xy": self._cost_ang_vel_xy(self.get_global_angvel(data)),
         "lin_vel_z": self._cost_lin_vel_z(
             self.get_global_linvel(data), info["gait"]
         ),
-        #"hip_splay": self._cost_hip_splay(data.qpos[7:]),
+        "invalid_contact": self._cost_invalid_contact_pattern(contact),
     }
     return pos, neg
 
-  def _reward_feet_phase(
-      self, data: mjx.Data, phase: jax.Array, foot_height: jax.Array
+  def _compute_reference_foot_trajectory(
+      self,
+      phase: jax.Array,  # (4,) phase per leg
+      foot_height: jax.Array,  # scalar foot swing height
+  ) -> Dict[str, jax.Array]:
+    """
+    Compute reference foot trajectory using analytical reference from demo trajectory.
+    
+    NOTE: Delegates to reference_at_phases_jax() from the demo module
+    to ensure both demo and RL training use the EXACT SAME trajectory.
+    
+    Args:
+      phase: (4,) phase angles for each leg (radians)
+      foot_height: scalar swing height
+    
+    Returns:
+      dict with:
+        - foot_heights_ref: (4,) reference z-heights
+        - foot_xy_ref: (4, 2) reference x,y positions (relative stride)
+        - ctrl_ref: (8,) reference joint angles
+    """
+    # Get reference using shared demo trajectory function (JAX-native)
+    # This ensures exact consistency between demo visualization and RL rewards
+    ref = demo_traj.reference_at_phases_jax(
+        phase_array=phase,
+        qpos0=self._default_pose,  # Use default pose from the environment
+        freq=self._config.demo_gait_params.freq,
+        swing_height=foot_height,
+        ramp_time=self._config.demo_gait_params.ramp_time,
+        hip_amp=self._config.demo_gait_params.hip_amp,
+        knee_swing_amp=self._config.demo_gait_params.knee_swing_amp,
+        knee_stance_amp=self._config.demo_gait_params.knee_stance_amp,
+        swing_threshold=self._config.demo_gait_params.swing_threshold,
+    )
+    
+    foot_heights_ref = ref['foot_heights']  # (4,)
+    ctrl_ref = ref['ctrl']  # (8,)
+    
+    # For horizontal position reference, compute from phases
+    # Normalized height (0 = ground, 1 = peak swing)
+    z_norm = jp.clip(foot_heights_ref / (foot_height + 1e-8), 0.0, 1.0)
+    
+    # Forward stride estimate: ~0.08m max during swing
+    stride_length = 0.08
+    forward_pos = stride_length * jp.sin(phase) * z_norm
+    
+    # Lateral sway (small): negligible in straight trot
+    lateral_pos = jp.zeros_like(phase)
+    
+    foot_xy_ref = jp.stack([forward_pos, lateral_pos], axis=-1)  # (4, 2)
+    
+    return {
+        "foot_heights_ref": foot_heights_ref,
+        "foot_xy_ref": foot_xy_ref,
+        "ctrl_ref": ctrl_ref,
+    }
+
+  def _reward_feet_height(
+      self,
+      data: mjx.Data,
+      foot_heights_ref: jax.Array,  # (4,)
   ) -> jax.Array:
-    # Reward for tracking the desired foot height.
-    foot_pos = data.site_xpos[self._feet_site_id]
-    foot_z = foot_pos[..., -1]
-    rz = gait.get_rz(phase, swing_height=foot_height)
-    error = jp.sum(jp.square(foot_z - rz))
-    return jp.exp(-error / 0.1)
+    """Reward for tracking desired foot z-height (vertical position)."""
+    foot_pos = data.site_xpos[self._feet_site_id]  # (4, 3)
+    foot_z = foot_pos[..., -1]  # (4,)
+    
+    height_error = jp.sum(jp.square(foot_z - foot_heights_ref))
+    reward = jp.exp(-height_error / 0.08)  # sigma = 0.08
+    return reward
+
+  def _reward_feet_xy_position(
+      self,
+      data: mjx.Data,
+      foot_xy_ref: jax.Array,  # (4, 2)
+  ) -> jax.Array:
+    """
+    Reward for tracking desired horizontal (x,y) foot positions.
+    
+    Note: This tracks relative stride length and lateral alignment.
+    foot_xy_ref contains target offsets from mean stance position.
+    """
+    foot_pos = data.site_xpos[self._feet_site_id]  # (4, 3)
+    foot_xy = foot_pos[..., :2]  # (4, 2)
+    
+    # Center reference at mean foot x,y position for comparison
+    mean_foot_xy = jp.mean(foot_xy, axis=0)  # (2,)
+    foot_xy_centered = foot_xy - mean_foot_xy  # (4, 2) centered positions
+    
+    # Reference is also centered (relative offsets)
+    mean_ref_xy = jp.mean(foot_xy_ref, axis=0)  # (2,)
+    ref_centered = foot_xy_ref - mean_ref_xy  # (4, 2)
+    
+    # Compare centered positions
+    xy_error = jp.sum(jp.square(foot_xy_centered - ref_centered))
+    reward = jp.exp(-xy_error / 0.02)  # sigma = 0.02 (tighter for xy)
+    return reward
+
+  def _reward_joint_tracking(
+      self,
+      data: mjx.Data,
+      ctrl_ref: jax.Array,  # (8,)
+  ) -> jax.Array:
+    """Reward for tracking reference joint angles."""
+    joint_angles = data.qpos[7:15]  # (8,) joint positions
+    joint_error = jp.sum(jp.square(joint_angles - ctrl_ref))
+    reward = jp.exp(-joint_error / 0.03)  # sigma = 0.03
+    return reward
 
   def _reward_tracking_lin_vel(
       self,
@@ -374,6 +506,43 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
   def _cost_ang_vel_xy(self, global_angvel) -> jax.Array:
     # Penalize xy axes base angular velocity.
     return jp.sum(jp.square(global_angvel[:2]))
+
+  def _reward_flight_phase(self, contact: jax.Array) -> jax.Array:
+    """
+    Reward for flight phases (all 4 feet in the air).
+    
+    This encourages the true trotting gait pattern where there are
+    moments of complete aerial phase between stance phases.
+    
+    Args:
+      contact: (4,) boolean array indicating which feet have contact
+    
+    Returns:
+      Scalar reward: 1.0 when all feet are in air, 0.0 otherwise
+    """
+    no_contact = jp.sum(contact) == 0
+    return jp.where(no_contact, 1.0, 0.0)
+
+  def _cost_invalid_contact_pattern(self, contact: jax.Array) -> jax.Array:
+    """
+    Penalize invalid contact patterns for trotting gait.
+    
+    In trotting, only 2 valid contact states exist:
+    - 0 feet: flight phase (aerial)
+    - 2 feet: stance phase (diagonal pair on ground)
+    
+    Invalid states (1, 3, or 4 feet) are penalized to enforce proper gait.
+    
+    Args:
+      contact: (4,) boolean array indicating which feet have contact
+    
+    Returns:
+      Scalar penalty: 0.0 when valid (0 or 2 feet), 1.0 when invalid
+    """
+    num_contact = jp.sum(contact)
+    # Valid: 0 (flight) or 2 (stance with diagonal pair)
+    is_valid = jp.logical_or(num_contact == 0, num_contact == 2)
+    return jp.where(is_valid, 0.0, 1.0)
 
   # Changed to only sample straight line
   def sample_command(self, rng: jax.Array) -> jax.Array:
