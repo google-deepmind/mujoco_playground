@@ -468,38 +468,48 @@ def main(argv):
       _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
   )
 
-  # Run evaluation rollouts.
-  def do_rollout(rng, state):
-    empty_data = state.data.__class__(
-        **{k: None for k in state.data.__annotations__}
-    )  # pytype: disable=attribute-error
-    empty_traj = state.__class__(**{k: None for k in state.__annotations__})  # pytype: disable=attribute-error
-    empty_traj = empty_traj.replace(data=empty_data)
+  # Run evaluation rollouts matching how training handles batched environments.
+  # Only pure JAX ops (inference, rng split) are vmapped per-world inside the scan
+  # body.
+  rng = jax.random.split(jax.random.PRNGKey(_SEED.value), _NUM_VIDEOS.value)
+  reset_states = jax.jit(jax.vmap(infer_env.reset))(rng)
 
-    def step(carry, _):
-      state, rng = carry
-      rng, act_key = jax.random.split(rng)
-      act = jit_inference_fn(state.obs, act_key)[0]
-      state = infer_env.step(state, act)
-      traj_data = empty_traj.tree_replace({
-          "data.qpos": state.data.qpos,
-          "data.qvel": state.data.qvel,
-          "data.time": state.data.time,
-          "data.ctrl": state.data.ctrl,
-          "data.mocap_pos": state.data.mocap_pos,
-          "data.mocap_quat": state.data.mocap_quat,
-          "data.xfrc_applied": state.data.xfrc_applied,
-      })
-      return (state, rng), traj_data
+  empty_data = reset_states.data.__class__(
+      **{k: None for k in reset_states.data.__annotations__}
+  )  # pytype: disable=attribute-error
+  empty_traj = reset_states.__class__(
+      **{k: None for k in reset_states.__annotations__}
+  )  # pytype: disable=attribute-error
+  empty_traj = empty_traj.replace(data=empty_data)
 
+  def step(carry, _):
+    state, rng = carry
+    rng_split = jax.vmap(jax.random.split)(rng)
+    rng = rng_split[:, 0]
+    act_key = rng_split[:, 1]
+    act = jax.vmap(jit_inference_fn)(state.obs, act_key)[0]
+    state = jax.vmap(infer_env.step)(state, act)
+    traj_data = empty_traj.tree_replace({
+        "data.qpos": state.data.qpos,
+        "data.qvel": state.data.qvel,
+        "data.time": state.data.time,
+        "data.ctrl": state.data.ctrl,
+        "data.mocap_pos": state.data.mocap_pos,
+        "data.mocap_quat": state.data.mocap_quat,
+        "data.xfrc_applied": state.data.xfrc_applied,
+    })
+    return (state, rng), traj_data
+
+  @jax.jit
+  def do_rollout(state, rng):
     _, traj = jax.lax.scan(
         step, (state, rng), None, length=_EPISODE_LENGTH.value
     )
     return traj
 
-  rng = jax.random.split(jax.random.PRNGKey(_SEED.value), _NUM_VIDEOS.value)
-  reset_states = jax.jit(jax.vmap(infer_env.reset))(rng)
-  traj_stacked = jax.jit(jax.vmap(do_rollout))(rng, reset_states)
+  traj_stacked = do_rollout(reset_states, rng)
+  # traj_stacked has shape (time, nworld, ...), swap to (nworld, time, ...).
+  traj_stacked = jax.tree.map(lambda x: jp.moveaxis(x, 0, 1), traj_stacked)
   trajectories = [None] * _NUM_VIDEOS.value
   for i in range(_NUM_VIDEOS.value):
     t = jax.tree.map(lambda x, i=i: x[i], traj_stacked)
