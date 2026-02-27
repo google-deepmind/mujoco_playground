@@ -163,8 +163,8 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
       out = mjx.render(self.mjx_model, data, self._rc_pytree)
-      depth = mjx.get_depth(self._rc_pytree, 0, out[0], depth_scale=2.0)
-      obs = {"pixels/view_0": depth}
+      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
+      obs = {"pixels/view_0": rgb}
 
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
@@ -176,8 +176,8 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
       out = mjx.render(self.mjx_model, data, self._rc_pytree)
-      depth = mjx.get_depth(self._rc_pytree, 0, out[0], depth_scale=2.0)
-      obs = {"pixels/view_0": depth}
+      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
+      obs = {"pixels/view_0": rgb}
 
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
