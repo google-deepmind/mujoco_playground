@@ -32,7 +32,7 @@ _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "cartpole.xml"
 def default_vision_config() -> config_dict.ConfigDict:
   return config_dict.create(
       nworld=2048,
-      cam_res=(32, 32),
+      cam_res=(64, 64),
       use_textures=False,
       use_shadows=False,
       render_rgb=(True,),
@@ -163,8 +163,8 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
       out = mjx.render(self.mjx_model, data, self._rc_pytree)
-      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
-      obs = {"pixels/view_0": rgb}
+      depth = mjx.get_depth(self._rc_pytree, 0, out[0], depth_scale=2.0)
+      obs = {"pixels/view_0": depth}
 
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
@@ -176,8 +176,8 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
       out = mjx.render(self.mjx_model, data, self._rc_pytree)
-      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
-      obs = {"pixels/view_0": rgb}
+      depth = mjx.get_depth(self._rc_pytree, 0, out[0], depth_scale=2.0)
+      obs = {"pixels/view_0": depth}
 
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
     done = done.astype(float)
