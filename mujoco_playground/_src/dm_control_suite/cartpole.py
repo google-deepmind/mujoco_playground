@@ -91,9 +91,10 @@ class Balance(mjx_env.MjxEnv):
     self._post_init()
 
     if self._vision:
-      self._rtx = mjx.create_render_context(
+      self._rc = mjx.create_render_context(
         mjm=self._mj_model,
         **self._config.vision_config.to_dict())
+      self._rc_pytree = self._rc.pytree()
 
   def _post_init(self) -> None:
     slider_jid = self._mj_model.joint("slider").id
@@ -160,9 +161,9 @@ class Balance(mjx_env.MjxEnv):
 
     obs = self._get_obs(data, info)
     if self._vision:
-      data = mjx.refit_bvh(self.mjx_model, data, self._rtx)
-      out = mjx.render(self.mjx_model, data, self._rtx)
-      rgb = mjx.get_rgb(self._rtx, 0, out[0])
+      data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
+      out = mjx.render(self.mjx_model, data, self._rc_pytree)
+      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
       obs = {"pixels/view_0": rgb}
 
     return mjx_env.State(data, obs, reward, done, metrics, info)
@@ -173,9 +174,9 @@ class Balance(mjx_env.MjxEnv):
 
     obs = self._get_obs(data, state.info)
     if self._vision:
-      data = mjx.refit_bvh(self.mjx_model, data, self._rtx)
-      out = mjx.render(self.mjx_model, data, self._rtx)
-      rgb = mjx.get_rgb(self._rtx, 0, out[0])
+      data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
+      out = mjx.render(self.mjx_model, data, self._rc_pytree)
+      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
       obs = {"pixels/view_0": rgb}
 
     done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
