@@ -58,7 +58,7 @@ def perturb_orientation(
 def domain_randomize(
     mjx_model: mjx.Model, num_worlds: int
 ) -> Tuple[mjx.Model, mjx.Model]:
-  """Tile the necessary axes for the Madrona BatchRenderer."""
+  """Tile the necessary axes for the renderer."""
   mj_model = pick_cartesian.PandaPickCubeCartesian().mj_model
   floor_geom_id = mj_model.geom('floor').id
   box_geom_id = mj_model.geom('box').id

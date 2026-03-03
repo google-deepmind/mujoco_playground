@@ -184,14 +184,19 @@ def brax_vision_ppo_config(
   env_config = manipulation.get_default_config(env_name)
 
   rl_config = config_dict.create(
-      madrona_backend=True,
-      wrap_env=False,
       episode_length=env_config.episode_length,
       normalize_observations=True,
       action_repeat=env_config.action_repeat,
       reward_scaling=1.0,
       network_factory=config_dict.create(
-          policy_hidden_layer_sizes=(32, 32, 32, 32)
+        policy_hidden_layer_sizes=(32, 32, 32, 32),
+        cnn_output_channels=(16, 32),
+        cnn_kernel_size=(5, 3),
+        cnn_stride=(2, 2),
+        cnn_padding="zeros",
+        cnn_activation="elu",
+        cnn_max_pool=False,
+        cnn_global_pool="avg",
       ),
       num_resets_per_eval=10,
   )

@@ -16,14 +16,12 @@
 Pick up a cube to a fixed location using a cartesian controller."""
 
 from typing import Any, Dict, Optional, Union
-import warnings
 
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
-import numpy as np
 
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.manipulation.franka_emika_panda import panda
@@ -33,12 +31,14 @@ from mujoco_playground._src.manipulation.franka_emika_panda import pick
 
 def default_vision_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      gpu_id=0,
-      render_batch_size=1024,
-      render_width=64,
-      render_height=64,
-      use_rasterizer=False,
+      nworld=1024,
+      cam_res=(64, 64),
+      use_textures=False,
+      use_shadows=False,
+      render_rgb=(True,),
+      render_depth=(False,),
       enabled_geom_groups=[0, 1, 2],
+      cam_active=None,  # Use all cameras.
   )
 
 
@@ -133,29 +133,10 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     ]
 
     if self._vision:
-      try:
-        # pylint: disable=import-outside-toplevel
-        from madrona_mjx.renderer import BatchRenderer  # pytype: disable=import-error
-      except ImportError:
-        warnings.warn(
-            'Madrona MJX not installed. Cannot use vision with'
-            ' PandaPickCubeCartesian.'
-        )
-        return
-      self.renderer = BatchRenderer(
-          m=self._mjx_model,
-          gpu_id=self._config.vision_config.gpu_id,
-          num_worlds=self._config.vision_config.render_batch_size,
-          batch_render_view_width=self._config.vision_config.render_width,
-          batch_render_view_height=self._config.vision_config.render_height,
-          enabled_geom_groups=np.asarray(
-              self._config.vision_config.enabled_geom_groups
-          ),
-          enabled_cameras=None,  # Use all cameras.
-          add_cam_debug_geo=False,
-          use_rasterizer=self._config.vision_config.use_rasterizer,
-          viz_gpu_hdls=None,
-      )
+      self._rc = mjx.create_render_context(
+        mjm=self._mj_model,
+        **self._config.vision_config.to_dict())
+      self._rc_pytree = self._rc.pytree()
 
   def _post_init(self, obj_name, keyframe):
     super()._post_init(obj_name, keyframe)
@@ -168,9 +149,6 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     self._sample_orientation = False
 
   def modify_model(self, mj_model: mujoco.MjModel):
-    # Expand floor size to non-zero so Madrona can render it
-    mj_model.geom_size[mj_model.geom('floor').id, :2] = [5.0, 5.0]
-
     # Make the finger pads white for increased visibility
     mesh_id = mj_model.mesh('finger_1').id
     geoms = [
@@ -262,12 +240,11 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
       )
       info.update({'brightness': brightness})
 
-      render_token, rgb, _ = self.renderer.init(data, self._mjx_model)
-      info.update({'render_token': render_token})
-
-      obs = jp.asarray(rgb[0][..., :3], dtype=jp.float32) / 255.0
-      obs = adjust_brightness(obs, brightness)
-      obs = {'pixels/view_0': obs}
+      data = mjx.refit_bvh(self._mjx_model, data, self._rc_pytree)
+      out = mjx.render(self._mjx_model, data, self._rc_pytree)
+      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
+      rgb = adjust_brightness(rgb, brightness)
+      obs = {'pixels/view_0': rgb}
 
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
@@ -395,10 +372,11 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     obs = self._get_obs(data, state.info)
     obs = jp.concat([obs, no_soln.reshape(1), action], axis=0)
     if self._vision:
-      _, rgb, _ = self.renderer.render(state.info['render_token'], data)
-      obs = jp.asarray(rgb[0][..., :3], dtype=jp.float32) / 255.0
-      obs = adjust_brightness(obs, state.info['brightness'])
-      obs = {'pixels/view_0': obs}
+      data = mjx.refit_bvh(self._mjx_model, data, self._rc_pytree)
+      out = mjx.render(self._mjx_model, data, self._rc_pytree)
+      rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
+      rgb = adjust_brightness(rgb, state.info['brightness'])
+      obs = {'pixels/view_0': rgb}
 
     return state.replace(
         data=data,
