@@ -31,8 +31,8 @@ dependencies = [
     "lxml",
     "mediapy",
     "ml_collections",
-    "mujoco-mjx>=3.5.dev0",
-    "mujoco>=3.4.dev",
+    "mujoco-mjx>=3.5",
+    "mujoco>=3.5",
     "warp-lang>=1.12.0.dev",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
@@ -53,6 +53,7 @@ explicit = true
 mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "main", subdirectory = "mjx" }
+brax = { path = "../mustafa_brax", editable = true }
 
 [project.optional-dependencies]
 cuda = [
