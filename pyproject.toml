@@ -33,7 +33,7 @@ dependencies = [
     "ml_collections",
     "mujoco-mjx>=3.5",
     "mujoco>=3.5",
-    "warp-lang>=1.12.0.dev",
+    "warp-lang>=1.11",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
 ]
