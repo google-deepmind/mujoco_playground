@@ -53,7 +53,6 @@ explicit = true
 mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "main", subdirectory = "mjx" }
-brax = { path = "../mustafa_brax", editable = true }
 
 [project.optional-dependencies]
 cuda = [
