@@ -89,9 +89,7 @@ def brax_vision_ppo_config(
         cnn_padding="zeros",
         cnn_activation="elu",
         cnn_max_pool=False,
-        cnn_global_pool="max",
-        cnn_spatial_softmax=False,
-        cnn_spatial_softmax_temperature=1.0,
+        cnn_global_pool="avg",
       ),
       num_resets_per_eval=10,
   )
