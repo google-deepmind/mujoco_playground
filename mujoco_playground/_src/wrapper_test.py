@@ -34,6 +34,7 @@ class WrapperTest(parameterized.TestCase):
   )
   def test_auto_reset_wrapper(self, full_reset):
     """Tests the AutoResetWrapper."""
+
     class DoneEnv:
 
       def __init__(self, env):
@@ -54,7 +55,11 @@ class WrapperTest(parameterized.TestCase):
 
     env = wrapper.BraxAutoResetWrapper(
         brax_training.VmapWrapper(
-            DoneEnv(dm_control_suite.load('CartpoleBalance'))
+            DoneEnv(
+                dm_control_suite.load(
+                    'CartpoleBalance', config_overrides={'impl': 'jax'}
+                )
+            )
         ),
         full_reset=full_reset,
     )
@@ -92,7 +97,9 @@ class WrapperTest(parameterized.TestCase):
     episode_length = 10
     num_envs = 4
 
-    env = dm_control_suite.load('CartpoleBalance')
+    env = dm_control_suite.load(
+        'CartpoleBalance', config_overrides={'impl': 'jax'}
+    )
     env = wrapper.wrap_for_brax_training(
         env,
         episode_length=episode_length,
@@ -136,7 +143,9 @@ class WrapperTest(parameterized.TestCase):
       in_axes = in_axes.tree_replace({'opt.gravity': 0})
       return model_v, in_axes
 
-    env = dm_control_suite.load('CartpoleBalance')
+    env = dm_control_suite.load(
+        'CartpoleBalance', config_overrides={'impl': 'jax'}
+    )
     rng = jax.random.PRNGKey(0)
     rng = jax.random.split(rng, 256)
     env = wrapper.wrap_for_brax_training(

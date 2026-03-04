@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the manipulation environments."""
+
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
 import jax.numpy as jp
-
 from mujoco_playground._src import manipulation
 
 
@@ -29,7 +29,9 @@ class TestSuite(parameterized.TestCase):
       for env_name in manipulation.ALL_ENVS
   )
   def test_can_create_all_environments(self, env_name: str) -> None:
-    env = manipulation.load(env_name)
+    config = manipulation.get_default_config(env_name)
+    overrides = {"impl": "jax"} if "impl" in config else {}
+    env = manipulation.load(env_name, config_overrides=overrides)
     state = jax.jit(env.reset)(jax.random.PRNGKey(42))
     state = jax.jit(env.step)(state, jp.zeros(env.action_size))
     self.assertIsNotNone(state)

@@ -13,11 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for the DM Control Suite."""
+
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
 from jax import numpy as jp
-
 from mujoco_playground._src import dm_control_suite
 
 
@@ -29,7 +29,7 @@ class TestSuite(parameterized.TestCase):
       for env_name in dm_control_suite.ALL_ENVS
   )
   def test_can_create_all_environments(self, env_name: str) -> None:
-    env = dm_control_suite.load(env_name)
+    env = dm_control_suite.load(env_name, config_overrides={"impl": "jax"})
     state = jax.jit(env.reset)(jax.random.PRNGKey(42))
     state = jax.jit(env.step)(state, jp.zeros(env.action_size))
     self.assertIsNotNone(state)
