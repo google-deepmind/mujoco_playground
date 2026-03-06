@@ -9,7 +9,7 @@ readme = "README.md"
 authors = [
     {name = "Google DeepMind", email = "mujoco@deepmind.com"},
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dynamic = ["description"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -24,15 +24,15 @@ classifiers = [
 ]
 dependencies = [
     "absl-py",
-    "brax>=0.12.5",
+    "brax",
     "etils",
     "flax",
     "jax",
     "lxml",
     "mediapy",
     "ml_collections",
-    "mujoco-mjx>=3.5",
-    "mujoco>=3.5",
+    "mujoco-mjx",
+    "mujoco>=3.5.1.dev879036130",
     "warp-lang>=1.11",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
@@ -53,6 +53,7 @@ explicit = true
 mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "main", subdirectory = "mjx" }
+brax = { git = "https://github.com/google/brax", rev = "main" }
 
 [project.optional-dependencies]
 cuda = [
