@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Next release]
+
+- Added vision-based PPO training configs for `CartpoleBalance` and
+  `PandaPickCubeCartesian`.
+- Renamed deprecated `nconmax` / `nccdmax` config fields to `naconmax` /
+  `naccdmax` across all environments, matching the updated MJX API.
+
 ## [0.1.0] - 2026-01-07
 
 - Pass through the [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp)

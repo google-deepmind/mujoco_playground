@@ -90,7 +90,7 @@ def default_config() -> config_dict.ConfigDict:
           b=[0.9, 0.25, 0.5],
       ),
       impl="jax",
-      nconmax=4 * 8192,
+      naconmax=4 * 8192,
       njmax=40,
   )
 
@@ -105,7 +105,7 @@ class Joystick(go1_base.Go1Env):
       config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
   ):
     if task.startswith("rough"):
-      config.nconmax = 8 * 8192
+      config.naconmax = 8 * 8192
       config.njmax = 12 + 48
     super().__init__(
         xml_path=consts.task_to_xml(task).as_posix(),
@@ -173,7 +173,7 @@ class Joystick(go1_base.Go1Env):
         qvel=qvel,
         ctrl=qpos[7:],
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

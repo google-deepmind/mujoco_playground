@@ -63,7 +63,7 @@ def default_config() -> config_dict.ConfigDict:
           ),
       ),
       impl="jax",
-      nconmax=30 * 8192,
+      naconmax=30 * 8192,
       njmax=250,
   )
 
@@ -173,7 +173,7 @@ class Getup(go1_base.Go1Env):
         qvel=qvel,
         ctrl=qpos[7:],
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

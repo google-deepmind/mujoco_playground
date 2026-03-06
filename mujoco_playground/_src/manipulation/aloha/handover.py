@@ -42,7 +42,7 @@ def default_config() -> config_dict.ConfigDict:
           ),
       ),
       impl='jax',
-      nconmax=24 * 2048,
+      naconmax=24 * 2048,
       njmax=88,
   )
 
@@ -108,7 +108,7 @@ class HandOver(aloha_base.AlohaEnv):
         qvel=jp.zeros(self._mjx_model.nv, dtype=float),
         ctrl=self._init_ctrl,
         impl=self._mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
 

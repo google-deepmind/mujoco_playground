@@ -64,7 +64,7 @@ def default_config() -> config_dict.ConfigDict:
       kick_durations=[0.05, 0.2],
       kick_wait_times=[1.0, 3.0],
       impl="jax",
-      nconmax=16 * 8192,
+      naconmax=16 * 8192,
       njmax=16 * 4 + 20 * 4,
   )
 
@@ -134,7 +134,7 @@ class Joystick(op3_base.Op3Env):
         qpos=self._init_q,
         qvel=jp.zeros(self.mjx_model.nv),
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

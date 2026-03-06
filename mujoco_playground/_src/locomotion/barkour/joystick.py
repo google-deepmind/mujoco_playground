@@ -102,7 +102,7 @@ def default_config() -> config_dict.ConfigDict:
       # each episode.
       kick_wait_steps=[50, 150],
       impl="jax",
-      nconmax=4 * 8192,
+      naconmax=4 * 8192,
       njmax=12 + 4 * 4,
   )
 
@@ -194,7 +194,7 @@ class Joystick(mjx_env.MjxEnv):
         qpos=self._init_q,
         qvel=jp.zeros(self.mjx_model.nv),
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

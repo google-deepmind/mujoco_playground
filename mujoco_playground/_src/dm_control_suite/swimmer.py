@@ -45,7 +45,7 @@ def default_config() -> config_dict.ConfigDict:
       action_repeat=1,
       vision=False,
       impl="jax",
-      nconmax=0,
+      naconmax=0,
       njmax=40,
   )
 
@@ -166,7 +166,7 @@ class Swim(mjx_env.MjxEnv):
         self.mj_model,
         qpos=qpos,
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

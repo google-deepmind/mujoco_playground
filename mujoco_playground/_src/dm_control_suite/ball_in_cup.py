@@ -36,7 +36,7 @@ def default_config() -> config_dict.ConfigDict:
       action_repeat=1,
       vision=False,
       impl="jax",
-      nconmax=10_000,
+      naconmax=10_000,
       njmax=25,
   )
 
@@ -75,7 +75,7 @@ class BallInCup(mjx_env.MjxEnv):
     data = mjx_env.make_data(
         self.mj_model,
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

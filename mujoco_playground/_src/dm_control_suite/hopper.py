@@ -42,7 +42,7 @@ def default_config() -> config_dict.ConfigDict:
       action_repeat=1,
       vision=False,
       impl="jax",
-      nconmax=50_000,
+      naconmax=50_000,
       njmax=50,
   )
 
@@ -110,7 +110,7 @@ class Hopper(mjx_env.MjxEnv):
         self.mj_model,
         qpos=qpos,
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

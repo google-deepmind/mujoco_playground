@@ -57,7 +57,7 @@ def default_config() -> config_dict.ConfigDict:
           tracking_sigma=0.25,
       ),
       impl="jax",
-      nconmax=8 * 8192,
+      naconmax=8 * 8192,
       njmax=19 + 8 * 4,
   )
 
@@ -129,7 +129,7 @@ class Joystick(h1_base.H1Env):
         qpos=self._init_q,
         qvel=jp.zeros(self.mjx_model.nv),
         impl=self.mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
     data = mjx.forward(self.mjx_model, data)

@@ -54,7 +54,7 @@ def default_config() -> config_dict.ConfigDict:
           ),
       ),
       impl='jax',
-      nconmax=30 * 8192,
+      naconmax=30 * 8192,
       njmax=160,
   )
 
@@ -114,7 +114,7 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
         ctrl=q_hand,
         mocap_pos=jp.array([-100.0, -100.0, -100.0]),  # Hide goal for task.
         impl=self._mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
 

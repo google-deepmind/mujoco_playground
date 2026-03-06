@@ -85,7 +85,7 @@ def default_config():
           ),
       ),
       impl="jax",
-      nconmax=32 * 8192,
+      naconmax=32 * 8192,
       njmax=256,
   )
 
@@ -175,7 +175,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
         mocap_pos=jp.array([target_pos]),
         mocap_quat=jp.array([target_quat]),
         impl=self._mjx_model.impl.value,
-        nconmax=self._config.nconmax,
+        naconmax=self._config.naconmax,
         njmax=self._config.njmax,
     )
 
