@@ -189,14 +189,19 @@ def brax_vision_ppo_config(
       action_repeat=env_config.action_repeat,
       reward_scaling=1.0,
       network_factory=config_dict.create(
-        policy_hidden_layer_sizes=(32, 32, 32, 32),
-        cnn_output_channels=(16, 32),
-        cnn_kernel_size=(5, 3),
-        cnn_stride=(2, 2),
-        cnn_padding="zeros",
-        cnn_activation="elu",
+        policy_hidden_layer_sizes=(256, 256),
+        cnn_output_channels=(32, 64, 64),
+        cnn_kernel_size=(8, 4, 3),
+        cnn_stride=(4, 2, 1),
+        cnn_padding="valid",
+        cnn_activation="relu",
         cnn_max_pool=False,
-        cnn_global_pool="avg",
+        cnn_global_pool="spatial_softmax",
+        init_noise_std=2.0,
+        cnn_kernel_init_fn="orthogonal",
+        cnn_kernel_init_kwargs={"scale": 1.41421356},
+        output_kernel_init_fn="orthogonal",
+        output_kernel_init_kwargs={"scale": 0.01},
       ),
       num_resets_per_eval=10,
   )
@@ -205,11 +210,11 @@ def brax_vision_ppo_config(
     rl_config.num_timesteps = 5_000_000
     rl_config.num_evals = 5
     rl_config.unroll_length = 10
-    rl_config.num_minibatches = 8
+    rl_config.num_minibatches = 4
     rl_config.num_updates_per_batch = 8
     rl_config.discounting = 0.97
-    rl_config.learning_rate = 5.0e-4
-    rl_config.entropy_cost = 7.5e-3
+    rl_config.learning_rate = 3e-4
+    rl_config.entropy_cost = 2e-2
     rl_config.num_envs = 1024
     rl_config.batch_size = 256
     rl_config.reward_scaling = 0.1

@@ -39,7 +39,10 @@ from mujoco_playground import wrapper
 from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
-import tensorboardX
+try:
+  import tensorboardX
+except ImportError:
+  tensorboardX = None
 
 try:
   import wandb
@@ -170,6 +173,10 @@ _TRAINING_METRICS_STEPS = flags.DEFINE_integer(
     "Number of steps between logging training metrics. Increase if training"
     " experiences slowdown.",
 )
+_WARP_KERNEL_CACHE_DIR = flags.DEFINE_string(
+    "warp_kernel_cache_dir", None,
+    "Directory for caching compiled Warp kernels.",
+)
 
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
@@ -211,6 +218,10 @@ def main(argv):
   """Run training and evaluation for the specified environment."""
 
   del argv
+
+  if _WARP_KERNEL_CACHE_DIR.value is not None:
+    import warp as wp  # pylint: disable=g-import-not-at-top
+    wp.config.kernel_cache_dir = _WARP_KERNEL_CACHE_DIR.value
 
   # Load environment configuration
   env_cfg = registry.get_default_config(_ENV_NAME.value)
@@ -314,7 +325,8 @@ def main(argv):
     wandb.config.update({"env_name": _ENV_NAME.value})
 
   # Initialize TensorBoard if required
-  if _USE_TB.value and not _PLAY_ONLY.value:
+  writer = None
+  if _USE_TB.value and not _PLAY_ONLY.value and tensorboardX is not None:
     writer = tensorboardX.SummaryWriter(logdir)
 
   # Handle checkpoint loading
@@ -392,7 +404,7 @@ def main(argv):
       wandb.log(metrics, step=num_steps)
 
     # Log to TensorBoard
-    if _USE_TB.value and not _PLAY_ONLY.value:
+    if _USE_TB.value and not _PLAY_ONLY.value and writer is not None:
       for key, value in metrics.items():
         writer.add_scalar(key, value, num_steps)
       writer.flush()
@@ -406,7 +418,8 @@ def main(argv):
         )
 
   # Load evaluation environment.
-  env_cfg.vision_config.nworld = num_eval_envs
+  if _VISION.value:
+    env_cfg.vision_config.nworld = num_eval_envs
   eval_env = registry.load(
       _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
   )
@@ -469,10 +482,14 @@ def main(argv):
   )
 
   # Run evaluation rollouts matching how training handles batched environments.
-  # Only pure JAX ops (inference, rng split) are vmapped per-world inside the scan
-  # body.
+  wrapped_infer_env = wrapper.wrap_for_brax_training(
+      infer_env,
+      episode_length=_EPISODE_LENGTH.value,
+      action_repeat=ppo_params.get("action_repeat", 1),
+  )
+
   rng = jax.random.split(jax.random.PRNGKey(_SEED.value), _NUM_VIDEOS.value)
-  reset_states = jax.jit(jax.vmap(infer_env.reset))(rng)
+  reset_states = jax.jit(wrapped_infer_env.reset)(rng)
 
   empty_data = reset_states.data.__class__(
       **{k: None for k in reset_states.data.__annotations__}
@@ -484,11 +501,10 @@ def main(argv):
 
   def step(carry, _):
     state, rng = carry
-    rng_split = jax.vmap(jax.random.split)(rng)
-    rng = rng_split[:, 0]
-    act_key = rng_split[:, 1]
-    act = jax.vmap(jit_inference_fn)(state.obs, act_key)[0]
-    state = jax.vmap(infer_env.step)(state, act)
+    rng, act_key = jax.random.split(rng)
+    act_keys = jax.random.split(act_key, _NUM_VIDEOS.value)
+    act = jax.vmap(jit_inference_fn)(state.obs, act_keys)[0]
+    state = wrapped_infer_env.step(state, act)
     traj_data = empty_traj.tree_replace({
         "data.qpos": state.data.qpos,
         "data.qvel": state.data.qvel,
@@ -507,7 +523,7 @@ def main(argv):
     )
     return traj
 
-  traj_stacked = do_rollout(reset_states, rng)
+  traj_stacked = do_rollout(reset_states, jax.random.PRNGKey(_SEED.value + 1))
   # traj_stacked has shape (time, nworld, ...), swap to (nworld, time, ...).
   traj_stacked = jax.tree.map(lambda x: jp.moveaxis(x, 0, 1), traj_stacked)
   trajectories = [None] * _NUM_VIDEOS.value

@@ -136,12 +136,14 @@ def make_data(
     mocap_quat: Optional[jax.Array] = None,
     impl: Optional[str] = None,
     nconmax: Optional[int] = None,
+    nccdmax: Optional[int] = None,
     njmax: Optional[int] = None,
     device: Optional[jax.Device] = None,
 ) -> mjx.Data:
   """Initialize MJX Data."""
   data = mjx.make_data(
-      model, impl=impl, nconmax=nconmax, njmax=njmax, device=device
+      model, impl=impl, nconmax=nconmax, naccdmax=nccdmax, njmax=njmax,
+      device=device,
   )
   if qpos is not None:
     data = data.replace(qpos=qpos)

@@ -75,7 +75,8 @@ def default_config():
       success_threshold=0.05,
       action_history_length=1,
       impl='jax',
-      nconmax=12 * 1024,
+      nconmax=24 * 2048,
+      nccdmax=24 * 2048,
       njmax=128,
   )
   return config
@@ -188,6 +189,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
         ctrl=self._init_ctrl,
         impl=self._mjx_model.impl.value,
         nconmax=self._config.nconmax,
+        nccdmax=self._config.nccdmax,
         njmax=self._config.njmax,
     )
 
@@ -240,6 +242,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
       )
       info.update({'brightness': brightness})
 
+      data = mjx.forward(self._mjx_model, data)
       data = mjx.refit_bvh(self._mjx_model, data, self._rc_pytree)
       out = mjx.render(self._mjx_model, data, self._rc_pytree)
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])

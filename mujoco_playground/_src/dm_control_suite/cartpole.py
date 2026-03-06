@@ -31,7 +31,7 @@ _XML_PATH = mjx_env.ROOT_PATH / "dm_control_suite" / "xmls" / "cartpole.xml"
 
 def default_vision_config() -> config_dict.ConfigDict:
   return config_dict.create(
-      nworld=2048,
+      nworld=1024,
       cam_res=(64, 64),
       use_textures=False,
       use_shadows=False,
@@ -71,6 +71,9 @@ class Balance(mjx_env.MjxEnv):
   ):
     super().__init__(config, config_overrides=config_overrides)
     self._vision = self._config.vision
+    if self._vision:
+      self._config.ctrl_dt = 0.02
+      self._config.episode_length = 250
 
     if swing_up:
       self._reset_randomize = self._reset_swing_up
@@ -78,8 +81,13 @@ class Balance(mjx_env.MjxEnv):
       self._reset_randomize = self._reset_balance
     if sparse:
       self._get_reward = self._sparse_reward
+      if self._vision:
+        raise NotImplementedError("Sparse reward not implemented for vision.")
     else:
-      self._get_reward = self._dense_reward
+      if self._vision:
+        self._get_reward = self._dense_vision_reward
+      else:
+        self._get_reward = self._dense_reward
 
     self._xml_path = _XML_PATH.as_posix()
     self._model_assets = common.get_assets()
@@ -91,9 +99,10 @@ class Balance(mjx_env.MjxEnv):
     self._post_init()
 
     if self._vision:
+      vision_kwargs = self._config.vision_config.to_dict()
       self._rc = mjx.create_render_context(
         mjm=self._mj_model,
-        **self._config.vision_config.to_dict())
+        **vision_kwargs)
       self._rc_pytree = self._rc.pytree()
 
   def _post_init(self) -> None:
@@ -147,41 +156,73 @@ class Balance(mjx_env.MjxEnv):
     )
     data = mjx.forward(self.mjx_model, data)
 
-    metrics = {
-        "reward/upright": jp.zeros(()),
-        "reward/centered": jp.zeros(()),
-        "reward/small_control": jp.zeros(()),
-        "reward/small_velocity": jp.zeros(()),
-        "reward/cart_in_bounds": jp.zeros(()),
-        "reward/angle_in_bounds": jp.zeros(()),
-    }
+    if self._vision:
+      metrics = {
+          "reward/alive": jp.zeros(()),
+          "reward/pole_pos_penalty": jp.zeros(()),
+          "reward/cart_pos_penalty": jp.zeros(()),
+          "reward/cart_vel_penalty": jp.zeros(()),
+          "reward/pole_vel_penalty": jp.zeros(()),
+      }
+    else:
+      metrics = {
+          "reward/upright": jp.zeros(()),
+          "reward/centered": jp.zeros(()),
+          "reward/small_control": jp.zeros(()),
+          "reward/small_velocity": jp.zeros(()),
+          "reward/cart_in_bounds": jp.zeros(()),
+          "reward/angle_in_bounds": jp.zeros(()),
+      }
     info = {"rng": rng}
 
     reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
 
     obs = self._get_obs(data, info)
     if self._vision:
-      data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
-      out = mjx.render(self.mjx_model, data, self._rc_pytree)
+      render_data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
+      out = mjx.render(self.mjx_model, render_data, self._rc_pytree)
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
-      obs = {"pixels/view_0": rgb}
+      gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5  # (H, W, 1)
+      frame_stack = jp.repeat(gray, 3, axis=-1)  # (H, W, 3)
+      info["frame_stack"] = frame_stack
+      obs = {"pixels/view_0": frame_stack}
 
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     data = mjx_env.step(self.mjx_model, state.data, action, self.n_substeps)
-    reward = self._get_reward(data, action, state.info, state.metrics)  # pylint: disable=redefined-outer-name
+
+    r = self._get_reward(data, action, state.info, state.metrics)
+    if self._vision:
+      cart_pos = data.qpos[self._slider_qposadr]
+      pole_angle = data.qpos[1]
+      done = (
+          jp.isnan(data.qpos).any()
+          | jp.isnan(data.qvel).any()
+          | (jp.abs(cart_pos) > 3.0)
+          | (jp.abs(pole_angle) > jp.pi / 2)
+      )
+      done = done.astype(float)
+      r = r + -2.0 * done
+    else:
+      done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
+      done = done.astype(float)
 
     obs = self._get_obs(data, state.info)
     if self._vision:
-      data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
-      out = mjx.render(self.mjx_model, data, self._rc_pytree)
+      render_data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
+      out = mjx.render(self.mjx_model, render_data, self._rc_pytree)
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
-      obs = {"pixels/view_0": rgb}
+      gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5  # (H, W, 1)
+      prev_stack = state.info["frame_stack"]
+      frame_stack = jp.concatenate([prev_stack[..., 1:], gray], axis=-1)
+      info = dict(state.info)
+      info["frame_stack"] = frame_stack
+      obs = {"pixels/view_0": frame_stack}
+    else:
+      info = state.info
 
-    done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
-    done = done.astype(float)
-    return mjx_env.State(data, obs, reward, done, state.metrics, state.info)
+    return mjx_env.State(data, obs, r, done, state.metrics, info)
 
   def _get_obs(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
     del info  # Unused.
@@ -205,25 +246,65 @@ class Balance(mjx_env.MjxEnv):
     del info  # Unused.
     pole_angle_cos = data.xmat[2, 2, 2]
     upright = (pole_angle_cos + 1) / 2
-    metrics["reward/upright"] = upright
 
     cart_position = data.qpos[self._slider_qposadr]
     centered = reward.tolerance(cart_position, margin=2)
     centered = (1 + centered) / 2
-    metrics["reward/centered"] = centered
 
     small_control = reward.tolerance(
         action[0], margin=1, value_at_margin=0, sigmoid="quadratic"
     )
     small_control = (4 + small_control) / 5
-    metrics["reward/small_control"] = small_control
 
     angular_vel = data.qvel[1:]
     small_velocity = reward.tolerance(angular_vel, margin=5).min()
     small_velocity = (1 + small_velocity) / 2
-    metrics["reward/small_velocity"] = small_velocity
 
-    return upright * small_control * small_velocity * centered
+    components = {
+        "upright": upright,
+        "centered": centered,
+        "small_control": small_control,
+        "small_velocity": small_velocity,
+    }
+    for k, v in components.items():
+      metrics[f"reward/{k}"] = v
+
+    return upright * centered * small_control * small_velocity
+
+  def _dense_vision_reward(
+      self,
+      data: mjx.Data,
+      action: jax.Array,
+      info: dict[str, Any],
+      metrics: dict[str, Any],
+  ) -> jax.Array:
+    """Additive dense reward for vision training."""
+    del info
+    pole_angle = data.qpos[1]
+    pole_vel = data.qvel[1]
+    cart_vel = data.qvel[self._slider_qposadr]
+
+    alive = jp.float32(1.0)
+    pole_pos_penalty = -1.0 * pole_angle ** 2
+    cart_pos = data.qpos[self._slider_qposadr]
+    cart_pos_penalty = -0.02 * cart_pos ** 2
+    cart_vel_penalty = -0.01 * jp.abs(cart_vel)
+    pole_vel_penalty = -0.005 * jp.abs(pole_vel)
+
+    components = {
+        "alive": alive,
+        "pole_pos_penalty": pole_pos_penalty,
+        "cart_pos_penalty": cart_pos_penalty,
+        "cart_vel_penalty": cart_vel_penalty,
+        "pole_vel_penalty": pole_vel_penalty,
+    }
+    for k, v in components.items():
+      metrics[f"reward/{k}"] = v
+
+    return (
+        alive + pole_pos_penalty + cart_pos_penalty
+        + cart_vel_penalty + pole_vel_penalty
+    )
 
   def _sparse_reward(
       self,
