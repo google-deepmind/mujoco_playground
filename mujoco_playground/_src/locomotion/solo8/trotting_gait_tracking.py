@@ -41,17 +41,18 @@ def default_config() -> config_dict.ConfigDict:
       ctrl_dt=0.02,
       sim_dt=0.004,
       episode_length=1000,
-      Kp=150.0,
-      Kd=6.0,
+      Kp=50.0,
+      Kd=0.5,
       early_termination=True,
       action_repeat=1,
-      action_scale=0.2,
+      action_scale=0.3,
       history_len=3,
       obs_noise=config_dict.create(
           scales=config_dict.create(
               joint_pos=0.05,
               gyro=0.1,
               gravity=0.03,
+              linvel=0.1,
               feet_pos=[0.01, 0.005, 0.02],
           ),
       ),
@@ -61,9 +62,13 @@ def default_config() -> config_dict.ConfigDict:
               feet_phase=2.0,
               tracking_lin_vel=0.5,
               tracking_ang_vel=0.5,
+              flight_phase=1.0,
               # Costs.
               ang_vel_xy=-0.5,
               lin_vel_z=-0.5,
+              orientation=-5.0,
+              action_rate=-0.01,
+              invalid_contact=-0.5,
               #hip_splay=-0.5,
           ),
           tracking_sigma=0.25,
@@ -77,10 +82,10 @@ def default_config() -> config_dict.ConfigDict:
       gait_frequency=[2.0, 2.0],
       #gaits=["trot", "walk", "pace", "bound", "pronk"],
       gaits=["trot"],
-      foot_height=[0.12, 0.12],
+      foot_height=[0.06, 0.06],
       impl="jax",
       nconmax=4 * 8192,
-      njmax=12 + 4 * 4,
+      njmax=50,
   )
 
 
@@ -163,7 +168,7 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
         "last_act": jp.zeros(self.mjx_model.nu),
         "last_last_act": jp.zeros(self.mjx_model.nu),
         "step": 0,
-        "motor_targets": jp.zeros(self.mjx_model.nu),
+        "motor_targets": jp.array(self._default_pose),
         "qpos_error_history": jp.zeros(self._config.history_len * 8),
         "last_contact": jp.zeros(4, dtype=bool),
         "swing_peak": jp.zeros(4),
@@ -178,6 +183,15 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     for k in self._config.reward_config.scales.keys():
       metrics[f"reward/{k}"] = jp.zeros(())
     metrics["swing_peak"] = jp.zeros(())
+    # Diagnostic metrics (same keys as Stage 1/2 for cross-comparison).
+    metrics["diag/forward_vel"] = jp.zeros(())
+    metrics["diag/base_height"] = jp.zeros(())
+    metrics["diag/roll"] = jp.zeros(())
+    metrics["diag/pitch"] = jp.zeros(())
+    metrics["diag/action_rate"] = jp.zeros(())
+    metrics["diag/n_contact"] = jp.zeros(())
+    metrics["diag/is_diagonal"] = jp.zeros(())
+    metrics["diag/is_flight"] = jp.zeros(())
 
     contact = jp.array([
         data.sensordata[self._mj_model.sensor_adr[sensor_id]] > 0
@@ -209,7 +223,7 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     obs = self._get_obs(data, state.info, noise_rng, contact)
     done = self._get_termination(data)
 
-    pos, neg = self._get_reward(data, action, state.info, state.metrics, done)
+    pos, neg = self._get_reward(data, action, state.info, state.metrics, done, contact)
     pos = {k: v * self._config.reward_config.scales[k] for k, v in pos.items()}
     neg = {k: v * self._config.reward_config.scales[k] for k, v in neg.items()}
     rewards = pos | neg
@@ -235,12 +249,32 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
       state.metrics[f"reward/{k}"] = v
     state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
 
+    # Diagnostic metrics for cross-approach comparison.
+    local_vel = self.get_local_linvel(data)
+    up = self.get_upvector(data)
+    contact_f = contact.astype(jp.float32)
+    state.metrics["diag/forward_vel"] = local_vel[0]
+    state.metrics["diag/base_height"] = data.qpos[2]
+    state.metrics["diag/roll"] = up[0]
+    state.metrics["diag/pitch"] = up[1]
+    state.metrics["diag/action_rate"] = jp.sqrt(
+        jp.sum(jp.square(action - state.info["last_act"]))
+    )
+    n_contact = jp.sum(contact_f)
+    state.metrics["diag/n_contact"] = n_contact
+    pair1 = contact_f[0] * contact_f[3]  # FL+HR
+    pair2 = contact_f[1] * contact_f[2]  # FR+HL
+    state.metrics["diag/is_diagonal"] = (
+        (pair1 > 0) | (pair2 > 0)
+    ).astype(jp.float32)
+    state.metrics["diag/is_flight"] = (n_contact == 0).astype(jp.float32)
+
     done = done.astype(reward.dtype)
     state = state.replace(data=data, obs=obs, reward=reward, done=done)
     return state
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:
-    fall_termination = self.get_gravity(data)[-1] < 0.85
+    fall_termination = self.get_upvector(data)[-1] < 0.0
     return jp.where(
         self._config.early_termination,
         fall_termination,
@@ -270,6 +304,14 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
         * self._config.obs_noise.scales.gravity
     )
 
+    linvel = self.get_local_linvel(data)  # (3,)
+    rng, noise_rng = jax.random.split(rng)
+    noisy_linvel = (
+        linvel
+        + (2 * jax.random.uniform(noise_rng, shape=linvel.shape) - 1)
+        * self._config.obs_noise.scales.linvel
+    )
+
     joint_angles = data.qpos[7:]  # (12,)
     rng, noise_rng = jax.random.split(rng)
     noisy_joint_angles = (
@@ -292,15 +334,17 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     # Concatenate final observation.
     return jp.hstack(
         [
-            noisy_gyro,
-            noisy_gravity,
-            noisy_joint_angles,
-            qpos_error_history,
-            contact,
-            phase,
-            info["gait_freq"],
-            info["gait"],
-            info["foot_height"],
+            noisy_linvel,        # (3,) local linear velocity (velocity feedback)
+            noisy_gyro,          # (3,)
+            noisy_gravity,       # (3,)
+            noisy_joint_angles,  # (8,)
+            qpos_error_history,  # (history_len * 8,)
+            contact,             # (4,)
+            phase,               # (8,) cos+sin of foot phases
+            info["command"],     # (3,) target velocity command
+            info["gait_freq"],   # (1,)
+            info["gait"],        # (1,)
+            info["foot_height"], # (1,)
         ],
     )
 
@@ -311,8 +355,43 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
       info: dict[str, Any],
       metrics: dict[str, Any],
       done: jax.Array,
+      contact: jax.Array,
   ) -> Tuple[Dict[str, jax.Array], Dict[str, jax.Array]]:
-    del action, done, metrics  # Unused.
+    del done, metrics  # Unused.
+    n_contact = jp.sum(contact.astype(jp.float32))
+
+    # Reward for alternating diagonal leg pair contacts and suspension phase.
+    def alternating_contact_reward(contact):
+        # Diagonal pairs: (0, 3) and (1, 2)
+        diagonal_contact = contact[0] * contact[3] + contact[1] * contact[2]
+        suspension_phase = (n_contact == 0).astype(jp.float32)  # No legs touching the ground.
+        return diagonal_contact + suspension_phase
+
+    # Reward for following the desired phase sequence.
+    def phase_tracking_reward(data, phase, foot_height):
+          foot_pos = data.site_xpos[self._feet_site_id]
+          foot_z = foot_pos[..., -1]
+          rz = gait.get_rz(phase, swing_height=foot_height)
+          error = jp.sum(jp.square(foot_z - rz))
+
+          # Enforce equal interval lengths for each phase.
+          phase_intervals = jp.diff(phase)
+          interval_error = jp.sum(jp.square(phase_intervals - jp.mean(phase_intervals)))
+
+          # Ensure correct alternation of phases (0,3 → 1,2 → suspension).
+          # This can be done by checking the order of contact states.
+          contact_order_error = jp.sum(
+              jp.abs(contact[0] * contact[3] - contact[1] * contact[2])
+          )
+
+          # Combine the errors into a single reward term.
+          return jp.exp(-error / 0.1) * jp.exp(-interval_error / 0.1) * jp.exp(-contact_order_error / 0.1)
+
+    # Penalize stiff leg movements (large changes in velocities or positions).
+    def smooth_movement_penalty(data):
+        foot_vel = data.sensordata[self._foot_linvel_sensor_adr]
+        return jp.sum(jp.square(foot_vel))
+
     pos = {
         "tracking_lin_vel": self._reward_tracking_lin_vel(
             info["command"], self.get_local_linvel(data)
@@ -320,16 +399,18 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
         "tracking_ang_vel": self._reward_tracking_ang_vel(
             info["command"], self.get_gyro(data)
         ),
-        "feet_phase": self._reward_feet_phase(
-            data, info["phase"], info["foot_height"]
-        ),
+        "alternating_contact": alternating_contact_reward(contact),
+        "phase_tracking": phase_tracking_reward(data, info["phase"], info["foot_height"]),
     }
     neg = {
         "ang_vel_xy": self._cost_ang_vel_xy(self.get_global_angvel(data)),
         "lin_vel_z": self._cost_lin_vel_z(
             self.get_global_linvel(data), info["gait"]
         ),
-        #"hip_splay": self._cost_hip_splay(data.qpos[7:]),
+        "orientation": self._cost_orientation(data),
+        "action_rate": self._cost_action_rate(action, info["last_act"]),
+        "invalid_contact": self._cost_invalid_contact(n_contact),
+        "stiff_movements": smooth_movement_penalty(data),
     }
     return pos, neg
 
@@ -342,6 +423,16 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     rz = gait.get_rz(phase, swing_height=foot_height)
     error = jp.sum(jp.square(foot_z - rz))
     return jp.exp(-error / 0.1)
+
+  def _reward_flight_phase(self, n_contact: jax.Array) -> jax.Array:
+    # Reward when all 4 feet are in the air (flight phase of trot).
+    return (n_contact == 0).astype(jp.float32)
+
+  def _cost_invalid_contact(self, n_contact: jax.Array) -> jax.Array:
+    # Penalize when 1, 3, or 4 feet contact the ground.
+    # Valid trot states: 0 (flight) or 2 (diagonal stance).
+    invalid = (n_contact == 1) | (n_contact == 3) | (n_contact == 4)
+    return invalid.astype(jp.float32)
 
   def _reward_tracking_lin_vel(
       self,
@@ -370,10 +461,20 @@ class TrottingGaitTracking(solo8_base.Solo8Env):
     del gait
     return jp.square(global_linvel[2])
 
-
   def _cost_ang_vel_xy(self, global_angvel) -> jax.Array:
     # Penalize xy axes base angular velocity.
     return jp.sum(jp.square(global_angvel[:2]))
+
+  def _cost_orientation(self, data: mjx.Data) -> jax.Array:
+    # Penalize non-flat base orientation (roll and pitch).
+    up = self.get_upvector(data)
+    return jp.sum(jp.square(up[:2]))
+
+  def _cost_action_rate(
+      self, action: jax.Array, last_act: jax.Array
+  ) -> jax.Array:
+    # Penalize large changes in action between consecutive steps.
+    return jp.sum(jp.square(action - last_act))
 
   # Changed to only sample straight line
   def sample_command(self, rng: jax.Array) -> jax.Array:

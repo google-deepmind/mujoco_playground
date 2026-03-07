@@ -41,6 +41,9 @@ from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spo
 from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
 from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 from mujoco_playground._src.locomotion.solo8 import trotting_gait_tracking as solo8_trotting_gait_tracking
+from mujoco_playground._src.locomotion.solo8.trotting_demonstration import trotting_demonstration_stage_1 as solo8_demo_s1
+from mujoco_playground._src.locomotion.solo8.trotting_demonstration import trotting_demonstration_stage_2 as solo8_demo_s2
+from mujoco_playground._src.locomotion.solo8.trotting_demonstration import randomize as solo8_demo_randomize
 
 
 _envs = {
@@ -91,6 +94,12 @@ _envs = {
     "Solo8_trotting_gait_tracking": functools.partial(
         solo8_trotting_gait_tracking.TrottingGaitTracking, task="flat_terrain"
     ),
+    "Solo8TrottingDemonstrationStage1": functools.partial(
+        solo8_demo_s1.TrottingDemonstrationStage1, task="flat_terrain"
+    ),
+    "Solo8TrottingDemonstrationStage2": functools.partial(
+        solo8_demo_s2.TrottingDemonstrationStage2, task="flat_terrain"
+    ),
 }
 
 _cfgs = {
@@ -119,6 +128,8 @@ _cfgs = {
     "T1JoystickRoughTerrain": t1_joystick.default_config,
     "Solo8TrottingGaitTracking": solo8_trotting_gait_tracking.default_config,
     "Solo8_trotting_gait_tracking": solo8_trotting_gait_tracking.default_config,
+    "Solo8TrottingDemonstrationStage1": solo8_demo_s1.default_config,
+    "Solo8TrottingDemonstrationStage2": solo8_demo_s2.default_config,
 }
 
 _randomizer = {
@@ -136,7 +147,8 @@ _randomizer = {
     "Go1Handstand": go1_randomize.domain_randomize,
     "Go1Footstand": go1_randomize.domain_randomize,
     "T1JoystickFlatTerrain": t1_randomize.domain_randomize,
-    "T1JoystickRoughTerrain": t1_randomize.domain_randomize
+    "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
+    "Solo8TrottingDemonstrationStage2": solo8_demo_randomize.domain_randomize,
 }
 
 
