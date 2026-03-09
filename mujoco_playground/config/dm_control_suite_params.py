@@ -78,7 +78,7 @@ def brax_vision_ppo_config(
       num_updates_per_batch=8,
       discounting=0.99,
       learning_rate=3e-4,
-      entropy_cost=5e-3,
+      entropy_cost=2e-3,
       num_envs=1024,
       num_eval_envs=512,
       batch_size=256,

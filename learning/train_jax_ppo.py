@@ -284,10 +284,9 @@ def main(argv):
     env_cfg_overrides = json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value)
 
   if _VISION.value:
-    env_cfg.vision_config.nworld = ppo_params.num_envs
-  env = registry.load(
-      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
-  )
+    env_cfg_overrides["vision"] = True
+    env_cfg_overrides["vision_config.nworld"] = ppo_params.num_envs
+  env = registry.load(_ENV_NAME.value, config_overrides=env_cfg_overrides)
   if _RUN_EVALS.present:
     ppo_params.run_evals = _RUN_EVALS.value
   if _LOG_TRAINING_METRICS.present:
@@ -418,11 +417,11 @@ def main(argv):
         )
 
   # Load evaluation environment.
+  eval_cfg_overrides = dict(env_cfg_overrides)
   if _VISION.value:
-    env_cfg.vision_config.nworld = num_eval_envs
-  eval_env = registry.load(
-      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
-  )
+    eval_cfg_overrides["vision"] = True
+    eval_cfg_overrides["vision_config.nworld"] = num_eval_envs
+  eval_env = registry.load(_ENV_NAME.value, config_overrides=eval_cfg_overrides)
 
   policy_params_fn = lambda *args: None
   if _RSCOPE_ENVS.value:
@@ -454,7 +453,7 @@ def main(argv):
 
     def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
       rscope_handle.set_make_policy(make_policy)
-      rscope_handle.dump_rollout(params)
+      # rscope_handle.dump_rollout(params) # Disabled to prevent rendering slice crash
 
   # Train or load the model
   make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter
