@@ -177,6 +177,9 @@ _WARP_KERNEL_CACHE_DIR = flags.DEFINE_string(
     "warp_kernel_cache_dir", None,
     "Directory for caching compiled Warp kernels.",
 )
+_LOGDIR = flags.DEFINE_string(
+    "logdir", None, "Directory for logging."
+)
 
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
@@ -277,16 +280,18 @@ def main(argv):
     ppo_params.network_factory.policy_obs_key = _POLICY_OBS_KEY.value
   if _VALUE_OBS_KEY.present:
     ppo_params.network_factory.value_obs_key = _VALUE_OBS_KEY.value
+
   if _VISION.value:
     env_cfg.vision = True
+    env_cfg.vision_config.nworld = ppo_params.num_envs
+
   env_cfg_overrides = {}
   if _PLAYGROUND_CONFIG_OVERRIDES.value is not None:
     env_cfg_overrides = json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value)
 
-  if _VISION.value:
-    env_cfg_overrides["vision"] = True
-    env_cfg_overrides["vision_config.nworld"] = ppo_params.num_envs
-  env = registry.load(_ENV_NAME.value, config_overrides=env_cfg_overrides)
+  env = registry.load(
+      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+  )
   if _RUN_EVALS.present:
     ppo_params.run_evals = _RUN_EVALS.value
   if _LOG_TRAINING_METRICS.present:
@@ -308,7 +313,7 @@ def main(argv):
   print(f"Experiment name: {exp_name}")
 
   # Set up logging directory
-  logdir = epath.Path("logs").resolve() / exp_name
+  logdir = epath.Path(_LOGDIR.value or "logs").resolve() / exp_name
   logdir.mkdir(parents=True, exist_ok=True)
   print(f"Logs are being stored in: {logdir}")
 
@@ -417,11 +422,12 @@ def main(argv):
         )
 
   # Load evaluation environment.
-  eval_cfg_overrides = dict(env_cfg_overrides)
+  eval_env_cfg = config_dict.ConfigDict(env_cfg)
   if _VISION.value:
-    eval_cfg_overrides["vision"] = True
-    eval_cfg_overrides["vision_config.nworld"] = num_eval_envs
-  eval_env = registry.load(_ENV_NAME.value, config_overrides=eval_cfg_overrides)
+    eval_env_cfg.vision_config.nworld = num_eval_envs
+  eval_env = registry.load(
+      _ENV_NAME.value, config=eval_env_cfg, config_overrides=env_cfg_overrides
+  )
 
   policy_params_fn = lambda *args: None
   if _RSCOPE_ENVS.value:
@@ -475,9 +481,11 @@ def main(argv):
   jit_inference_fn = jax.jit(inference_fn)
 
   # For inference rollouts, create env with vision disabled.
-  env_cfg.vision_config.nworld = _NUM_VIDEOS.value
+  infer_env_cfg = config_dict.ConfigDict(env_cfg)
+  if _VISION.value:
+    infer_env_cfg.vision_config.nworld = _NUM_VIDEOS.value
   infer_env = registry.load(
-      _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
+      _ENV_NAME.value, config=infer_env_cfg, config_overrides=env_cfg_overrides
   )
 
   # Run evaluation rollouts matching how training handles batched environments.
@@ -546,8 +554,8 @@ def main(argv):
     frames = infer_env.render(
         traj, height=480, width=640, scene_option=scene_option
     )
-    media.write_video(f"rollout{i}.mp4", frames, fps=fps)
-    print(f"Rollout video saved as 'rollout{i}.mp4'.")
+    media.write_video(logdir / f"rollout{i}.mp4", frames, fps=fps)
+    print(f"Rollout video saved as '{logdir}/rollout{i}.mp4'.")
 
 
 def run():
