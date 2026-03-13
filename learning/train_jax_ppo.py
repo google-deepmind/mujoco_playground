@@ -491,7 +491,7 @@ def main(argv):
   # Run evaluation rollouts matching how training handles batched environments.
   wrapped_infer_env = wrapper.wrap_for_brax_training(
       infer_env,
-      episode_length=_EPISODE_LENGTH.value,
+      episode_length=ppo_params.episode_length,
       action_repeat=ppo_params.get("action_repeat", 1),
   )
 
@@ -526,7 +526,7 @@ def main(argv):
   @jax.jit
   def do_rollout(state, rng):
     _, traj = jax.lax.scan(
-        step, (state, rng), None, length=_EPISODE_LENGTH.value
+        step, (state, rng), None, length=ppo_params.episode_length
     )
     return traj
 
@@ -538,7 +538,7 @@ def main(argv):
     t = jax.tree.map(lambda x, i=i: x[i], traj_stacked)
     trajectories[i] = [
         jax.tree.map(lambda x, j=j: x[j], t)
-        for j in range(_EPISODE_LENGTH.value)
+        for j in range(ppo_params.episode_length)
     ]
 
   # Render and save the rollout.

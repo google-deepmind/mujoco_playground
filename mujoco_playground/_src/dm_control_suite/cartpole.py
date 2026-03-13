@@ -101,8 +101,9 @@ class Balance(mjx_env.MjxEnv):
     if self._vision:
       vision_kwargs = self._config.vision_config.to_dict()
       self._rc = mjx.create_render_context(
-        mjm=self._mj_model,
-        **vision_kwargs)
+          mjm=self._mj_model,
+          **vision_kwargs
+      )
       self._rc_pytree = self._rc.pytree()
 
   def _post_init(self) -> None:
@@ -163,6 +164,7 @@ class Balance(mjx_env.MjxEnv):
           "reward/cart_pos_penalty": jp.zeros(()),
           "reward/cart_vel_penalty": jp.zeros(()),
           "reward/pole_vel_penalty": jp.zeros(()),
+          "reward/action_penalty": jp.zeros(()),
       }
     else:
       metrics = {
@@ -173,7 +175,7 @@ class Balance(mjx_env.MjxEnv):
           "reward/cart_in_bounds": jp.zeros(()),
           "reward/angle_in_bounds": jp.zeros(()),
       }
-    info = {"rng": rng}
+    info = {"rng": rng, "time_out": jp.float32(0.0)}
 
     reward, done = jp.zeros(2)  # pylint: disable=redefined-outer-name
 
@@ -182,8 +184,8 @@ class Balance(mjx_env.MjxEnv):
       render_data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
       out = mjx.render(self.mjx_model, render_data, self._rc_pytree)
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
-      gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5  # (H, W, 1)
-      frame_stack = jp.repeat(gray, 3, axis=-1)  # (H, W, 3)
+      gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5
+      frame_stack = jp.repeat(gray, 3, axis=-1)
       info["frame_stack"] = frame_stack
       obs = {"pixels/view_0": frame_stack}
 
@@ -203,7 +205,6 @@ class Balance(mjx_env.MjxEnv):
           | (jp.abs(pole_angle) > jp.pi / 2)
       )
       done = done.astype(float)
-      r = r + -2.0 * done
     else:
       done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
       done = done.astype(float)
@@ -213,11 +214,12 @@ class Balance(mjx_env.MjxEnv):
       render_data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
       out = mjx.render(self.mjx_model, render_data, self._rc_pytree)
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
-      gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5  # (H, W, 1)
+      gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5
       prev_stack = state.info["frame_stack"]
       frame_stack = jp.concatenate([prev_stack[..., 1:], gray], axis=-1)
       info = dict(state.info)
       info["frame_stack"] = frame_stack
+      info["time_out"] = done
       obs = {"pixels/view_0": frame_stack}
     else:
       info = state.info
@@ -280,16 +282,17 @@ class Balance(mjx_env.MjxEnv):
   ) -> jax.Array:
     """Additive dense reward for vision training."""
     del info
-    pole_angle = data.qpos[1]
+    pole_cos = data.xmat[2, 2, 2]
     pole_vel = data.qvel[1]
     cart_vel = data.qvel[self._slider_qposadr]
 
-    alive = jp.float32(1.0)
-    pole_pos_penalty = -1.0 * pole_angle ** 2
+    alive = jp.float32(0.1)
+    pole_pos_penalty = -1.0 * (1.0 - pole_cos) ** 2
     cart_pos = data.qpos[self._slider_qposadr]
     cart_pos_penalty = -0.02 * cart_pos ** 2
     cart_vel_penalty = -0.01 * jp.abs(cart_vel)
     pole_vel_penalty = -0.005 * jp.abs(pole_vel)
+    action_penalty = -0.01 * jp.sum(action ** 2)
 
     components = {
         "alive": alive,
@@ -297,13 +300,14 @@ class Balance(mjx_env.MjxEnv):
         "cart_pos_penalty": cart_pos_penalty,
         "cart_vel_penalty": cart_vel_penalty,
         "pole_vel_penalty": pole_vel_penalty,
+        "action_penalty": action_penalty,
     }
     for k, v in components.items():
       metrics[f"reward/{k}"] = v
 
     return (
         alive + pole_pos_penalty + cart_pos_penalty
-        + cart_vel_penalty + pole_vel_penalty
+        + cart_vel_penalty + pole_vel_penalty + action_penalty
     )
 
   def _sparse_reward(
