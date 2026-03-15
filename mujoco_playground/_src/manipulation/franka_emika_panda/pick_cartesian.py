@@ -74,7 +74,7 @@ def default_config():
       box_init_range=0.05,
       success_threshold=0.05,
       action_history_length=1,
-      impl='jax',
+      impl='warp',
       naconmax=24 * 2048,
       naccdmax=24 * 2048,
       njmax=128,
