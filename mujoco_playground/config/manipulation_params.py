@@ -185,41 +185,39 @@ def brax_vision_ppo_config(
 
   rl_config = config_dict.create(
       episode_length=env_config.episode_length,
-      normalize_observations=True,
+      normalize_observations=False,
       action_repeat=env_config.action_repeat,
       reward_scaling=1.0,
+      num_timesteps=10_000_000,
+      num_evals=5,
+      unroll_length=10,
+      num_minibatches=8,
+      num_updates_per_batch=8,
+      discounting=0.97,
+      learning_rate=3e-4,
+      entropy_cost=5e-3,
+      num_envs=1024,
+      batch_size=256,
       network_factory=config_dict.create(
-        policy_hidden_layer_sizes=(256, 256),
-        cnn_output_channels=(32, 64, 64),
-        cnn_kernel_size=(8, 4, 3),
-        cnn_stride=(4, 2, 1),
-        cnn_padding="valid",
-        cnn_activation="relu",
-        cnn_max_pool=False,
-        cnn_global_pool="spatial_softmax",
-        init_noise_std=2.0,
-        cnn_kernel_init_fn="orthogonal",
-        cnn_kernel_init_kwargs={"scale": 1.41421356},
-        output_kernel_init_fn="orthogonal",
-        output_kernel_init_kwargs={"scale": 0.01},
+          policy_hidden_layer_sizes=(128, 128, 128),
+          value_hidden_layer_sizes=(128, 128, 128),
+          cnn_output_channels=(16, 32),
+          cnn_kernel_size=(5, 3),
+          cnn_stride=(2, 2),
+          cnn_padding="zeros",
+          cnn_activation="elu",
+          cnn_max_pool=True,
+          cnn_global_pool="none",
+          cnn_kernel_init_fn="orthogonal",
+          cnn_kernel_init_kwargs={"scale": 1.41421356},
+          output_kernel_init_fn="orthogonal",
+          output_kernel_init_kwargs={"scale": 0.2},
       ),
-      num_resets_per_eval=10,
+      max_grad_norm=1.0,
+      num_resets_per_eval=1,
   )
 
-  if env_name == "PandaPickCubeCartesian":
-    rl_config.num_timesteps = 5_000_000
-    rl_config.num_evals = 5
-    rl_config.unroll_length = 10
-    rl_config.num_minibatches = 4
-    rl_config.num_updates_per_batch = 8
-    rl_config.discounting = 0.97
-    rl_config.learning_rate = 3e-4
-    rl_config.entropy_cost = 2e-2
-    rl_config.num_envs = 1024
-    rl_config.batch_size = 256
-    rl_config.reward_scaling = 0.1
-    rl_config.num_resets_per_eval = 1
-  else:
+  if env_name != "PandaPickCubeCartesian":
     raise NotImplementedError(f"Vision PPO params not tested for {env_name}")
 
   return rl_config
