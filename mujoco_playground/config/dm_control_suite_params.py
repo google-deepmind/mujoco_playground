@@ -67,7 +67,7 @@ def brax_vision_ppo_config(
   env_config = dm_control_suite.get_default_config(env_name)
 
   rl_config = config_dict.create(
-      num_timesteps=10_000_000,
+      num_timesteps=5_000_000,
       num_evals=5,
       reward_scaling=1.0,
       episode_length=250,
@@ -76,14 +76,14 @@ def brax_vision_ppo_config(
       unroll_length=20,
       num_minibatches=8,
       num_updates_per_batch=8,
-      discounting=0.997,
-      learning_rate=5e-4,
-      entropy_cost=0.01,
+      discounting=0.99,
+      learning_rate=1e-3,
+      entropy_cost=0.02,
       num_envs=1024,
       num_eval_envs=32,
       batch_size=256,
       max_grad_norm=1.0,
-      bootstrap_on_timeout=True,
+      clipping_epsilon=0.3,
       network_factory=config_dict.create(
           policy_hidden_layer_sizes=(128, 64),
           value_hidden_layer_sizes=(128, 64),

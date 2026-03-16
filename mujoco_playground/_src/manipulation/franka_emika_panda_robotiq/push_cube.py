@@ -84,7 +84,7 @@ def default_config():
               action_rate=-0.1,
           ),
       ),
-      impl="jax",
+      impl="warp",
       naconmax=32 * 8192,
       njmax=256,
   )

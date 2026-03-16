@@ -23,36 +23,20 @@ classifiers = [
 ]
 dependencies = [
     "absl-py",
-    "brax",
+    "brax>=0.14.2",
     "etils",
     "flax",
     "jax",
     "lxml",
     "mediapy",
     "ml_collections",
-    "mujoco-mjx",
-    "mujoco>=3.5.1.dev879036130",
+    "mujoco-mjx>=3.6.0",
+    "mujoco>=3.6.0",
     "warp-lang>=1.11",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
 ]
 keywords = ["mjx", "mujoco", "sim2real", "reinforcement learning"]
-
-[[tool.uv.index]]
-name = "mujoco"
-url = "https://py.mujoco.org"
-explicit = true
-
-[[tool.uv.index]]
-name = "nvidia"
-url = "https://pypi.nvidia.com"
-explicit = true
-
-[tool.uv.sources]
-mujoco = { index = "mujoco" }
-warp-lang = { index = "nvidia" }
-mujoco-mjx = { git = "https://github.com/google-deepmind/mujoco", rev = "main", subdirectory = "mjx" }
-brax = { git = "https://github.com/google/brax", rev = "main" }
 
 [project.optional-dependencies]
 cuda = [

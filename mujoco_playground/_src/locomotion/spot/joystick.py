@@ -78,7 +78,7 @@ def default_config() -> config_dict.ConfigDict:
           lin_vel_y=[-0.8, 0.8],
           ang_vel_yaw=[-1.0, 1.0],
       ),
-      impl="jax",
+      impl="warp",
       naconmax=4 * 8192,
       njmax=12 + 4 * 4,
   )

@@ -56,7 +56,7 @@ def default_config() -> config_dict.ConfigDict:
           ),
           tracking_sigma=0.25,
       ),
-      impl="jax",
+      impl="warp",
       naconmax=8 * 8192,
       njmax=19 + 8 * 4,
   )

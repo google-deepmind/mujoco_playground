@@ -63,7 +63,7 @@ def default_config() -> config_dict.ConfigDict:
       velocity_kick=[1.0, 5.0],
       kick_durations=[0.05, 0.2],
       kick_wait_times=[1.0, 3.0],
-      impl="jax",
+      impl="warp",
       naconmax=16 * 8192,
       njmax=16 * 4 + 20 * 4,
   )

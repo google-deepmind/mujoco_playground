@@ -71,7 +71,7 @@ def default_config() -> config_dict.ConfigDict:
           max=[1.5, 0.8, 1.5],
           zero_prob=[0.9, 0.25, 0.5],
       ),
-      impl="jax",
+      impl="warp",
       naconmax=8 * 8192,
       njmax=32 + 8 * 4,
   )

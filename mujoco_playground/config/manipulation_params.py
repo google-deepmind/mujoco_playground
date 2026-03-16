@@ -194,10 +194,11 @@ def brax_vision_ppo_config(
       num_minibatches=8,
       num_updates_per_batch=8,
       discounting=0.97,
-      learning_rate=3e-4,
-      entropy_cost=5e-3,
+      learning_rate=1e-3,
+      entropy_cost=0.01,
       num_envs=1024,
       batch_size=256,
+      clipping_epsilon=0.3,
       network_factory=config_dict.create(
           policy_hidden_layer_sizes=(128, 128, 128),
           value_hidden_layer_sizes=(128, 128, 128),

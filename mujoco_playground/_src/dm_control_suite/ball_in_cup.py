@@ -35,7 +35,7 @@ def default_config() -> config_dict.ConfigDict:
       episode_length=1000,
       action_repeat=1,
       vision=False,
-      impl="jax",
+      impl="warp",
       naconmax=10_000,
       njmax=25,
   )

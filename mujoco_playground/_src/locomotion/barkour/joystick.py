@@ -101,7 +101,7 @@ def default_config() -> config_dict.ConfigDict:
       # A duration will be sampled uniformly from this range at the beginning of
       # each episode.
       kick_wait_steps=[50, 150],
-      impl="jax",
+      impl="warp",
       naconmax=4 * 8192,
       njmax=12 + 4 * 4,
   )

@@ -64,7 +64,7 @@ def default_config() -> config_dict.ConfigDict:
       gait_frequency=[0.5, 4.0],
       gaits=["walk", "jump"],
       foot_height=[0.08, 0.4],
-      impl="jax",
+      impl="warp",
       naconmax=8 * 8192,
       njmax=19 + 8 * 4,
   )

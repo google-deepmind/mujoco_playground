@@ -89,7 +89,7 @@ def default_config() -> config_dict.ConfigDict:
           # Probability of not zeroing out new command.
           b=[0.9, 0.25, 0.5],
       ),
-      impl="jax",
+      impl="warp",
       naconmax=4 * 8192,
       njmax=40,
   )

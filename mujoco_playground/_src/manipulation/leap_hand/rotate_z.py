@@ -53,7 +53,7 @@ def default_config() -> config_dict.ConfigDict:
               action_rate=0.0,
           ),
       ),
-      impl='jax',
+      impl='warp',
       naconmax=30 * 8192,
       njmax=160,
   )

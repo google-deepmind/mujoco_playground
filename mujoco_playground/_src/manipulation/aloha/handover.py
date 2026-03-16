@@ -41,7 +41,7 @@ def default_config() -> config_dict.ConfigDict:
               no_table_collision=0.3,
           ),
       ),
-      impl='jax',
+      impl='warp',
       naconmax=24 * 2048,
       njmax=88,
   )

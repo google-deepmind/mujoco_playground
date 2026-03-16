@@ -66,7 +66,7 @@ def default_config() -> config_dict.ConfigDict:
               dof_acc=0.0,
           ),
       ),
-      impl="jax",
+      impl="warp",
       naconmax=30 * 8192,
       njmax=200,
   )

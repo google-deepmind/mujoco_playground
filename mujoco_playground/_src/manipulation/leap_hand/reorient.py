@@ -67,7 +67,7 @@ def default_config() -> config_dict.ConfigDict:
           pert_duration_steps=[1, 100],
           pert_wait_steps=[60, 150],
       ),
-      impl='jax',
+      impl='warp',
       naconmax=30 * 8192,
       njmax=160,
   )

@@ -48,7 +48,7 @@ def default_config() -> config_dict.ConfigDict:
               robot_target_qpos=0.3,
           )
       ),
-      impl="jax",
+      impl="warp",
       naconmax=12 * 2048,
       njmax=96,
   )

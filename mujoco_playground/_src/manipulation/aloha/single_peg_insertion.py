@@ -48,7 +48,7 @@ def default_config() -> config_dict.ConfigDict:
               peg_insertion_reward=8,
           )
       ),
-      impl="jax",
+      impl="warp",
       naconmax=24 * 1024,
       njmax=256,
   )

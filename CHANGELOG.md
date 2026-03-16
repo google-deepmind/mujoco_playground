@@ -2,10 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Next release]
+## [0.2.0] - 2026-03-16
 
 - Added vision-based PPO training configs for `CartpoleBalance` and
-  `PandaPickCubeCartesian`.
+  `PandaPickCubeCartesian` with tuned hyperparameters.
+- Update vision notebooks to use MuJoCo Warp.
+- Default MuJoCo implementation for all envs is now MuJoCo Warp.
 - Renamed deprecated `nconmax` / `nccdmax` config fields to `naconmax` /
   `naccdmax` across all environments, matching the updated MJX API.
 

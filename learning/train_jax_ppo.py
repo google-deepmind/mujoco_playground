@@ -130,7 +130,7 @@ _NUM_EVAL_ENVS = flags.DEFINE_integer(
 _BATCH_SIZE = flags.DEFINE_integer("batch_size", 256, "Batch size")
 _MAX_GRAD_NORM = flags.DEFINE_float("max_grad_norm", 1.0, "Max grad norm")
 _CLIPPING_EPSILON = flags.DEFINE_float(
-    "clipping_epsilon", 0.2, "Clipping epsilon for PPO"
+    "clipping_epsilon", 0.3, "Clipping epsilon for PPO"
 )
 _POLICY_HIDDEN_LAYER_SIZES = flags.DEFINE_list(
     "policy_hidden_layer_sizes",
@@ -228,7 +228,6 @@ def main(argv):
 
   # Load environment configuration
   env_cfg = registry.get_default_config(_ENV_NAME.value)
-  env_cfg["impl"] = _IMPL.value
 
   ppo_params = get_rl_config(_ENV_NAME.value)
 
@@ -281,13 +280,12 @@ def main(argv):
   if _VALUE_OBS_KEY.present:
     ppo_params.network_factory.value_obs_key = _VALUE_OBS_KEY.value
 
+  env_cfg_overrides = {"impl": _IMPL.value}
   if _VISION.value:
-    env_cfg.vision = True
-    env_cfg.vision_config.nworld = ppo_params.num_envs
-
-  env_cfg_overrides = {}
+    env_cfg_overrides["vision"] = True
+    env_cfg_overrides["vision_config.nworld"] = ppo_params.num_envs
   if _PLAYGROUND_CONFIG_OVERRIDES.value is not None:
-    env_cfg_overrides = json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value)
+    env_cfg_overrides.update(json.loads(_PLAYGROUND_CONFIG_OVERRIDES.value))
 
   env = registry.load(
       _ENV_NAME.value, config=env_cfg, config_overrides=env_cfg_overrides
@@ -395,6 +393,7 @@ def main(argv):
       save_checkpoint_path=ckpt_path,
       wrap_env_fn=wrapper.wrap_for_brax_training,
       num_eval_envs=num_eval_envs,
+      vision=_VISION.value,
   )
 
   times = [time.monotonic()]
@@ -421,12 +420,13 @@ def main(argv):
             f" reward={metrics['episode/sum_reward']:.3f}"
         )
 
-  # Load evaluation environment.
-  eval_env_cfg = config_dict.ConfigDict(env_cfg)
+  eval_env_overrides = dict(env_cfg_overrides)
   if _VISION.value:
-    eval_env_cfg.vision_config.nworld = num_eval_envs
+    eval_env_overrides["vision_config.nworld"] = num_eval_envs
   eval_env = registry.load(
-      _ENV_NAME.value, config=eval_env_cfg, config_overrides=env_cfg_overrides
+      _ENV_NAME.value,
+      config=registry.get_default_config(_ENV_NAME.value),
+      config_overrides=eval_env_overrides,
   )
 
   policy_params_fn = lambda *args: None
@@ -480,12 +480,13 @@ def main(argv):
   inference_fn = make_inference_fn(params, deterministic=True)
   jit_inference_fn = jax.jit(inference_fn)
 
-  # For inference rollouts, create env with vision disabled.
-  infer_env_cfg = config_dict.ConfigDict(env_cfg)
+  infer_env_overrides = dict(env_cfg_overrides)
   if _VISION.value:
-    infer_env_cfg.vision_config.nworld = _NUM_VIDEOS.value
+    infer_env_overrides["vision_config.nworld"] = _NUM_VIDEOS.value
   infer_env = registry.load(
-      _ENV_NAME.value, config=infer_env_cfg, config_overrides=env_cfg_overrides
+      _ENV_NAME.value,
+      config=registry.get_default_config(_ENV_NAME.value),
+      config_overrides=infer_env_overrides,
   )
 
   # Run evaluation rollouts matching how training handles batched environments.
