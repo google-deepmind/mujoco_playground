@@ -148,6 +148,35 @@ def brax_ppo_config(
       value_obs_key="privileged_state",
     )
 
+  elif env_name == "Solo8TrottingGaitTracking":
+    rl_config.num_timesteps = 150_000_000
+    rl_config.num_evals = 10
+    rl_config.reward_scaling = 1.0
+    rl_config.action_repeat = 1
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(256, 256, 128),
+        value_hidden_layer_sizes=(256, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="state",
+    )
+
+  elif env_name in (
+      "Solo8TrottingDemonstrationStage1",
+      "Solo8TrottingDemonstrationStage2",
+  ):
+    # Paper Section 2.2: "two layers of 64 units each"
+    # Same architecture for both stages to enable weight transfer.
+    rl_config.num_timesteps = 100_000_000
+    rl_config.num_evals = 10
+    rl_config.reward_scaling = 1.0
+    rl_config.action_repeat = 1
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(64, 64),
+        value_hidden_layer_sizes=(128, 128),
+        policy_obs_key="state",
+        value_obs_key="state",
+    )
+
   elif env_name in (
       "BarkourJoystick",
       "H1InplaceGaitTracking",
