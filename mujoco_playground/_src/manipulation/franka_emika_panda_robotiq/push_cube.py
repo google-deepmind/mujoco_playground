@@ -469,7 +469,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
   def _orientation_error(self, object_quat, target_quat) -> jax.Array:
     quat_diff = math.quat_mul(object_quat, math.quat_inv(target_quat))
     quat_diff = math.normalize(quat_diff)
-    ori_error = 2.0 * jp.asin(jp.clip(math.norm(quat_diff[1:]), a_max=1.0))
+    ori_error = 2.0 * jp.asin(jp.clip(math.norm(quat_diff[1:]), max=1.0))
     return ori_error
 
   def _get_obs(self, state: mjx_env.State) -> jax.Array:
