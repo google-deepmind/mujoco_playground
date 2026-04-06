@@ -22,8 +22,9 @@ import jax
 from jax import numpy as jp
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mjx_env
 import numpy as np
+
+from mujoco_playground._src import mjx_env
 
 
 class Wrapper(mjx_env.MjxEnv):
@@ -77,9 +78,16 @@ class Wrapper(mjx_env.MjxEnv):
       modify_scene_fns: Optional[
           Sequence[Callable[[mujoco.MjvScene], None]]
       ] = None,
+      **kwargs,
   ) -> Sequence[np.ndarray]:
     return self.env.render(
-        trajectory, height, width, camera, scene_option, modify_scene_fns
+        trajectory,
+        height,
+        width,
+        camera,
+        scene_option,
+        modify_scene_fns,
+        **kwargs,
     )
 
 
@@ -244,5 +252,3 @@ class BraxDomainRandomizationVmapWrapper(Wrapper):
         self._mjx_model_v, state, action
     )
     return res
-
-
