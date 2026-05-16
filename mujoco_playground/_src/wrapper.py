@@ -153,6 +153,14 @@ class BraxAutoResetWrapper(Wrapper):
     state.info[f'{self._info_key}_done_count'] = jp.zeros(
         key.shape[:-1], dtype=int
     )
+    # Seed the final-obs slot with the initial observation so the info dict
+    # has the same key set on reset and on step. JAX traced state (e.g.
+    # EpisodeWrapper, VmapWrapper) requires consistent tree structure across
+    # all transitions; an asymmetric info would raise a Dict key mismatch on
+    # the first stepped transition. No semantic meaning on the very first
+    # observation (no episode has terminated yet); learners should gate on
+    # state.info['truncation'] before using this field.
+    state.info[f'{self._info_key}_final_obs'] = state.obs
     return state
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
