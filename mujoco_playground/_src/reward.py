@@ -99,7 +99,8 @@ def tolerance(
       all values of `x` outside of `bounds`. * If `margin > 0` then the output
       will decrease sigmoidally with increasing distance from the nearest bound.
     sigmoid: String, choice of sigmoid type. Valid values are: 'gaussian',
-      'linear', 'hyperbolic', 'long_tail', 'cosine', 'tanh_squared'.
+      'hyperbolic', 'long_tail', 'reciprocal', 'cosine', 'linear', 'quadratic',
+      'tanh_squared'.
     value_at_margin: A float between 0 and 1 specifying the output value when
       the distance from `x` to the nearest bound is equal to `margin`. Ignored
       if `margin == 0`.
