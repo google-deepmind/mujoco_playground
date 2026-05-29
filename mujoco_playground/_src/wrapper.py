@@ -153,6 +153,14 @@ class BraxAutoResetWrapper(Wrapper):
     state.info[f'{self._info_key}_done_count'] = jp.zeros(
         key.shape[:-1], dtype=int
     )
+    # Seed the final-obs slot with the initial observation so the info dict
+    # has the same key set on reset and on step. JAX traced state (e.g.
+    # EpisodeWrapper, VmapWrapper) requires consistent tree structure across
+    # all transitions; an asymmetric info would raise a Dict key mismatch on
+    # the first stepped transition. No semantic meaning on the very first
+    # observation (no episode has terminated yet); learners should gate on
+    # state.info['truncation'] before using this field.
+    state.info[f'{self._info_key}_final_obs'] = state.obs
     return state
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
@@ -185,10 +193,21 @@ class BraxAutoResetWrapper(Wrapper):
         done = jp.reshape(done, [x.shape[0]] + [1] * (len(x.shape) - 1))
       return jp.where(done, x, y)
 
+    # Preserve the pre-reset observation BEFORE the where_done replacement
+    # below clobbers it. Downstream RL learners need this terminal observation
+    # to compute the correct value-bootstrap target on truncation:
+    #   target = r_t + gamma * V(s_{t+1})
+    # where s_{t+1} is the observation the agent would have seen next had the
+    # episode not been truncated, not the reset observation. Without this
+    # field, every actor-critic implementation on Playground silently
+    # bootstraps on V(s_reset). See issue #305.
+    final_obs = state.obs
+
     data = jax.tree.map(where_done, reset_data, state.data)
     obs = jax.tree.map(where_done, reset_obs, state.obs)
 
     next_info = state.info
+    next_info[f'{self._info_key}_final_obs'] = final_obs
     done_count_key = f'{self._info_key}_done_count'
     if self._full_reset and reset_state:
       next_info = jax.tree.map(where_done, reset_state.info, state.info)
