@@ -1,0 +1,181 @@
+<?xml version="1.0" ?>
+<mujoco model="solo8">
+  <compiler angle="radian" meshdir="meshes/stl/without_foot/" autolimits="true"/>
+
+  <option iterations="1" ls_iterations="5" timestep="0.004" integrator="Euler">
+    <flag eulerdamp="disable"/>
+  </option>
+
+  <default>
+    <default class="solo8">
+      <!-- Globally disable all collisions -->
+      <geom condim="1" contype="0" conaffinity="0"/>
+      <joint axis="0 1 0" armature="0.005" damping="0.5"/>
+      <position forcerange="-60 60" inheritrange="1" kp="50" kv="8"/>
+      <default class="hip">
+        <joint range="-3.14 3.14" frictionloss="0.3"/>
+        <position kp="50" kv="8"/>
+      </default>
+      <default class="knee">
+        <joint range="-3.14 3.14" frictionloss="0.5"/>
+        <position kp="60" kv="8" forcerange="-60 60"/>
+      </default>
+      <default class="visual">
+        <geom type="mesh" contype="0" conaffinity="0" group="2"/>
+      </default>
+      <default class="collision">
+        <geom group="3" type="capsule"/>
+      </default>
+      <default class="foot">
+        <!-- Only feet can collide with ground (floor is contype=1, conaffinity=0) -->
+        <geom type="sphere" size="0.013" solimp="0.9 .95 0.023" contype="0" conaffinity="1"/>
+      </default>
+    </default>
+  </default>
+
+  <asset>
+    <texture builtin="checker" height="512" name="texplane" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" type="2d" width="512"/>
+    <material name="floorplane" reflectance="0.5" texrepeat="1 1" texture="texplane" texuniform="true"/>
+    <mesh name="solo_body" file="solo_body.stl"/>
+    <mesh name="solo_upper_leg_left_side" file="solo_upper_leg_left_side.stl"/>
+    <mesh name="solo_upper_leg_right_side" file="solo_upper_leg_right_side.stl"/>
+    <mesh name="solo_lower_leg_left_side" file="solo_lower_leg_left_side.stl"/>
+    <mesh name="solo_lower_leg_right_side" file="solo_lower_leg_right_side.stl"/>
+  </asset>
+
+  <worldbody>
+  
+    <body name="robot" pos="0 0 0.27" childclass="solo8">
+      <freejoint name="root"/>
+      <inertial pos="0 0 0" mass="1.0" diaginertia="0.01 0.01 0.01"/>
+      <geom name="body_visual" type="mesh" mesh="solo_body" class="visual"/>
+
+      <body name="imu_link" pos="-0.01018 -0.03835 -0.00785">
+        <site name="imu_site" type="box" size="0.038 0.024 0.0107"/>
+      </body>
+
+      <!-- Front Left Leg -->
+      <body name="FL_UPPER_LEG" pos="0.1946 0.1015 0">
+        <inertial pos="0.00001530 0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 0.00000010 -0.00004589" mass="0.14737324"/>
+        <joint name="FL_HFE" pos="0 0 0" axis="0 1 0" class="hip" range="-3.14 3.14"/>
+        <geom name="FL_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_left_side" class="visual"/>
+        <geom name="FL_UL_collision" type="capsule" size="0.01" fromto="0 0 0 0 0.03 -0.16" class="collision"/>
+
+        <body name="FL_LOWER_LEG" pos="0 0.03745 -0.16">
+          <inertial pos="0 0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 -0.00000200" mass="0.02318294"/>
+          <joint name="FL_KFE" pos="0 0 0" axis="0 1 0" class="knee" range="-3.14 3.14"/>
+          <geom name="FL_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_left_side" class="visual"/>
+          <geom name="FL_LL_collision" type="capsule" size="0.01" fromto="0 0 0 0 0.01 -0.16" class="collision"/>
+          <geom name="FL" class="foot" pos="0 0.0075 -0.16"/>
+          <site name="FL_contact_site" pos="0 0.0075 -0.16" type="sphere" size="0.013"/>
+          <site name="FL" pos="0 0.0075 -0.16" type="sphere" size="0.023" group="5"/>
+        </body>
+      </body>
+
+      <!-- Front Right Leg -->
+      <body name="FR_UPPER_LEG" pos="0.1946 -0.1015 0">
+        <inertial pos="-0.00001530 -0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 -0.00000010 0.00004589" mass="0.14737324"/>
+        <joint name="FR_HFE" pos="0 0 0" axis="0 1 0" class="hip" range="-3.14 3.14"/>
+        <geom name="FR_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_right_side" class="visual"/>
+        <geom name="FR_UL_collision" type="capsule" size="0.01" fromto="0 0 0 0 -0.03 -0.16" class="collision"/>
+
+        <body name="FR_LOWER_LEG" pos="0 -0.03745 -0.16">
+          <inertial pos="0 -0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 0.00000200" mass="0.02318294"/>
+          <joint name="FR_KFE" pos="0 0 0" axis="0 1 0" class="knee" range="-3.14 3.14"/>
+          <geom name="FR_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_right_side" class="visual"/>
+          <geom name="FR_LL_collision" type="capsule" size="0.01" fromto="0 0 0 0 -0.01 -0.16" class="collision"/>
+          <geom name="FR" class="foot" pos="0 -0.0075 -0.16"/>
+          <site name="FR_contact_site" pos="0 -0.0075 -0.16" type="sphere" size="0.013"/>
+          <site name="FR" pos="0 -0.0075 -0.16" type="sphere" size="0.023" group="5"/>
+        </body>
+      </body>
+
+      <!-- Hind Left Leg -->
+      <body name="HL_UPPER_LEG" pos="-0.1946 0.1015 0">
+        <inertial pos="0.00001530 0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 0.00000010 -0.00004589" mass="0.14737324"/>
+        <joint name="HL_HFE" pos="0 0 0" axis="0 1 0" class="hip" range="-3.14 3.14"/>
+        <geom name="HL_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_left_side" class="visual"/>
+        <geom name="HL_UL_collision" type="capsule" size="0.01" fromto="0 0 0 0 0.03 -0.16" class="collision"/>
+
+        <body name="HL_LOWER_LEG" pos="0 0.03745 -0.16">
+          <inertial pos="0 0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 -0.00000200" mass="0.02318294"/>
+          <joint name="HL_KFE" pos="0 0 0" axis="0 1 0" class="knee" range="-3.14 3.14"/>
+          <geom name="HL_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_left_side" class="visual"/>
+          <geom name="HL_LL_collision" type="capsule" size="0.01" fromto="0 0 0 0 0.01 -0.16" class="collision"/>
+          <geom name="HL" class="foot" pos="0 0.0075 -0.16"/>
+          <site name="HL_contact_site" pos="0 0.0075 -0.16" type="sphere" size="0.013"/>
+          <site name="HL" pos="0 0.0075 -0.16" type="sphere" size="0.023" group="5"/>
+        </body>
+      </body>
+
+      <!-- Hind Right Leg -->
+      <body name="HR_UPPER_LEG" pos="-0.1946 -0.1015 0">
+        <inertial pos="-0.00001530 -0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 -0.00000010 0.00004589" mass="0.14737324"/>
+        <joint name="HR_HFE" pos="0 0 0" axis="0 1 0" class="hip" range="-3.14 3.14"/>
+        <geom name="HR_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_right_side" class="visual"/>
+        <geom name="HR_UL_collision" type="capsule" size="0.01" fromto="0 0 0 0 -0.03 -0.16" class="collision"/>
+
+        <body name="HR_LOWER_LEG" pos="0 -0.03745 -0.16">
+          <inertial pos="0 -0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 0.00000200" mass="0.02318294"/>
+          <joint name="HR_KFE" pos="0 0 0" axis="0 1 0" class="knee" range="-3.14 3.14"/>
+          <geom name="HR_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_right_side" class="visual"/>
+          <geom name="HR_LL_collision" type="capsule" size="0.01" fromto="0 0 0 0 -0.01 -0.16" class="collision"/>
+          <geom name="HR" class="foot" pos="0 -0.0075 -0.16"/>
+          <site name="HR_contact_site" pos="0 -0.0075 -0.16" type="sphere" size="0.013"/>
+          <site name="HR" pos="0 -0.0075 -0.16" type="sphere" size="0.023" group="5"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <contact>
+    <pair name="front_left_foot_ground_contact" condim="6" geom1="floor" geom2="FL" friction="1 1 0.005 0.0001 0.0001"/>
+    <pair name="front_right_foot_ground_contact" condim="6" geom1="floor" geom2="FR" friction="1 1 0.005 0.0001 0.0001"/>
+    <pair name="back_left_foot_ground_contact" condim="6" geom1="floor" geom2="HL" friction="1 1 0.005 0.0001 0.0001"/>
+    <pair name="back_right_foot_ground_contact" condim="6" geom1="floor" geom2="HR" friction="1 1 0.005 0.0001 0.0001"/>
+  </contact>
+
+  <actuator>
+    <position name="FL_HFE" joint="FL_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="FL_KFE" joint="FL_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="FR_HFE" joint="FR_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="FR_KFE" joint="FR_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HL_HFE" joint="HL_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HL_KFE" joint="HL_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HR_HFE" joint="HR_HFE" kp="50" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+    <position name="HR_KFE" joint="HR_KFE" kp="60" kv="8" ctrlrange="-1.5 1.5" forcerange="-60 60"/>
+  </actuator>
+
+  <sensor>
+    <!-- IMU sensors -->
+    <accelerometer name="accelerometer" site="imu_site" noise="0.01"/>
+    <gyro name="gyroscope" site="imu_site" noise="0.01"/>
+    <framequat name="orientation_sensor" objtype="site" objname="imu_site" noise="0.02"/>
+
+    <!-- IMU-based derived quantities -->
+    <framepos objtype="site" objname="imu_site" name="position"/>
+    <framezaxis objtype="site" objname="imu_site" name="upvector"/>
+    <framexaxis objtype="site" objname="imu_site" name="forwardvector"/>
+    <framelinvel objtype="site" objname="imu_site" name="global_linvel"/>
+    <frameangvel objtype="site" objname="imu_site" name="global_angvel"/>
+    <velocimeter site="imu_site" name="local_linvel"/>
+
+    <!-- Foot sensors -->
+    <touch name="FL_contact_sensor" site="FL_contact_site"/>
+    <touch name="FR_contact_sensor" site="FR_contact_site"/>
+    <touch name="HL_contact_sensor" site="HL_contact_site"/>
+    <touch name="HR_contact_sensor" site="HR_contact_site"/>
+
+    <!-- Foot positions relative to IMU -->
+    <framepos objtype="site" objname="FL" name="FL_pos" reftype="site" refname="imu_site"/>
+    <framepos objtype="site" objname="FR" name="FR_pos" reftype="site" refname="imu_site"/>
+    <framepos objtype="site" objname="HL" name="HL_pos" reftype="site" refname="imu_site"/>
+    <framepos objtype="site" objname="HR" name="HR_pos" reftype="site" refname="imu_site"/>
+
+    <!-- Foot velocities in global frame -->
+    <framelinvel objtype="site" objname="FL" name="FL_global_linvel"/>
+    <framelinvel objtype="site" objname="FR" name="FR_global_linvel"/>
+    <framelinvel objtype="site" objname="HL" name="HL_global_linvel"/>
+    <framelinvel objtype="site" objname="HR" name="HR_global_linvel"/>
+  </sensor>
+</mujoco>

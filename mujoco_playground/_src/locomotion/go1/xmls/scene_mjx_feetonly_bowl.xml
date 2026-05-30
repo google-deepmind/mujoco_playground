@@ -18,6 +18,8 @@
     <hfield name="terrain" ncol="201" nrow="201" size="30 30 5 .1"/>
   </asset>
 
+  
+
   <worldbody>
     <camera name="global"  pos="-5 5 5" xyaxes="-1 -1 0 1 0 1" mode="trackcom"/>
     <geom name="floor" type="hfield" hfield="terrain" material="groundplane" pos="0 0 -.01"/>

@@ -1,0 +1,15 @@
+<include>
+  <sensor>
+    <accelerometer name="accelerometer" site="imu_site" noise="0.01"/>
+    <gyro name="gyroscope" site="imu_site" noise="0.01"/>
+    <!-- Orientation sensor for simplicity and because the orientation is typically computed by the IMU -->
+    <!-- From compute noise (e.g. EKF), the orientation is more noisy -->
+    <framequat name="orientation_sensor" objtype="site" objname="imu_site" noise="0.02"/>
+
+    <!-- Foot contacts -->
+    <touch name="FL_contact_sensor" site="FL_contact_site"/>
+    <touch name="FR_contact_sensor" site="FR_contact_site"/>
+    <touch name="HL_contact_sensor" site="HL_contact_site"/>
+    <touch name="HR_contact_sensor" site="HR_contact_site"/>
+  </sensor>
+</include>
