@@ -142,7 +142,11 @@ def make_data(
 ) -> mjx.Data:
   """Initialize MJX Data."""
   data = mjx.make_data(
-      model, impl=impl, naconmax=naconmax, naccdmax=naccdmax, njmax=njmax,
+      model,
+      impl=impl,
+      naconmax=naconmax,
+      naccdmax=naccdmax,
+      njmax=njmax,
       device=device,
   )
   if qpos is not None:
@@ -301,6 +305,7 @@ class MjxEnv(abc.ABC):
       modify_scene_fns: Optional[
           Sequence[Callable[[mujoco.MjvScene], None]]
       ] = None,
+      **kwargs,
   ) -> Sequence[np.ndarray]:
     return render_array(
         self.mj_model,
@@ -310,6 +315,7 @@ class MjxEnv(abc.ABC):
         camera,
         scene_option=scene_option,
         modify_scene_fns=modify_scene_fns,
+        **kwargs,
     )
 
   @property
