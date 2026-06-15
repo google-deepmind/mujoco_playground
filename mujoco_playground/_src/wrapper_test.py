@@ -131,6 +131,26 @@ class WrapperTest(parameterized.TestCase):
     else:
       np.testing.assert_allclose(state.obs, first_obs, rtol=1e-6)
 
+  def test_render_forwards_kwargs(self):
+    """Tests that Wrapper.render forwards extra kwargs to the wrapped env."""
+
+    class RecordingEnv:
+
+      def __init__(self):
+        self.received_kwargs = None
+
+      def render(self, trajectory, height=240, width=320, camera=None,
+                 scene_option=None, modify_scene_fns=None, **kwargs):
+        del trajectory, height, width, camera, scene_option, modify_scene_fns
+        self.received_kwargs = kwargs
+        return []
+
+    inner = RecordingEnv()
+    wrapped = wrapper.Wrapper(inner)
+    wrapped.render([], hfield_data=123, foo='bar')
+
+    self.assertEqual(inner.received_kwargs, {'hfield_data': 123, 'foo': 'bar'})
+
   def test_domain_randomization_wrapper(self):
     def randomization_fn(model, rng):
       @jax.vmap
