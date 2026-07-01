@@ -25,7 +25,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          uv pip install --system -e ".[test]"
+          python -m venv .venv
+          . .venv/bin/activate
+          uv pip install -e ".[test]"
       - name: Trigger git clone
         run: |
           python -c "from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()"
