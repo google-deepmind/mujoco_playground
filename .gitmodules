@@ -1,0 +1,3 @@
+[submodule "extern/diff-mjx"]
+	path = extern/diff-mjx
+	url = https://github.com/Herpderk/diff-mjx.git
