@@ -9,7 +9,7 @@ readme = "README.md"
 authors = [
     {name = "Google DeepMind", email = "mujoco@deepmind.com"},
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dynamic = ["description"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering",
 ]
@@ -30,13 +29,16 @@ dependencies = [
     "lxml",
     "mediapy",
     "ml_collections",
-    "mujoco-mjx>=3.6.0",
-    "mujoco>=3.6.0",
-    "warp-lang>=1.11",
+    "mujoco>=3.10.0",
+    "mujoco-mjx",
+    "warp-lang>=1.14",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
 ]
 keywords = ["mjx", "mujoco", "sim2real", "reinforcement learning"]
+
+[tool.uv.sources]
+mujoco-mjx = { path = "extern/diff-mjx/mjx" }
 
 [project.optional-dependencies]
 cuda = [
