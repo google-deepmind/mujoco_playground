@@ -32,6 +32,8 @@ from mujoco_playground._src.locomotion.go1 import handstand as go1_handstand
 from mujoco_playground._src.locomotion.go1 import joystick as go1_joystick
 from mujoco_playground._src.locomotion.go1 import randomize as go1_randomize
 from mujoco_playground._src.locomotion.h1 import inplace_gait_tracking as h1_inplace_gait_tracking
+from mujoco_playground._src.locomotion.k1 import joystick as k1_joystick
+from mujoco_playground._src.locomotion.k1 import randomize as k1_randomize
 from mujoco_playground._src.locomotion.h1 import joystick_gait_tracking as h1_joystick_gait_tracking
 from mujoco_playground._src.locomotion.op3 import joystick as op3_joystick
 from mujoco_playground._src.locomotion.spot import getup as spot_getup
@@ -65,6 +67,12 @@ _envs = {
     "Go1Footstand": go1_handstand.Footstand,
     "H1InplaceGaitTracking": h1_inplace_gait_tracking.InplaceGaitTracking,
     "H1JoystickGaitTracking": h1_joystick_gait_tracking.JoystickGaitTracking,
+    "K1JoystickFlatTerrain": functools.partial(
+        k1_joystick.Joystick, task="flat_terrain"
+    ),
+    "K1JoystickRoughTerrain": functools.partial(
+        k1_joystick.Joystick, task="rough_terrain"
+    ),
     "Op3Joystick": op3_joystick.Joystick,
     "SpotFlatTerrainJoystick": functools.partial(
         spot_joystick.Joystick, task="flat_terrain"
@@ -98,6 +106,8 @@ _cfgs = {
     "Go1Footstand": go1_handstand.default_config,
     "H1InplaceGaitTracking": h1_inplace_gait_tracking.default_config,
     "H1JoystickGaitTracking": h1_joystick_gait_tracking.default_config,
+    "K1JoystickFlatTerrain": k1_joystick.default_config,
+    "K1JoystickRoughTerrain": k1_joystick.default_config,
     "Op3Joystick": op3_joystick.default_config,
     "SpotFlatTerrainJoystick": spot_joystick.default_config,
     "SpotGetup": spot_getup.default_config,
@@ -120,6 +130,8 @@ _randomizer = {
     "Go1Getup": go1_randomize.domain_randomize,
     "Go1Handstand": go1_randomize.domain_randomize,
     "Go1Footstand": go1_randomize.domain_randomize,
+    "K1JoystickFlatTerrain": k1_randomize.domain_randomize,
+    "K1JoystickRoughTerrain": k1_randomize.domain_randomize,
     "T1JoystickFlatTerrain": t1_randomize.domain_randomize,
     "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
 }

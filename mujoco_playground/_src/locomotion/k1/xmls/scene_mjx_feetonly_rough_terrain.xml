@@ -1,0 +1,46 @@
+<mujoco model="k1 feet only rough terrain scene">
+  <include file="k1_mjx_feetonly.xml"/>
+
+  <statistic center="0.3 0.1 0.55" extent="0.7" meansize="0.04"/>
+
+  <visual>
+    <rgba force="1 0 0 1"/>
+    <global azimuth="-160" elevation="-20"/>
+    <map force="0.01"/>
+    <scale forcewidth="0.3" contactwidth="0.5" contactheight="0.2"/>
+    <quality shadowsize="8192"/>
+  </visual>
+
+  <asset>
+    <!-- https://polyhaven.com/a/rock_face -->
+    <texture type="2d" name="groundplane" file="assets/rocky_texture.png"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance=".8"/>
+    <hfield name="hfield" file="assets/hfield.png" size="10 10 .05 1.0"/>
+  </asset>
+
+  <worldbody>
+    <geom name="floor" type="hfield" hfield="hfield" material="groundplane" priority="1" friction=".6" contype="1" conaffinity="2" condim="3"/>
+  </worldbody>
+
+  <include file="sensor.xml"/>
+
+  <keyframe>
+    <key name="home"
+      qpos="
+    0 0 0.6
+    1 0 0 0
+    0 0
+    0 -1.3 0 0
+    0 1.3 0 0
+    -0.2 0 0 0.4 -0.2 0
+    -0.2 0 0 0.4 -0.2 0
+    "
+      ctrl="
+    0 0
+    0 -1.3 0 0
+    0 1.3 0 0
+    -0.2 0 0 0.4 -0.2 0
+    -0.2 0 0 0.4 -0.2 0
+    "/>
+  </keyframe>
+</mujoco>
