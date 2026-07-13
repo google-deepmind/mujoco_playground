@@ -30,9 +30,8 @@ dependencies = [
     "lxml",
     "mediapy",
     "ml_collections",
-    "mujoco-mjx>=3.6.0",
+    "mujoco-mjx[warp]>=3.6.0",
     "mujoco>=3.6.0",
-    "warp-lang>=1.11",
     "orbax-checkpoint>=0.11.22",
     "tqdm",
 ]
