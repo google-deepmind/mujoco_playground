@@ -31,11 +31,13 @@ import tqdm
 
 # Root path is used for loading XML strings directly using etils.epath.
 ROOT_PATH = epath.Path(__file__).parent
-# Base directory for external dependencies.
-EXTERNAL_DEPS_PATH = epath.Path(__file__).parent.parent / "external_deps"
-# The menagerie path is used to load robot assets.
-# Resource paths do not have glob implemented, so we use a bare epath.Path.
-MENAGERIE_PATH = EXTERNAL_DEPS_PATH / "mujoco_menagerie"
+try:
+  from . import internal_paths
+  EXTERNAL_DEPS_PATH = internal_paths.EXTERNAL_DEPS_PATH
+  MENAGERIE_PATH = internal_paths.MENAGERIE_PATH
+except ImportError:
+  EXTERNAL_DEPS_PATH = epath.Path(__file__).parent.parent / "external_deps"
+  MENAGERIE_PATH = EXTERNAL_DEPS_PATH / "mujoco_menagerie"
 # Commit SHA of the menagerie repo.
 MENAGERIE_COMMIT_SHA = "1b86ece576591213e2b666ebf59508454200ca97"
 
