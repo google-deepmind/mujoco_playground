@@ -88,6 +88,22 @@ class WrapperTest(parameterized.TestCase):
       self.assertEqual(state.info['AutoResetWrapper_preserve_info'], 2)
       expected_other_info = 1 if full_reset else 2
       self.assertEqual(state.info['other_info'], expected_other_info)
+      # Regression for #305: the pre-reset (terminal) observation must be
+      # stashed in info so downstream RL learners can compute the correct
+      # value-bootstrap target on truncation.
+      self.assertIn('AutoResetWrapper_final_obs', state.info)
+      self.assertEqual(
+          state.info['AutoResetWrapper_final_obs'].shape, state.obs.shape
+      )
+      # On a done step, state.obs has been replaced by the reset observation;
+      # final_obs must hold the terminal observation, which differs.
+      self.assertFalse(
+          np.allclose(
+              np.asarray(state.info['AutoResetWrapper_final_obs']),
+              np.asarray(state.obs),
+              atol=1e-6,
+          )
+      )
 
   @parameterized.named_parameters(
       ('full_reset', True),
