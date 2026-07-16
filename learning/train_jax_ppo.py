@@ -33,12 +33,14 @@ import jax.numpy as jp
 import mediapy as media
 from ml_collections import config_dict
 import mujoco
-import mujoco_playground
+
 from mujoco_playground import registry
 from mujoco_playground import wrapper
+import mujoco_playground
 from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
+
 try:
   import tensorboardX
 except ImportError:
@@ -174,12 +176,11 @@ _TRAINING_METRICS_STEPS = flags.DEFINE_integer(
     " experiences slowdown.",
 )
 _WARP_KERNEL_CACHE_DIR = flags.DEFINE_string(
-    "warp_kernel_cache_dir", None,
+    "warp_kernel_cache_dir",
+    None,
     "Directory for caching compiled Warp kernels.",
 )
-_LOGDIR = flags.DEFINE_string(
-    "logdir", None, "Directory for logging."
-)
+_LOGDIR = flags.DEFINE_string("logdir", None, "Directory for logging.")
 
 
 def get_rl_config(env_name: str) -> config_dict.ConfigDict:
@@ -224,6 +225,7 @@ def main(argv):
 
   if _WARP_KERNEL_CACHE_DIR.value is not None:
     import warp as wp  # pylint: disable=g-import-not-at-top
+
     wp.config.kernel_cache_dir = _WARP_KERNEL_CACHE_DIR.value
 
   # Load environment configuration
@@ -319,8 +321,7 @@ def main(argv):
   if _USE_WANDB.value and not _PLAY_ONLY.value:
     if wandb is None:
       raise ImportError(
-          "wandb is required for --use_wandb. "
-          "Install via: pip install wandb"
+          "wandb is required for --use_wandb. Install via: pip install wandb"
       )
     wandb.init(project="mjxrl", name=exp_name)
     wandb.config.update(env_cfg.to_dict())

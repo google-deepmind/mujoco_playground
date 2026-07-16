@@ -198,7 +198,9 @@ class Joystick(op3_base.Op3Env):
         self.mjx_model, state.data, motor_targets, self.n_substeps
     )
 
-    obs = self._get_obs(data, state.info, state.obs, noise_rng)  # pyrefly: ignore[bad-argument-type]
+    obs = self._get_obs(
+        data, state.info, state.obs, noise_rng
+    )  # pyrefly: ignore[bad-argument-type]
     done = self._get_termination(data)
 
     rewards = self._get_reward(data, action, state.info, state.metrics, done)
@@ -229,7 +231,9 @@ class Joystick(op3_base.Op3Env):
       state.metrics[f"reward/{k}"] = v
 
     done = jp.float32(done)
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:

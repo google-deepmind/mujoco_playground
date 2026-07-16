@@ -22,11 +22,11 @@ from ml_collections import config_dict
 from mujoco import mjx
 from mujoco.mjx._src import math
 from mujoco.mjx._src import types
+import numpy as np
 
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src import reward as reward_util
 from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import panda_robotiq
-import numpy as np
 
 WORKSPACE_MIN = (0.3, -0.5, 0.0)
 WORKSPACE_MAX = (0.75, 0.7, 0.5)
@@ -201,7 +201,9 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
     info["obs_history"] = jp.zeros(self._config.obs_history_len * obs.shape[0])
 
     reward, done = jp.zeros(2)
-    state = mjx_env.State(data, obs, reward, done, metrics, info)  # pyrefly: ignore[bad-argument-type]
+    state = mjx_env.State(
+        data, obs, reward, done, metrics, info
+    )  # pyrefly: ignore[bad-argument-type]
     return state
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
@@ -510,9 +512,11 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
     obj_quat = data.xquat[self._obj_body]
     obj_quat_w_noise = math.quat_mul(rand_quat, obj_quat)
     obj_pos = data.xpos[self._obj_body]
-    obj_pos_w_noise = obj_pos + jax.random.uniform(
-        key3, (3,), minval=-1, maxval=1
-    ) * self._config.noise_config.noise_scales.obj_pos
+    obj_pos_w_noise = (
+        obj_pos
+        + jax.random.uniform(key3, (3,), minval=-1, maxval=1)
+        * self._config.noise_config.noise_scales.obj_pos
+    )
 
     # Add noise to robot proprio observation.
     info["rng"], key1, key2, key3, key4 = jax.random.split(info["rng"], 5)

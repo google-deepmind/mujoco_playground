@@ -115,7 +115,9 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
         **{k: 0.0 for k in self._config.reward_config.scales.keys()},
     }
 
-    return mjx_env.State(data, obs, reward, done, metrics, info)  # pyrefly: ignore[bad-argument-type]
+    return mjx_env.State(
+        data, obs, reward, done, metrics, info
+    )  # pyrefly: ignore[bad-argument-type]
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     delta = action * self._config.action_scale
@@ -157,7 +159,9 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
         out_of_bounds=out_of_bounds.astype(float),
     )
     obs = self._get_obs(data)
-    return mjx_env.State(data, obs, reward, done, state.metrics, state.info)  # pyrefly: ignore[bad-argument-type]
+    return mjx_env.State(
+        data, obs, reward, done, state.metrics, state.info
+    )  # pyrefly: ignore[bad-argument-type]
 
   def _get_obs(self, data: mjx.Data) -> jax.Array:
     left_gripper_pos = data.site_xpos[self._left_gripper_site]

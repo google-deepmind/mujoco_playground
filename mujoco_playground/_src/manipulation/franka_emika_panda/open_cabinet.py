@@ -202,7 +202,9 @@ class PandaOpenCabinet(panda.PandaBase):
     return {
         "box_target": box_target * info["reached_box"],
         "gripper_box": gripper_box,
-        "no_barrier_collision": no_barrier_collision.astype(float),  # pyrefly: ignore[missing-attribute]
+        "no_barrier_collision": no_barrier_collision.astype(
+            float
+        ),  # pyrefly: ignore[missing-attribute]
         "robot_target_qpos": robot_target_qpos,
     }
 

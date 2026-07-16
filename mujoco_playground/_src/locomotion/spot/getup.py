@@ -176,7 +176,9 @@ class Getup(spot_base.SpotEnv):
       state.metrics[f"reward/{k}"] = v
 
     done = jp.float32(done)
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_obs(

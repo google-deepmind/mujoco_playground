@@ -38,7 +38,7 @@ def default_vision_config() -> config_dict.ConfigDict:
       render_rgb=(True,),
       render_depth=(False,),
       enabled_geom_groups=[0, 1, 2],
-      cam_active=(True, False), # [fixed, lookatcart]
+      cam_active=(True, False),  # [fixed, lookatcart]
   )
 
 
@@ -100,10 +100,7 @@ class Balance(mjx_env.MjxEnv):
 
     if self._vision:
       vision_kwargs = self._config.vision_config.to_dict()
-      self._rc = mjx.create_render_context(
-          mjm=self._mj_model,
-          **vision_kwargs
-      )
+      self._rc = mjx.create_render_context(mjm=self._mj_model, **vision_kwargs)
       self._rc_pytree = self._rc.pytree()
 
   def _post_init(self) -> None:
@@ -289,10 +286,10 @@ class Balance(mjx_env.MjxEnv):
     alive = jp.float32(0.1)
     pole_pos_penalty = -1.0 * (1.0 - pole_cos) ** 2
     cart_pos = data.qpos[self._slider_qposadr]
-    cart_pos_penalty = -0.02 * cart_pos ** 2
+    cart_pos_penalty = -0.02 * cart_pos**2
     cart_vel_penalty = -0.01 * jp.abs(cart_vel)
     pole_vel_penalty = -0.005 * jp.abs(pole_vel)
-    action_penalty = -0.01 * jp.sum(action ** 2)
+    action_penalty = -0.01 * jp.sum(action**2)
 
     components = {
         "alive": alive,
@@ -306,8 +303,12 @@ class Balance(mjx_env.MjxEnv):
       metrics[f"reward/{k}"] = v
 
     return (
-        alive + pole_pos_penalty + cart_pos_penalty
-        + cart_vel_penalty + pole_vel_penalty + action_penalty
+        alive
+        + pole_pos_penalty
+        + cart_pos_penalty
+        + cart_vel_penalty
+        + pole_vel_penalty
+        + action_penalty
     )
 
   def _sparse_reward(

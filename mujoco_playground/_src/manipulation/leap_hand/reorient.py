@@ -67,7 +67,7 @@ def default_config() -> config_dict.ConfigDict:
           pert_duration_steps=[1, 100],
           pert_wait_steps=[60, 150],
       ),
-      impl='warp',
+      impl="warp",
       naconmax=30 * 8192,
       njmax=160,
   )
@@ -261,7 +261,9 @@ class CubeReorient(leap_hand_base.LeapHandEnv):
       state.metrics[f"reward/{k}"] = v
 
     done = done.astype(reward.dtype)
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_termination(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:

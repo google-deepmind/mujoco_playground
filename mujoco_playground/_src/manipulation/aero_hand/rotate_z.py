@@ -163,7 +163,9 @@ class CubeRotateZAxis(aero_hand_base.AeroHandEnv):
       state.metrics[f"reward/{k}"] = v
 
     done = done.astype(reward.dtype)  # pyrefly: ignore[missing-attribute]
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:

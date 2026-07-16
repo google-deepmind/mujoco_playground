@@ -139,7 +139,9 @@ class HandOver(aloha_base.AlohaEnv):
         **{k: 0.0 for k in self._config.reward_config.scales.keys()},
     }
 
-    return mjx_env.State(data, obs, reward, done, metrics, info)  # pyrefly: ignore[bad-argument-type]
+    return mjx_env.State(
+        data, obs, reward, done, metrics, info
+    )  # pyrefly: ignore[bad-argument-type]
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     newly_reset = state.info['_steps'] == 0

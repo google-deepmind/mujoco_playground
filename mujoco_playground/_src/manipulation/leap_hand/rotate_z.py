@@ -53,7 +53,7 @@ def default_config() -> config_dict.ConfigDict:
               action_rate=0.0,
           ),
       ),
-      impl='warp',
+      impl="warp",
       naconmax=30 * 8192,
       njmax=160,
   )
@@ -159,7 +159,9 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
       state.metrics[f"reward/{k}"] = v
 
     done = done.astype(reward.dtype)  # pyrefly: ignore[missing-attribute]
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:

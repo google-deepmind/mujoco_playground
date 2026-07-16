@@ -15,6 +15,7 @@
 """Constants for Apollo."""
 
 from etils import epath
+
 from mujoco_playground._src import mjx_env
 
 XML_DIR = mjx_env.ROOT_PATH / "locomotion" / "apollo" / "xmls"

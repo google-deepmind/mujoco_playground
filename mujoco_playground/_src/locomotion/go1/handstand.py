@@ -141,8 +141,7 @@ class Handstand(go1_base.Go1Env):
 
     # Contact sensor ids.
     self._fullcollision_floor_found_sensor = [
-        self._mj_model.sensor(f"{geom}_floor_found").id
-        for geom in geom_names
+        self._mj_model.sensor(f"{geom}_floor_found").id for geom in geom_names
     ]
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
@@ -225,7 +224,9 @@ class Handstand(go1_base.Go1Env):
       state.metrics[f"reward/{k}"] = v
 
     done = done.astype(reward.dtype)
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_termination(

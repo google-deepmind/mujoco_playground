@@ -15,7 +15,9 @@
 """RL config for DM Control Suite."""
 
 from typing import Optional
+
 from ml_collections import config_dict
+
 from mujoco_playground._src import dm_control_suite
 
 

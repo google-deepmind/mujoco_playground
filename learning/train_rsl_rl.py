@@ -26,14 +26,15 @@ import jax
 import mediapy as media
 from ml_collections import config_dict
 import mujoco
-import mujoco_playground
-from mujoco_playground import registry
-from mujoco_playground import wrapper_torch
-from mujoco_playground.config import locomotion_params
-from mujoco_playground.config import manipulation_params
 from rsl_rl.runners import OnPolicyRunner
 import torch
 import warp as wp
+
+from mujoco_playground import registry
+from mujoco_playground import wrapper_torch
+import mujoco_playground
+from mujoco_playground.config import locomotion_params
+from mujoco_playground.config import manipulation_params
 
 try:
   import wandb  # pylint: disable=g-import-not-at-top

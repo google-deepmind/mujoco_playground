@@ -21,9 +21,10 @@ from absl.testing import parameterized
 from brax.envs.wrappers import training as brax_training
 import jax
 import jax.numpy as jp
+import numpy as np
+
 from mujoco_playground._src import dm_control_suite
 from mujoco_playground._src import wrapper
-import numpy as np
 
 
 class WrapperTest(parameterized.TestCase):

@@ -425,15 +425,24 @@ class Joystick(g1_base.G1Env):
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:
     fall_termination = self.get_gravity(data, "torso")[-1] < 0.0
-    contact_termination = data.sensordata[
-        self._mj_model.sensor_adr[self._right_foot_left_foot_found_sensor]
-    ] > 0
-    contact_termination |= data.sensordata[
-        self._mj_model.sensor_adr[self._left_foot_right_shin_found_sensor]
-    ] > 0
-    contact_termination |= data.sensordata[
-        self._mj_model.sensor_adr[self._right_foot_left_shin_found_sensor]
-    ] > 0
+    contact_termination = (
+        data.sensordata[
+            self._mj_model.sensor_adr[self._right_foot_left_foot_found_sensor]
+        ]
+        > 0
+    )
+    contact_termination |= (
+        data.sensordata[
+            self._mj_model.sensor_adr[self._left_foot_right_shin_found_sensor]
+        ]
+        > 0
+    )
+    contact_termination |= (
+        data.sensordata[
+            self._mj_model.sensor_adr[self._right_foot_left_shin_found_sensor]
+        ]
+        > 0
+    )
     return (
         fall_termination
         | contact_termination

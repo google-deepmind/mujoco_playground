@@ -129,14 +129,14 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
 
     # Contact sensor IDs.
     self._floor_hand_found_sensor = [
-        self._mj_model.sensor(f"{geom}_floor_found").id
-        for geom in ["left_finger_pad", "right_finger_pad", "hand_capsule"]
+        self._mj_model.sensor(f'{geom}_floor_found').id
+        for geom in ['left_finger_pad', 'right_finger_pad', 'hand_capsule']
     ]
 
     if self._vision:
       self._rc = mjx.create_render_context(
-        mjm=self._mj_model,
-        **self._config.vision_config.to_dict())
+          mjm=self._mj_model, **self._config.vision_config.to_dict()
+      )
       self._rc_pytree = self._rc.pytree()
 
   def _post_init(self, obj_name, keyframe):
@@ -249,7 +249,9 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
       rgb = adjust_brightness(rgb, brightness)
       obs = {'pixels/view_0': rgb}
 
-    return mjx_env.State(data, obs, reward, done, metrics, info)  # pyrefly: ignore[bad-argument-type]
+    return mjx_env.State(
+        data, obs, reward, done, metrics, info
+    )  # pyrefly: ignore[bad-argument-type]
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
     """Runs one timestep of the environment's dynamics."""

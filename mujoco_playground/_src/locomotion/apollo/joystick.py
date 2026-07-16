@@ -21,7 +21,9 @@ import jax.numpy as jp
 from ml_collections import config_dict
 from mujoco import mjx
 from mujoco.mjx._src import math
-from mujoco_playground._src import gait, mjx_env
+
+from mujoco_playground._src import gait
+from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.apollo import base
 from mujoco_playground._src.locomotion.apollo import constants as consts
 
@@ -243,7 +245,9 @@ class Joystick(base.ApolloEnv):
     for k, v in rewards.items():
       state.metrics[f"reward/{k}"] = v
     done = done.astype(reward.dtype)  # pyrefly: ignore[missing-attribute]
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_termination(

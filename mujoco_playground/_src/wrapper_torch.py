@@ -32,6 +32,7 @@ except ImportError:
   torch = None
 
 from mujoco_playground._src import wrapper
+
 try:
   from tensordict import TensorDict  # pytype: disable=import-error
 except ImportError:
@@ -65,7 +66,9 @@ def get_load_path(root, load_run=-1, checkpoint=-1):
   if load_run == -1 or load_run == "-1":
     load_run = last_run
   else:
-    load_run = os.path.join(root, load_run)  # pyrefly: ignore[no-matching-overload]
+    load_run = os.path.join(
+        root, load_run
+    )  # pyrefly: ignore[no-matching-overload]
 
   if checkpoint == -1:
     models = [file for file in os.listdir(load_run) if "model" in file]
@@ -194,7 +197,9 @@ class RSLRLBraxWrapper(VecEnv):  # pyrefly: ignore[invalid-inheritance]
       if k not in info_ret["log"]:
         info_ret["log"][k] = _jax_to_torch(v).float().mean().item()
 
-    obs = TensorDict(obs, batch_size=[self.num_envs])  # pyrefly: ignore[not-callable]
+    obs = TensorDict(
+        obs, batch_size=[self.num_envs]
+    )  # pyrefly: ignore[not-callable]
     return obs, reward, done, info_ret
 
   def reset(self):
@@ -208,10 +213,12 @@ class RSLRLBraxWrapper(VecEnv):  # pyrefly: ignore[invalid-inheritance]
     else:
       obs = _jax_to_torch(self.env_state.obs)
       obs = {"state": obs}
-    return TensorDict(obs, batch_size=[self.num_envs])  # pyrefly: ignore[not-callable]
+    return TensorDict(
+        obs, batch_size=[self.num_envs]
+    )  # pyrefly: ignore[not-callable]
 
   def get_observations(self):
-   return self.reset()
+    return self.reset()
 
   def render(self, mode="human"):  # pylint: disable=unused-argument
     if self.render_callback is not None:

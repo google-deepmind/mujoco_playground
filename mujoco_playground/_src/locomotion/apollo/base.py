@@ -22,9 +22,10 @@ import jax.numpy as jp
 from ml_collections import config_dict
 import mujoco
 from mujoco import mjx
+import numpy as np
+
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.apollo import constants as consts
-import numpy as np
 
 
 def get_assets() -> Dict[str, bytes]:

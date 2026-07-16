@@ -200,7 +200,9 @@ class Joystick(t1_base.T1Env):
     new_x = jp.where(jp.abs(qpos[0]) > 9.5, 0.0, qpos[0])
     new_y = jp.where(jp.abs(qpos[1]) > 9.5, 0.0, qpos[1])
     qpos = qpos.at[0:2].set(jp.array([new_x, new_y]))
-    state = state.replace(data=state.data.replace(qpos=qpos))  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=state.data.replace(qpos=qpos)
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def reset(self, rng: jax.Array) -> mjx_env.State:

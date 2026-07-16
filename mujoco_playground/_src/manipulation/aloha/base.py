@@ -110,4 +110,6 @@ class AlohaEnv(mjx_env.MjxEnv):
         data.sensordata[self._mj_model.sensor_adr[sensorid]] > 0
         for sensorid in self._table_finger_found_sensor
     ]
-    return (sum(hand_table_collisions) > 0).astype(float)  # pyrefly: ignore[missing-attribute]
+    return (sum(hand_table_collisions) > 0).astype(
+        float
+    )  # pyrefly: ignore[missing-attribute]

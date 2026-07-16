@@ -22,8 +22,9 @@ import jax
 from jax import numpy as jp
 import mujoco
 from mujoco import mjx
-from mujoco_playground._src import mjx_env
 import numpy as np
+
+from mujoco_playground._src import mjx_env
 
 
 class Wrapper(mjx_env.MjxEnv):
@@ -113,7 +114,9 @@ def wrap_for_brax_training(
     env = brax_training.VmapWrapper(env)  # pytype: disable=wrong-arg-types
   else:
     env = BraxDomainRandomizationVmapWrapper(env, randomization_fn)
-  env = brax_training.EpisodeWrapper(env, episode_length, action_repeat)  # pyrefly: ignore[bad-argument-type, bad-assignment]
+  env = brax_training.EpisodeWrapper(
+      env, episode_length, action_repeat
+  )  # pyrefly: ignore[bad-argument-type, bad-assignment]
   env = BraxAutoResetWrapper(env, full_reset=full_reset)
   return env
 
@@ -174,7 +177,9 @@ class BraxAutoResetWrapper(Wrapper):
       steps = jp.where(state.done, jp.zeros_like(steps), steps)
       state.info.update(steps=steps)
 
-    state = state.replace(done=jp.zeros_like(state.done))  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        done=jp.zeros_like(state.done)
+    )  # pyrefly: ignore[missing-attribute]
     state = self.env.step(state, action)
 
     def where_done(x, y):
@@ -244,5 +249,3 @@ class BraxDomainRandomizationVmapWrapper(Wrapper):
         self._mjx_model_v, state, action
     )
     return res
-
-

@@ -157,10 +157,15 @@ class Joystick(h1_base.H1Env):
     motor_targets = self._default_pose + action * self._config.action_scale
     motor_targets = jp.clip(motor_targets, self._lowers, self._uppers)
     data = mjx_env.step(
-        self.mjx_model, state.data, motor_targets, self._n_frames  # pytype: disable=attribute-error
+        self.mjx_model,
+        state.data,
+        motor_targets,
+        self._n_frames,  # pytype: disable=attribute-error
     )
 
-    obs = self._get_obs(data, state.info, state.obs, noise_rng)  # pyrefly: ignore[bad-argument-type]
+    obs = self._get_obs(
+        data, state.info, state.obs, noise_rng
+    )  # pyrefly: ignore[bad-argument-type]
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     torso_z = data.xpos[self._torso_body_id, -1]
@@ -196,7 +201,9 @@ class Joystick(h1_base.H1Env):
       state.metrics[f"reward/{k}"] = v
 
     done = jp.float32(done)
-    state = state.replace(data=data, obs=obs, reward=reward, done=done)  # pyrefly: ignore[missing-attribute]
+    state = state.replace(
+        data=data, obs=obs, reward=reward, done=done
+    )  # pyrefly: ignore[missing-attribute]
     return state
 
   def _get_obs(
