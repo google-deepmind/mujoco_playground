@@ -13,12 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 """MuJoCo Playground."""
+import importlib
+
 from mujoco_playground._src import dm_control_suite
 from mujoco_playground._src import locomotion
 from mujoco_playground._src import manipulation
 from mujoco_playground._src import registry
 from mujoco_playground._src import wrapper
-from mujoco_playground._src import wrapper_torch
+
+try:
+  wrapper_torch = importlib.import_module(
+      "mujoco_playground.rss2025._src.wrapper_torch"
+  )
+except (ImportError, AttributeError):
+  wrapper_torch = None
+
 # pylint: disable=g-importing-member
 from mujoco_playground._src.mjx_env import MjxEnv
 from mujoco_playground._src.mjx_env import render_array
@@ -37,5 +46,6 @@ __all__ = [
     "State",
     "step",
     "wrapper",
-    "wrapper_torch",
 ]
+if wrapper_torch is not None:
+  __all__.append("wrapper_torch")
