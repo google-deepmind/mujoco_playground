@@ -66,7 +66,7 @@ def get_load_path(root, load_run=-1, checkpoint=-1):
   if load_run == -1 or load_run == "-1":
     load_run = last_run
   else:
-    load_run = os.path.join(
+    load_run = os.path.join(  # pyrefly: ignore[no-matching-overload]
         root, load_run
     )  # pyrefly: ignore[no-matching-overload]
 
@@ -197,7 +197,7 @@ class RSLRLBraxWrapper(VecEnv):  # pyrefly: ignore[invalid-inheritance]
       if k not in info_ret["log"]:
         info_ret["log"][k] = _jax_to_torch(v).float().mean().item()
 
-    obs = TensorDict(
+    obs = TensorDict(  # pyrefly: ignore[not-callable]
         obs, batch_size=[self.num_envs]
     )  # pyrefly: ignore[not-callable]
     return obs, reward, done, info_ret
@@ -213,7 +213,7 @@ class RSLRLBraxWrapper(VecEnv):  # pyrefly: ignore[invalid-inheritance]
     else:
       obs = _jax_to_torch(self.env_state.obs)
       obs = {"state": obs}
-    return TensorDict(
+    return TensorDict(  # pyrefly: ignore[not-callable]
         obs, batch_size=[self.num_envs]
     )  # pyrefly: ignore[not-callable]
 

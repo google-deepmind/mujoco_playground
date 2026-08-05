@@ -202,7 +202,7 @@ class PandaRobotiqPushCube(panda_robotiq.PandaRobotiqBase):
 
     reward, done = jp.zeros(2)
     state = mjx_env.State(
-        data, obs, reward, done, metrics, info
+        data, obs, reward, done, metrics, info  # pyrefly: ignore[bad-argument-type]
     )  # pyrefly: ignore[bad-argument-type]
     return state
 

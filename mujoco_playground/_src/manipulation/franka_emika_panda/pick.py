@@ -152,7 +152,7 @@ class PandaPickCube(panda.PandaBase):
     obs = self._get_obs(data, info)
     reward, done = jp.zeros(2)
     state = State(
-        data, obs, reward, done, metrics, info
+        data, obs, reward, done, metrics, info  # pyrefly: ignore[bad-argument-type]
     )  # pyrefly: ignore[bad-argument-type]
     return state
 
@@ -208,7 +208,7 @@ class PandaPickCube(panda.PandaBase):
         for sensor_id in self._floor_hand_found_sensor
     ]
     floor_collision = sum(hand_floor_collision) > 0
-    no_floor_collision = (1 - floor_collision).astype(
+    no_floor_collision = (1 - floor_collision).astype(  # pyrefly: ignore[missing-attribute]
         float
     )  # pyrefly: ignore[missing-attribute]
 

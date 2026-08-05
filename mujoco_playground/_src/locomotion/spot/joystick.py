@@ -281,7 +281,7 @@ class Joystick(spot_base.SpotEnv):
     state.metrics["swing_peak"] = jp.mean(state.info["swing_peak"])
 
     done = done.astype(reward.dtype)
-    state = state.replace(
+    state = state.replace(  # pyrefly: ignore[missing-attribute]
         data=data, obs=obs, reward=reward, done=done
     )  # pyrefly: ignore[missing-attribute]
     return state

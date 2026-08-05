@@ -159,7 +159,7 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
       state.metrics[f"reward/{k}"] = v
 
     done = done.astype(reward.dtype)  # pyrefly: ignore[missing-attribute]
-    state = state.replace(
+    state = state.replace(  # pyrefly: ignore[missing-attribute]
         data=data, obs=obs, reward=reward, done=done
     )  # pyrefly: ignore[missing-attribute]
     return state

@@ -140,7 +140,7 @@ class HandOver(aloha_base.AlohaEnv):
     }
 
     return mjx_env.State(
-        data, obs, reward, done, metrics, info
+        data, obs, reward, done, metrics, info  # pyrefly: ignore[bad-argument-type]
     )  # pyrefly: ignore[bad-argument-type]
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
