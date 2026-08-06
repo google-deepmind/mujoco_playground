@@ -141,7 +141,7 @@ class SinglePegInsertion(aloha_base.AlohaEnv):
     out_of_bounds |= jp.any(jp.abs(data.xpos[self._peg_body]) > 1.0)
 
     raw_rewards = self._get_reward(
-        data, use_peg_insertion_reward=(peg_end2_dist_to_line < 0.005)
+        data, use_peg_insertion_reward=(peg_end2_dist_to_line < 0.005)  # pyrefly: ignore[bad-argument-type]
     )
     rewards = {
         k: v * self._config.reward_config.scales[k]
