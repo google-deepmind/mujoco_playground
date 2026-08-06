@@ -178,8 +178,9 @@ class Balance(mjx_env.MjxEnv):
 
     obs = self._get_obs(data, info)
     if self._vision:
-      render_data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
-      out = mjx.render(self.mjx_model, render_data, self._rc_pytree)
+      data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
+      out = mjx.render(self.mjx_model, data, self._rc_pytree)
+      data = out[2]
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
       gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5
       frame_stack = jp.repeat(gray, 3, axis=-1)
@@ -208,8 +209,9 @@ class Balance(mjx_env.MjxEnv):
 
     obs = self._get_obs(data, state.info)
     if self._vision:
-      render_data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
-      out = mjx.render(self.mjx_model, render_data, self._rc_pytree)
+      data = mjx.refit_bvh(self.mjx_model, data, self._rc_pytree)
+      out = mjx.render(self.mjx_model, data, self._rc_pytree)
+      data = out[2]
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
       gray = jp.mean(rgb, axis=-1, keepdims=True) - 0.5
       prev_stack = state.info["frame_stack"]

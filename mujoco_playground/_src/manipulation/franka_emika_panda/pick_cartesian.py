@@ -245,6 +245,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
       data = mjx.forward(self._mjx_model, data)
       data = mjx.refit_bvh(self._mjx_model, data, self._rc_pytree)
       out = mjx.render(self._mjx_model, data, self._rc_pytree)
+      data = out[2]
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
       rgb = adjust_brightness(rgb, brightness)
       obs = {'pixels/view_0': rgb}
@@ -379,6 +380,7 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
     if self._vision:
       data = mjx.refit_bvh(self._mjx_model, data, self._rc_pytree)
       out = mjx.render(self._mjx_model, data, self._rc_pytree)
+      data = out[2]
       rgb = mjx.get_rgb(self._rc_pytree, 0, out[0])
       rgb = adjust_brightness(rgb, state.info['brightness'])
       obs = {'pixels/view_0': rgb}
