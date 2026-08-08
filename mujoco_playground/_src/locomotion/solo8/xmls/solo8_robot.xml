@@ -1,0 +1,84 @@
+<mujoco model="solo8">
+  <body name="robot" pos="0 0 0">
+    <geom name="body_visual" type="mesh" mesh="solo_body"/>
+    <body name="imu_link" pos="-0.01018 -0.03835 -0.00785">
+      <site name="imu_site" type="box" size="0.038 0.024 0.0107"/>
+    </body>
+
+    <!-- Front left leg -->
+    <body name="FL_UPPER_LEG" pos="0.1946 0.1015 0">
+      <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+      <inertial pos="0.00001530 0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 0.00000010 -0.00004589" mass="0.14737324"/>
+      <joint name="FL_HFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+      <geom name="FL_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_left_side" contype="0" conaffinity="0"/>
+
+      <body name="FL_LOWER_LEG" pos="0 0.03745 -0.16">
+        <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+        <inertial pos="0 0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 -0.00000200" mass="0.02318294"/>
+        <joint name="FL_KFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+        <geom name="FL_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_left_side" contype="0" conaffinity="0"/>
+        <geom name="FL_FOOT_GEOM" type="sphere" size="0.013" pos="0 0.0075 -0.16" contype="1" conaffinity="1"/>
+
+        <!-- Foot contact sensor -->
+        <site name="FL_contact_site" pos="0 0.0075 -0.16" type="sphere" size="0.013"/>
+      </body>
+    </body>
+
+    <!-- Front right leg -->
+    <body name="FR_UPPER_LEG" pos="0.1946 -0.1015 0">
+      <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+      <inertial pos="-0.00001530 -0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 -0.00000010 0.00004589" mass="0.14737324"/>
+      <joint name="FR_HFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+      <geom name="FR_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_right_side" contype="0" conaffinity="0"/>
+
+      <body name="FR_LOWER_LEG" pos="0 -0.03745 -0.16">
+        <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+        <inertial pos="0 -0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 0.00000200" mass="0.02318294"/>
+        <joint name="FR_KFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+        <geom name="FR_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_right_side" contype="0" conaffinity="0"/>
+        <geom name="FR_FOOT_GEOM" type="sphere" size="0.013" pos="0 -0.0075 -0.16" contype="1" conaffinity="1"/>
+
+        <!-- Foot contact sensor -->
+        <site name="FR_contact_site" pos="0 -0.0075 -0.16" type="sphere" size="0.013"/>
+      </body>
+    </body>
+
+    <!-- Back left leg -->
+    <body name="HL_UPPER_LEG" pos="-0.1946 0.1015 0">
+      <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+      <inertial pos="0.00001530 0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 0.00000010 -0.00004589" mass="0.14737324"/>
+      <joint name="HL_HFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+      <geom name="HL_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_left_side" contype="0" conaffinity="0"/>
+
+      <body name="HL_LOWER_LEG" pos="0 0.03745 -0.16">
+        <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+        <inertial pos="0 0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 -0.00000200" mass="0.02318294"/>
+        <joint name="HL_KFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+        <geom name="HL_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_left_side" contype="0" conaffinity="0"/>
+        <geom name="HL_FOOT_GEOM" type="sphere" size="0.013" pos="0 0.0075 -0.16" contype="1" conaffinity="1"/>
+
+        <!-- Foot contact sensor -->
+        <site name="HL_contact_site" pos="0 0.0075 -0.16" type="sphere" size="0.013"/>
+      </body>
+    </body>
+
+    <!-- Back right leg -->
+    <body name="HR_UPPER_LEG" pos="-0.1946 -0.1015 0">
+      <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+      <inertial pos="-0.00001530 -0.01767640 -0.07838230" fullinertia="0.00041540 0.00041637 0.00002982 0 -0.00000010 0.00004589" mass="0.14737324"/>
+      <joint name="HR_HFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+      <geom name="HR_UPPER_LEG_VISUAL" type="mesh" mesh="solo_upper_leg_right_side" contype="0" conaffinity="0"/>
+
+      <body name="HR_LOWER_LEG" pos="0 -0.03745 -0.16">
+        <!-- Inertia (fullinertia) is specified in the order M11 M22 M33 M12 M13 M23 -->
+        <inertial pos="0 -0.00776716 -0.07003876" fullinertia="0.00008508 0.00008580 0.00000139 0 0 0.00000200" mass="0.02318294"/>
+        <joint name="HR_KFE" pos="0 0 0" axis="0 1 0" limited="true" range="-3.14 3.14" actuatorfrcrange="-2.7 2.7" damping="0.05"/>
+        <geom name="HR_LOWER_LEG_VISUAL" type="mesh" mesh="solo_lower_leg_right_side" contype="0" conaffinity="0"/>
+        <geom name="HR_FOOT_GEOM" type="sphere" size="0.013" pos="0 -0.0075 -0.16" contype="1" conaffinity="1"/>
+
+        <!-- Foot contact sensor -->
+        <site name="HR_contact_site" pos="0 -0.0075 -0.16" type="sphere" size="0.013"/>
+      </body>
+    </body>
+  </body>
+</mujoco>
