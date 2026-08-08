@@ -78,9 +78,16 @@ class Wrapper(mjx_env.MjxEnv):
       modify_scene_fns: Optional[
           Sequence[Callable[[mujoco.MjvScene], None]]
       ] = None,
+      **kwargs,
   ) -> Sequence[np.ndarray]:
     return self.env.render(
-        trajectory, height, width, camera, scene_option, modify_scene_fns
+        trajectory,
+        height=height,
+        width=width,
+        camera=camera,
+        scene_option=scene_option,
+        modify_scene_fns=modify_scene_fns,
+        **kwargs,
     )
 
 
