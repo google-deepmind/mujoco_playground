@@ -105,11 +105,12 @@ class Spin(mjx_env.MjxEnv):
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
     rng, rng1 = jax.random.split(rng, 2)
+    rng1, rng2 = jax.random.split(rng1, 2)
     qpos = jp.zeros(self.mjx_model.nq)
     qpos = qpos.at[:2].set(
         jax.random.uniform(rng1, (2,), minval=self._lowers, maxval=self._uppers)
     )
-    qpos = qpos.at[2].set(jax.random.uniform(rng1, minval=-jp.pi, maxval=jp.pi))
+    qpos = qpos.at[2].set(jax.random.uniform(rng2, minval=-jp.pi, maxval=jp.pi))
 
     data = mjx_env.make_data(
         self._mj_model,
@@ -243,12 +244,13 @@ class Turn(mjx_env.MjxEnv):
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
     rng, rng1, rng2 = jax.random.split(rng, 3)
+    rng1, rng3 = jax.random.split(rng1, 2)
 
     qpos = jp.zeros(self.mjx_model.nq)
     qpos = qpos.at[:2].set(
         jax.random.uniform(rng1, (2,), minval=self._lowers, maxval=self._uppers)
     )
-    qpos = qpos.at[2].set(jax.random.uniform(rng1, minval=-jp.pi, maxval=jp.pi))
+    qpos = qpos.at[2].set(jax.random.uniform(rng3, minval=-jp.pi, maxval=jp.pi))
 
     data = mjx_env.make_data(
         self._mj_model,

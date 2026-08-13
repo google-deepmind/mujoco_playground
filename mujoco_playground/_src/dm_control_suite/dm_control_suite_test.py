@@ -14,9 +14,8 @@
 # ==============================================================================
 """Tests for the DM Control Suite."""
 
-from absl.testing import absltest
-from absl.testing import parameterized
 import jax
+from absl.testing import absltest, parameterized
 from jax import numpy as jp
 
 from mujoco_playground._src import dm_control_suite
@@ -24,6 +23,23 @@ from mujoco_playground._src import dm_control_suite
 
 class TestSuite(parameterized.TestCase):
   """Tests for the DM Control Suite."""
+
+  def test_cartpole_balance_reset_does_not_reuse_rng(self) -> None:
+    env = dm_control_suite.load(
+        "CartpoleBalance", config_overrides={"impl": "jax"}
+    )
+    with jax.debug_key_reuse(True):
+      env.reset(jax.random.key(42))
+
+  @parameterized.named_parameters(
+      ("spin", "FingerSpin"),
+      ("turn", "FingerTurnEasy"),
+  )
+  def test_finger_reset_does_not_reuse_rng(self, env_name: str) -> None:
+    env = dm_control_suite.load(env_name, config_overrides={"impl": "jax"})
+
+    with jax.debug_key_reuse(True):
+      env.reset(jax.random.key(42))
 
   @parameterized.named_parameters(
       {"testcase_name": f"test_can_create_{env_name}", "env_name": env_name}
