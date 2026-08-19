@@ -136,6 +136,10 @@ class BraxAutoResetWrapper(Wrapper):
       `AutoResetWrapper_preserve_info`, which is passed through from the prior
       step. This can be used for curriculum learning.
 
+  The terminal (pre-reset) observation of each step is exposed in
+  `state.info['AutoResetWrapper_final_obs']`, so downstream RL algorithms can
+  bootstrap value targets correctly on truncation instead of using the reset obs.
+
   Attributes:
     env: The wrapped environment.
     full_reset: Whether to call `env.reset` during `env.step` on done.
@@ -152,6 +156,9 @@ class BraxAutoResetWrapper(Wrapper):
     state = self.env.reset(key)
     state.info[f'{self._info_key}_first_data'] = state.data
     state.info[f'{self._info_key}_first_obs'] = state.obs
+    # Terminal (pre-reset) observation, exposed for correct value bootstrapping on
+    # truncation. Initialized here so the info pytree structure matches `step`. See #305.
+    state.info[f'{self._info_key}_final_obs'] = state.obs
     state.info[f'{self._info_key}_rng'] = rng
     state.info[f'{self._info_key}_done_count'] = jp.zeros(
         key.shape[:-1], dtype=int
@@ -207,6 +214,11 @@ class BraxAutoResetWrapper(Wrapper):
 
     next_info[done_count_key] += state.done.astype(int)
     next_info[f'{self._info_key}_rng'] = reset_rng
+    # Preserve the terminal (pre-reset) observation so downstream RL can bootstrap
+    # correctly on truncation, instead of using the reset obs. `obs` (returned below)
+    # is the reset-blended observation; `state.obs` is the true post-step observation.
+    # See #305.
+    next_info[f'{self._info_key}_final_obs'] = state.obs
 
     return state.replace(data=data, obs=obs, info=next_info)
 
