@@ -390,7 +390,7 @@ class JoystickGaitTracking(h1_base.H1Env):
         "pose": self._cost_pose(data.qpos[7:]),
         "foot_slip": self._cost_foot_slip(data, contact),
         "action_rate": self._cost_action_rate(
-            info["last_act"], info["last_last_act"], action
+            action, info["last_act"], info["last_last_act"]
         ),
     }
     return pos, neg
