@@ -14,12 +14,15 @@
 
 """Tests for the DM Control Suite."""
 
+from unittest import mock
+
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
 from jax import numpy as jp
 
 from mujoco_playground._src import dm_control_suite
+from mujoco_playground._src import mjx_env
 
 
 class TestSuite(parameterized.TestCase):
@@ -57,6 +60,23 @@ class TestSuite(parameterized.TestCase):
     warn_overflow = int(mjx_model.opt._impl.warn_overflow)
     self.assertEqual(warn_overflow & int(mjw.OverflowType.ITERATIONS), 0)
     self.assertEqual(warn_overflow & int(mjw.OverflowType.LS_ITERATIONS), 0)
+
+  @parameterized.parameters("qpos", "qvel")
+  def test_humanoid_nan_state_zeroes_reward(self, invalid_field: str) -> None:
+    env = dm_control_suite.load(
+        "HumanoidStand", config_overrides={"impl": "jax"}
+    )
+    state = jax.jit(env.reset)(jax.random.PRNGKey(42))
+    invalid_data = state.data.replace(
+        **{invalid_field: getattr(state.data, invalid_field).at[0].set(jp.nan)},
+        xpos=state.data.xpos.at[env.mj_model.body("head").id, -1].set(jp.nan),
+    )
+
+    with mock.patch.object(mjx_env, "step", return_value=invalid_data):
+      state = env.step(state, jp.zeros(env.action_size))
+
+    self.assertEqual(float(state.done), 1.0)
+    self.assertEqual(float(state.reward), 0.0)
 
 
 if __name__ == "__main__":
