@@ -202,10 +202,7 @@ class RSLRLBraxWrapper(VecEnv):  # pyrefly: ignore[invalid-inheritance]
     )  # pyrefly: ignore[not-callable]
     return obs, reward, done, info_ret
 
-  def reset(self):
-    # todo add random init like in collab examples?
-    self.env_state = self.reset_fn(self.key_reset)
-
+  def _current_observations(self):
     if self.asymmetric_obs:
       obs = _jax_to_torch(self.env_state.obs["state"])
       critic_obs = _jax_to_torch(self.env_state.obs["privileged_state"])
@@ -217,8 +214,15 @@ class RSLRLBraxWrapper(VecEnv):  # pyrefly: ignore[invalid-inheritance]
         obs, batch_size=[self.num_envs]
     )  # pyrefly: ignore[not-callable]
 
+  def reset(self):
+    # todo add random init like in collab examples?
+    self.env_state = self.reset_fn(self.key_reset)
+    return self._current_observations()
+
   def get_observations(self):
-    return self.reset()
+    if self.env_state is None:
+      return self.reset()
+    return self._current_observations()
 
   def render(self, mode="human"):  # pylint: disable=unused-argument
     if self.render_callback is not None:
