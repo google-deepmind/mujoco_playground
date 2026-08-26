@@ -150,3 +150,47 @@ def brax_sac_config(
     rl_config.num_timesteps = 10_000_000
 
   return rl_config
+
+
+def rsl_rl_config(
+    env_name: str, unused_impl: Optional[str] = None
+) -> config_dict.ConfigDict:
+  """Returns a baseline RSL-RL PPO config for the given environment."""
+  brax_config = brax_ppo_config(env_name)
+
+  return config_dict.create(
+      seed=1,
+      runner_class_name="OnPolicyRunner",
+      policy=config_dict.create(
+          init_noise_std=1.0,
+          actor_hidden_dims=[512, 256, 128],
+          critic_hidden_dims=[512, 256, 128],
+          activation="elu",
+          class_name="ActorCritic",
+      ),
+      algorithm=config_dict.create(
+          class_name="PPO",
+          value_loss_coef=1.0,
+          use_clipped_value_loss=True,
+          clip_param=0.2,
+          entropy_coef=brax_config.entropy_cost,
+          num_learning_epochs=5,
+          num_mini_batches=4,
+          learning_rate=brax_config.learning_rate,
+          schedule="fixed",
+          gamma=brax_config.discounting,
+          lam=0.95,
+          desired_kl=0.01,
+          max_grad_norm=1.0,
+      ),
+      num_steps_per_env=brax_config.unroll_length,
+      max_iterations=1000,
+      empirical_normalization=True,
+      save_interval=50,
+      experiment_name="test",
+      run_name="",
+      resume=False,
+      load_run="-1",
+      checkpoint=-1,
+      resume_path=None,
+  )

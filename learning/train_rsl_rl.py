@@ -32,6 +32,7 @@ import warp as wp
 from mujoco_playground import registry
 from mujoco_playground import wrapper_torch
 import mujoco_playground
+from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
 
@@ -99,6 +100,8 @@ def get_rl_config(env_name: str) -> config_dict.ConfigDict:
     return manipulation_params.rsl_rl_config(env_name)
   elif env_name in registry.locomotion._envs:
     return locomotion_params.rsl_rl_config(env_name)
+  elif env_name in registry.dm_control_suite._envs:
+    return dm_control_suite_params.rsl_rl_config(env_name)
   else:
     raise ValueError(f"No RL config for {env_name}")
 
