@@ -32,7 +32,7 @@ pip install playground
 ### <a id="from-source">From Source</a>
 
 > [!IMPORTANT]
-> Requires Python 3.10 or later.
+> Requires Python 3.11 or later.
 
 1. `git clone git@github.com:google-deepmind/mujoco_playground.git && cd mujoco_playground`
 2. [Install uv](https://docs.astral.sh/uv/getting-started/installation/), a faster alternative to `pip`
