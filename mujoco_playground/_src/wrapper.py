@@ -245,7 +245,7 @@ class BraxAutoResetWrapper(Wrapper):
     next_info[done_count_key] += state.done.astype(int)
     next_info[f'{self._info_key}_rng'] = reset_rng
 
-    return state.replace(data=data, obs=obs, info=next_info)
+    return state.replace(data=data, obs=obs, info=next_info)  # pyrefly: ignore[missing-attribute]
 
 
 class BraxDomainRandomizationVmapWrapper(Wrapper):
