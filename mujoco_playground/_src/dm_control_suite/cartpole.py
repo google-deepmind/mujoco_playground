@@ -141,10 +141,10 @@ class Balance(mjx_env.MjxEnv):
     return qpos
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
-    qpos = self._reset_randomize(rng)
-
     rng, rng1 = jax.random.split(rng, 2)
-    qvel = 0.01 * jax.random.normal(rng1, (self.mjx_model.nv,))
+    rng1, rng2 = jax.random.split(rng1, 2)
+    qpos = self._reset_randomize(rng1)
+    qvel = 0.01 * jax.random.normal(rng2, (self.mjx_model.nv,))
 
     data = mjx_env.make_data(
         self.mj_model,
