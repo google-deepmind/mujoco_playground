@@ -193,4 +193,25 @@
     <framelinvel objtype="site" objname="HR" name="HR_global_linvel"/>
     <framelinvel objtype="site" objname="HL" name="HL_global_linvel"/>
   </sensor>
+
+  <sensor>
+    <gyro site="imu" name="gyro"/>
+    <velocimeter site="imu" name="local_linvel"/>
+    <accelerometer site="imu" name="accelerometer"/>
+    <framepos objtype="site" objname="imu" name="position"/>
+    <framezaxis objtype="site" objname="imu" name="upvector"/>
+    <framexaxis objtype="site" objname="imu" name="forwardvector"/>
+    <framelinvel objtype="site" objname="imu" name="global_linvel"/>
+    <frameangvel objtype="site" objname="imu" name="global_angvel"/>
+    <framequat objtype="site" objname="imu" name="orientation"/>
+    <framelinvel objtype="site" objname="FR" name="FR_global_linvel"/>
+    <framelinvel objtype="site" objname="FL" name="FL_global_linvel"/>
+    <framelinvel objtype="site" objname="RR" name="RR_global_linvel"/>
+    <framelinvel objtype="site" objname="RL" name="RL_global_linvel"/>
+    <framepos objtype="site" objname="FR" name="FR_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="FL" name="FL_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="RR" name="RR_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="RL" name="RL_pos" reftype="site" refname="imu"/>
+    <framepos objtype="site" objname="head" name="head_pos"/>
+  </sensor>
 </mujoco>
