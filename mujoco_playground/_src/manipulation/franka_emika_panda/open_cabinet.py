@@ -206,7 +206,7 @@ class PandaOpenCabinet(panda.PandaBase):
         "gripper_box": gripper_box,
         "no_barrier_collision": no_barrier_collision.astype(  # pyrefly: ignore[missing-attribute]
             float
-        ),  # pyrefly: ignore[missing-attribute]
+        ),
         "robot_target_qpos": robot_target_qpos,
     }
 

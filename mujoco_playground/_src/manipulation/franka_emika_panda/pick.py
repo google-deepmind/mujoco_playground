@@ -153,7 +153,7 @@ class PandaPickCube(panda.PandaBase):
     reward, done = jp.zeros(2)
     state = State(
         data, obs, reward, done, metrics, info  # pyrefly: ignore[bad-argument-type]
-    )  # pyrefly: ignore[bad-argument-type]
+    )
     return state
 
   def step(self, state: State, action: jax.Array) -> State:
@@ -210,7 +210,7 @@ class PandaPickCube(panda.PandaBase):
     floor_collision = sum(hand_floor_collision) > 0
     no_floor_collision = (1 - floor_collision).astype(  # pyrefly: ignore[missing-attribute]
         float
-    )  # pyrefly: ignore[missing-attribute]
+    )
 
     info["reached_box"] = 1.0 * jp.maximum(
         info["reached_box"],

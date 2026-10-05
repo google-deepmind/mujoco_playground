@@ -114,4 +114,4 @@ class AlohaEnv(mjx_env.MjxEnv):
     ]
     return (sum(hand_table_collisions) > 0).astype(  # pyrefly: ignore[missing-attribute]
         float
-    )  # pyrefly: ignore[missing-attribute]
+    )

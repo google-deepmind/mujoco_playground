@@ -61,7 +61,7 @@ def _clone_with_progress(
     current = 0
     while True:
       # Read output line by line.
-      output = process.stderr.readline()  # pytype: disable=attribute-error
+      output = process.stderr.readline()  # pyrefly: ignore[missing-attribute]
       if not output and process.poll() is not None:
         break
       if output:

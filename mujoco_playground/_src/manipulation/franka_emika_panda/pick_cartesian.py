@@ -271,8 +271,8 @@ class PandaPickCubeCartesian(pick.PandaPickCube):
         reward,
         done,
         metrics,  # pyrefly: ignore[bad-argument-type]
-        info,  # pyrefly: ignore[bad-argument-type]
-    )  # pyrefly: ignore[bad-argument-type]
+        info,
+    )
     if self._vision and not self._defer_rendering:
       state = self.render_state(state)
     return state

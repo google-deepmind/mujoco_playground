@@ -256,7 +256,7 @@ class Joystick(mjx_env.MjxEnv):
 
     obs = self._get_obs(
         data, state.info, state.obs, noise_rng  # pyrefly: ignore[bad-argument-type]
-    )  # pyrefly: ignore[bad-argument-type]
+    )
     joint_angles = data.qpos[7:]
     joint_vel = data.qvel[6:]
     torso_z = data.xpos[self._torso_body_id, -1]
@@ -309,7 +309,7 @@ class Joystick(mjx_env.MjxEnv):
     done = jp.float32(done)
     state = state.replace(  # pyrefly: ignore[missing-attribute]
         data=data, obs=obs, reward=reward, done=done
-    )  # pyrefly: ignore[missing-attribute]
+    )
     return state
 
   def _get_obs(

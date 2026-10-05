@@ -281,7 +281,7 @@ class JoystickGaitTracking(h1_base.H1Env):
     done = done.astype(reward.dtype)
     state = state.replace(  # pyrefly: ignore[missing-attribute]
         data=data, obs=obs, reward=reward, done=done
-    )  # pyrefly: ignore[missing-attribute]
+    )
     return state
 
   def _get_termination(self, data: mjx.Data) -> jax.Array:

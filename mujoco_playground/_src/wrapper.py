@@ -120,12 +120,12 @@ def wrap_for_brax_training(
   if defer_rendering:
     env.defer_rendering()  # pyrefly: ignore[missing-attribute]
   if randomization_fn is None:
-    env = brax_training.VmapWrapper(env)  # pytype: disable=wrong-arg-types
+    env = brax_training.VmapWrapper(env)  # pyrefly: ignore[bad-argument-type, bad-assignment]
   else:
     env = BraxDomainRandomizationVmapWrapper(env, randomization_fn)
   env = brax_training.EpisodeWrapper(  # pyrefly: ignore[bad-assignment]
       env, episode_length, action_repeat  # pyrefly: ignore[bad-argument-type]
-  )  # pyrefly: ignore[bad-argument-type, bad-assignment]
+  )  # pyrefly: ignore[bad-assignment]
   env = BraxAutoResetWrapper(env, full_reset=full_reset)
   if defer_rendering:
     env = DeferredVisionWrapper(env)
@@ -216,7 +216,7 @@ class BraxAutoResetWrapper(Wrapper):
 
     state = state.replace(  # pyrefly: ignore[missing-attribute]
         done=jp.zeros_like(state.done)
-    )  # pyrefly: ignore[missing-attribute]
+    )
     state = self.env.step(state, action)
 
     def where_done(x, y):
