@@ -118,8 +118,9 @@ class Humanoid(mjx_env.MjxEnv):
     data = mjx_env.step(self.mjx_model, state.data, action, self.n_substeps)
     reward = self._get_reward(data, action, state.info, state.metrics)  # pylint: disable=redefined-outer-name
     obs = self._get_obs(data, state.info)
-    done = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
-    done = done.astype(float)
+    invalid_state = jp.isnan(data.qpos).any() | jp.isnan(data.qvel).any()
+    reward = jp.where(invalid_state, jp.zeros_like(reward), reward)
+    done = invalid_state.astype(float)
     return mjx_env.State(data, obs, reward, done, state.metrics, state.info)
 
   def _get_obs(self, data: mjx.Data, info: dict[str, Any]) -> jax.Array:
