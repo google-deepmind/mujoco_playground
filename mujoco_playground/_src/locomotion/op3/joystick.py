@@ -18,9 +18,9 @@ from typing import Any, Dict, Optional, Union
 
 import jax
 import jax.numpy as jp
+import numpy as np
 from ml_collections import config_dict
 from mujoco import mjx
-import numpy as np
 
 from mujoco_playground._src import mjx_env
 from mujoco_playground._src.locomotion.op3 import base as op3_base
@@ -39,6 +39,8 @@ def default_config() -> config_dict.ConfigDict:
       action_scale=0.3,
       obs_noise=0.05,
       obs_history_size=3,
+      # Opt in to external velocity kicks; preserve existing unperturbed policy.
+      pushes=False,
       max_foot_height=0.07,
       lin_vel_x=[-0.6, 1.5],
       lin_vel_y=[-0.8, 0.8],
@@ -188,9 +190,11 @@ class Joystick(op3_base.Op3Env):
     return mjx_env.State(data, obs, reward, done, metrics, info)
 
   def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:
-    rng, cmd_rng, noise_rng = jax.random.split(state.info["rng"], 3)
-
-    # state = self._maybe_apply_perturbation(state, pert_rng)
+    if self._config.pushes:
+      rng, cmd_rng, noise_rng, pert_rng = jax.random.split(state.info["rng"], 4)
+      state = self._maybe_apply_perturbation(state, pert_rng)
+    else:
+      rng, cmd_rng, noise_rng = jax.random.split(state.info["rng"], 3)
 
     motor_targets = self._default_pose + action * self._config.action_scale
     motor_targets = jp.clip(motor_targets, self._lowers, self._uppers)
@@ -199,7 +203,10 @@ class Joystick(op3_base.Op3Env):
     )
 
     obs = self._get_obs(
-        data, state.info, state.obs, noise_rng  # pyrefly: ignore[bad-argument-type]
+        data,
+        state.info,
+        state.obs,
+        noise_rng,  # pyrefly: ignore[bad-argument-type]
     )
     done = self._get_termination(data)
 
