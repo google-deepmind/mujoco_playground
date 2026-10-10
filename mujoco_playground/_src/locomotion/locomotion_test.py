@@ -19,6 +19,7 @@ import jax
 import jax.numpy as jp
 
 from mujoco_playground._src import locomotion
+from mujoco_playground.config import locomotion_params
 
 
 class TestSuite(parameterized.TestCase):
@@ -37,6 +38,12 @@ class TestSuite(parameterized.TestCase):
     obs_shape = obs_shape[0] if isinstance(obs_shape, tuple) else obs_shape
     self.assertEqual(obs_shape, env.observation_size)
     self.assertFalse(jp.isnan(state.data.qpos).any())
+
+  def test_g1_rsl_config_uses_tuned_iteration_count(self) -> None:
+    env_name = "G1JoystickFlatTerrain"
+    self.assertIn(env_name, locomotion.ALL_ENVS)
+    config = locomotion_params.rsl_rl_config(env_name)
+    self.assertEqual(config.max_iterations, 1000)
 
 
 if __name__ == "__main__":

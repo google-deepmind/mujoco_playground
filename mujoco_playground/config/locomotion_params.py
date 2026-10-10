@@ -215,7 +215,7 @@ def rsl_rl_config(
   if env_name in (
       "Go1Getup",
       "BerkeleyHumanoidJoystickFlatTerrain",
-      "G1Joystick",
+      "G1JoystickFlatTerrain",
       "Go1JoystickFlatTerrain",
   ):
     rl_config.max_iterations = 1000
