@@ -155,6 +155,63 @@ class WrapperTest(parameterized.TestCase):
       ('full_reset', True),
       ('cache_reset', False),
   )
+  def test_auto_reset_wrapper_keeps_final_obs(self, full_reset):
+    """The observation the episode ended on has to survive the reset."""
+
+    sentinel = 7.0
+
+    class DoneEnv:
+      """Ends the episode when the action is positive, with a known obs."""
+
+      def __init__(self, env):
+        self._env = env
+
+      def reset(self, key):
+        return self._env.reset(key)
+
+      def step(self, state, action):
+        state = self._env.step(state, jp.ones_like(action))
+        state = state.replace(obs=jp.full_like(state.obs, sentinel))
+        return state.replace(done=action[0] > 0)
+
+    env = wrapper.BraxAutoResetWrapper(
+        brax_training.VmapWrapper(
+            DoneEnv(
+                dm_control_suite.load(
+                    'CartpoleBalance', config_overrides={'impl': 'jax'}
+                )
+            )
+        ),
+        full_reset=full_reset,
+    )
+
+    jit_reset = jax.jit(env.reset)
+    jit_step = jax.jit(env.step)
+
+    state = jit_reset(jax.random.PRNGKey(0)[None])
+    # Reset has to define the same info as step, or the two cannot be used
+    # together under scan.
+    reset_treedef = jax.tree.structure(state.info)
+    reset_obs = state.obs
+    action = jp.ones(env._env.action_size)[None]  # pylint: disable=protected-access
+
+    state = jit_step(state, action)
+
+    self.assertEqual(jax.tree.structure(state.info), reset_treedef)
+    np.testing.assert_allclose(
+        state.info['AutoResetWrapper_final_obs'],
+        np.full_like(reset_obs, sentinel),
+    )
+    if not full_reset:
+      np.testing.assert_allclose(state.obs, reset_obs, atol=1e-6)
+    self.assertGreater(
+        np.abs(state.info['AutoResetWrapper_final_obs'] - state.obs).max(), 1e-3
+    )
+
+  @parameterized.named_parameters(
+      ('full_reset', True),
+      ('cache_reset', False),
+  )
   def test_evalwrapper_with_reset(self, full_reset):
     """Tests EvalWrapper with reset in the AutoResetWrapper."""
     episode_length = 10
