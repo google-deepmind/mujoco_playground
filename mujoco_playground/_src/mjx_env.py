@@ -192,7 +192,31 @@ def step(
     data: mjx.Data,
     action: jax.Array,
     n_substeps: int = 1,
-) -> mjx.Data:
+    return_substeps: bool = False,
+) -> Union[mjx.Data, Tuple[mjx.Data, mjx.Data]]:
+  """Steps an MJX model, optionally returning every intermediate substep.
+
+  Args:
+    model: MJX model to step.
+    data: Initial MJX data.
+    action: Control values applied at every substep.
+    n_substeps: Number of simulation steps to execute.
+    return_substeps: If true, return ``(final_data, substeps)`` where ``substeps``
+      is an ``mjx.Data`` pytree with a leading axis of length ``n_substeps``.
+      Leave this false when intermediate states are not needed to avoid storing
+      the scan outputs.
+
+  Returns:
+    The final MJX data, or the final data and all intermediate substep data.
+  """
+  if return_substeps:
+    def single_step_with_output(data, _):
+      data = data.replace(ctrl=action)
+      data = mjx.step(model, data)
+      return data, data
+
+    return jax.lax.scan(single_step_with_output, data, (), n_substeps)
+
   def single_step(data, _):
     data = data.replace(ctrl=action)
     data = mjx.step(model, data)
