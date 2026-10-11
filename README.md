@@ -66,6 +66,32 @@ uv --no-config run train-jax-ppo --env_name CartpoleBalance --impl warp
 uv --no-config run train-rsl-ppo --env_name CartpoleBalance --impl warp
 ```
 
+### Fast environment for integration tests
+
+The registry provides a model-free Fast environment with a two-element
+observation and a one-element action. It uses analytic JAX updates without
+calling MuJoCo or Warp simulation, making it useful for quick wrapper and
+training-loop smoke tests.
+
+Example using the standard Brax wrappers:
+
+```python
+import jax
+import jax.numpy as jnp
+from mujoco_playground import registry, wrapper
+
+env = wrapper.wrap_for_brax_training(
+    registry.load("Fast"), episode_length=3, action_repeat=1)
+keys = jax.random.split(jax.random.PRNGKey(0), 2)
+state = jax.jit(env.reset)(keys)
+state = jax.jit(env.step)(state, jnp.zeros((2, 1)))
+```
+
+The Fast environment deliberately has no MJCF or MJX model and does not
+support visualization or model-based domain randomization. Its reset, step,
+registry lookup, batching, and episode/truncation behavior follow the regular
+Playground wrapper interfaces.
+
 ### Basic Tutorials
 | Colab | Description |
 |-------|-------------|
