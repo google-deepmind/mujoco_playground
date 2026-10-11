@@ -19,10 +19,13 @@ import jax
 import ml_collections
 from mujoco import mjx
 
-from mujoco_playground._src import dm_control_suite
-from mujoco_playground._src import locomotion
-from mujoco_playground._src import manipulation
-from mujoco_playground._src import mjx_env
+from mujoco_playground._src import (
+  dm_control_suite,
+  fast,
+  locomotion,
+  manipulation,
+  mjx_env,
+)
 
 DomainRandomizer = Optional[
     Callable[[mjx.Model, jax.Array], Tuple[mjx.Model, mjx.Model]]
@@ -31,11 +34,14 @@ DomainRandomizer = Optional[
 
 # A tuple containing all available environment names across all suites.
 ALL_ENVS = (
-    dm_control_suite.ALL_ENVS + locomotion.ALL_ENVS + manipulation.ALL_ENVS
+    ('Fast',) + dm_control_suite.ALL_ENVS
+    + locomotion.ALL_ENVS + manipulation.ALL_ENVS
 )
 
 
 def get_default_config(env_name: str):
+  if env_name == 'Fast':
+    return fast.default_config()
   if env_name in manipulation.ALL_ENVS:
     return manipulation.get_default_config(env_name)
   elif env_name in locomotion.ALL_ENVS:
@@ -51,6 +57,8 @@ def load(
     config: Optional[ml_collections.ConfigDict] = None,
     config_overrides: Optional[Dict[str, Union[str, int, list[Any]]]] = None,
 ) -> mjx_env.MjxEnv:
+  if env_name == 'Fast':
+    return fast.Fast(config=config, config_overrides=config_overrides)
   if env_name in manipulation.ALL_ENVS:
     return manipulation.load(env_name, config, config_overrides)
   elif env_name in locomotion.ALL_ENVS:
