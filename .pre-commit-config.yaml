@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: check-copyright
         name: Check Copyright Notice
-        entry: python3 -c "import sys, re; pattern = re.compile(r'Copyright \d{4} Google LLC'); bad = [f for f in sys.argv[1:] if not pattern.search(open(f, errors='ignore').read())]; sys.exit('\n'.join(['Files missing Copyright notice:'] + bad)) if bad else None"
+        entry: python3 -c "import sys, re; pattern = re.compile(r'Copyright \d{4} (?:Google LLC|OneRobotics)'); bad = [f for f in sys.argv[1:] if not pattern.search(open(f, errors='ignore').read())]; sys.exit('\n'.join(['Files missing Copyright notice:'] + bad)) if bad else None"
         language: system
         types_or: [python, c, c++, cuda]
 
