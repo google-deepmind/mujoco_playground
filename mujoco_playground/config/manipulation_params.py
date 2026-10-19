@@ -41,7 +41,6 @@ def brax_ppo_config(
       num_resets_per_eval=10,
   )
   if env_name == "A1Reach":
-    # Baseline validated with three random seeds.
     rl_config.num_timesteps = 4_000_000
     rl_config.num_evals = 5
     rl_config.unroll_length = 10
