@@ -36,11 +36,13 @@ Changes made for MuJoCo Playground and MJX compatibility:
   pair is excluded because the revolute joint sits inside the base housing;
   all other contact masks and the default parent-child filtering are retained.
 
-These fits correct earlier primitives that used centered mesh bounds as body
-coordinates, leaving substantial portions of the visible links unprotected.
-They remain conservative envelopes, not exact mesh collision surfaces.
-`tools/check_a1_collision.py` checks vertex containment, task-range clearance,
-and actual contact generation using an independent sphere probe.
+The collision primitives are conservatively fitted in each link's local
+coordinates to enclose the original STL geometry. They are approximate
+collision envelopes rather than exact mesh collision surfaces.
+
+The collision envelopes were validated locally against the original STL
+mesh vertices, randomized robot configurations, and contact generation
+using an independent sphere probe.
 
 The seven arm joints, inertial parameters, actuator gains, mesh bytes,
 joint ranges, body transforms, and original `home` keyframe are unchanged.
