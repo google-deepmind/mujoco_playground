@@ -131,6 +131,9 @@ class WrapperTest(parameterized.TestCase):
     jit_step = jax.jit(env.step)
     state = jit_reset(jax.random.PRNGKey(0)[None])
     first_qpos = state.data.qpos
+    # The terminal-observation key must exist after reset so the info pytree
+    # structure matches `step` (e.g. under jax.lax.scan). See #305.
+    self.assertIn('AutoResetWrapper_final_obs', state.info)
 
     # First step should not be done.
     state = jit_step(state, -jp.ones(env._env.action_size)[None])
@@ -150,6 +153,10 @@ class WrapperTest(parameterized.TestCase):
       self.assertEqual(state.info['AutoResetWrapper_preserve_info'], 2)
       expected_other_info = 1 if full_reset else 2
       self.assertEqual(state.info['other_info'], expected_other_info)
+      # These are done steps (action > 0), so the returned `obs` is the reset obs
+      # while `AutoResetWrapper_final_obs` must hold the distinct terminal obs. See #305.
+      final_obs = state.info['AutoResetWrapper_final_obs']
+      self.assertGreater(np.linalg.norm(np.asarray(final_obs) - np.asarray(state.obs)), 1e-6)
 
   @parameterized.named_parameters(
       ('full_reset', True),
