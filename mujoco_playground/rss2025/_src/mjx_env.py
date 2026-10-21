@@ -138,7 +138,7 @@ def put_model(
   if impl in (mjx.Impl.WARP, "warp"):
     warn_overflow = getattr(mjx_model.opt._impl, "warn_overflow", None)
     if isinstance(warn_overflow, int):
-      import mujoco_warp as mjw  # pylint: disable=g-import-not-at-top
+      from mujoco.mjx.warp import mujoco_warp as mjw  # pylint: disable=g-import-not-at-top
 
       # Disable solver and linesearch iteration overflow warnings, as MJX
       # environments intentionally set them low for historical reasons

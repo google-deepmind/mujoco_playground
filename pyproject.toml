@@ -207,3 +207,10 @@ bad-dunder-all = false
 bad-override-mutable-attribute = false
 bad-override-param-name = false
 abstract-method-call = false
+
+[tool.pytest.ini_options]
+norecursedirs = [
+    "rss2025",
+    "third_party",
+    ".venv*",
+]
