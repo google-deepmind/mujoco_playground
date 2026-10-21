@@ -1,104 +1,120 @@
 # MuJoCo Playground
 
 [![Build](https://img.shields.io/github/actions/workflow/status/google-deepmind/mujoco_playground/ci.yml?branch=main)](https://github.com/google-deepmind/mujoco_playground/actions)
-[![PyPI version](https://img.shields.io/pypi/v/playground)](https://pypi.org/project/playground/)
-![Banner for playground](https://github.com/google-deepmind/mujoco_playground/blob/main/assets/banner.png?raw=true)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+![Banner for playground](https://www.gstatic.com/mujoco/playground/banner/1/banner.png)
 
-A comprehensive suite of GPU-accelerated environments for robot learning research and sim-to-real, built with [MuJoCo MJX](https://github.com/google-deepmind/mujoco/tree/main/mjx).
+MuJoCo Playground is a suite of robot environments, reinforcement learning tasks, and hardware workflows written in [PyTorch](https://pytorch.org/) and built on [`reaf-sim`](https://github.com/google-deepmind/reaf-sim), [MuJoCo](https://github.com/google-deepmind/mujoco), and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp).
 
-Features include:
+Robots exist in `mujoco_playground/robots/`, either in simulation or paired with a hardware counterpart, enabling end-to-end workflows across simulation and hardware:
 
-- Classic control environments from `dm_control`.
-- Quadruped and bipedal locomotion environments.
-- Non-prehensile and dexterous manipulation environments.
-- Vision-based support available via the [MJWarp Batch Renderer](https://mujoco.readthedocs.io/en/stable/mjwarp/index.html#batch-rendering).
+- **Large-batch RL training on GPU**: with state and vision observations across control, manipulation, and humanoid whole-body tracking.
+- **Sim & real teleoperation**: with leader-follower control and episodic MCAP logging.
+- **System identification**: fitting simulated joint dynamics to logged hardware trajectories via `mujoco.sysid`.
+- **Zero-shot sim-to-real policy deployment**: running the same task layer and policy in simulation (`--mode=sim`) and on hardware (`--mode=real`).
+- **Agentic manipulation**: for vision-language model (VLM) examples across simulation and hardware (`SO-101`, `i2rt YAM`).
 
-For more details, check out the project [website](https://playground.mujoco.org/).
-
-> [!NOTE]
-> We now support training with both the MuJoCo MJX JAX implementation, as well as the [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) implementation at HEAD. See this [discussion post](https://github.com/google-deepmind/mujoco_playground/discussions/197) for more details.
+> **Note:** Looking for the original RSS 2025 JAX/MJX environments? They remain available under [`mujoco_playground/rss2025`](mujoco_playground/rss2025).
 
 ## Installation
 
-You can install MuJoCo Playground directly from PyPI:
-
-```sh
-pip install playground
-```
-
-> [!IMPORTANT]
-> We recommend users to install [from source](#from-source) to get the latest features and bug fixes from MuJoCo.
-
-### <a id="from-source">From Source</a>
-
-> [!IMPORTANT]
-> Requires Python 3.10 or later.
-
-1. `git clone git@github.com:google-deepmind/mujoco_playground.git && cd mujoco_playground`
-2. [Install uv](https://docs.astral.sh/uv/getting-started/installation/), a faster alternative to `pip`
-3. Create a virtual environment: `uv venv --python 3.12`
-4. Activate it: `source .venv/bin/activate`
-5. Install CUDA 12 jax: `uv pip install -U "jax[cuda12]" --index-url https://pypi.org/simple`
-    * Verify GPU backend: `python -c "import jax; print(jax.default_backend())"` should print gpu. `unset LD_LIBRARY_PATH` may need to be run before running this command.
-6. Install playground from source: `uv --no-config sync --all-extras`
-7. Verify installation: `uv --no-config run python -c "import mujoco_playground; print('Success')"`
-    * **Note**: Menagerie assets will be downloaded automatically the first time you load a locomotion or manipulation environment. You can trigger this with: `uv --no-config run python -c "from mujoco_playground import locomotion; locomotion.load('G1JoystickFlatTerrain')"`
-
-## Getting started
-
-### Running from CLI
-For basic usage, navigate to the repo's directory, install [from source](#from-source) with `jax[cuda12]`, and run:
+Clone the repository and sync dependencies with [`uv`](https://docs.astral.sh/uv/):
 
 ```bash
-train-jax-ppo --env_name CartpoleBalance
+git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
+
+# For GPU (CUDA 12.4 + RSL-RL — recommended for RL training)
+make sync
+
+# Or for CPU-only
+make sync-cpu
 ```
 
-To train with [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp):
+Verify your installation by running the test suite:
 
 ```bash
-train-jax-ppo --env_name CartpoleBalance --impl warp
+make test
 ```
 
-Or with `uv`:
+> **Note:** Real-robot hardware SDKs are optional extras so simulation-only checkouts stay lightweight. To install hardware drivers for a specific robot, add `--extra so101` or `--extra yam` (e.g., `uv sync --extra cpu --extra so101`).
+
+## Getting Started
+
+### 1. Train & Visualize an RL Policy
+
+Train a PPO policy across parallel GPU environments with [RSL-RL](https://github.com/leggedrobotics/rsl_rl) (available environments: `CartpoleBalance`, `CartpoleSwingUp`, `CartpoleBalanceVision`, `SO101PickCube`, `SO101PickCubeVision`, `TrossenPickCube`, `TrossenPickCubeVision`, `G1WholeBodyTracking`):
 
 ```bash
-uv --no-config run train-jax-ppo --env_name CartpoleBalance --impl warp
-uv --no-config run train-rsl-ppo --env_name CartpoleBalance --impl warp
+# Train SO-101 Pick-Cube on GPU
+uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
+  --env=SO101PickCube \
+  --logdir=/tmp/rslrl_logs/so101_pick_cube
+
+# Play back the trained policy in the interactive MuJoCo viewer
+uv run --no-sync python -m mujoco_playground.rl.rsl_rl.play \
+  --env=SO101PickCube \
+  --resume_path=/tmp/rslrl_logs/so101_pick_cube
 ```
 
-### Basic Tutorials
-| Colab | Description |
+Monitor training curves in TensorBoard:
+
+```bash
+uv run --no-sync tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube
+```
+
+### 2. Try Agentic Manipulation in Simulation
+
+Run the tabletop manipulation harness in simulation with the built-in scripted oracle (or connect a VLM via `--agent=bridge`):
+
+```bash
+uv run --no-sync python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
+  --mode=sim --robot=so101 --task=cube_in_bowl --agent=oracle --viewer
+```
+
+### 3. Workflow Guides
+
+| Guide | Description |
 |-------|-------------|
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/dm_control_suite.ipynb) | Introduction to the Playground with DM Control Suite |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/locomotion.ipynb) | Locomotion Environments |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/manipulation.ipynb) | Manipulation Environments |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/learning/notebooks/vision.ipynb) | Vision Environments |
+| [SO-101 Hardware Setup](mujoco_playground/robots/so101/real/README.md) | USB port & wrist camera identification and arm calibration |
+| [i2rt YAM Hardware Setup](mujoco_playground/robots/yam/README.md) | SocketCAN bring-up and RealSense D405 camera setup |
+| [Sim & Real Teleoperation](mujoco_playground/tasks/teleop/so101/README.md) | Leader-follower teleoperation, foot-pedal gating, and MCAP episode logging |
+| [System Identification](mujoco_playground/tasks/sysid/so101/README.md) | Fit simulated joint dynamics to logged hardware trajectories with `mujoco.sysid` |
+| [Sim-to-Real Pick-Cube Deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md) | Train vision policies and deploy zero-shot to `--mode=sim` and `--mode=real` |
+| [G1 Whole-Body Motion Tracking](mujoco_playground/tasks/whole_body/tracking/README.md) | Retarget motion capture clips and train humanoid tracking policies |
+| [Agentic Tabletop Manipulation](mujoco_playground/tasks/agentic/tabletop_v0/README.md) | Zero-shot sim-to-real VLM code-as-policies harness (`SO-101`, `i2rt YAM`) |
 
-### Training Visualization
+## Profiling with Tracy
 
-To interactively view trajectories throughout training with [rscope](https://github.com/Andrew-Luo1/rscope/tree/main), install it (`pip install rscope`) and run:
+MuJoCo Playground includes [Tracy](https://github.com/wolfpld/tracy) instrumentation for profiling physics substeps, environment MDP loops, and RL training (see [`profiling/README.md`](profiling/README.md)):
 
+```bash
+# Capture 10s of headless telemetry from a running training script and export stats
+tracy-capture -o /tmp/training_profile.tracy -f -s 10
+tracy-csvexport /tmp/training_profile.tracy
+
+# Or connect the interactive GUI profiler (127.0.0.1:8086) / open a saved trace
+tracy-profiler /tmp/training_profile.tracy
 ```
-python learning/train_jax_ppo.py --env_name PandaPickCube --rscope_envs 16 --run_evals=False --deterministic_rscope=True
-# In a separate terminal
-python -m rscope
-```
 
-## FAQ
+## Documentation & Contributing
 
-### How can I contribute?
-
-Get started by installing the library and exploring its features! Found a bug? Report it in the issue tracker. Interested in contributing? If you are a developer with robotics experience, we would love your help—check out the [contribution guidelines](CONTRIBUTING.md) for more details.
-
-### Reproducibility / GPU Precision Issues
-
-Users with NVIDIA Ampere architecture GPUs (e.g., RTX 30 and 40 series) may experience reproducibility [issues](https://github.com/google-deepmind/mujoco_playground/issues/86) in mujoco_playground due to JAX’s default use of TF32 for matrix multiplications. This lower precision can adversely affect RL training stability. To ensure consistent behavior with systems using full float32 precision (as on Turing GPUs), please run `export JAX_DEFAULT_MATMUL_PRECISION=highest` in your terminal before starting your experiments (or add it to the end of `~/.bashrc`).
-
-To reproduce results using the same exact learning script as used in the paper, run the brax training script which is available [here](https://github.com/google/brax/blob/1ed3be220c9fdc9ef17c5cf80b1fa6ddc4fb34fa/brax/training/learner.py#L1). There are slight differences in results when using the `learning/train_jax_ppo.py` script, see the issue [here](https://github.com/google-deepmind/mujoco_playground/issues/171) for more context.
+- **Contributing:** See [mujoco_playground/docs/contributing.rst](mujoco_playground/docs/contributing.rst) for contribution guidelines (`uv run pre-commit run --all-files`, `make test`).
+- **Changelog:** See [mujoco_playground/docs/changelog.rst](mujoco_playground/docs/changelog.rst).
 
 ## Citation
 
-If you use Playground in your scientific works, please cite it as follows:
+If you use MuJoCo Playground in your work, please cite it as follows (see the [GitHub contributors page](https://github.com/google-deepmind/mujoco_playground/graphs/contributors?from=10%2F12%2F2026) for the full list of contributors):
+
+```bibtex
+@software{mujoco_playground_2026,
+  author = {Tabanpour, Baruch and Howell, Taylor and Haves, Sam and Abeyruwan, Saminda and Ma, Tony and Suh, Dan and {MuJoCo Playground Contributors}},
+  title = {{MuJoCo Playground}},
+  url = {https://github.com/google-deepmind/mujoco_playground},
+  year = {2026},
+}
+```
+
+For the RSS 2025 benchmark suite that was built on JAX/MJX (see [`mujoco_playground/rss2025`](mujoco_playground/rss2025/README.md)), please cite:
 
 ```bibtex
 @misc{mujoco_playground_2025,
@@ -110,10 +126,8 @@ If you use Playground in your scientific works, please cite it as follows:
 }
 ```
 
-## License and Disclaimer
+## License & Disclaimer
 
-The texture used in the rough terrain for the locomotion environments is from [Polyhaven](https://polyhaven.com/a/rock_face) and licensed under [CC0](https://creativecommons.org/public-domain/cc0/).
-
-All other content in this repository is licensed under the Apache License, Version 2.0. A copy of this license is provided in the top-level [LICENSE](LICENSE) file in this repository. You can also obtain it from https://www.apache.org/licenses/LICENSE-2.0.
+All content in this repository is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
 This is not an officially supported Google product.

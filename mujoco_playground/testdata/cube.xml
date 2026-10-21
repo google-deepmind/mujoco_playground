@@ -1,0 +1,8 @@
+<mujoco>
+  <worldbody>
+    <body>
+      <joint type="free"/>
+      <geom type="box" size=".01 .01 .01"/>
+    </body>
+  </worldbody>
+</mujoco>

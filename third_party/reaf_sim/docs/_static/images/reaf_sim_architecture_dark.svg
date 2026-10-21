@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 430" width="100%" height="100%">
+  <defs>
+    <marker id="arrow-dark" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#cbd5e1"/>
+    </marker>
+  </defs>
+
+  <style>
+    .label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; fill: #cbd5e1; text-anchor: middle; }
+    .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 700; fill: #f8fafc; text-anchor: middle; }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 400; fill: #cbd5e1; text-anchor: middle; }
+    .container-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 700; fill: #94a3b8; }
+    .device-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 700; fill: #38bdf8; }
+  </style>
+
+  <!-- Environment Outer Container -->
+  <rect x="40" y="55" width="600" height="355" rx="14" fill="#1e293b" stroke="#475569" stroke-width="2" stroke-dasharray="6,5"/>
+  <text x="65" y="88" class="container-title">Environment</text>
+
+  <!-- External Action / Timestep arrows crossing the Environment boundary -->
+  <!-- action: into Task Layer -->
+  <line x1="250" y1="8" x2="250" y2="103" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrow-dark)"/>
+  <text x="205" y="38" class="label">action</text>
+
+  <!-- timestep: out of Task Layer -->
+  <line x1="390" y1="105" x2="390" y2="18" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrow-dark)"/>
+  <text x="435" y="38" class="label">timestep</text>
+
+  <!-- Task Layer (Green - invariant across sim & real) -->
+  <rect x="100" y="105" width="480" height="64" rx="10" fill="#14532d" stroke="#22c55e" stroke-width="2"/>
+  <text x="340" y="143" class="title">Task Layer</text>
+
+  <!-- Task <-> Device arrows -->
+  <line x1="250" y1="169" x2="250" y2="219" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrow-dark)"/>
+  <text x="205" y="198" class="label">commands</text>
+
+  <line x1="390" y1="219" x2="390" y2="169" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrow-dark)"/>
+  <text x="448" y="198" class="label">measurements</text>
+
+  <!-- Device Layer (Container) -->
+  <rect x="100" y="221" width="480" height="165" rx="10" fill="#082f49" stroke="#0284c7" stroke-width="2"/>
+  <text x="120" y="251" class="device-title">Device Layer</text>
+
+  <!-- Simulator or Hardware (Nested inside Device Layer) -->
+  <rect x="125" y="266" width="430" height="105" rx="8" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
+  <text x="340" y="312" class="title">Simulator or Hardware</text>
+  <text x="340" y="342" class="subtitle">MuJoCo (CPU) / MuJoCo Warp (GPU) / Real Robot</text>
+</svg>

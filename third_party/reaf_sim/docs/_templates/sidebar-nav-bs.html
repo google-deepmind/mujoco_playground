@@ -1,0 +1,24 @@
+{#
+  Full table of contents in the left sidebar on every page.
+
+  pydata-sphinx-theme's own components/sidebar-nav-bs.html renders only the
+  subtree of the active top-level section (startdepth=1) and relies on the
+  header bar for top-level navigation. We render the whole toctree from the
+  root (startdepth=0) instead, so the captioned sections of index.rst are
+  always visible and the header carries no page links.
+#}
+<nav class="bd-docs-nav bd-links" aria-label="{{ _('Table of Contents') }}">
+  <p class="bd-links__title" role="heading" aria-level="1">{{ _("Table of Contents") }}</p>
+  <div class="bd-toc-item navbar-nav">
+    {{- generate_toctree_html(
+      "sidebar",
+      startdepth=0,
+      show_nav_level=theme_show_nav_level | int,
+      maxdepth=theme_navigation_depth | int,
+      collapse=theme_collapse_navigation | tobool,
+      includehidden=theme_sidebar_includehidden | tobool,
+      titles_only=True
+      )
+    -}}
+  </div>
+</nav>

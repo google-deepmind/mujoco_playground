@@ -1,24 +1,28 @@
 default_stages: [pre-commit]
-exclude: '.*__init__\.py$'
+exclude: '.*__init__\.py$|^third_party/|^mujoco_playground/rss2025/'
 
-# Install
-# 1. pip install -e .
-# 2. pre-commit install
-# 3. pre-commit run --all-files  # make sure all files are clean
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trailing Whitespace
+        types_or: [python, c, c++, cuda, shell, markdown, yaml, json, toml]
+      - id: end-of-file-fixer
+        name: End of File Fixer
+        types_or: [python, c, c++, cuda, shell, markdown, yaml, json, toml]
+
   - repo: https://github.com/google/pyink
-    rev: 24.10.0
+    rev: 25.12.0
     hooks:
       - id: pyink
         name: Pyink (Formatting)
-        # pyink will automatically read configuration from pyproject.toml
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
         name: Isort (Import Sorting)
-        # isort will automatically read configuration from pyproject.toml
 
   - repo: local
     hooks:
@@ -28,31 +32,18 @@ repos:
         language: system
         types_or: [python, c, c++, cuda]
 
-  # - repo: local
-  #   hooks:
-  #     - id: pylint
-  #       name: Pylint (Google Style)
-  #       entry: pylint
-  #       args: ['--rcfile=pylintrc']
-  #       language: system
-  #       types: [python]
+      - id: check-imports
+        name: Imports (No Optional Extras)
+        entry: make check-imports
+        language: system
+        # Checks the whole package, not the staged files, and the first run
+        # builds a base-dependency environment (a torch download).
+        pass_filenames: false
+        files: ^mujoco_playground/.*\.py$
 
-  # - repo: local # re-using locally installed libraries
-  #   hooks:
-  #     - id: pytype
-  #       name: Pytype (Type Checking)
-  #       entry: pytype
-  #       language: system
-  #       types: [python]
-  #       always_run: true
-
-  # - repo: local
-  #   hooks:
-  #     - id: pytest
-  #       name: Run Pytest
-  #       entry: pytest
-  #       language: system
-  #       pass_filenames: false
-  #       always_run: true
-  #       args: ["-n", "auto"]  # Execute tests in parallel
-  #       verbose: true
+      - id: pyrefly
+        name: Pyrefly (Type Checking)
+        entry: make typecheck
+        language: system
+        pass_filenames: false
+        types: [python]

@@ -1,0 +1,46 @@
+default_stages: [pre-commit]
+exclude: '.*__init__\.py$'
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trailing Whitespace
+        types_or: [python, c, c++, cuda, shell, markdown, rst, yaml, json, toml]
+      - id: end-of-file-fixer
+        name: End of File Fixer
+        types_or: [python, c, c++, cuda, shell, markdown, rst, yaml, json, toml]
+
+  - repo: https://github.com/google/pyink
+    rev: 25.12.0
+    hooks:
+      - id: pyink
+        name: Pyink (Formatting)
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Isort (Import Sorting)
+
+  - repo: local
+    hooks:
+      - id: docstrfmt
+        name: Docstrfmt (RST Formatting)
+        entry: uv run --group dev docstrfmt
+        language: system
+        types: [rst]
+
+      - id: check-copyright
+        name: Check Copyright Notice
+        entry: python3 -c "import sys, re; pattern = re.compile(r'Copyright \d{4} Google LLC'); bad = [f for f in sys.argv[1:] if not pattern.search(open(f, errors='ignore').read())]; sys.exit('\n'.join(['Files missing Copyright notice:'] + bad)) if bad else None"
+        language: system
+        types_or: [python, c, c++, cuda]
+
+      - id: pyrefly
+        name: Pyrefly (Type Checking)
+        entry: make typecheck
+        language: system
+        pass_filenames: false
+        types: [python]

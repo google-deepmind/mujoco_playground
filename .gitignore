@@ -1,9 +1,14 @@
-.DS_Store
-__pycache__
-*.egg-info
-.venv
+.venv/
+.venv-no-extras/
+.pytest_cache/
+.claude/
+__pycache__/
+*.py[cod]
+# Generated machine-local config (USB serial numbers, calibration).
+/.local/
 MUJOCO_LOG.TXT
-mujoco_menagerie
-checkpoints/
-logs
-.mujoco_playground_asset_cache/
+MUJOCO_LOG.txt
+
+# Profiling logs and generated nightly data
+profiling/nightly/
+/tmp/playground_benchmark_logs/
