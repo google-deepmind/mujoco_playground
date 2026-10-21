@@ -71,7 +71,6 @@ _envs = {
 }
 
 _cfgs = {
-    # go/keep-sorted start
     "AcrobotSwingup": acrobot.default_config,
     "AcrobotSwingupSparse": acrobot.default_config,
     "BallInCup": ball_in_cup.default_config,
@@ -97,7 +96,6 @@ _cfgs = {
     "WalkerRun": walker.default_config,
     "WalkerStand": walker.default_config,
     "WalkerWalk": walker.default_config,
-    # go/keep-sorted end
 }
 
 
