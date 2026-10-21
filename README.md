@@ -4,6 +4,10 @@
 [![PyPI version](https://img.shields.io/pypi/v/playground)](https://pypi.org/project/playground/)
 ![Banner for playground](https://github.com/google-deepmind/mujoco_playground/blob/main/assets/banner.png?raw=true)
 
+<p align="center">
+  <b>English</b> · <a href="https://github.com/google-deepmind/mujoco_playground/blob/main/README.zh.md">简体中文</a>
+</p>
+
 A comprehensive suite of GPU-accelerated environments for robot learning research and sim-to-real, built with [MuJoCo MJX](https://github.com/google-deepmind/mujoco/tree/main/mjx).
 
 Features include:
