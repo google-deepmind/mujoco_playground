@@ -11,22 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12"]
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libosmesa6-dev
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv pip install --system -e ".[test]"
+          uv venv --python ${{ matrix.python-version }} .venv
+          uv pip install -e ".[test]"
       - name: Trigger git clone
         run: |
-          python -c "from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()"
+          uv run --no-sync python -c "from mujoco_playground._src import mjx_env; mjx_env.ensure_menagerie_exists()"
       - name: Test with pytest
         run: |
-          pytest -n auto mujoco_playground/_src/
+          uv run --no-sync pytest -n auto mujoco_playground/_src/
