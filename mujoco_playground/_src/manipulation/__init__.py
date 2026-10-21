@@ -20,17 +20,25 @@ from ml_collections import config_dict
 from mujoco import mjx
 
 from mujoco_playground._src import mjx_env
+from mujoco_playground._src.manipulation.aero_hand import rotate_z as aero_hand_rotate_z
 from mujoco_playground._src.manipulation.aloha import handover as aloha_handover
 from mujoco_playground._src.manipulation.aloha import single_peg_insertion as aloha_peg
-from mujoco_playground._src.manipulation.franka_emika_panda import open_cabinet as panda_open_cabinet
+from mujoco_playground._src.manipulation.franka_emika_panda import (
+  open_cabinet as panda_open_cabinet,
+)
 from mujoco_playground._src.manipulation.franka_emika_panda import pick as panda_pick
-from mujoco_playground._src.manipulation.franka_emika_panda import pick_cartesian as panda_pick_cartesian
-from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import push_cube as robotiq_push_cube
+from mujoco_playground._src.manipulation.franka_emika_panda import (
+  pick_cartesian as panda_pick_cartesian,
+)
+from mujoco_playground._src.manipulation.franka_emika_panda_robotiq import (
+  push_cube as robotiq_push_cube,
+)
 from mujoco_playground._src.manipulation.leap_hand import reorient as leap_cube_reorient
 from mujoco_playground._src.manipulation.leap_hand import rotate_z as leap_rotate_z
-from mujoco_playground._src.manipulation.aero_hand import rotate_z as aero_hand_rotate_z
+from mujoco_playground._src.manipulation.onerobotics_a1 import reach as a1_reach
 
 _envs = {
+    "A1Reach": a1_reach.A1Reach,
     "AlohaHandOver": aloha_handover.HandOver,
     "AlohaSinglePegInsertion": aloha_peg.SinglePegInsertion,
     "PandaPickCube": panda_pick.PandaPickCube,
@@ -44,6 +52,7 @@ _envs = {
 }
 
 _cfgs = {
+    "A1Reach": a1_reach.default_config,
     "AlohaHandOver": aloha_handover.default_config,
     "AlohaSinglePegInsertion": aloha_peg.default_config,
     "PandaPickCube": panda_pick.default_config,

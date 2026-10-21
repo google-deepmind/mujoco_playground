@@ -40,7 +40,23 @@ def brax_ppo_config(
       ),
       num_resets_per_eval=10,
   )
-  if env_name == "AlohaHandOver":
+  if env_name == "A1Reach":
+    rl_config.num_timesteps = 4_000_000
+    rl_config.num_evals = 5
+    rl_config.unroll_length = 10
+    rl_config.num_minibatches = 8
+    rl_config.num_updates_per_batch = 4
+    rl_config.discounting = 0.97
+    rl_config.learning_rate = 3e-4
+    rl_config.entropy_cost = 1e-3
+    rl_config.num_envs = 512
+    rl_config.num_eval_envs = 64
+    rl_config.batch_size = 256
+    rl_config.num_resets_per_eval = 1
+    rl_config.max_grad_norm = 1.0
+    rl_config.network_factory.policy_hidden_layer_sizes = (256, 256)
+    rl_config.network_factory.value_hidden_layer_sizes = (256, 256)
+  elif env_name == "AlohaHandOver":
     rl_config.num_timesteps = 100_000_000
     rl_config.num_evals = 25
     rl_config.unroll_length = 15
