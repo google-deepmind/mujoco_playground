@@ -14,6 +14,8 @@
 
 """Math helper functions."""
 
+import math
+
 import torch
 
 
@@ -89,7 +91,7 @@ def quat_conjugate(q: torch.Tensor) -> torch.Tensor:
   Returns:
     (..., 4) conjugate quaternion.
   """
-  return q * torch.tensor([1.0, -1.0, -1.0, -1.0], device=q.device)
+  return torch.cat((q[..., :1], -q[..., 1:]), dim=-1)
 
 
 @torch.jit.script
@@ -180,8 +182,9 @@ def quat_error_magnitude(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
 def quat_error_magnitude2(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   """Compute the angular distance (in radians) between two quaternions.
 
-  Computed as the norm of the box-minus (axis-angle) difference, which
-  is exact (returns 0.0 for identical orientations) and numerically
+  Equal to the norm of the box-minus (axis-angle) difference for unit
+  quaternions, computed directly as 2 * atan2(||xyz||, |w|) of the relative
+  rotation. Exact (returns 0.0 for identical orientations) and numerically
   stable for small errors, unlike acos-of-dot-product formulations.
 
   Args:
@@ -191,7 +194,11 @@ def quat_error_magnitude2(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   Returns:
     (...,) angular distance in radians.
   """
-  return torch.norm(quat_box_minus(q1, q2), dim=-1)
+  quat_diff = quat_mul(q1, quat_conjugate(q2))
+  return 2.0 * torch.atan2(
+      torch.linalg.norm(quat_diff[..., 1:], dim=-1),
+      torch.abs(quat_diff[..., 0]),
+  )
 
 
 @torch.jit.script
@@ -218,6 +225,7 @@ def yaw_quat(quat: torch.Tensor) -> torch.Tensor:
   return torch.nn.functional.normalize(quat_yaw, p=2.0, dim=-1)
 
 
+@torch.jit.script
 def subtract_frame_transforms(
     t01: torch.Tensor,
     q01: torch.Tensor,
@@ -264,6 +272,19 @@ def axis_angle_to_quat(axis: torch.Tensor, angle: torch.Tensor) -> torch.Tensor:
 
 
 @torch.jit.script
+def _elementary_quats(
+    roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+  """Returns quaternions rotating by roll/pitch/yaw about the x/y/z axes."""
+  zeros = torch.zeros_like(roll)
+  hr, hp, hy = 0.5 * roll, 0.5 * pitch, 0.5 * yaw
+  qx = torch.stack([torch.cos(hr), torch.sin(hr), zeros, zeros], dim=-1)
+  qy = torch.stack([torch.cos(hp), zeros, torch.sin(hp), zeros], dim=-1)
+  qz = torch.stack([torch.cos(hy), zeros, zeros, torch.sin(hy)], dim=-1)
+  return qx, qy, qz
+
+
+@torch.jit.script
 def quat_from_euler_xyz(
     roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor
 ) -> torch.Tensor:
@@ -277,20 +298,11 @@ def quat_from_euler_xyz(
   Returns:
     Quaternion in (w, x, y, z). Shape is (N, 4).
   """
-  n = roll.shape[0]
-  device = roll.device
-
-  x_axis = torch.tensor([[1.0, 0.0, 0.0]], device=device).expand(n, 3)
-  y_axis = torch.tensor([[0.0, 1.0, 0.0]], device=device).expand(n, 3)
-  z_axis = torch.tensor([[0.0, 0.0, 1.0]], device=device).expand(n, 3)
-
-  qx = axis_angle_to_quat(x_axis, roll)
-  qy = axis_angle_to_quat(y_axis, pitch)
-  qz = axis_angle_to_quat(z_axis, yaw)
-
+  qx, qy, qz = _elementary_quats(roll, pitch, yaw)
   return quat_mul(quat_mul(qz, qy), qx)
 
 
+@torch.jit.script
 def quat_from_euler_extrinsic_zyx(
     roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor
 ) -> torch.Tensor:
@@ -304,17 +316,7 @@ def quat_from_euler_extrinsic_zyx(
   Returns:
     Quaternion in (w, x, y, z). Shape is (N, 4).
   """
-  n = roll.shape[0]
-  device = roll.device
-
-  x_axis = torch.tensor([[1.0, 0.0, 0.0]], device=device).expand(n, 3)
-  y_axis = torch.tensor([[0.0, 1.0, 0.0]], device=device).expand(n, 3)
-  z_axis = torch.tensor([[0.0, 0.0, 1.0]], device=device).expand(n, 3)
-
-  qx = axis_angle_to_quat(x_axis, roll)
-  qy = axis_angle_to_quat(y_axis, pitch)
-  qz = axis_angle_to_quat(z_axis, yaw)
-
+  qx, qy, qz = _elementary_quats(roll, pitch, yaw)
   return quat_mul(quat_mul(qx, qy), qz)
 
 
@@ -381,31 +383,16 @@ def sample_uniform_range(
 def sigmoids(x: torch.Tensor, value_at_1: float, sigmoid: str) -> torch.Tensor:
   """Returns 1-sigmoid(x) that hits value_at_1 at x=1."""
   if sigmoid == 'gaussian':
-    scale = torch.sqrt(
-        -2 * torch.log(torch.tensor(value_at_1, device=x.device, dtype=x.dtype))
-    )
+    scale = math.sqrt(-2.0 * math.log(value_at_1))
     return torch.exp(-0.5 * (x * scale) ** 2)
   elif sigmoid == 'quadratic':
-    scale = (
-        torch.sqrt(
-            torch.tensor(1.0 - value_at_1, device=x.device, dtype=x.dtype)
-        )
-        + 1e-8
-    )
+    scale = math.sqrt(1.0 - value_at_1) + 1e-8
     scaled_x = x * scale
-    return torch.where(
-        scaled_x < 1,
-        1 - scaled_x**2,
-        torch.tensor(0.0, dtype=x.dtype, device=x.device),
-    )
+    return torch.where(scaled_x < 1, 1 - scaled_x**2, 0.0)
   elif sigmoid == 'linear':
     scale = 1.0 - value_at_1
     scaled_x = x * scale
-    return torch.where(
-        scaled_x < 1,
-        1 - scaled_x,
-        torch.tensor(0.0, dtype=x.dtype, device=x.device),
-    )
+    return torch.where(scaled_x < 1, 1 - scaled_x, 0.0)
   else:
     raise ValueError(f'Unknown sigmoid type {sigmoid}')
 
@@ -480,63 +467,27 @@ def matrix_to_quat(matrix: torch.Tensor) -> torch.Tensor:
   """Convert rotation matrices to quaternions (wxyz).
 
   Args:
-    matrix: Rotation matrices of shape (B, 3, 3) or (3, 3).
+    matrix: Rotation matrices of shape (..., 3, 3).
 
   Returns:
-    Quaternions of shape (B, 4) or (4,) in wxyz.
+    Quaternions of shape (..., 4) in wxyz.
   """
-  is_batched = matrix.ndim == 3
-  if not is_batched:
-    matrix = matrix.unsqueeze(0)
+  m00, m01, m02 = matrix[..., 0, 0], matrix[..., 0, 1], matrix[..., 0, 2]
+  m10, m11, m12 = matrix[..., 1, 0], matrix[..., 1, 1], matrix[..., 1, 2]
+  m20, m21, m22 = matrix[..., 2, 0], matrix[..., 2, 1], matrix[..., 2, 2]
 
-  batch_size = matrix.shape[0]
+  t0 = 1.0 + m00 + m11 + m22
+  t1 = 1.0 + m00 - m11 - m22
+  t2 = 1.0 - m00 + m11 - m22
+  t3 = 1.0 - m00 - m11 + m22
 
-  t0 = 1.0 + matrix[:, 0, 0] + matrix[:, 1, 1] + matrix[:, 2, 2]
-  t1 = 1.0 + matrix[:, 0, 0] - matrix[:, 1, 1] - matrix[:, 2, 2]
-  t2 = 1.0 - matrix[:, 0, 0] + matrix[:, 1, 1] - matrix[:, 2, 2]
-  t3 = 1.0 - matrix[:, 0, 0] - matrix[:, 1, 1] + matrix[:, 2, 2]
+  q0 = torch.stack([t0, m21 - m12, m02 - m20, m10 - m01], dim=-1)
+  q1 = torch.stack([m21 - m12, t1, m01 + m10, m02 + m20], dim=-1)
+  q2 = torch.stack([m02 - m20, m01 + m10, t2, m12 + m21], dim=-1)
+  q3 = torch.stack([m10 - m01, m02 + m20, m12 + m21, t3], dim=-1)
 
-  t = torch.stack([t0, t1, t2, t3], dim=1)  # (B, 4)
-
-  max_idx = torch.argmax(t, dim=1)  # (B,)
-  max_val = torch.gather(t, 1, max_idx.unsqueeze(1)).squeeze(1)  # (B,)
-
-  q = torch.zeros((batch_size, 4), dtype=matrix.dtype, device=matrix.device)
-
-  mask0 = max_idx == 0
-  if mask0.any():  # pyrefly: ignore[missing-attribute]
-    s = 0.5 / torch.sqrt(max_val[mask0])
-    q[mask0, 0] = 0.25 / s
-    q[mask0, 1] = (matrix[mask0, 2, 1] - matrix[mask0, 1, 2]) * s
-    q[mask0, 2] = (matrix[mask0, 0, 2] - matrix[mask0, 2, 0]) * s
-    q[mask0, 3] = (matrix[mask0, 1, 0] - matrix[mask0, 0, 1]) * s
-
-  mask1 = max_idx == 1
-  if mask1.any():  # pyrefly: ignore[missing-attribute]
-    s = 0.5 / torch.sqrt(max_val[mask1])
-    q[mask1, 0] = (matrix[mask1, 2, 1] - matrix[mask1, 1, 2]) * s
-    q[mask1, 1] = 0.25 / s
-    q[mask1, 2] = (matrix[mask1, 0, 1] + matrix[mask1, 1, 0]) * s
-    q[mask1, 3] = (matrix[mask1, 0, 2] + matrix[mask1, 2, 0]) * s
-
-  mask2 = max_idx == 2
-  if mask2.any():  # pyrefly: ignore[missing-attribute]
-    s = 0.5 / torch.sqrt(max_val[mask2])
-    q[mask2, 0] = (matrix[mask2, 0, 2] - matrix[mask2, 2, 0]) * s
-    q[mask2, 1] = (matrix[mask2, 0, 1] + matrix[mask2, 1, 0]) * s
-    q[mask2, 2] = 0.25 / s
-    q[mask2, 3] = (matrix[mask2, 1, 2] + matrix[mask2, 2, 1]) * s
-
-  mask3 = max_idx == 3
-  if mask3.any():  # pyrefly: ignore[missing-attribute]
-    s = 0.5 / torch.sqrt(max_val[mask3])
-    q[mask3, 0] = (matrix[mask3, 1, 0] - matrix[mask3, 0, 1]) * s
-    q[mask3, 1] = (matrix[mask3, 0, 2] + matrix[mask3, 2, 0]) * s
-    q[mask3, 2] = (matrix[mask3, 1, 2] + matrix[mask3, 2, 1]) * s
-    q[mask3, 3] = 0.25 / s
-
-  q = q / torch.linalg.norm(q, dim=1, keepdim=True)
-
-  if not is_batched:
-    return q.squeeze(0)
-  return q
+  candidates = torch.stack([q0, q1, q2, q3], dim=-2)
+  t = torch.stack([t0, t1, t2, t3], dim=-1)
+  idx = torch.argmax(t, dim=-1, keepdim=True).unsqueeze(-1)
+  q = torch.gather(candidates, -2, idx.expand_as(q0.unsqueeze(-2))).squeeze(-2)
+  return q / torch.linalg.norm(q, dim=-1, keepdim=True)

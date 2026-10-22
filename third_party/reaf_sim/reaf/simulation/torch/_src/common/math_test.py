@@ -14,9 +14,11 @@
 
 """Tests for math helper functions."""
 
+from collections.abc import Callable
 import math
 
 from absl.testing import absltest
+from absl.testing import parameterized
 import numpy as np
 from reaf.simulation.torch._src.common import math as pg_math
 import scipy.spatial.transform
@@ -178,12 +180,18 @@ class MathTest(absltest.TestCase):
     expected_q_batched = expected_q.repeat(2, 1)
     torch.testing.assert_close(q_batched, expected_q_batched)
 
+    q_branches = torch.eye(4)  # Exercises all 4 Shepperd branches (t0..t3).
     q_orig = torch.randn(10, 4)
     q_orig = q_orig / torch.linalg.norm(q_orig, dim=-1, keepdim=True)
     q_orig = torch.where(q_orig[:, 0:1] < 0, -q_orig, q_orig)
+    q_orig = torch.cat([q_branches, q_orig], dim=0)
 
     r_orig = pg_math.quat_to_matrix(q_orig)
     q_recon = pg_math.matrix_to_quat(r_orig)
+    torch.testing.assert_close(
+        pg_math.matrix_to_quat(r_orig.view(2, 7, 3, 3)),
+        q_recon.view(2, 7, 4),
+    )
     q_recon = torch.where(q_recon[:, 0:1] < 0, -q_recon, q_recon)
 
     torch.testing.assert_close(q_recon, q_orig, atol=1e-5, rtol=1e-5)
@@ -402,6 +410,43 @@ class MathTest(absltest.TestCase):
     err2 = pg_math.quat_error_magnitude2(q1, q2)
     torch.testing.assert_close(err1, err2, atol=1e-4, rtol=1e-4)
 
+  def test_quat_error_magnitude2_matches_box_minus_norm(self):
+    """Equals the norm of quat_box_minus, with finite gradients at zero/180."""
+    q1 = torch.randn(64, 4, dtype=torch.float64)
+    q1 = q1 / torch.linalg.norm(q1, dim=-1, keepdim=True)
+    q2 = torch.randn(64, 4, dtype=torch.float64)
+    q2 = q2 / torch.linalg.norm(q2, dim=-1, keepdim=True)
+    q2[:8] = q1[:8]  # Identical orientations.
+    q2[8:16] = -q1[8:16]  # Same orientation, opposite hemisphere.
+    q1[16] = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64)
+    q2[16] = torch.tensor([0.0, 1.0, 0.0, 0.0], dtype=torch.float64)  # 180 deg.
+    expected = torch.linalg.norm(pg_math.quat_box_minus(q1, q2), dim=-1)
+    err = pg_math.quat_error_magnitude2(q1, q2)
+    torch.testing.assert_close(err, expected, atol=1e-6, rtol=1e-6)
+    torch.testing.assert_close(
+        err[:16], torch.zeros(16, dtype=torch.float64), atol=1e-6, rtol=0.0
+    )
+    torch.testing.assert_close(
+        err[16], torch.tensor(math.pi, dtype=torch.float64), atol=1e-6, rtol=0.0
+    )
+
+    q1.requires_grad_(True)
+    q2.requires_grad_(True)
+    pg_math.quat_error_magnitude2(q1, q2).sum().backward()
+    self.assertTrue(torch.isfinite(q1.grad).all().item())
+    self.assertTrue(torch.isfinite(q2.grad).all().item())
+
+  def test_quat_from_euler_xyz_scipy(self):
+    """quat_from_euler_xyz matches scipy extrinsic 'xyz' Euler angles."""
+    roll, pitch, yaw = torch.randn(3, 10, dtype=torch.float64)
+    q = pg_math.quat_from_euler_xyz(roll, pitch, yaw)
+    angles = torch.stack([roll, pitch, yaw], dim=-1).numpy()
+    q_xyzw = R.from_euler('xyz', angles).as_quat()
+    q_scipy = torch.from_numpy(q_xyzw[:, [3, 0, 1, 2]])
+    q = torch.where(q[:, 0:1] < 0, -q, q)
+    q_scipy = torch.where(q_scipy[:, 0:1] < 0, -q_scipy, q_scipy)
+    torch.testing.assert_close(q, q_scipy, atol=1e-10, rtol=1e-10)
+
   def test_yaw_quat_pure_yaw(self):
     """A pure yaw rotation should be returned unchanged (up to sign)."""
     yaw_angle = math.pi / 3
@@ -542,10 +587,19 @@ class MathTest(absltest.TestCase):
     # Quadratic sigmoid
     val_q = pg_math.sigmoids(x, value_at_1=0.1, sigmoid='quadratic')
     torch.testing.assert_close(val_q[0], torch.tensor(1.0))
+    torch.testing.assert_close(val_q[2], torch.tensor(0.1))
 
     # Linear sigmoid
     val_l = pg_math.sigmoids(x, value_at_1=0.1, sigmoid='linear')
     torch.testing.assert_close(val_l[0], torch.tensor(1.0))
+    torch.testing.assert_close(val_l[2], torch.tensor(0.1))
+
+    # Quadratic and linear are zero beyond their support, preserving dtype.
+    x_far = torch.tensor([10.0], dtype=torch.float64)
+    for sigmoid in ('quadratic', 'linear'):
+      val = pg_math.sigmoids(x_far, value_at_1=0.1, sigmoid=sigmoid)
+      self.assertEqual(val.dtype, torch.float64)
+      torch.testing.assert_close(val, torch.zeros(1, dtype=torch.float64))
 
   def test_tolerance(self):
     """Test tolerance computation for values in/out of bounds."""
@@ -554,12 +608,243 @@ class MathTest(absltest.TestCase):
     res_in = pg_math.tolerance(x_in, bounds=(0.0, 1.0))
     torch.testing.assert_close(res_in, torch.tensor([1.0]))
 
-    # Values outside bounds return < 1.0 when margin > 0
-    x_out = torch.tensor([1.5])
-    res_out = pg_math.tolerance(
-        x_out, bounds=(0.0, 1.0), margin=1.0, value_at_margin=0.1
+    # Zero margin outside bounds returns 0.0 and preserves dtype.
+    x_zero = torch.tensor([-0.5, 0.5, 1.5], dtype=torch.float64)
+    res_zero = pg_math.tolerance(x_zero, bounds=(0.0, 1.0), margin=0.0)
+    self.assertEqual(res_zero.dtype, torch.float64)
+    torch.testing.assert_close(
+        res_zero, torch.tensor([0.0, 1.0, 0.0], dtype=torch.float64)
     )
-    self.assertLess(res_out.item(), 1.0)
+
+    # Values at lower - margin and upper + margin match value_at_margin.
+    x_margin = torch.tensor([-1.0, 2.0])
+    for sigmoid in ('gaussian', 'quadratic', 'linear'):
+      res_margin = pg_math.tolerance(
+          x_margin,
+          bounds=(0.0, 1.0),
+          margin=1.0,
+          sigmoid=sigmoid,
+          value_at_margin=0.1,
+      )
+      torch.testing.assert_close(res_margin, torch.tensor([0.1, 0.1]))
+
+
+def _rand_quat(n: int) -> torch.Tensor:
+  q = torch.randn(n, 4, device='cuda')
+  return q / torch.linalg.norm(q, dim=-1, keepdim=True)
+
+
+_N = 256
+_CASES: dict[
+    str, Callable[[], tuple[Callable[..., object], tuple[torch.Tensor, ...]]]
+] = {
+    'quat_mul': lambda: (
+        pg_math.quat_mul,
+        (_rand_quat(_N), _rand_quat(_N)),
+    ),
+    'quat_rotate': lambda: (
+        pg_math.quat_rotate,
+        (_rand_quat(_N), torch.randn(_N, 3, device='cuda')),
+    ),
+    'quat_rotate_inverse': lambda: (
+        pg_math.quat_rotate_inverse,
+        (_rand_quat(_N), torch.randn(_N, 3, device='cuda')),
+    ),
+    'quat_conjugate': lambda: (pg_math.quat_conjugate, (_rand_quat(_N),)),
+    'quat_inv': lambda: (pg_math.quat_inv, (_rand_quat(_N),)),
+    'axis_angle_from_quat': lambda: (
+        pg_math.axis_angle_from_quat,
+        (_rand_quat(_N),),
+    ),
+    'axis_angle_to_quat': lambda: (
+        pg_math.axis_angle_to_quat,
+        (
+            torch.nn.functional.normalize(
+                torch.randn(_N, 3, device='cuda'), dim=-1
+            ),
+            torch.randn(_N, device='cuda'),
+        ),
+    ),
+    'quat_box_minus': lambda: (
+        pg_math.quat_box_minus,
+        (_rand_quat(_N), _rand_quat(_N)),
+    ),
+    'quat_error_magnitude': lambda: (
+        pg_math.quat_error_magnitude,
+        (_rand_quat(_N), _rand_quat(_N)),
+    ),
+    'quat_error_magnitude2': lambda: (
+        pg_math.quat_error_magnitude2,
+        (_rand_quat(_N), _rand_quat(_N)),
+    ),
+    'yaw_quat': lambda: (pg_math.yaw_quat, (_rand_quat(_N),)),
+    'subtract_frame_transforms': lambda: (
+        pg_math.subtract_frame_transforms,
+        (
+            torch.randn(_N, 3, device='cuda'),
+            _rand_quat(_N),
+            torch.randn(_N, 3, device='cuda'),
+            _rand_quat(_N),
+        ),
+    ),
+    'quat_from_euler_xyz': lambda: (
+        pg_math.quat_from_euler_xyz,
+        tuple(torch.randn(3, _N, device='cuda')),
+    ),
+    'quat_from_euler_extrinsic_zyx': lambda: (
+        pg_math.quat_from_euler_extrinsic_zyx,
+        tuple(torch.randn(3, _N, device='cuda')),
+    ),
+    'sigmoids_gaussian': lambda: (
+        lambda x: pg_math.sigmoids(x, 0.1, 'gaussian'),
+        (torch.randn(_N, device='cuda').abs(),),
+    ),
+    'sigmoids_quadratic': lambda: (
+        lambda x: pg_math.sigmoids(x, 0.1, 'quadratic'),
+        (torch.randn(_N, device='cuda').abs(),),
+    ),
+    'sigmoids_linear': lambda: (
+        lambda x: pg_math.sigmoids(x, 0.1, 'linear'),
+        (torch.randn(_N, device='cuda').abs(),),
+    ),
+    'tolerance_zero_margin': lambda: (
+        lambda x: pg_math.tolerance(x, (0.0, 0.5), 0.0, 'gaussian', 0.1),
+        (torch.randn(_N, device='cuda'),),
+    ),
+    'tolerance_gaussian': lambda: (
+        lambda x: pg_math.tolerance(x, (0.0, 0.5), 1.0, 'gaussian', 0.1),
+        (torch.randn(_N, device='cuda'),),
+    ),
+    'tolerance_quadratic': lambda: (
+        lambda x: pg_math.tolerance(x, (0.0, 0.5), 1.0, 'quadratic', 0.1),
+        (torch.randn(_N, device='cuda'),),
+    ),
+    'tolerance_linear': lambda: (
+        lambda x: pg_math.tolerance(x, (0.0, 0.5), 1.0, 'linear', 0.1),
+        (torch.randn(_N, device='cuda'),),
+    ),
+    'quat_to_matrix': lambda: (pg_math.quat_to_matrix, (_rand_quat(_N),)),
+    'rotation_6d_to_matrix': lambda: (
+        pg_math.rotation_6d_to_matrix,
+        (torch.randn(_N, 6, device='cuda'),),
+    ),
+    'rot_matrix_to_6d': lambda: (
+        lambda r: pg_math.rot_matrix_to_6d(r.transpose(-1, -2)),
+        (pg_math.quat_to_matrix(_rand_quat(_N)),),
+    ),
+    'matrix_to_quat': lambda: (
+        pg_math.matrix_to_quat,
+        (pg_math.quat_to_matrix(_rand_quat(_N)),),
+    ),
+}
+
+
+def _bound_pair() -> tuple[torch.Tensor, torch.Tensor]:
+  return (
+      torch.tensor([-2.0, -1.0, 0.0], device='cuda'),
+      torch.tensor([1.0, 2.0, 3.0], device='cuda'),
+  )
+
+
+_RNG_CASES: dict[
+    str, Callable[[], tuple[Callable[[], torch.Tensor], tuple[int, ...]]]
+] = {
+    'sample_uniform': lambda: (
+        lambda: pg_math.sample_uniform(_N, -2.0, 3.0, torch.device('cuda')),
+        (_N,),
+    ),
+    'sample_uniform_3d': lambda: (
+        lambda bounds=_bound_pair(): pg_math.sample_uniform_3d(
+            _N, bounds[0], bounds[1], torch.device('cuda')
+        ),
+        (_N, 3),
+    ),
+    'sample_uniform_range': lambda: (
+        lambda bounds=_bound_pair(): pg_math.sample_uniform_range(
+            bounds[0], bounds[1], (_N, 3), torch.device('cuda')
+        ),
+        (_N, 3),
+    ),
+}
+
+
+class MathCudaGraphTest(parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    if not torch.cuda.is_available():
+      self.skipTest('CUDA is not available')
+
+  @parameterized.named_parameters((name, name) for name in _CASES)
+  def test_cuda_graph_capture(self, name: str):
+    fn, args = _CASES[name]()
+    _, replay_args = _CASES[name]()
+    graph = torch.cuda.CUDAGraph()
+    stream = torch.cuda.Stream()
+    stream.wait_stream(torch.cuda.current_stream())
+    # Any host-device sync in fn raises; H2D copies of unpinned CPU tensors
+    # fail graph capture.
+    torch.cuda.set_sync_debug_mode('error')
+    try:
+      with torch.cuda.stream(stream):
+        for _ in range(3):
+          fn(*args)  # Warm up TorchScript profiling outside capture.
+        with torch.cuda.graph(graph, stream=stream):
+          captured = fn(*args)
+      torch.cuda.current_stream().wait_stream(stream)
+    finally:
+      torch.cuda.set_sync_debug_mode('default')
+    for arg, new_arg in zip(args, replay_args):
+      arg.copy_(new_arg)
+    graph.replay()
+    expected = fn(*replay_args)
+    torch.cuda.synchronize()
+    torch.testing.assert_close(captured, expected)
+
+  @parameterized.named_parameters((name, name) for name in _RNG_CASES)
+  def test_cuda_graph_capture_rng(self, name: str):
+    fn, expected_shape = _RNG_CASES[name]()
+    graph = torch.cuda.CUDAGraph()
+    stream = torch.cuda.Stream()
+    stream.wait_stream(torch.cuda.current_stream())
+    with torch.cuda.stream(stream):
+      torch.cuda.set_sync_debug_mode('error')
+      try:
+        for _ in range(3):
+          fn()
+      finally:
+        torch.cuda.set_sync_debug_mode('default')
+      # CUDAGeneratorCaptureState::initialize syncs the default stream once
+      # when registering extragraph Philox state on a new CUDAGraph.
+      with torch.cuda.graph(graph, stream=stream):
+        captured = fn()
+    torch.cuda.current_stream().wait_stream(stream)
+    captured.zero_()
+    graph.replay()
+    first = captured.clone()
+    graph.replay()
+    torch.cuda.synchronize()
+    self.assertEqual(tuple(captured.shape), expected_shape)
+    self.assertTrue(torch.all((captured >= -2.0) & (captured < 3.0)).item())
+    self.assertGreater(captured.abs().sum().item(), 0.0)
+    self.assertFalse(torch.equal(first, captured))
+
+  def test_all_public_functions_covered(self):
+    public_fns = {
+        name
+        for name, obj in vars(pg_math).items()
+        if not name.startswith('_') and callable(obj)
+    }
+    covered = (
+        set(_CASES)
+        | set(_RNG_CASES)
+        | {
+            k.split('_')[0]
+            for k in _CASES
+            if k.startswith(('sigmoids_', 'tolerance_'))
+        }
+    )
+    self.assertEmpty(public_fns - covered)
 
 
 if __name__ == '__main__':
