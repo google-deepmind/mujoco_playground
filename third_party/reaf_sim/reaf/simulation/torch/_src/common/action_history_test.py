@@ -71,7 +71,11 @@ class ActionHistoryTest(absltest.TestCase):
   def test_features_after_steps(self):
     """Verify current action and history buffer after processing actions."""
     # Process 3 different actions.
-    actions = [torch.full((self.nworld, 4), float(i)) for i in range(1, 4)]
+    # requires_grad=True verifies history updates do not mutate in-place.
+    actions = [
+        torch.full((self.nworld, 4), float(i), requires_grad=True)
+        for i in range(1, 4)
+    ]
     for a in actions:
       self.history.process_commands({self.key: a})
 
@@ -88,6 +92,8 @@ class ActionHistoryTest(absltest.TestCase):
     torch.testing.assert_close(history[0, 0], torch.full((4,), 2.0))
     torch.testing.assert_close(history[0, 1], torch.full((4,), 1.0))
     torch.testing.assert_close(history[0, 2], torch.zeros(4))
+    (features[self.key].sum() + history.sum()).backward()
+    self.assertTrue(all(a.grad is not None for a in actions))
 
   def test_reset_clears_buffer(self):
     action = torch.ones(self.nworld, *self.feature_shape)

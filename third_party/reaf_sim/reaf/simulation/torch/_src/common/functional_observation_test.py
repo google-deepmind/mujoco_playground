@@ -197,16 +197,20 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     self.assertEqual(spec["obs"].shape, (nworld, 9))
 
     # Step 0: history filled with current value.
-    features = {"a": torch.ones(nworld, 3)}
-    obs = provider.observations_from_features(features)
-    torch.testing.assert_close(obs["obs"], torch.ones(nworld, 9))
+    # requires_grad=True verifies history updates do not mutate in-place.
+    a0 = torch.ones(nworld, 3, requires_grad=True)
+    obs0 = provider.observations_from_features({"a": a0})
+    torch.testing.assert_close(obs0["obs"], torch.ones(nworld, 9))
 
     # Step 1: current=[2,2,2], history=[1,1,1, 1,1,1]
-    features = {"a": torch.full((nworld, 3), 2.0)}
-    obs = provider.observations_from_features(features)
+    a1 = torch.full((nworld, 3), 2.0, requires_grad=True)
+    obs = provider.observations_from_features({"a": a1})
     torch.testing.assert_close(obs["obs"][:, :3], torch.full((nworld, 3), 2.0))
     torch.testing.assert_close(obs["obs"][:, 3:6], torch.ones(nworld, 3))
     torch.testing.assert_close(obs["obs"][:, 6:], torch.ones(nworld, 3))
+    (obs0["obs"].sum() + obs["obs"].sum()).backward()
+    self.assertIsNotNone(a0.grad)
+    self.assertIsNotNone(a1.grad)
 
   def test_image_history(self):
     nworld = 2

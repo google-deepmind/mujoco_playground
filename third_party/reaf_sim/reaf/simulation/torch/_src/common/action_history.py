@@ -131,8 +131,9 @@ class ActionHistory(
 
     # Push previous current_action into history, then update.
     if self._buffer is not None:
-      self._buffer = torch.roll(self._buffer, shifts=1, dims=1)
-      self._buffer[:, 0] = self._current_action
+      self._buffer = torch.cat(
+          [self._current_action.unsqueeze(1), self._buffer[:, :-1]], dim=1
+      )
     self._current_action = raw.clone()
 
     return {self._key: raw}

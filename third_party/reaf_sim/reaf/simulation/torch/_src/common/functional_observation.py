@@ -303,8 +303,9 @@ class FunctionalObservationAdapter(
                 [value.unsqueeze(1), buf], dim=1
             ).flatten(start_dim=1)
           # Update buffer: shift right, insert current at position 0.
-          self._history_buffers[group_name][name] = torch.roll(buf, 1, dims=1)
-          self._history_buffers[group_name][name][:, 0] = value
+          self._history_buffers[group_name][name] = torch.cat(
+              [value.unsqueeze(1), buf[:, :-1]], dim=1
+          )
           value = value_with_history
 
         # If multiple terms in group, flatten before concatenating.
