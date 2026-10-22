@@ -12,21 +12,21 @@ It enables an external vision-language model (VLM) to perceive scenes through a 
 <table>
   <tr>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_mug_real/1/yam_mug_real.gif" alt="YAM Agentic Real Hardware Manipulation">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_mug_real/2/yam_mug_real.webp" alt="YAM Agentic Real Hardware Manipulation">
       <br><b>YAM agentic manipulation (Real)</b>
     </td>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_pantry_spice/1/yam_pantry_spice.gif" alt="YAM Agentic Pantry Spices">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_pantry_spice/2/yam_pantry_spice.webp" alt="YAM Agentic Pantry Spices">
       <br><b>YAM agentic pantry spices (Sim)</b>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_chess/1/yam_chess.gif" alt="YAM Agentic Chess Manipulation">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_chess/2/yam_chess.webp" alt="YAM Agentic Chess Manipulation">
       <br><b>YAM agentic chess (Sim)</b>
     </td>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_rock_cairn/1/yam_rock_cairn.gif" alt="YAM Agentic Rock Balancing">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_rock_cairn/2/yam_rock_cairn.webp" alt="YAM Agentic Rock Balancing">
       <br><b>YAM agentic rock balancing (Sim)</b>
     </td>
   </tr>

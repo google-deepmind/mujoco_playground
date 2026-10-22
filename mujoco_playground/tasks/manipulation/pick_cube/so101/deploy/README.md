@@ -3,7 +3,7 @@
 This directory implements sim2real policy deployment for the SO101 pick-cube task (`SO101PickCubeVision`), supporting both single-world simulation (`--mode=sim`) and the physical follower arm (`--mode=real`).
 
 <p align="center">
-  <img width="640" src="https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.gif" alt="SO-101 Pick-Cube Sim-to-Real Deployment">
+  <img width="640" src="https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/2/so101_pick_cube_sim2real.webp" alt="SO-101 Pick-Cube Sim-to-Real Deployment">
 </p>
 
 ## Setup

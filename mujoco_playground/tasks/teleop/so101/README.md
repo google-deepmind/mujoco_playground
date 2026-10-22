@@ -8,11 +8,11 @@ they produce are interchangeable.
 <table>
   <tr>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/1/so101_sim_teleop.gif" alt="SO-101 Simulation Teleoperation Demo">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/2/so101_sim_teleop.webp" alt="SO-101 Simulation Teleoperation Demo">
       <br><b>Sim Teleop (<code>--sim</code>)</b>
     </td>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/1/so101_real_teleop.gif" alt="SO-101 Real Teleoperation Demo">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/2/so101_real_teleop.webp" alt="SO-101 Real Teleoperation Demo">
       <br><b>Real Teleop</b>
     </td>
   </tr>
