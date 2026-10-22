@@ -4,6 +4,10 @@ This package implements whole-body motion tracking for the Unitree G1 humanoid
 ([BeyondMimic](https://beyondmimic.github.io/)-style tracking) using the
 **Robotics Environment Authoring Framework (REAF)**.
 
+<p align="center">
+  <img width="640" src="https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/0/g1_lafan_dance.gif" alt="Unitree G1 Whole-Body Motion Tracking">
+</p>
+
 ## Architecture Overview
 
 The task is structured across the three canonical REAF layers:

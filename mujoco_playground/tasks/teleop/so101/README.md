@@ -5,6 +5,19 @@ from an SO101 leader arm, in simulation or on real hardware. Both modes run the 
 runloop, leader agent, foot-pedal gating and episodic logger, so the episodes
 they produce are interchangeable.
 
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/0/so101_sim_teleop.gif" alt="SO-101 Simulation Teleoperation Demo">
+      <br><b>Sim Teleop (<code>--sim</code>)</b>
+    </td>
+    <td align="center" width="50%">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/0/so101_real_teleop.gif" alt="SO-101 Real Teleoperation Demo">
+      <br><b>Real Teleop</b>
+    </td>
+  </tr>
+</table>
+
 ## Before you start
 
 We assume the arms are already identified and calibrated. Work through
