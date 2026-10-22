@@ -393,15 +393,14 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
       fail |= torch.any(ee_err > self._ee_pos_z_threshold, dim=-1)
 
     newly = fail & ~self._fail_latch
-    if torch.any(newly):
-      bins = torch.clamp(
-          (self.time_steps * self.bin_count)
-          // max(self.motion.time_step_total, 1),
-          0,
-          self.bin_count - 1,
-      )
-      self._fail_bin = torch.where(newly, bins, self._fail_bin)
-      self._fail_latch = self._fail_latch | fail
+    bins = torch.clamp(
+        (self.time_steps * self.bin_count)
+        // max(self.motion.time_step_total, 1),
+        0,
+        self.bin_count - 1,
+    )
+    self._fail_bin = torch.where(newly, bins, self._fail_bin)
+    self._fail_latch = self._fail_latch | fail
 
   def produced_features_spec(self) -> Mapping[str, specs.Array]:
     nj = self._num_joints
