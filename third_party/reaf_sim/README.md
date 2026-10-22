@@ -10,6 +10,7 @@
 
 This project adheres to the [GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/blob/main/src/gdm_robotics/interfaces/environment.py).
 
+> [!NOTE]
 > **Looking for pre-built robot environments and training scripts?** We will be revamping [MuJoCo Playground](https://github.com/google-deepmind/mujoco_playground) with ready-made examples for RL, sim/real teleop, sysid, sim2real, and agentic robotics. Stay tuned!
 
 ## Quickstart

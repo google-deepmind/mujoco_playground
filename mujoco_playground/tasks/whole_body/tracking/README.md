@@ -99,7 +99,8 @@ datasets (like LAFAN1) to the target robot model.
       --logdir=/tmp/g1_tracking/
     ```
 
-    > **Note**: To run distributed multi-GPU training, substitute `python` with
+    > [!TIP]
+    > To run distributed multi-GPU training, substitute `python` with
     > `torchrun --standalone --nnodes=1 --nproc_per_node=N_GPUS`. For example on
     > a 2-GPU machine:
     > ```bash

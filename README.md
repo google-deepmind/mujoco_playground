@@ -14,7 +14,8 @@ Robots exist in `mujoco_playground/robots/`, either in simulation or paired with
 - **Zero-shot sim-to-real policy deployment**: running the same task layer and policy in simulation (`--mode=sim`) and on hardware (`--mode=real`).
 - **Agentic manipulation**: for vision-language model (VLM) examples across simulation and hardware (`SO-101`, `i2rt YAM`).
 
-> **Note:** Looking for the original RSS 2025 JAX/MJX environments? They remain available under [`mujoco_playground/rss2025`](mujoco_playground/rss2025).
+> [!NOTE]
+> Looking for the original RSS 2025 JAX/MJX environments? They remain available under [`mujoco_playground/rss2025`](mujoco_playground/rss2025).
 
 ## Installation
 
@@ -36,7 +37,8 @@ Verify your installation by running the test suite:
 make test
 ```
 
-> **Note:** Real-robot hardware SDKs are optional extras so simulation-only checkouts stay lightweight. To install hardware drivers for a specific robot, add `--extra so101` or `--extra yam` (e.g., `uv sync --extra cpu --extra so101`).
+> [!NOTE]
+> Real-robot hardware SDKs are optional extras so simulation-only checkouts stay lightweight. To install hardware drivers for a specific robot, add `--extra so101` or `--extra yam` (e.g., `uv sync --extra cpu --extra so101`).
 
 ## Getting Started
 

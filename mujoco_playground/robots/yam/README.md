@@ -35,7 +35,8 @@ Identify the wrist camera (saves one preview image per candidate V4L2 node to
 uv run --extra yam python -m mujoco_playground.robots.yam.real.get_cameras --identify
 ```
 
-> **Note:** On Linux, the Intel RealSense D405 exposes multiple V4L2 nodes that
+> [!NOTE]
+> On Linux, the Intel RealSense D405 exposes multiple V4L2 nodes that
 > produce color images. Pick the **ISP RGB stream** (`...-video-index4`,
 > typically `/dev/video4` — bright, `640×480` `4:3` with no corner vignetting),
 > **not** the raw left stereo sensor (`...-video-index2`, typically
