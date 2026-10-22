@@ -17,31 +17,31 @@ Robots exist in `mujoco_playground/robots/`, either in simulation or paired with
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/whole_body/tracking/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/0/g1_lafan_dance.gif" alt="Whole body motion tracking"></a>
+      <a href="mujoco_playground/tasks/whole_body/tracking/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/1/g1_lafan_dance.gif" alt="Whole body motion tracking"></a>
       <br><b><a href="mujoco_playground/tasks/whole_body/tracking/README.md">Whole body motion tracking</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/0/so101_sim_teleop.gif" alt="SO-101 Simulation Teleoperation Demo"></a>
+      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/1/so101_sim_teleop.gif" alt="SO-101 Simulation Teleoperation Demo"></a>
       <br><b><a href="mujoco_playground/tasks/teleop/so101/README.md">Sim teleoperation</a></b>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/0/so101_real_teleop.gif" alt="SO-101 Real Teleoperation Demo"></a>
+      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/1/so101_real_teleop.gif" alt="SO-101 Real Teleoperation Demo"></a>
       <br><b><a href="mujoco_playground/tasks/teleop/so101/README.md">Real teleoperation</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/sysid/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sysid/0/so101_sysid.gif" alt="SO-101 System Identification Rollout"></a>
+      <a href="mujoco_playground/tasks/sysid/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sysid/1/so101_sysid.gif" alt="SO-101 System Identification Rollout"></a>
       <br><b><a href="mujoco_playground/tasks/sysid/so101/README.md">System identification</a></b>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/0/so101_pick_cube_sim2real.gif" alt="Sim2Real and interactive viewer"></a>
+      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.gif" alt="Sim2Real and interactive viewer"></a>
       <br><b><a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md">Sim2Real and interactive viewer</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_mug_real/0/yam_mug_real.gif" alt="YAM Agentic Tabletop Manipulation"></a>
+      <a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_mug_real/1/yam_mug_real.gif" alt="YAM Agentic Tabletop Manipulation"></a>
       <br><b><a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md">Agentic manipulation</a></b>
     </td>
   </tr>

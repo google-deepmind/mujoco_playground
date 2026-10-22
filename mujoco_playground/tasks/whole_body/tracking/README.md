@@ -5,7 +5,7 @@ This package implements whole-body motion tracking for the Unitree G1 humanoid
 **Robotics Environment Authoring Framework (REAF)**.
 
 <p align="center">
-  <img width="640" src="https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/0/g1_lafan_dance.gif" alt="Unitree G1 Whole-Body Motion Tracking">
+  <img width="640" src="https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/1/g1_lafan_dance.gif" alt="Unitree G1 Whole-Body Motion Tracking">
 </p>
 
 ## Architecture Overview
