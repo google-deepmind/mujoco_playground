@@ -96,6 +96,18 @@ and capture visual rollouts:
 
 .. toctree::
     :hidden:
+    :maxdepth: 2
+    :caption: MuJoCo Playground
+
+    Overview <playground/index>
+    Robots <playground/robots>
+    RL <playground/tasks_and_rl>
+    Robotic Workflows <playground/workflows>
+    Contributing <playground/contributing>
+    Changelog <playground/changelog>
+
+.. toctree::
+    :hidden:
     :caption: Project Links
 
     reaf-sim <https://github.com/google-deepmind/reaf-sim>

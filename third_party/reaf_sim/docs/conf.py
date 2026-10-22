@@ -15,6 +15,7 @@
 
 import inspect
 import os
+import shutil
 import sys
 import types
 import typing
@@ -143,19 +144,46 @@ def _skip_member(app, what, name, obj, skip, options):
   return skip
 
 
+# Sphinx requires all toctree documents to reside inside the source directory
+# (`docs/`). Because the MuJoCo Playground `.rst` files live in the sibling
+# `mujoco_playground/docs/` directory, copy them into `docs/playground/` before
+# the build starts and remove the temporary copy when the build finishes.
+_PLAYGROUND_DOCS_DIR = os.path.join(_DOCS_DIR, "playground")
+
+
+def _fetch_playground_docs(app):
+  """Copies the MuJoCo Playground docs into the Sphinx source tree."""
+  del app
+  local_docs = os.path.join(_ROOT_DIR, "..", "..", "mujoco_playground", "docs")
+  if os.path.isdir(local_docs):
+    shutil.copytree(local_docs, _PLAYGROUND_DOCS_DIR, dirs_exist_ok=True)
+
+
+def _cleanup_playground_docs(app, exception):
+  """Removes the temporary MuJoCo Playground docs directory after the build."""
+  del app, exception
+  shutil.rmtree(_PLAYGROUND_DOCS_DIR, ignore_errors=True)
+
+
 # pydata-sphinx-theme hides the sidebar TOC on pages without a top-level
 # toctree ancestor (index, search, genindex). Our sidebar renders the full
 # toctree from the root (see _templates/sidebar-nav-bs.html), so it is never
-# empty.
+# empty. The top-left navbar brand text switches to "MuJoCo Playground" on
+# pages under `playground/` and "reaf-sim" elsewhere.
 def _keep_sidebar_toctree(app, pagename, templatename, context, doctree):
   """Keeps the left sidebar TOC on every page and sets the section brand."""
   del app, templatename, doctree
   context["suppress_sidebar_toctree"] = lambda *args, **kwargs: False
-  context["docstitle"] = "reaf-sim"
+  if pagename.startswith("playground/"):
+    context["docstitle"] = "MuJoCo Playground"
+  else:
+    context["docstitle"] = "reaf-sim"
 
 
 def setup(app):
   """Registers Sphinx autodoc and theme hooks."""
+  app.connect("builder-inited", _fetch_playground_docs)
+  app.connect("build-finished", _cleanup_playground_docs)
   app.connect("autodoc-process-docstring", _process_docstring)
   app.connect("autodoc-skip-member", _skip_member)
   # Runs after pydata-sphinx-theme has populated the page context.
