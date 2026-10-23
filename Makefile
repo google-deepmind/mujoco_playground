@@ -4,11 +4,11 @@ export CMAKE_ARGS := -DCMAKE_CXX_STANDARD=17
 
 .PHONY: sync
 sync:
-	uv sync --extra cu124 --extra rl --group dev --default-index https://pypi.org/simple
+	uv sync --extra cu124 --extra rl --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 
 .PHONY: sync-cpu
 sync-cpu:
-	uv sync --extra cpu --extra rl --group dev --default-index https://pypi.org/simple
+	uv sync --extra cpu --extra rl --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 
 .PHONY: format
 format:
@@ -36,7 +36,7 @@ N_WORKERS ?= auto
 
 .PHONY: sync-test
 sync-test:
-	uv sync $(TEST_EXTRAS) --group dev --default-index https://pypi.org/simple
+	uv sync $(TEST_EXTRAS) --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 
 .PHONY: test
 test: sync-test
@@ -47,5 +47,5 @@ test: sync-test
 NO_EXTRAS_ENV := .venv-no-extras
 .PHONY: check-imports
 check-imports:
-	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv sync --no-default-groups --default-index https://pypi.org/simple
+	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv sync --no-default-groups --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv run --no-sync python -m mujoco_playground.import_check

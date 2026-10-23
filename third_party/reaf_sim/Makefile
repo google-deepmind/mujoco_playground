@@ -12,15 +12,15 @@ N_WORKERS ?= auto
 
 .PHONY: install
 install:
-	uv sync --group dev --default-index https://pypi.org/simple
+	uv sync --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 
 .PHONY: install-cu124
 install-cu124:
-	uv sync --extra cu124 --group dev --default-index https://pypi.org/simple
+	uv sync --extra cu124 --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 
 .PHONY: install-cpu
 install-cpu:
-	uv sync --extra cpu --group dev --default-index https://pypi.org/simple
+	uv sync --extra cpu --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 
 .PHONY: format
 format:
