@@ -32,6 +32,14 @@ jobs:
       - name: Run pre-commit
         run: uv run --no-sync --group dev pre-commit run -a
 
+      - name: Notify team chat
+        if: failure() && github.event_name == 'push' && github.ref_name == 'main'
+        uses: google-deepmind/mujoco/.github/actions/notify-chat@main
+        with:
+          service-account-key: ${{ secrets.CHAT_SERVICE_ACCOUNT_KEY }}
+          user-id-map: ${{ secrets.CHAT_USER_ID_MAP }}
+          space-id: "spaces/AAQAvblqAtM"
+
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -62,6 +70,14 @@ jobs:
 
       - name: Run tests
         run: make test
+
+      - name: Notify team chat
+        if: failure() && github.event_name == 'push' && github.ref_name == 'main'
+        uses: google-deepmind/mujoco/.github/actions/notify-chat@main
+        with:
+          service-account-key: ${{ secrets.CHAT_SERVICE_ACCOUNT_KEY }}
+          user-id-map: ${{ secrets.CHAT_USER_ID_MAP }}
+          space-id: "spaces/AAQAvblqAtM"
 
   # Aggregates test matrix results into a single version-independent status check.
   ci:
