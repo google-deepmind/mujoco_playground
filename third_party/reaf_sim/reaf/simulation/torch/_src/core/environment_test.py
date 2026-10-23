@@ -713,19 +713,11 @@ class EnvironmentSetConstTest(parameterized.TestCase):
             simulator_module.mujoco, "mj_setConst"
         ) as mj_set_const,
         mock.patch.object(simulator_module.mjw, "set_const") as mjw_set_const,
-        mock.patch.object(
-            simulator_module.mjw, "set_const_0"
-        ) as mjw_set_const_0,
-        mock.patch.object(
-            simulator_module.mjw, "set_const_fixed"
-        ) as mjw_set_const_fixed,
     ):
       env.reset()
     forward.assert_called_once()
     mj_set_const.assert_not_called()
     mjw_set_const.assert_not_called()
-    mjw_set_const_0.assert_not_called()
-    mjw_set_const_fixed.assert_not_called()
 
   def test_device_layer_without_simulator_skips_set_const(self):
     """Hardware device layers whose `sim` is None only run forward()."""

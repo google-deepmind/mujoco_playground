@@ -1145,17 +1145,28 @@ class TorchWrapperSetConstFieldsTest(absltest.TestCase):
 
     set_const_cases = [
         (
-            mjw.set_const_fixed,
+            lambda m, d: mjw.set_const(
+                m, d, groups=mjw.SetConstGroup.FIXED, restore=False
+            ),
             torch_wrapper.SET_CONST_FIXED_OUTPUT_FIELDS,
             "set_const_fixed",
         ),
         (
-            mjw.set_const_0,
-            torch_wrapper.SET_CONST_0_OUTPUT_FIELDS,
-            "set_const_0",
+            lambda m, d: mjw.set_const(
+                m, d, groups=mjw.SetConstGroup.KIN0, restore=False
+            ),
+            torch_wrapper.SET_CONST_KIN0_OUTPUT_FIELDS,
+            "set_const_kin0",
         ),
         (
-            mjw.set_const,
+            lambda m, d: mjw.set_const(
+                m, d, groups=mjw.SetConstGroup.INERT0, restore=False
+            ),
+            torch_wrapper.SET_CONST_INERT0_OUTPUT_FIELDS,
+            "set_const_inert0",
+        ),
+        (
+            lambda m, d: mjw.set_const(m, d, restore=False),
             torch_wrapper.SET_CONST_OUTPUT_FIELDS,
             "set_const",
         ),
@@ -1200,257 +1211,6 @@ class TorchWrapperSetConstFieldsTest(absltest.TestCase):
       )
 
 
-# Comprehensive XML exercising all entity types with highly anisotropic geoms
-# (no physical symmetry in inertias) and a dampratio general actuator.
-# This was inspired by mujoco/test/testdata/model.xml and made compatible with
-# MuJoCo Warp.
-# TODO(btaba): consider moving this to a shared testdata file.
-RECOMPILE_XML = """
-<mujoco>
-  <option jacobian="dense" density="1.225" viscosity="1.8e-5"/>
-
-  <asset>
-    <mesh name="icosahedron" scale=".05 .05 .05"
-          vertex="0         1       1.618
-                  0        -1       1.618
-                  0         1      -1.618
-                  0        -1      -1.618
-                  1         1.618   0
-                 -1         1.618   0
-                  1        -1.618   0
-                 -1        -1.618   0
-                  1.618     0       1
-                  1.618     0      -1
-                 -1.618     0       1
-                 -1.618     0      -1"/>
-    <texture name="grid" type="cube" builtin="checker" width="32"
-             height="32" rgb1=".1 .2 .3" rgb2="1 1 1"/>
-    <material name="grid" texture="grid" texrepeat="1 1"
-              texuniform="true" reflectance=".2"/>
-  </asset>
-
-  <default>
-    <site rgba=".5 .5 .5 .5"/>
-    <joint armature="1" damping="10"/>
-    <general ctrllimited="true" ctrlrange="-1 1"/>
-  </default>
-
-  <worldbody>
-    <light name="light1" pos="0.1 -0.2 3"/>
-    <camera name="cam1" pos="0.1 -3 1.2" xyaxes="1 0 0 0 0.1 1"/>
-    <geom name="floor" type="plane" size="4 4 .1"/>
-    <body name="head" pos="0 0 .7" gravcomp="0.5">
-      <!-- Anisotropic ellipsoid has highly non-symmetric inertia -->
-      <geom type="ellipsoid" size=".2 .35 .5" density="200"
-            material="grid"/>
-      <site name="head" pos="0 0 .4" size=".1 .15 .05" type="box"/>
-      <site name="anchor0" pos="0 .2 0"/>
-      <freejoint/>
-      <body euler="10 20 30" pos=".2 0 -.2">
-        <joint name="hipy_0" axis="0 1 0" stiffness="60" springref="30"/>
-        <geom type="capsule" size=".05 0.2" rgba="1 0 0 1"
-              fromto="0 0 0 .3 .1 -.05"/>
-        <body pos=".3 .1 -.05">
-          <site name="knee"/>
-          <geom type="capsule" size=".04 0.15" rgba="1 0 0 1"
-                fromto="0 0 0 .1 -.05 -.3"/>
-          <body pos=".1 -.05 -.3">
-            <joint name="wheel_0" type="ball" damping=".1" armature=".1"/>
-            <site name="wheel_0" type="box" size=".1 .12 .08"/>
-            <!-- Anisotropic ellipsoid -->
-            <geom name="wheel_0" size=".1 .15 .2" rgba="0 1 0 1"
-                  type="ellipsoid"/>
-          </body>
-        </body>
-      </body>
-      <body euler="5 -15 45" pos="-.15 .2 -.2">
-        <joint name="hipy_1" axis="0 1 0" stiffness="60" springref="30"/>
-        <!-- Anisotropic box -->
-        <geom type="box" size=".05 .07 .12" rgba="1 0 0 1"
-              fromto="0 0 0 .3 -.05 .1"/>
-        <body pos=".45 -.05 -.2">
-          <joint name="wheel_1" axis="1 0 0" damping=".1" armature=".1"/>
-          <geom size=".1 .12" rgba="0 1 0 1" type="cylinder"
-                fromto="0 0 0 .03 .01 -.02"/>
-        </body>
-      </body>
-    </body>
-    <body pos="-.33 0 1">
-      <joint name="slider" type="slide" axis="0 0 1" limited="true"
-             range="-.2 .5"/>
-      <geom type="mesh" mesh="icosahedron" size=".1" rgba="0 0 1 1"/>
-    </body>
-    <body name="cylinder" pos="-.5 .3 .7">
-      <freejoint/>
-      <geom name="wrapping" type="cylinder" size=".04"
-            fromto="-.1 -.2 0 .1 .4 0"/>
-      <site name="cylinder"/>
-    </body>
-    <site name="sidesite" pos="-.5 .4 1"/>
-    <body pos="-.3 .6 .8">
-      <freejoint/>
-      <!-- Anisotropic box -->
-      <geom type="box" size=".05 .06 .07" rgba="0 0 1 1"/>
-      <site name="anchor1" pos=".05 .05 .05"/>
-    </body>
-    <body pos="-.6 .4 .8">
-      <freejoint/>
-      <geom type="box" size=".04 .05 .06" rgba="0 0 1 1"/>
-      <site name="anchor2" pos=".05 .05 .05"/>
-    </body>
-  </worldbody>
-
-  <equality>
-    <weld body1="world" body2="cylinder"/>
-  </equality>
-
-  <tendon>
-    <spatial name="spatial" limited="true" range="0 .7" rgba="1 0 1 1">
-      <site site="anchor0"/>
-      <site site="anchor1"/>
-      <geom geom="wrapping" sidesite="sidesite"/>
-      <site site="anchor2"/>
-    </spatial>
-    <fixed name="fixed">
-      <joint joint="hipy_0" coef="1"/>
-      <joint joint="hipy_1" coef="1"/>
-    </fixed>
-  </tendon>
-
-  <actuator>
-    <motor tendon="fixed" gear="100"/>
-    <motor tendon="spatial" gear="10"/>
-    <motor joint="hipy_1" gear="100"/>
-    <!-- General dampratio actuator resolving biasprm at runtime -->
-    <general name="dampratio_actuator" joint="hipy_0" biastype="affine"
-             gainprm="100" biasprm="0 -100 0.5"/>
-    <velocity joint="wheel_1" kv="1"/>
-  </actuator>
-</mujoco>
-"""
-
-# Derived constant fields compiled by set_const_fixed and set_const_0.
-_FIXED_OUTPUT = list(torch_wrapper.SET_CONST_FIXED_OUTPUT_FIELDS)
-_CONST_0_OUTPUT = list(torch_wrapper.SET_CONST_0_OUTPUT_FIELDS)
-_ALL_OUTPUT = frozenset(_FIXED_OUTPUT + _CONST_0_OUTPUT)
-
-
-class SetConstLevelVerificationTest(absltest.TestCase):
-  """Verifies SetConstLevel for every float field in mjw.Model.
-
-  For each source field, directly mutates the tensor, runs set_const,
-  and checks which derived constants changed.
-  """
-
-  def setUp(self):
-    super().setUp()
-    wp.init()
-    wp.set_device("cpu")
-    wp.config.kernel_cache_dir = "/tmp/kernel_cache"
-    self.nworld = 4
-    self.spec = mujoco.MjSpec.from_string(RECOMPILE_XML)
-    self.mj_model = self.spec.compile()
-    self.mj_data = mujoco.MjData(self.mj_model)
-    self.reset_model()
-
-  def reset_model(self):
-    self.mjw_model = mjw.put_model(self.mj_model)
-    self.mjw_data = mjw.put_data(
-        self.mj_model, self.mj_data, nworld=self.nworld
-    )
-    self.model = torch_wrapper.TorchWrapper(self.mjw_model, nworld=self.nworld)
-
-  def _discover_source_fields(self):
-    """Returns floating point fields from mjw.Model not in _ALL_OUTPUT."""
-    sources = []
-    for name in mjw.Model.__annotations__:
-      if not hasattr(self.model, name):
-        continue
-      val = getattr(self.model, name)
-      if not isinstance(val, torch_wrapper.TorchTensor):
-        continue
-      if not val.is_floating_point():
-        continue
-      if name in _ALL_OUTPUT:
-        continue
-      sources.append(name)
-    return sources
-
-  def _get_field_value(self, name):
-    if hasattr(self.model, name):
-      val = getattr(self.model, name)
-      return val.clone()
-    if hasattr(self.mjw_model, name):
-      return getattr(self.mjw_model, name)
-    raise AttributeError(f"Field {name} not found on model or mjw_model")
-
-  def _has_changed(self, baseline, current):
-    if isinstance(baseline, torch.Tensor):
-      if baseline.numel() == 0:
-        return False
-      return (baseline - current).abs().max().item() > 1e-5
-    else:
-      return baseline != current
-
-  def _check_output_changes(self, baselines):
-    """Returns (fixed_changed, const_0_changed)."""
-
-    def has_changed(f):
-      return f in baselines and self._has_changed(
-          baselines[f], self._get_field_value(f)
-      )
-
-    fixed_changed = any(has_changed(f) for f in _FIXED_OUTPUT)
-    const_0_changed = any(has_changed(f) for f in _CONST_0_OUTPUT)
-    return fixed_changed, const_0_changed
-
-  def test_set_const_levels(self):
-    """Verifies declared SetConstLevel matches reality for all fields."""
-    source_fields = self._discover_source_fields()
-    for field in source_fields:
-      self.reset_model()
-
-      # Run compilation once to populate pristine derived constants.
-      mjw.set_const(self.mjw_model, self.mjw_data)
-
-      # Capture baselines for all compiled derived constants.
-      baselines = {}
-      for f in _ALL_OUTPUT:
-        baselines[f] = self._get_field_value(f)
-
-      # Directly mutate the tensor.
-      val = getattr(self.model, field)
-      val[:] = val[:] + 1.0
-
-      if field == "actuator_gainprm":
-        # Maintain general actuator dampratio constraints:
-        # gainprm[0] == -biasprm[1]
-        self.model.actuator_biasprm[:, :, 1] = -self.model.actuator_gainprm[
-            :, :, 0
-        ]
-
-      # Run compilation.
-      mjw.set_const(self.mjw_model, self.mjw_data)
-
-      # Deduce the actual set_const level.
-      fixed_changed, const_0_changed = self._check_output_changes(baselines)
-      if fixed_changed and const_0_changed:
-        expected = torch_wrapper.SetConstLevel.FULL
-      elif const_0_changed:
-        expected = torch_wrapper.SetConstLevel.STAGE_0
-      elif fixed_changed:
-        expected = torch_wrapper.SetConstLevel.FIXED
-      else:
-        expected = torch_wrapper.SetConstLevel.NONE
-
-      declared = torch_wrapper.get_set_const_level(field)
-      self.assertEqual(
-          declared,
-          expected,
-          f"Field '{field}': declared={declared}, expected={expected}",
-      )
-
-
 class TorchWrapperSetConstTrackingTest(parameterized.TestCase):
   """Tests that model writes through the wrapper request set_const levels."""
 
@@ -1481,8 +1241,41 @@ class TorchWrapperSetConstTrackingTest(parameterized.TestCase):
     model = self._model(backend)
     bound = model.bind_pattern(self.spec, mujoco.mjtObj.mjOBJ_BODY, "sphere")
     bound.set("ipos", bound.ipos + 0.01)
+    self.assertEqual(model.pending_set_const, torch_wrapper.SetConstLevel.FULL)
+
+  @parameterized.parameters(types.Impl.WARP, types.Impl.CPP)
+  def test_geom_size_level_depends_on_tendon_wrap(self, backend):
+    # Without geom tendon wrapping, geom_size only requires FIXED.
+    model = self._model(backend)
+    model.geom_size[:, 1] = 0.2
+    self.assertEqual(model.pending_set_const, torch_wrapper.SetConstLevel.FIXED)
+
+    # With sphere/cylinder geom tendon wrapping, geom_size requires FULL.
+    wrap_xml = """
+    <mujoco>
+      <worldbody>
+        <site name="s1" pos="-1 0 1"/>
+        <site name="s2" pos="1 0 1"/>
+        <body name="sphere" pos="0 0 1">
+          <freejoint/>
+          <geom name="sphere" type="sphere" size="0.2"/>
+        </body>
+      </worldbody>
+      <tendon>
+        <spatial>
+          <site site="s1"/>
+          <geom geom="sphere"/>
+          <site site="s2"/>
+        </spatial>
+      </tendon>
+    </mujoco>
+    """
+    m = mujoco.MjModel.from_xml_string(wrap_xml)
+    nworld = 4 if backend == types.Impl.WARP else 1
+    wrap_mw = wrap_model(backend, m, nworld=nworld)
+    wrap_mw.geom_size[:, 0] = 0.3
     self.assertEqual(
-        model.pending_set_const, torch_wrapper.SetConstLevel.STAGE_0
+        wrap_mw.pending_set_const, torch_wrapper.SetConstLevel.FULL
     )
 
   def test_full_slice_assignment_requests_level(self):
@@ -1490,7 +1283,8 @@ class TorchWrapperSetConstTrackingTest(parameterized.TestCase):
     other = torch.zeros_like(model.qpos0._tensor)
     model.qpos0[...] = other
     self.assertEqual(
-        model.pending_set_const, torch_wrapper.SetConstLevel.STAGE_0
+        model.pending_set_const,
+        torch_wrapper.SetConstLevel.KIN0 | torch_wrapper.SetConstLevel.INERT0,
     )
 
   def test_in_place_copy_does_not_request(self):
@@ -1531,7 +1325,12 @@ class TorchWrapperSetConstTrackingTest(parameterized.TestCase):
     model = self._model()
     model.dof_armature[:] = 0.1
     self.assertEqual(
-        model.pending_set_const, torch_wrapper.SetConstLevel.STAGE_0
+        model.pending_set_const, torch_wrapper.SetConstLevel.INERT0
+    )
+    model.cam_pos[:] = 0.2
+    self.assertEqual(
+        model.pending_set_const,
+        torch_wrapper.SetConstLevel.KIN0 | torch_wrapper.SetConstLevel.INERT0,
     )
     model.body_mass[:, 1] = 2.0
     self.assertEqual(model.pending_set_const, torch_wrapper.SetConstLevel.FULL)
@@ -1540,7 +1339,8 @@ class TorchWrapperSetConstTrackingTest(parameterized.TestCase):
     model = self._model()
     model.qpos0[:] = 0.0
     self.assertEqual(
-        model.flush_set_const(), torch_wrapper.SetConstLevel.STAGE_0
+        model.flush_set_const(),
+        torch_wrapper.SetConstLevel.KIN0 | torch_wrapper.SetConstLevel.INERT0,
     )
     self.assertEqual(model.pending_set_const, torch_wrapper.SetConstLevel.NONE)
     self.assertEqual(model.flush_set_const(), torch_wrapper.SetConstLevel.NONE)

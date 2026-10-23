@@ -66,8 +66,8 @@ When model fields (e.g., ``body_mass``, ``geom_size``, ``geom_friction``) are mo
 
 - Lazily clones initial field values on first write so ``sim.model.restore_defaults(env_mask)`` can restore baseline
   values on reset without compounding changes across episodes.
-- Tracks the minimal required :class:`~reaf.simulation.torch.SetConstLevel` (``NONE``, ``FIXED``, ``STAGE_0``, ``FULL``)
-  flushed by ``sim.set_const()`` to recompute derived constants.
+- Tracks the minimal required :class:`~reaf.simulation.torch.SetConstLevel`
+  (``NONE``, ``FIXED``, ``KIN0``, ``INERT0``, ``FULL``) flushed by ``sim.set_const()`` to recompute derived constants.
 
 .. code-block:: python
 

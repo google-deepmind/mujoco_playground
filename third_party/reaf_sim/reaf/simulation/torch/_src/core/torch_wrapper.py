@@ -49,69 +49,100 @@ class SetConstLevel(enum.IntFlag):
   Levels are defined as bitmask flags to support independent compilation stages.
   """
 
-  NONE = 0  # No constants need updating (e.g. friction, damping).
-  FIXED = 1 << 0  # Updates subtree masses (e.g. body_gravcomp).
-  STAGE_0 = 1 << 1  # Updates qpos0 constants (e.g. body_inertia/pos/quat).
-  FULL = FIXED | STAGE_0  # Recalculates all constants (e.g. body_mass/ipos).
+  NONE = mjw.SetConstGroup.NONE  # No constants need updating.
+  FIXED = mjw.SetConstGroup.FIXED  # Configuration-independent constants.
+  KIN0 = mjw.SetConstGroup.KIN0  # Kinematic constants at qpos0.
+  INERT0 = mjw.SetConstGroup.INERT0  # Inertial constants at qpos0.
+  FULL = mjw.SetConstGroup.ALL  # All constants.
 
 
 T = TypeVar("T")
 
-# Model fields that are the outputs of mjw.set_const_fixed.
-SET_CONST_FIXED_OUTPUT_FIELDS: frozenset[str] = frozenset({
-    "body_subtreemass",
-    "geom_aabb",
-    "geom_rbound",
-    "geom_size",
-})
-# Model fields that are the outputs of mjw.set_const_0.
-SET_CONST_0_OUTPUT_FIELDS: frozenset[str] = frozenset({
-    "body_invweight0",
-    "dof_invweight0",
-    "tendon_length0",
-    "tendon_invweight0",
-    "cam_pos0",
-    "cam_poscom0",
-    "cam_mat0",
-    "light_pos0",
-    "light_poscom0",
-    "light_dir0",
-    "actuator_acc0",
-    "eq_data",
-})
+
+# pylint: disable=protected-access
+def _set_const_output_fields(group: str) -> frozenset[str]:
+  """Returns batched Model output fields for a set_const group."""
+  idx = mujoco.MjModel._setconst_groups.index(group)
+  return frozenset(
+      name
+      for name, access in mujoco.MjModel._setconst_fields.items()
+      if (access[idx] & mujoco.mjSC_OUT)
+      and isinstance(ann := mjw.Model.__annotations__.get(name), wp.array)
+      and ann.shape[0] in ("*", "nworld")
+  )
+
+
+def _set_const_input_levels() -> dict[str, SetConstLevel]:
+  """Returns the mapping from Model input fields to SetConstLevel."""
+  # Direct mjSC_IN bits per group suffice for mjwarp: FIXED only writes
+  # body_subtreemass and geom bounds (no body_sameframe or ten_J sparsity), and
+  # the inputs whose FIXED outputs are read by KIN0/INERT0 in mjwarp
+  # (body_mass -> body_subtreemass, geom_size -> cylinder/sphere tendon wrap)
+  # already carry direct mjSC_IN bits in KIN0 and INERT0. Taking a group-level
+  # closure over FIXED in the C table would over-promote FIXED-only inputs.
+  groups = (
+      (mujoco.MjModel._setconst_groups.index("fixed"), SetConstLevel.FIXED),
+      (mujoco.MjModel._setconst_groups.index("kin0"), SetConstLevel.KIN0),
+      (mujoco.MjModel._setconst_groups.index("inert0"), SetConstLevel.INERT0),
+  )
+  levels: dict[str, SetConstLevel] = {}
+  for name in mujoco.MjModel._setconst_inputs:
+    access = mujoco.MjModel._setconst_fields[name]
+    level = SetConstLevel.NONE
+    for idx, group_level in groups:
+      if access[idx] & mujoco.mjSC_IN:
+        level |= group_level
+    if level != SetConstLevel.NONE:
+      levels[name] = level
+  return levels
+
+
+# pylint: enable=protected-access
+
+
+# Model fields that are the outputs of mjw.set_const(..., groups=FIXED).
+SET_CONST_FIXED_OUTPUT_FIELDS: frozenset[str] = _set_const_output_fields(
+    "fixed"
+)
+# Model fields that are the outputs of mjw.set_const(..., groups=KIN0).
+SET_CONST_KIN0_OUTPUT_FIELDS: frozenset[str] = _set_const_output_fields("kin0")
+# Model fields that are the outputs of mjw.set_const(..., groups=INERT0).
+SET_CONST_INERT0_OUTPUT_FIELDS: frozenset[str] = _set_const_output_fields(
+    "inert0"
+)
 # Model fields that are the outputs of mjw.set_const.
 SET_CONST_OUTPUT_FIELDS: frozenset[str] = (
-    SET_CONST_FIXED_OUTPUT_FIELDS | SET_CONST_0_OUTPUT_FIELDS
+    SET_CONST_FIXED_OUTPUT_FIELDS
+    | SET_CONST_KIN0_OUTPUT_FIELDS
+    | SET_CONST_INERT0_OUTPUT_FIELDS
 )
 
-
-SET_CONST_INPUT_LEVELS: dict[str, SetConstLevel] = {
-    "actuator_gear": SetConstLevel.STAGE_0,
-    "body_inertia": SetConstLevel.STAGE_0,
-    "body_ipos": SetConstLevel.STAGE_0,
-    "body_iquat": SetConstLevel.STAGE_0,
-    "body_mass": SetConstLevel.FULL,
-    "body_pos": SetConstLevel.STAGE_0,
-    "body_quat": SetConstLevel.STAGE_0,
-    "cam_pos": SetConstLevel.STAGE_0,
-    "cam_quat": SetConstLevel.STAGE_0,
-    "dof_armature": SetConstLevel.STAGE_0,
-    "geom_size": SetConstLevel.FIXED,
-    "jnt_axis": SetConstLevel.STAGE_0,
-    "jnt_pos": SetConstLevel.STAGE_0,
-    "light_dir": SetConstLevel.STAGE_0,
-    "light_pos": SetConstLevel.STAGE_0,
-    "qpos0": SetConstLevel.STAGE_0,
-    "site_pos": SetConstLevel.STAGE_0,
-    "tendon_armature": SetConstLevel.STAGE_0,
-    "tendon_coef": SetConstLevel.STAGE_0,
-    "wrap_prm": SetConstLevel.STAGE_0,
-}
+SET_CONST_INPUT_LEVELS: dict[str, SetConstLevel] = _set_const_input_levels()
 
 
-def get_set_const_level(field: str) -> SetConstLevel:
+def _has_geom_tendon_wrap(obj: object) -> bool:
+  """Returns True if the model has sphere or cylinder tendon wrap objects."""
+  if isinstance(obj, mjw.Model):
+    return obj.wrap_geom_adr.size > 0
+  if isinstance(obj, mujoco.MjModel):
+    return bool(
+        np.isin(
+            obj.wrap_type,
+            (
+                int(mujoco.mjtWrap.mjWRAP_SPHERE),
+                int(mujoco.mjtWrap.mjWRAP_CYLINDER),
+            ),
+        ).any()
+    )
+  return True
+
+
+def _get_set_const_level(field: str, obj: object) -> SetConstLevel:
   """Returns the SetConstLevel required after modifying a model field."""
-  return SET_CONST_INPUT_LEVELS.get(field, SetConstLevel.NONE)
+  level = SET_CONST_INPUT_LEVELS.get(field, SetConstLevel.NONE)
+  if field == "geom_size" and not _has_geom_tendon_wrap(obj):
+    level &= ~(SetConstLevel.KIN0 | SetConstLevel.INERT0)
+  return level
 
 
 def _create_set_const_callback(
@@ -121,7 +152,7 @@ def _create_set_const_callback(
   # pylint: disable=protected-access
   if wrapper._obj_type not in (MjObjType.MJW_MODEL, MjObjType.MJ_MODEL):
     return None
-  level = get_set_const_level(field_name)
+  level = _get_set_const_level(field_name, wrapper._obj)
 
   def _record():
     # Clone the field once before its first write so restore_defaults() can
@@ -607,7 +638,7 @@ class TorchWrapper(Generic[T], NoSetAttr):
           torch.where(mask, saved, target, out=target)
         else:
           target.copy_(saved)
-      level = get_set_const_level(field)
+      level = _get_set_const_level(field, self._obj)
       if level != SetConstLevel.NONE:
         object.__setattr__(
             self, "_pending_set_const", self._pending_set_const | level

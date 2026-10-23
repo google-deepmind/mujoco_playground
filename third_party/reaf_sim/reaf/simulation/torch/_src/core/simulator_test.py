@@ -172,28 +172,14 @@ class SimulatorTest(parameterized.TestCase):
     )
     self.assertEqual(sim.set_const(), torch_wrapper.SetConstLevel.NONE)
 
-    # Partial levels dispatch to the matching kernel with restore=False.
+    # Non-NONE levels dispatch to mjw.set_const with groups and restore=False.
     cases = [
-        (
-            "dof_armature",
-            torch_wrapper.SetConstLevel.STAGE_0,
-            "set_const_0",
-            {"restore": False},
-        ),
-        (
-            None,
-            torch_wrapper.SetConstLevel.FIXED,
-            "set_const_fixed",
-            {},
-        ),
-        (
-            "body_mass",
-            torch_wrapper.SetConstLevel.FULL,
-            "set_const",
-            {"restore": False},
-        ),
+        ("geom_margin", torch_wrapper.SetConstLevel.FIXED),
+        (None, torch_wrapper.SetConstLevel.KIN0),
+        ("dof_armature", torch_wrapper.SetConstLevel.INERT0),
+        ("body_mass", torch_wrapper.SetConstLevel.FULL),
     ]
-    for field, level, mjw_fn, kwargs in cases:
+    for field, level in cases:
       with self.subTest(level=level):
         if field is not None:
           getattr(sim.model, field)[:] = 0.25
@@ -204,9 +190,14 @@ class SimulatorTest(parameterized.TestCase):
             self.assertEqual(sim.set_const(), level)
           fn.assert_called_once_with(sim.mj_model, sim.mj_data)
         else:
-          with mock.patch.object(simulator.mjw, mjw_fn) as fn:
+          with mock.patch.object(simulator.mjw, "set_const") as fn:
             self.assertEqual(sim.set_const(), level)
-          fn.assert_called_once_with(sim.warp_model, sim.warp_data, **kwargs)
+          fn.assert_called_once_with(
+              sim.warp_model,
+              sim.warp_data,
+              groups=int(level),
+              restore=False,
+          )
 
   @parameterized.named_parameters(
       ("cpp", types.Impl.CPP, "cpu", 1),

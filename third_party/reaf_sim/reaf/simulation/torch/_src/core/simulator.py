@@ -306,10 +306,5 @@ class Simulator(protocols.Simulator):
       self._data.qpos[:] = qpos
       return level
     with wp.ScopedDevice(self._xpu_device):
-      if level == torch_wrapper.SetConstLevel.FULL:
-        mjw.set_const(self._model, self._data, restore=False)
-      elif level == torch_wrapper.SetConstLevel.FIXED:
-        mjw.set_const_fixed(self._model, self._data)
-      else:
-        mjw.set_const_0(self._model, self._data, restore=False)
+      mjw.set_const(self._model, self._data, groups=int(level), restore=False)
     return level
