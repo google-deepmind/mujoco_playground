@@ -76,6 +76,7 @@ dev = [
     "pre-commit",
     "pylint",
     "pynput",
+    "sphinx>=7.4.7",
 ]
 
 [build-system]
@@ -144,9 +145,6 @@ order_by_type = false
 known_third_party = ["mujoco_playground", "profiling", "reaf"]
 line_length = 200
 skip = ["mujoco_menagerie", "third_party", "mujoco_playground/rss2025", ".venv", ".venv-no-extras"]
-# `make format` runs from the repo root, so any virtualenv it can walk into
-# gets its installed packages rewritten. isort reorders imports that upstream
-# packages deliberately order by hand, which breaks them at import time.
 skip_glob = ["**/*.ipynb", "**/.venv*/**"]
 
 [tool.pyink]
@@ -175,7 +173,7 @@ project-includes = [
 project-excludes = [
     "mujoco_playground/rss2025/**",
     ".venv*/**",
-    "docs/**",
+    "mujoco_playground/docs/**",
     "third_party/reaf_sim/docs/**",
 ]
 search-path = [

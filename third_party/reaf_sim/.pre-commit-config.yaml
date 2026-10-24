@@ -26,11 +26,12 @@ repos:
 
   - repo: local
     hooks:
-      - id: docstrfmt
-        name: Docstrfmt (RST Formatting)
-        entry: uv run --group dev docstrfmt
+      - id: check-tabs
+        name: Check No Tabs
+        entry: python3 -c "import sys; bad = [f for f in sys.argv[1:] if '\t' in open(f, errors='ignore').read()]; sys.exit('\n'.join(['Files containing prohibited tab characters:'] + bad)) if bad else None"
         language: system
-        types: [rst]
+        types: [text]
+        exclude: '(\.(go(\.[^/]+)?|tsv|mk|patch|diff|bara\.consistency)|(^|/)Makefile[^/]*)$'
 
       - id: check-copyright
         name: Check Copyright Notice

@@ -27,7 +27,7 @@ Clone the repository, sync development dependencies with `uv <https://docs.astra
     make install  # or `make install-cpu` for CPU-only
     uv run --no-sync pre-commit install
 
-Before opening a pull request, run `pre-commit` (which formats with `pyink`, `isort`, and `docstrfmt`, checks copyright
+Before opening a pull request, run `pre-commit` (which formats with `pyink` and `isort`, checks copyright
 headers, and type-checks with `pyrefly`) and run the test suite:
 
 .. code-block:: bash
@@ -48,16 +48,6 @@ Every pull request that introduces new features, fixes bugs, or modifies the API
 :doc:`changelog` under the ``unreleased`` section. `reaf-sim` adheres to `MuJoCo's semantic versioning scheme
 <https://github.com/google-deepmind/mujoco/blob/main/VERSIONING.md>`_; please review :doc:`versioning` to understand how
 changes map to release levels.
-
-Linting and Type Checking
--------------------------
-
-We use ``pre-commit`` hooks for formatting (``pyink``, ``isort``) and ``pyrefly`` for type checking (``make
-typecheck``). Before submitting a pull request, run:
-
-.. code-block:: bash
-
-    pre-commit run --all-files
 
 Community Guidelines
 --------------------

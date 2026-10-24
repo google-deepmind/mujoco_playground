@@ -7,10 +7,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         name: Trailing Whitespace
-        types_or: [python, c, c++, cuda, shell, markdown, yaml, json, toml]
+        types_or: [python, c, c++, cuda, shell, markdown, rst, yaml, json, toml]
       - id: end-of-file-fixer
         name: End of File Fixer
-        types_or: [python, c, c++, cuda, shell, markdown, yaml, json, toml]
+        types_or: [python, c, c++, cuda, shell, markdown, rst, yaml, json, toml]
 
   - repo: https://github.com/google/pyink
     rev: 25.12.0
@@ -26,6 +26,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: check-tabs
+        name: Check No Tabs
+        entry: python3 -c "import sys; bad = [f for f in sys.argv[1:] if '\t' in open(f, errors='ignore').read()]; sys.exit('\n'.join(['Files containing prohibited tab characters:'] + bad)) if bad else None"
+        language: system
+        types: [text]
+        exclude: '(\.(go(\.[^/]+)?|tsv|mk|patch|diff|bara\.consistency)|(^|/)Makefile[^/]*)$'
+
       - id: check-copyright
         name: Check Copyright Notice
         entry: python3 -c "import sys, re; pattern = re.compile(r'Copyright \d{4} Google LLC'); bad = [f for f in sys.argv[1:] if not pattern.search(open(f, errors='ignore').read())]; sys.exit('\n'.join(['Files missing Copyright notice:'] + bad)) if bad else None"

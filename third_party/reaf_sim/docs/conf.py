@@ -13,45 +13,16 @@
 # limitations under the License.
 """Configuration file for the Sphinx documentation builder."""
 
+import importlib.util
 import inspect
 import os
+import re
 import shutil
 import sys
 import types
 import typing
 
-import sphinx.ext.autodoc.mock as autodoc_mock
-
-_DOCS_DIR = os.path.dirname(os.path.abspath(__file__))
-_ROOT_DIR = os.path.dirname(_DOCS_DIR)
-if os.path.isdir(os.path.join(_ROOT_DIR, "reaf")):
-  sys.path.insert(0, _ROOT_DIR)
-else:
-  _reaf_pkg = types.ModuleType("reaf")
-  _reaf_pkg.__path__ = [os.path.dirname(_ROOT_DIR)]
-  sys.modules.setdefault("reaf", _reaf_pkg)
-
-autodoc_mock._MockObject.__or__ = lambda self, other: self  # pylint: disable=protected-access
-autodoc_mock._MockObject.__ror__ = lambda self, other: self  # pylint: disable=protected-access
-autodoc_mock._MockObject.__int__ = lambda self: 0  # pylint: disable=protected-access
-_orig_mock_getattr = autodoc_mock._MockObject.__getattr__  # pylint: disable=protected-access
-_orig_mock_call = autodoc_mock._MockObject.__call__  # pylint: disable=protected-access
-
-
-def _mock_getattr(self, key: str):
-  if key in ("ResetOptions", "Action", "Observation", "PolicyDataType"):
-    return typing.TypeVar(key)
-  return _orig_mock_getattr(self, key)
-
-
-def _mock_call(self, *args, **kwargs):
-  if len(args) == 1 and not kwargs and inspect.isfunction(args[0]):
-    return args[0]
-  return _orig_mock_call(self, *args, **kwargs)
-
-
-autodoc_mock._MockObject.__getattr__ = _mock_getattr  # pylint: disable=protected-access
-autodoc_mock._MockObject.__call__ = _mock_call  # pylint: disable=protected-access
+from sphinx.ext.autodoc.mock import _MockObject
 
 autodoc_mock_imports = [
     "absl",
@@ -68,6 +39,46 @@ autodoc_mock_imports = [
     "warp",
 ]
 
+# Python checks sys.modules before autodoc's MockFinder on sys.meta_path;
+# evict preloaded modules when running Sphinx in-process (e.g. pytest-xdist).
+for _mod in list(sys.modules):
+  if any(
+      _mod == prefix or _mod.startswith(f"{prefix}.")
+      for prefix in ("reaf", *autodoc_mock_imports)
+  ):
+    del sys.modules[_mod]
+
+_DOCS_DIR = os.path.dirname(os.path.abspath(__file__))
+_ROOT_DIR = os.path.dirname(_DOCS_DIR)
+if os.path.isdir(os.path.join(_ROOT_DIR, "reaf")):
+  _reaf_dir = os.path.join(_ROOT_DIR, "reaf")
+  sys.path.insert(0, _ROOT_DIR)
+else:
+  _reaf_dir = os.path.dirname(_ROOT_DIR)
+_reaf_pkg = types.ModuleType("reaf")
+_reaf_pkg.__path__ = [_reaf_dir]
+sys.modules["reaf"] = _reaf_pkg
+
+if _MockObject.__getattr__.__name__ != "_mock_getattr":
+  _orig_mock_getattr = _MockObject.__getattr__
+  _orig_mock_call = _MockObject.__call__
+
+  def _mock_getattr(self, key: str):
+    if key in ("ResetOptions", "Action", "Observation", "PolicyDataType"):
+      return typing.TypeVar(key)
+    return _orig_mock_getattr(self, key)
+
+  def _mock_call(self, *args, **kwargs):
+    if len(args) == 1 and not kwargs and inspect.isfunction(args[0]):
+      return args[0]
+    return _orig_mock_call(self, *args, **kwargs)
+
+  _MockObject.__or__ = lambda self, other: self
+  _MockObject.__ror__ = lambda self, other: self
+  _MockObject.__int__ = lambda self: 0
+  _MockObject.__getattr__ = _mock_getattr
+  _MockObject.__call__ = _mock_call
+
 project = "reaf-sim"
 copyright = "2026, Google LLC"  # pylint: disable=redefined-builtin
 author = "Google DeepMind"
@@ -77,8 +88,9 @@ master_doc = "index"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    "sphinx_copybutton",
 ]
+if importlib.util.find_spec("sphinx_copybutton") is not None:
+  extensions.append("sphinx_copybutton")
 
 napoleon_google_docstring = True
 autodoc_class_signature = "separated"
@@ -149,20 +161,38 @@ def _skip_member(app, what, name, obj, skip, options):
 # `mujoco_playground/docs/` directory, copy them into `docs/playground/` before
 # the build starts and remove the temporary copy when the build finishes.
 _PLAYGROUND_DOCS_DIR = os.path.join(_DOCS_DIR, "playground")
+_PLAYGROUND_TOCTREE_RE = re.compile(
+    r"\n\.\. toctree::\n(?:[ ]+.*\n)*?[ ]+:caption: MuJoCo Playground\n"
+    r"(?:\n|[ ]+.*\n)*"
+)
+_fetched_playground_docs = False
 
 
 def _fetch_playground_docs(app):
   """Copies the MuJoCo Playground docs into the Sphinx source tree."""
+  global _fetched_playground_docs
   del app
   local_docs = os.path.join(_ROOT_DIR, "..", "..", "mujoco_playground", "docs")
-  if os.path.isdir(local_docs):
+  if not os.path.isdir(_PLAYGROUND_DOCS_DIR) and os.path.isdir(local_docs):
     shutil.copytree(local_docs, _PLAYGROUND_DOCS_DIR, dirs_exist_ok=True)
+    _fetched_playground_docs = True
 
 
 def _cleanup_playground_docs(app, exception):
   """Removes the temporary MuJoCo Playground docs directory after the build."""
+  global _fetched_playground_docs
   del app, exception
-  shutil.rmtree(_PLAYGROUND_DOCS_DIR, ignore_errors=True)
+  if _fetched_playground_docs:
+    shutil.rmtree(_PLAYGROUND_DOCS_DIR, ignore_errors=True)
+    _fetched_playground_docs = False
+
+
+def _strip_missing_playground_toctree(app, docname, source):
+  """Omits the MuJoCo Playground toctree in standalone reaf-sim builds."""
+  if docname == "index" and not os.path.isdir(
+      os.path.join(app.srcdir, "playground")
+  ):
+    source[0] = _PLAYGROUND_TOCTREE_RE.sub("\n", source[0])
 
 
 # pydata-sphinx-theme hides the sidebar TOC on pages without a top-level
@@ -184,6 +214,7 @@ def setup(app):
   """Registers Sphinx autodoc and theme hooks."""
   app.connect("builder-inited", _fetch_playground_docs)
   app.connect("build-finished", _cleanup_playground_docs)
+  app.connect("source-read", _strip_missing_playground_toctree)
   app.connect("autodoc-process-docstring", _process_docstring)
   app.connect("autodoc-skip-member", _skip_member)
   # Runs after pydata-sphinx-theme has populated the page context.

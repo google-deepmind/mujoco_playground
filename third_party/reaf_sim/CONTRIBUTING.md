@@ -25,7 +25,9 @@ make install  # or `make install-cpu` for CPU-only
 uv run --no-sync pre-commit install
 ```
 
-Before opening a pull request, run `pre-commit` (which formats with `pyink`, `isort`, and `docstrfmt`, checks copyright headers, and type-checks with `pyrefly`) and run the test suite:
+Before opening a pull request, run `pre-commit` (which formats with `pyink` and
+`isort`, checks copyright headers, and type-checks with `pyrefly`) and run the
+test suite:
 
 ```bash
 uv run --no-sync pre-commit run --all-files  # Format and type-check (or `make format` / `make typecheck`)
@@ -43,15 +45,6 @@ Every pull request that introduces new features, bug fixes, or API changes
 must include an entry in `docs/changelog.rst` under the `unreleased` section.
 `reaf-sim` adheres to [MuJoCo's semantic versioning scheme](https://github.com/google-deepmind/mujoco/blob/main/VERSIONING.md);
 see `docs/versioning.rst` for release semantics and categorization.
-
-## Linting and Type Checking
-
-We use `pre-commit` hooks for formatting (`pyink`, `isort`) and `pyrefly` for
-type checking (`make typecheck`). Before submitting a pull request, run:
-
-```bash
-pre-commit run --all-files
-```
 
 ## Community Guidelines
 

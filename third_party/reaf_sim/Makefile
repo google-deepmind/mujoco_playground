@@ -2,14 +2,6 @@
 # C++ standard and abseil requires >= 17.
 export CMAKE_ARGS := -DCMAKE_CXX_STANDARD=17
 
-# Headless rendering needs osmesa, which exists only on Linux; on macOS the
-# default backend works and the variable would be rejected.
-ifeq ($(shell uname -s),Linux)
-  MUJOCO_GL_ENV := MUJOCO_GL=osmesa
-endif
-
-N_WORKERS ?= auto
-
 .PHONY: install
 install:
 	uv sync --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
@@ -26,7 +18,6 @@ install-cpu:
 format:
 	uv run --group dev pyink .
 	uv run --group dev isort .
-	uv run --group dev docstrfmt docs/
 
 .venv/typings/mujoco:
 	uv run --no-sync --group dev pybind11-stubgen mujoco -o .venv/typings --ignore-all-errors
@@ -36,6 +27,19 @@ format:
 typecheck: .venv/typings/mujoco
 	uv run --no-sync --group dev pyrefly check
 
+# Headless rendering needs osmesa, which exists only on Linux; on macOS the
+# default backend works and the variable would be rejected.
+ifeq ($(shell uname -s),Linux)
+  MUJOCO_GL_ENV := MUJOCO_GL=osmesa
+endif
+
+TEST_EXTRAS ?= --extra cpu
+N_WORKERS ?= auto
+
+.PHONY: sync-test
+sync-test:
+	uv sync $(TEST_EXTRAS) --group dev --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
+
 .PHONY: test
-test:
-	$(MUJOCO_GL_ENV) uv run --no-sync --group dev pytest reaf/simulation/ -n $(N_WORKERS) --dist loadfile -v
+test: sync-test
+	$(MUJOCO_GL_ENV) uv run --no-sync --group dev pytest reaf/simulation/ docs/ -n $(N_WORKERS) --dist worksteal -v
