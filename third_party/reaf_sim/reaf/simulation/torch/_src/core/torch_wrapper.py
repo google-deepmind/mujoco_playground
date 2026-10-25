@@ -420,6 +420,15 @@ class ScalarTensor(TorchTensor):
         self._parent, self._field_name, self._torch_tensor.flatten()[0].item()
     )
 
+  def __int__(self) -> int:
+    return int(self.item())
+
+  def __index__(self) -> int:
+    return int(self.item())
+
+  def __float__(self) -> float:
+    return float(self.item())
+
   if TYPE_CHECKING:
     # fmt: off
     def __add__(self, other: Any) -> "TorchTensor": raise NotImplementedError

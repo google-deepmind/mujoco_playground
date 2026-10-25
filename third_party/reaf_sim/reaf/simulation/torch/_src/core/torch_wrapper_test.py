@@ -14,6 +14,7 @@
 """Tests wrapping MuJoCo Warp structs with TorchTensor."""
 
 import dataclasses
+import operator
 from typing import Any
 from unittest import mock
 
@@ -124,13 +125,14 @@ class TorchTensorCPUTest(absltest.TestCase):
     np.testing.assert_array_equal(qpos._array[1:], qpos[1:])
 
 
-class ScalarTensorTest(absltest.TestCase):
+class ScalarTensorTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
 
     class MockParent:
       time: float = 0.002
+      step: int = 5
 
     self.parent = MockParent()
 
@@ -169,6 +171,69 @@ class ScalarTensorTest(absltest.TestCase):
         scalar + 1, torch.tensor([1.004], dtype=torch.float64)
     )
     self.assertIn("0.004", repr(scalar))
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name="int_field_batch_dim",
+          field="step",
+          initial_val=5,
+          updated_val=3,
+          add_batch_dim=True,
+      ),
+      dict(
+          testcase_name="int_field_no_batch_dim",
+          field="step",
+          initial_val=5,
+          updated_val=3,
+          add_batch_dim=False,
+      ),
+      dict(
+          testcase_name="float_field_batch_dim",
+          field="time",
+          initial_val=5.5,
+          updated_val=3.2,
+          add_batch_dim=True,
+      ),
+      dict(
+          testcase_name="float_field_no_batch_dim",
+          field="time",
+          initial_val=5.5,
+          updated_val=3.2,
+          add_batch_dim=False,
+      ),
+  )
+  def test_scalar_tensor_coercion_and_indexing(
+      self,
+      field: str,
+      initial_val: int | float,
+      updated_val: int | float,
+      add_batch_dim: bool,
+  ):
+    setattr(self.parent, field, initial_val)
+    scalar = torch_wrapper.ScalarTensor(
+        self.parent, field, add_batch_dim=add_batch_dim
+    )
+    sample_list = list(range(10))
+
+    self.assertEqual(int(scalar), int(initial_val))
+    self.assertEqual(float(scalar), float(initial_val))
+    self.assertEqual(operator.index(scalar), int(initial_val))
+    self.assertEqual(list(range(scalar)), list(range(int(initial_val))))
+    self.assertEqual(list(range(1, scalar)), list(range(1, int(initial_val))))
+    self.assertEqual(sample_list[:scalar], sample_list[: int(initial_val)])
+    self.assertEqual(sample_list[scalar:], sample_list[int(initial_val) :])
+    self.assertEqual(sample_list[1:scalar], sample_list[1 : int(initial_val)])
+
+    # Mutate parent attribute and verify updated values are reflected.
+    setattr(self.parent, field, updated_val)
+    self.assertEqual(int(scalar), int(updated_val))
+    self.assertEqual(float(scalar), float(updated_val))
+    self.assertEqual(operator.index(scalar), int(updated_val))
+    self.assertEqual(list(range(scalar)), list(range(int(updated_val))))
+    self.assertEqual(list(range(1, scalar)), list(range(1, int(updated_val))))
+    self.assertEqual(sample_list[:scalar], sample_list[: int(updated_val)])
+    self.assertEqual(sample_list[scalar:], sample_list[int(updated_val) :])
+    self.assertEqual(sample_list[1:scalar], sample_list[1 : int(updated_val)])
 
 
 class TorchWrapperTest(absltest.TestCase):
