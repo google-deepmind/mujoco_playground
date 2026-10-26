@@ -101,8 +101,11 @@ and capture visual rollouts:
 
     Overview <playground/index>
     Robots <playground/robots>
-    RL <playground/tasks_and_rl>
-    Robotic Workflows <playground/workflows>
+    Teleoperation <playground/teleop>
+    System Identification <playground/sysid>
+    RL Training <playground/rl_training>
+    Sim-to-Real <playground/sim2real>
+    Agentic <playground/agentic>
     Contributing <playground/contributing>
     Changelog <playground/changelog>
 
