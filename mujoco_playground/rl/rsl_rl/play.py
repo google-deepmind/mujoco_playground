@@ -94,6 +94,8 @@ class _RslRlPolicy(gdmr_policy.Policy[torch.Tensor]):
     return self._policy(*args, **kwargs)
 
   def step(self, timestep: dm_env.TimeStep, prev_state=()):
+    if hasattr(self._policy, "reset"):
+      self._policy.reset(dones=timestep.first())
     obs = timestep.observation
     if not isinstance(obs, dict):
       obs = {"policy": obs}
