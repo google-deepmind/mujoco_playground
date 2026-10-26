@@ -9,6 +9,10 @@ Policies train in parallel GPU simulation and can then be deployed onto physical
 Example Environments
 --------------------
 
+See `mujoco_playground/_src/rl/env_registry.py
+<https://github.com/google-deepmind/mujoco_playground/blob/main/mujoco_playground/_src/rl/env_registry.py>`_ for the
+full list of registered environments:
+
 .. list-table::
     :header-rows: 1
     :widths: 30 20 50
@@ -66,6 +70,13 @@ browser to monitor training rewards, episode length, policy entropy, and losses:
 .. code-block:: bash
 
     uv run --no-sync tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube
+
+.. image:: https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_tensorboard/0/so101_pick_cube_tensorboard.png
+    :align: center
+    :alt: TensorBoard SO101PickCube training metrics
+    :width: 100%
+
+|
 
 Unitree G1 Whole-Body Tracking
 ------------------------------
