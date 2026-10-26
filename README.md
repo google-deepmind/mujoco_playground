@@ -1,6 +1,7 @@
 # MuJoCo Playground
 
 [![Build](https://img.shields.io/github/actions/workflow/status/google-deepmind/mujoco_playground/ci.yml?branch=main)](https://github.com/google-deepmind/mujoco_playground/actions)
+[![Documentation Status](https://readthedocs.org/projects/reaf-sim/badge/?version=latest)](https://reaf-sim.readthedocs.io/en/latest/playground/index.html)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![Banner for playground](https://www.gstatic.com/mujoco/playground/banner/1/banner.png)
 
