@@ -22,6 +22,7 @@ sim and real for every registered embodiment.
 """
 
 from collections.abc import Sequence
+import signal
 import time
 from typing import Any
 from typing import Literal
@@ -128,6 +129,7 @@ class Shutdown(reaf_environment.EnvironmentCloser):
     self._dt = dt
 
   def close(self) -> None:
+    prev_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
     try:
       _interpolate_to_pose(
           follower=self._follower,
@@ -137,13 +139,14 @@ class Shutdown(reaf_environment.EnvironmentCloser):
           duration_secs=self._duration_secs,
           dt=self._dt,
       )
+      if hasattr(self._follower, "close"):
+        self._follower.close()
     except Exception:  # pylint: disable=broad-exception-caught
       logging.exception("Failed to return %s to rest pose.", self._emb.name)
     finally:
+      signal.signal(signal.SIGINT, prev_sigint)
       if self._camera is not None and hasattr(self._camera, "close"):
         self._camera.close()
-      if hasattr(self._follower, "close"):
-        self._follower.close()
 
 
 def create_sim_env(

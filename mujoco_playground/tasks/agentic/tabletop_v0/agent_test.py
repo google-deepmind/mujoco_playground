@@ -16,6 +16,7 @@
 
 import json
 import os
+import signal
 import sys
 import tempfile
 
@@ -323,6 +324,37 @@ robot.home()
       self.assertIn("calibration_image", payload)
     finally:
       backend.close()
+
+  def test_shutdown_ignores_sigint_and_keeps_torque_on_failure(self):
+    emb = embodiment.get("so101")
+    follower = mock.MagicMock()
+    follower.get_measurements.return_value = {
+        k: np.float32(0.0) for k in emb.joint_position_keys
+    }
+    camera = mock.MagicMock()
+    seen_sigint = []
+
+    def _on_set_commands(cmds):
+      del cmds
+      seen_sigint.append(signal.getsignal(signal.SIGINT))
+
+    follower.set_commands.side_effect = _on_set_commands
+    orig_sigint = signal.getsignal(signal.SIGINT)
+    closer = agentic_env.Shutdown(
+        follower=follower, emb=emb, camera=camera, duration_secs=0.01, dt=0.01
+    )
+    closer.close()
+    self.assertEqual(seen_sigint, [signal.SIG_IGN])
+    self.assertEqual(signal.getsignal(signal.SIGINT), orig_sigint)
+    follower.close.assert_called_once()
+    camera.close.assert_called_once()
+
+    follower.reset_mock()
+    camera.reset_mock()
+    follower.get_measurements.side_effect = RuntimeError("bus error")
+    closer.close()
+    follower.close.assert_not_called()
+    camera.close.assert_called_once()
 
 
 class OracleTest(parameterized.TestCase):
