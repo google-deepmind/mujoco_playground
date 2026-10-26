@@ -33,12 +33,12 @@ from typing import Literal
 
 import mujoco
 from mujoco_playground import asset
+from mujoco_playground._src.objects import furniture
 from mujoco_playground._src.objects import primitive
 from mujoco_playground.tasks.agentic.tabletop_v0 import embodiment as embodiment_lib
 from mujoco_playground.tasks.agentic.tabletop_v0 import ik_controller
 from mujoco_playground.tasks.agentic.tabletop_v0 import mdp
 from mujoco_playground.tasks.agentic.tabletop_v0 import reset
-from mujoco_playground.tasks.manipulation.pick_cube import mdp as pick_mdp
 import numpy as np
 from reaf.simulation.torch import CameraDevice
 from reaf.simulation.torch import DomainRandomizationResetter
@@ -638,12 +638,22 @@ TASKS: dict[str, Task] = {
 # --- Environment configuration -----------------------------------------------
 
 
+_TABLE_HEIGHT = 0.75
+_TABLE_OFFSET_X = 0.27
+_TABLE_QUAT = (np.sqrt(0.5), 0.0, 0.0, -np.sqrt(0.5))
+
+
 def _base_scene(emb: embodiment_lib.Embodiment) -> mujoco.MjSpec:
   scene = primitive.plane()
   scene.copy_during_attach = True
   floor = scene.geom("floor")
-  floor.material = ""
-  floor.rgba = [0.28, 0.28, 0.28, 1.0]
+  floor.pos = [0.0, 0.0, -_TABLE_HEIGHT]
+  table = furniture.aloha_table()
+  table_frame = scene.worldbody.add_frame(
+      pos=[_TABLE_OFFSET_X, 0.0, -_TABLE_HEIGHT],
+      quat=list(_TABLE_QUAT),
+  )
+  scene.attach(table, prefix="table/", frame=table_frame)
   scene.stat.extent = 4.0
   center_x = float(np.mean(emb.spawn_x))
   scene.worldbody.add_body(name="workspace_center", pos=[center_x, 0.0, 0.0])
@@ -769,17 +779,7 @@ def env_config(
       ),
   }
 
-  dr_terms = {
-      "flat_materials": config.Term(
-          pick_mdp.override_flat_materials,
-          # Mesh assets keep their textures; boxes are flat colors.
-          patterns=(
-              f"{prefix}.*",
-              *(f"{o.name}/.*" for o in spec.objects if o.asset is None),
-              "floor",
-          ),
-      ),
-  }
+  dr_terms: dict[str, config.Term] = {}
   light_rand: dict[str, tuple[float, float, noise.OperationType]] = {
       "light_pos": (-0.25, 0.25, "add"),
       "light_dir": (-0.35, 0.35, "add"),
