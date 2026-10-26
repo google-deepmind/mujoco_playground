@@ -20,17 +20,17 @@ Each turn, a local HTTP bridge serves the robot's state (``obs.json``) and an an
             :width: 100%
 
             YAM agentic manipulation (Real)
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_pantry_spice/2/yam_pantry_spice.webp
+      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_pantry_spice/3/yam_pantry_spice.webp
             :alt: YAM Agentic Pantry Spices
             :width: 100%
 
             YAM agentic pantry spices (Sim)
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_chess/2/yam_chess.webp
+    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_chess/3/yam_chess.webp
             :alt: YAM Agentic Chess Manipulation
             :width: 100%
 
             YAM agentic chess (Sim)
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_rock_cairn/2/yam_rock_cairn.webp
+      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_rock_cairn/3/yam_rock_cairn.webp
             :alt: YAM Agentic Rock Balancing
             :width: 100%
 

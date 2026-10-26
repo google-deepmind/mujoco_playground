@@ -44,17 +44,17 @@ the same stack was deployed zero-shot to real hardware (`--mode=sim` →
       <br><b>YAM agentic manipulation (Real)</b>
     </td>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_pantry_spice/2/yam_pantry_spice.webp" alt="YAM Agentic Pantry Spices">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_pantry_spice/3/yam_pantry_spice.webp" alt="YAM Agentic Pantry Spices">
       <br><b>YAM agentic pantry spices (Sim)</b>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_chess/2/yam_chess.webp" alt="YAM Agentic Chess Manipulation">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_chess/3/yam_chess.webp" alt="YAM Agentic Chess Manipulation">
       <br><b>YAM agentic chess (Sim)</b>
     </td>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_rock_cairn/2/yam_rock_cairn.webp" alt="YAM Agentic Rock Balancing">
+      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_rock_cairn/3/yam_rock_cairn.webp" alt="YAM Agentic Rock Balancing">
       <br><b>YAM agentic rock balancing (Sim)</b>
     </td>
   </tr>
