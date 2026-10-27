@@ -14,6 +14,8 @@
 
 """MDP functions (observations and rewards) for the Pick Object task."""
 
+from collections.abc import Mapping
+
 import mujoco
 import torch
 
@@ -288,3 +290,19 @@ def reward_cube_to_target(
   lifted = (cube_z > table_z).float()
   dist_sq = torch.sum(torch.square(target_pos - cube_pos), dim=-1)
   return lifted * torch.exp(-dist_sq / std**2)
+
+
+def metric_distance(
+    features: Mapping[str, torch.Tensor],
+    pos_a_key: str,
+    pos_b_key: str,
+) -> torch.Tensor:
+  return torch.linalg.norm(features[pos_a_key] - features[pos_b_key], dim=-1)
+
+
+def metric_cube_lifted(
+    features: Mapping[str, torch.Tensor],
+    cube_xpos_key: str = "object/xpos",
+    lift_height_threshold: float = 0.04,
+) -> torch.Tensor:
+  return (features[cube_xpos_key][..., 2] > lift_height_threshold).float()

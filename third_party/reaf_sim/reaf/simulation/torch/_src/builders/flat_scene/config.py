@@ -25,6 +25,7 @@ from dataclasses import field
 from typing import Any
 from typing import Concatenate
 from typing import Generic
+from typing import Literal
 from typing import overload
 from typing import ParamSpec
 from typing import Protocol
@@ -35,6 +36,8 @@ from reaf.core import action_space_adapter as core_action_space_adapter
 from reaf.simulation.torch._src.builders.config import Sim
 
 _P = ParamSpec("_P")
+
+MetricReduceMode = Literal["last", "max", "mean", "sum"]
 
 
 def _feature(features: Mapping[str, Any], *, key: str) -> Any:
@@ -160,6 +163,30 @@ class Reward(Term):
   ):
     super().__init__(func, **params)
     self.weight = weight
+
+
+@dataclass
+class Metric(Term):
+  """Metric term evaluated at each step and reduced over episodes."""
+
+  reduce: MetricReduceMode = "mean"
+
+  def __init__(
+      self,
+      func_or_key: Callable[..., Any] | str,
+      *,
+      reduce: MetricReduceMode = "mean",
+      **params: Any,
+  ):
+    if isinstance(func_or_key, str):
+      if params:
+        raise TypeError(
+            f"Metric({func_or_key!r}) does not accept keyword arguments."
+        )
+      super().__init__(_feature, key=func_or_key)
+    else:
+      super().__init__(func_or_key, **params)
+    self.reduce = reduce
 
 
 @dataclass
@@ -305,6 +332,7 @@ class TaskLayer:
 
   rewards: dict[str, Reward] = field(default_factory=dict)
   reward_provider: Component | None = None  # defaults to weighted sum
+  metrics: dict[str, Metric] = field(default_factory=dict)
   # Stateless functional checks, grouped into a FunctionalTerminationChecker.
   terminations: dict[str, Term] = field(default_factory=dict)
   # Stateful TerminationChecker components (e.g. with internal state / reset()).

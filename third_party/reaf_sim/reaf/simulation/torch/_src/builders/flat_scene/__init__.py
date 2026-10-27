@@ -24,6 +24,8 @@ from reaf.simulation.torch._src.builders.flat_scene.build import make_deployment
 from reaf.simulation.torch._src.builders.flat_scene.config import Component
 from reaf.simulation.torch._src.builders.flat_scene.config import DeviceLayer
 from reaf.simulation.torch._src.builders.flat_scene.config import Environment
+from reaf.simulation.torch._src.builders.flat_scene.config import Metric
+from reaf.simulation.torch._src.builders.flat_scene.config import MetricReduceMode
 from reaf.simulation.torch._src.builders.flat_scene.config import Obs
 from reaf.simulation.torch._src.builders.flat_scene.config import ObsGroup
 from reaf.simulation.torch._src.builders.flat_scene.config import Reward

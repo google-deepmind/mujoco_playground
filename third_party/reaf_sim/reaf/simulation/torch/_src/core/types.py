@@ -16,6 +16,7 @@
 from collections.abc import Callable
 import enum
 from typing import Any
+from typing import Literal
 from typing import Protocol
 from typing import TypeVar
 
@@ -45,6 +46,17 @@ class RewardTerm(Protocol):
   func: Callable[..., Any]
   params: dict[str, Any]
   weight: float
+
+
+MetricReduceMode = Literal["last", "max", "mean", "sum"]
+
+
+class MetricTerm(Protocol):
+  """Protocol for metric term objects with function, params, and reduce."""
+
+  func: Callable[..., Any]
+  params: dict[str, Any]
+  reduce: MetricReduceMode
 
 
 class Impl(enum.Enum):

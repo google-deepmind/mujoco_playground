@@ -142,7 +142,6 @@ class NanTerminationResetter(reaf_environment.EnvironmentReset):
 
   def __init__(self, name: str = "nan_termination"):
     self._name = name
-    self.metrics: dict[str, torch.Tensor] = {}
 
   @property
   def name(self) -> str:
@@ -160,7 +159,6 @@ class NanTerminationResetter(reaf_environment.EnvironmentReset):
         data.qpos.sum(dim=-1)
         + (data.qvel + data.qacc + data.qacc_warmstart).sum(dim=-1)
     ).to(device=self._xpu_device)
-    self.metrics["nan_terminated"] = has_nan.float()
     return torch.where(
         has_nan,
         termination_checker.TerminationResult.TERMINATE,

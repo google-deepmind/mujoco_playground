@@ -2,7 +2,8 @@ Task layer
 ==========
 
 :class:`~reaf.simulation.torch.TaskLayer` defines a Markov Decision Process (MDP): processing actions into device
-commands, extracting task features from device measurements, and computing rewards, terminations, and observations.
+commands, extracting task features from device measurements, and computing rewards, terminations, metrics, and
+observations.
 
 Importantly, :class:`~reaf.simulation.torch.TaskLayer` has **no direct access to privileged simulation information** and
 operates strictly on information provided via the layer interface. This information boundary enables unmodified
@@ -56,6 +57,24 @@ terms scaled by the control timestep:
 
     r_t = control_timestep * sum(weight_i * term_func_i(features))
 
+Metrics
+-------
+
+Diagnostic metrics are configured declaratively using :class:`~reaf.simulation.torch.flat_scene.Metric` with an explicit
+per-episode reduction mode (``reduce="mean" | "last" | "max" | "sum"``):
+
+.. code-block:: python
+
+    metrics = {
+        "tracking_error": flat_scene.Metric(pose_error, reduce="mean"),
+        "peak_height": flat_scene.Metric(object_height, reduce="max"),
+        "contact_events": flat_scene.Metric(new_contact_event, reduce="sum"),
+        "success": flat_scene.Metric(goal_reached, threshold=0.02, reduce="last"),
+    }
+
+- **Per-episode metrics**: ``env.task_layer.get_episode_metrics(env_mask)`` returns ``dict[str, torch.Tensor]`` of 0-D
+  scalar means over the masked worlds without host-device synchronization.
+
 Terminations and discounts
 --------------------------
 
@@ -93,6 +112,7 @@ Task components assemble inside :class:`~reaf.simulation.torch.flat_scene.Enviro
             feature_producers=feature_producers,
             command_feature_producers=command_feature_producers,
             rewards=rewards_dict,
+            metrics=metrics_dict,
             terminations=terminations_dict,
         ),
         observation_adapter=observation_adapter,

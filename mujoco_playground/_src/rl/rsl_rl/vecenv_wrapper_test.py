@@ -28,6 +28,8 @@ from reaf.simulation.torch import default_discount_provider
 from reaf.simulation.torch import device as device_module
 from reaf.simulation.torch import device_layer as device_layer_module
 from reaf.simulation.torch import environment
+from reaf.simulation.torch import flat_scene
+from reaf.simulation.torch import FunctionalMetricProvider
 from reaf.simulation.torch import NanTerminationResetter
 from reaf.simulation.torch import reward_provider
 from reaf.simulation.torch import simulator as simulator_module
@@ -75,7 +77,7 @@ class PendulumDevice(device_module.Device):
       simulator: simulator_module.Simulator,
       consumed_substep_commands: Mapping[str, torch.Tensor],
   ) -> None:
-    simulator.data.ctrl[:, 0] = consumed_substep_commands["motor_ctrl"]
+    simulator.data.ctrl[:, 0:1] = consumed_substep_commands["motor_ctrl"]
 
   def get_substep_measurements(
       self,
@@ -184,6 +186,7 @@ def _build_pendulum_env(
     xpu_device: str,
     timeouts: torch.Tensor,
     impl: types.Impl,
+    metric_provider: FunctionalMetricProvider | None = None,
 ) -> environment.Environment:
   """Builds a simple pendulum environment for testing."""
   mj_spec = mujoco.MjSpec.from_string(_PENDULUM_XML)
@@ -221,6 +224,7 @@ def _build_pendulum_env(
       commands_processors=[],
       features_producers=[],
       reward_provider=rew,
+      metric_provider=metric_provider,
       termination_checkers=terminations,
       discount_provider=discount,
       features_observers=[],
@@ -330,8 +334,8 @@ class VecEnvWrapperTest(absltest.TestCase):
         rtol=1e-6,
     )
 
-  def test_nan_termination_resetter_metrics_logged(self):
-    """Verify NanTerminationResetter terminates NaN envs and logs metrics."""
+  def test_nan_termination_resetter_terminates_nan_envs(self):
+    """Verify NanTerminationResetter terminates NaN envs."""
     nworld = 1
     timeouts = torch.full(
         (nworld,), 10.0, dtype=torch.float32, device=self.DEVICE
@@ -355,15 +359,117 @@ class VecEnvWrapperTest(absltest.TestCase):
     # Inject NaN into world 0 velocity so it remains NaN after sim step.
     wrapper.unwrapped.device_layer.sim.data.qvel[0, 0] = float("nan")
     action = torch.zeros(nworld, 1, dtype=torch.float32, device=self.DEVICE)
-    _, _, dones, extras = wrapper.step(action)
+    _, _, dones, _ = wrapper.step(action)
 
     torch.testing.assert_close(
         dones, torch.tensor([1], dtype=torch.long, device=self.DEVICE)
     )
-    self.assertIn("Metrics/nan_termination/nan_terminated", extras["log"])
+
+  def test_task_layer_episode_metrics_across_episodes(self):
+    """Verify episode metrics are logged before auto-reset and then cleared."""
+    nworld = 2
+    # Staggered timeouts: world 0 terminates on step 3 (0.06s > 0.04s),
+    # world 1 terminates on step 4 (0.08s > 0.06s).
+    timeouts = torch.tensor(
+        [0.04, 0.06], dtype=torch.float32, device=self.DEVICE
+    )
+    metric_provider = FunctionalMetricProvider(
+        terms={
+            "time_mean": flat_scene.Metric("time", reduce="mean"),
+            "time_sum": flat_scene.Metric("time", reduce="sum"),
+            "time_max": flat_scene.Metric("time", reduce="max"),
+            "time_last": flat_scene.Metric("time", reduce="last"),
+        },
+        nworld=nworld,
+        xpu_device=self.DEVICE,
+    )
+    env = _build_pendulum_env(
+        nworld=nworld,
+        xpu_device=self.DEVICE,
+        timeouts=timeouts,
+        impl=types.Impl.WARP,
+        metric_provider=metric_provider,
+    )
+
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=100)
+    action = torch.zeros(nworld, 1, dtype=torch.float32, device=self.DEVICE)
+
+    # Steps 1-2 (0.02s, 0.04s): mid-episode for both worlds, no metrics logged.
+    for _ in range(2):
+      _, _, dones, extras = wrapper.step(action)
+      torch.testing.assert_close(
+          dones, torch.tensor([0, 0], dtype=torch.long, device=self.DEVICE)
+      )
+      self.assertNotIn("Metrics/time_sum", extras["log"])
+
+    # Step 3 (0.06s): only world 0 terminates (steps 0.02, 0.04, 0.06) and
+    # auto-resets; world 1 stays mid-episode and keeps accumulating.
+    _, _, dones, extras = wrapper.step(action)
     torch.testing.assert_close(
-        extras["log"]["Metrics/nan_termination/nan_terminated"],
-        torch.tensor(1.0, dtype=torch.float32, device=self.DEVICE),
+        dones, torch.tensor([1, 0], dtype=torch.long, device=self.DEVICE)
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_mean"],
+        torch.tensor(0.04, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_sum"],
+        torch.tensor(0.12, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_max"],
+        torch.tensor(0.06, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_last"],
+        torch.tensor(0.06, device=self.DEVICE),
+    )
+
+    # Step 4: world 0 is on step 1 (0.02s, mid); world 1 terminates after 4
+    # un-reset steps (0.02, 0.04, 0.06, 0.08).
+    _, _, dones, extras = wrapper.step(action)
+    torch.testing.assert_close(
+        dones, torch.tensor([0, 1], dtype=torch.long, device=self.DEVICE)
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_mean"],
+        torch.tensor(0.05, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_sum"],
+        torch.tensor(0.20, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_max"],
+        torch.tensor(0.08, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_last"],
+        torch.tensor(0.08, device=self.DEVICE),
+    )
+
+    # Step 5: lower both timeouts to 0.01s so both worlds terminate together
+    # with unequal episode lengths (world 0: [0.02, 0.04], world 1: [0.02]).
+    timeouts[:] = 0.01
+    _, _, dones, extras = wrapper.step(action)
+    torch.testing.assert_close(
+        dones, torch.tensor([1, 1], dtype=torch.long, device=self.DEVICE)
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_mean"],
+        torch.tensor(0.025, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_sum"],
+        torch.tensor(0.04, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_max"],
+        torch.tensor(0.03, device=self.DEVICE),
+    )
+    torch.testing.assert_close(
+        extras["log"]["Metrics/time_last"],
+        torch.tensor(0.03, device=self.DEVICE),
     )
 
 

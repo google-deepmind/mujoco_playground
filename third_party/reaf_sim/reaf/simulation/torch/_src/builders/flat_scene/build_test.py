@@ -254,6 +254,54 @@ class BuildTest(absltest.TestCase):
         task_layer.check_for_termination({"x": torch.ones(1)}).item(), 1
     )
 
+  def test_build_env_metrics(self):
+    seen_dtypes = []
+
+    def scaled_step(features, mult: torch.Tensor) -> torch.Tensor:
+      seen_dtypes.append(features["time"].dtype)
+      return features["time"] * mult
+
+    env_cfg = config.Environment(
+        base_scene=mujoco.MjSpec(),
+        sim=builders_config.Sim(
+            nworld=1,
+            xpu_device="cpu",
+            impl="cpp",
+            simulation_timestep=0.01,
+            control_timestep=0.02,
+        ),
+        task_layer=config.TaskLayer(
+            metrics={
+                "scaled": config.Metric(
+                    scaled_step, mult=torch.tensor([50.0]), reduce="mean"
+                ),
+                "last_time": config.Metric("time", reduce="last"),
+            },
+        ),
+        observation_adapter={
+            "policy": config.ObsGroup(
+                terms={"time": config.Obs("time").configure(output_shape=(1,))}
+            ),
+        },
+        episode_length_secs=0.04,
+    )
+    env = build.build_env(env_cfg)
+    env.reset()
+    self.assertEmpty(seen_dtypes)
+    ts = env.step({})
+    self.assertTrue(bool(ts.mid().item()))
+    ts = env.step({})
+    self.assertTrue(bool(ts.last().item()))
+    ep = env.task_layer.get_episode_metrics(ts.last())
+    torch.testing.assert_close(ep["scaled"], torch.tensor(1.5))
+    torch.testing.assert_close(ep["last_time"], torch.tensor(0.04))
+
+    # Impl.CPP wraps update_metrics so float64 features are cast to float32.
+    env.task_layer.update_metrics(
+        {"time": torch.tensor([0.1], dtype=torch.float64)}
+    )
+    self.assertEqual(seen_dtypes[-1], torch.float32)
+
 
 class MakeDeploymentConfigTest(absltest.TestCase):
 
@@ -268,6 +316,7 @@ class MakeDeploymentConfigTest(absltest.TestCase):
         task_layer=config.TaskLayer(
             rewards={"reach": config.Reward(lambda: None)},
             reward_provider=config.Component(object),
+            metrics={"lift": config.Metric(lambda f: None, reduce="max")},
             terminations={"timeout": config.Term(lambda: None)},
             termination_checkers={"checker": config.Component(object)},
             feature_producers={
@@ -292,6 +341,7 @@ class MakeDeploymentConfigTest(absltest.TestCase):
 
     self.assertEmpty(deploy_config.task_layer.rewards)
     self.assertIsNone(deploy_config.task_layer.reward_provider)
+    self.assertEmpty(deploy_config.task_layer.metrics)
     self.assertEmpty(deploy_config.task_layer.terminations)
     self.assertEmpty(deploy_config.task_layer.termination_checkers)
     self.assertEqual(
@@ -316,6 +366,7 @@ class MakeDeploymentConfigTest(absltest.TestCase):
 
     self.assertTrue(deploy_config.nan_termination)
     self.assertNotEmpty(env_config.task_layer.rewards)
+    self.assertNotEmpty(env_config.task_layer.metrics)
     self.assertEqual(
         list(env_config.task_layer.feature_producers),
         ["policy_producer", "privileged_producer"],
@@ -331,6 +382,8 @@ class ConfigTest(absltest.TestCase):
       config.Obs(lambda features: None, 123)
     with self.assertRaises(TypeError):
       config.Obs("joint_pos", extra_kwarg=1)  # pyrefly: ignore[bad-argument-type]
+    with self.assertRaises(TypeError):
+      config.Metric("joint_pos", extra_kwarg=1)  # pyrefly: ignore[bad-argument-type]
 
   def test_component_configure_spec_rejects_positional_args(self):
     comp = config.Component(clock_device.ClockDevice)

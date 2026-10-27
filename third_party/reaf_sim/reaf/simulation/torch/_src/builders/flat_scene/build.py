@@ -25,6 +25,7 @@ from reaf.simulation.torch._src.builders import config as builders_config
 from reaf.simulation.torch._src.builders.flat_scene import config
 from reaf.simulation.torch._src.common import clock_device
 from reaf.simulation.torch._src.common import default_discount_provider
+from reaf.simulation.torch._src.common import functional_metric
 from reaf.simulation.torch._src.common import functional_observation
 from reaf.simulation.torch._src.common import functional_reward
 from reaf.simulation.torch._src.common import functional_termination
@@ -127,6 +128,7 @@ def make_deployment_config(
   task_layer = copy.deepcopy(env_config.task_layer)
   task_layer.reward_provider = None
   task_layer.rewards = {}
+  task_layer.metrics = {}
   task_layer.terminations = {}
   task_layer.termination_checkers = {}
 
@@ -268,6 +270,8 @@ def build_task_layer(
   termination_terms = list(env_config.task_layer.terminations.values())
   for term in env_config.task_layer.rewards.values():
     term.params = _move_tensors_to_device(term.params, xpu_device)
+  for term in env_config.task_layer.metrics.values():
+    term.params = _move_tensors_to_device(term.params, xpu_device)
   for term in termination_terms:
     term.params = _move_tensors_to_device(term.params, xpu_device)
   for component in env_config.task_layer.termination_checkers.values():
@@ -375,10 +379,21 @@ def build_task_layer(
     if impl == types.Impl.CPP:
       _wrap_method_for_float32(reward_provider, "compute_reward")
 
+  metric_provider = None
+  if env_config.task_layer.metrics:
+    metric_provider = functional_metric.FunctionalMetricProvider(
+        terms=env_config.task_layer.metrics,
+        nworld=nworld,
+        xpu_device=xpu_device,
+    )
+    if impl == types.Impl.CPP:
+      _wrap_method_for_float32(metric_provider, "update_metrics")
+
   task_layer = task_layer_module.TaskLayer(
       commands_processors=command_processors,
       features_producers=feature_producers,
       reward_provider=reward_provider,
+      metric_provider=metric_provider,
       termination_checkers=termination_checkers,
       discount_provider=default_discount_provider.DefaultDiscountProvider(
           nworld=nworld, xpu_device=xpu_device

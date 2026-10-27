@@ -26,6 +26,7 @@ from reaf.simulation.torch._src.common import default_discount_provider
 from reaf.simulation.torch._src.common import delay_buffer
 from reaf.simulation.torch._src.common import free_device
 from reaf.simulation.torch._src.common import functional_device
+from reaf.simulation.torch._src.common import functional_metric
 from reaf.simulation.torch._src.common import functional_observation
 from reaf.simulation.torch._src.common import functional_reset
 from reaf.simulation.torch._src.common import functional_reward
@@ -63,6 +64,8 @@ from reaf.simulation.torch._src.common.functional_device import joint
 from reaf.simulation.torch._src.common.functional_device import joint_pos
 from reaf.simulation.torch._src.common.functional_device import joint_vel
 from reaf.simulation.torch._src.common.functional_device import MeasurementDevice
+from reaf.simulation.torch._src.common.functional_metric import FunctionalMetricProvider
+from reaf.simulation.torch._src.common.functional_metric import MetricReduceMode
 from reaf.simulation.torch._src.common.functional_observation import FunctionalObservationAdapter
 from reaf.simulation.torch._src.common.functional_reset import FunctionalEnvironmentReset
 from reaf.simulation.torch._src.common.functional_reset import TYPE_KEY
@@ -99,6 +102,7 @@ from reaf.simulation.torch._src.core import device_layer
 from reaf.simulation.torch._src.core import discount_provider
 from reaf.simulation.torch._src.core import environment
 from reaf.simulation.torch._src.core import feature_producer
+from reaf.simulation.torch._src.core import metric_provider
 from reaf.simulation.torch._src.core import mujoco_types
 from reaf.simulation.torch._src.core import observation_space_adapter
 from reaf.simulation.torch._src.core import profile
@@ -120,6 +124,7 @@ from reaf.simulation.torch._src.core.environment import EndOfEpisodeHandler
 from reaf.simulation.torch._src.core.environment import Environment
 from reaf.simulation.torch._src.core.environment import EnvironmentReset
 from reaf.simulation.torch._src.core.feature_producer import FeatureProducer
+from reaf.simulation.torch._src.core.metric_provider import MetricProvider
 from reaf.simulation.torch._src.core.mujoco_types import get_spec_by_obj_type
 from reaf.simulation.torch._src.core.mujoco_types import match_names
 from reaf.simulation.torch._src.core.mujoco_types import OBJ_TYPE_TO_ACCESSOR

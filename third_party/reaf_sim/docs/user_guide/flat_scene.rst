@@ -45,9 +45,10 @@ Environments are defined using :class:`~reaf.simulation.torch.flat_scene.Environ
             }
         ),
 
-        # Task terms (rewards & terminations)
+        # Task terms (rewards, metrics, & terminations)
         task_layer=flat_scene.TaskLayer(
             rewards={"distance": flat_scene.Reward(reach_goal_reward, weight=1.0)},
+            metrics={"success": flat_scene.Metric(reach_goal_metric, reduce="last")},
             terminations={"bounds": flat_scene.Term(workspace_bounds_checker)},
         ),
 
@@ -100,7 +101,7 @@ Building an Environment
 - :func:`~reaf.simulation.torch.flat_scene.make_deployment_config`: Generates a deployment configuration for hardware or
   single-world simulation:
 
-  - Drops training-only rewards and terminations.
+  - Drops training-only rewards, metrics, and terminations.
   - Disables observation noise across observation groups.
   - Sets ``sim.nworld = 1``.
 

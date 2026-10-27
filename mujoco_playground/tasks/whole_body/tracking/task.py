@@ -296,6 +296,48 @@ def g1_env(
       ),
   }
 
+  metrics = {
+      "motion/error_anchor_pos": config.Metric(
+          mdp.metric_error_anchor_pos, reduce="mean"
+      ),
+      "motion/error_anchor_rot": config.Metric(
+          mdp.metric_error_anchor_rot, reduce="mean"
+      ),
+      "motion/error_anchor_lin_vel": config.Metric(
+          mdp.metric_error_anchor_lin_vel, reduce="mean"
+      ),
+      "motion/error_anchor_ang_vel": config.Metric(
+          mdp.metric_error_anchor_ang_vel, reduce="mean"
+      ),
+      "motion/error_body_pos": config.Metric(
+          mdp.metric_error_body_pos, reduce="mean"
+      ),
+      "motion/error_body_rot": config.Metric(
+          mdp.metric_error_body_rot, reduce="mean"
+      ),
+      "motion/error_body_lin_vel": config.Metric(
+          mdp.metric_error_body_lin_vel, reduce="mean"
+      ),
+      "motion/error_body_ang_vel": config.Metric(
+          mdp.metric_error_body_ang_vel, reduce="mean"
+      ),
+      "motion/error_joint_pos": config.Metric(
+          mdp.metric_error_joint_pos, reduce="mean"
+      ),
+      "motion/error_joint_vel": config.Metric(
+          mdp.metric_error_joint_vel, reduce="mean"
+      ),
+      "motion/sampling_entropy": config.Metric(
+          "motion/sampling_entropy", reduce="last"
+      ),
+      "motion/sampling_top1_prob": config.Metric(
+          "motion/sampling_top1_prob", reduce="last"
+      ),
+      "motion/sampling_top1_bin": config.Metric(
+          "motion/sampling_top1_bin", reduce="last"
+      ),
+  }
+
   ##
   # Observations (asymmetric actor / critic groups).
   ##
@@ -455,6 +497,7 @@ def g1_env(
           feature_producers={"motion_reference": motion_ref_comp},
           command_feature_producers={"action_history": action_history_comp},
           rewards=rewards,
+          metrics=metrics,
           terminations=terminations,
       ),
       observation_adapter=observations,

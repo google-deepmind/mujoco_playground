@@ -267,7 +267,6 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
         nworld, dtype=torch.bool, device=self._device
     )
     self._fail_bin = torch.zeros(nworld, dtype=torch.long, device=self._device)
-    self.metrics: dict[str, torch.Tensor] = {}
 
   @property
   def name(self) -> str:
@@ -411,8 +410,12 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
         "motion/joint_vel_ref": specs.Array(shape=(nj,), dtype=f32),
         "motion/anchor_pos_ref": specs.Array(shape=(3,), dtype=f32),
         "motion/anchor_quat_ref": specs.Array(shape=(4,), dtype=f32),
+        "motion/anchor_lin_vel_ref": specs.Array(shape=(3,), dtype=f32),
+        "motion/anchor_ang_vel_ref": specs.Array(shape=(3,), dtype=f32),
         "motion/anchor_pos_robot": specs.Array(shape=(3,), dtype=f32),
         "motion/anchor_quat_robot": specs.Array(shape=(4,), dtype=f32),
+        "motion/anchor_lin_vel_robot": specs.Array(shape=(3,), dtype=f32),
+        "motion/anchor_ang_vel_robot": specs.Array(shape=(3,), dtype=f32),
         "motion/body_pos_relative": specs.Array(shape=(nb, 3), dtype=f32),
         "motion/body_quat_relative": specs.Array(shape=(nb, 4), dtype=f32),
         "motion/body_pos_robot": specs.Array(shape=(nb, 3), dtype=f32),
@@ -423,27 +426,14 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
         "motion/body_ang_vel_ref": specs.Array(shape=(nb, 3), dtype=f32),
         "motion/body_lin_vel_robot": specs.Array(shape=(nb, 3), dtype=f32),
         "motion/body_ang_vel_robot": specs.Array(shape=(nb, 3), dtype=f32),
-        "metrics/error_anchor_pos": specs.Array(shape=(), dtype=f32),
-        "metrics/error_anchor_rot": specs.Array(shape=(), dtype=f32),
-        "metrics/error_anchor_lin_vel": specs.Array(shape=(), dtype=f32),
-        "metrics/error_anchor_ang_vel": specs.Array(shape=(), dtype=f32),
-        "metrics/error_body_pos": specs.Array(shape=(), dtype=f32),
-        "metrics/error_body_rot": specs.Array(shape=(), dtype=f32),
-        "metrics/error_body_lin_vel": specs.Array(shape=(), dtype=f32),
-        "metrics/error_body_ang_vel": specs.Array(shape=(), dtype=f32),
-        "metrics/error_joint_pos": specs.Array(shape=(), dtype=f32),
-        "metrics/error_joint_vel": specs.Array(shape=(), dtype=f32),
-        "metrics/sampling_entropy": specs.Array(shape=(), dtype=f32),
-        "metrics/sampling_top1_prob": specs.Array(shape=(), dtype=f32),
-        "metrics/sampling_top1_bin": specs.Array(shape=(), dtype=f32),
+        "motion/sampling_entropy": specs.Array(shape=(), dtype=f32),
+        "motion/sampling_top1_prob": specs.Array(shape=(), dtype=f32),
+        "motion/sampling_top1_bin": specs.Array(shape=(), dtype=f32),
     }
 
   def required_features_keys(self) -> set[str]:
     bt = self._body_tracking_name
-    rb = self._robot_name
     return {
-        f"{rb}/joint_pos",
-        f"{rb}/joint_vel",
         f"{bt}/body_pos_w",
         f"{bt}/body_quat_w",
         f"{bt}/body_lin_vel_w",
@@ -454,9 +444,6 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
       self, required_features: Mapping[str, torch.Tensor]
   ) -> Mapping[str, torch.Tensor]:
     bt = self._body_tracking_name
-    rb = self._robot_name
-    joint_pos = required_features[f"{rb}/joint_pos"].float()
-    joint_vel = required_features[f"{rb}/joint_vel"].float()
     body_pos = required_features[f"{bt}/body_pos_w"].float()
     body_quat = required_features[f"{bt}/body_quat_w"].float()
     body_lin_vel = required_features[f"{bt}/body_lin_vel_w"].float()
@@ -503,13 +490,17 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
     anchor_lin = body_lin_vel[:, self._anchor_index]
     anchor_ang = body_ang_vel[:, self._anchor_index]
 
-    feats: dict[str, torch.Tensor] = {
+    return {
         "motion/joint_pos_ref": ref_joint_pos,
         "motion/joint_vel_ref": ref_joint_vel,
         "motion/anchor_pos_ref": ref_anchor_pos_w,
         "motion/anchor_quat_ref": ref_anchor_quat_w,
+        "motion/anchor_lin_vel_ref": anchor_lin_ref,
+        "motion/anchor_ang_vel_ref": anchor_ang_ref,
         "motion/anchor_pos_robot": anchor_pos,
         "motion/anchor_quat_robot": anchor_quat,
+        "motion/anchor_lin_vel_robot": anchor_lin,
+        "motion/anchor_ang_vel_robot": anchor_ang,
         "motion/body_pos_relative": body_pos_relative_w,
         "motion/body_quat_relative": body_quat_relative_w,
         "motion/body_pos_robot": body_pos,
@@ -520,48 +511,10 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
         "motion/body_ang_vel_ref": ref_body_ang_vel_w,
         "motion/body_lin_vel_robot": body_lin_vel,
         "motion/body_ang_vel_robot": body_ang_vel,
-        "metrics/error_anchor_pos": torch.norm(
-            ref_anchor_pos_w - anchor_pos, dim=-1
-        ),
-        "metrics/error_anchor_rot": pg_math.quat_error_magnitude2(
-            ref_anchor_quat_w, anchor_quat
-        ),
-        "metrics/error_anchor_lin_vel": torch.norm(
-            anchor_lin_ref - anchor_lin, dim=-1
-        ),
-        "metrics/error_anchor_ang_vel": torch.norm(
-            anchor_ang_ref - anchor_ang, dim=-1
-        ),
-        "metrics/error_body_pos": (
-            torch.norm(body_pos_relative_w - body_pos, dim=-1).mean(dim=-1)
-        ),
-        "metrics/error_body_rot": (
-            pg_math.quat_error_magnitude2(body_quat_relative_w, body_quat).mean(
-                dim=-1
-            )
-        ),
-        "metrics/error_body_lin_vel": (
-            torch.norm(ref_body_lin_vel_w - body_lin_vel, dim=-1).mean(dim=-1)
-        ),
-        "metrics/error_body_ang_vel": (
-            torch.norm(ref_body_ang_vel_w - body_ang_vel, dim=-1).mean(dim=-1)
-        ),
-        "metrics/error_joint_pos": torch.norm(
-            ref_joint_pos - joint_pos, dim=-1
-        ),
-        "metrics/error_joint_vel": torch.norm(
-            ref_joint_vel - joint_vel, dim=-1
-        ),
-        "metrics/sampling_entropy": self.sampling_entropy,
-        "metrics/sampling_top1_prob": self.sampling_top1_prob,
-        "metrics/sampling_top1_bin": self.sampling_top1_bin,
+        "motion/sampling_entropy": self.sampling_entropy,
+        "motion/sampling_top1_prob": self.sampling_top1_prob,
+        "motion/sampling_top1_bin": self.sampling_top1_bin,
     }
-    self.metrics = {
-        k.removeprefix("metrics/"): v
-        for k, v in feats.items()
-        if k.startswith("metrics/")
-    }
-    return feats
 
   def reset(self, env_mask: torch.Tensor | None = None) -> None:
     del env_mask

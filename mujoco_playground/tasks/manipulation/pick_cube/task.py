@@ -142,6 +142,35 @@ def pick_cube_env() -> config.Environment:
       ),
   }
 
+  metrics = {
+      "reaching_dist": config.Metric(
+          mdp.metric_distance,
+          pos_a_key="ee/xpos",
+          pos_b_key="object/xpos",
+          reduce="last",
+      ),
+      "bringing_dist": config.Metric(
+          mdp.metric_distance,
+          pos_a_key="object/xpos",
+          pos_b_key=TARGET_MOCAP_POS,
+          reduce="last",
+      ),
+      "cube_lifted": config.Metric(
+          mdp.metric_cube_lifted,
+          cube_xpos_key="object/xpos",
+          lift_height_threshold=0.04,
+          reduce="max",
+      ),
+      "success": config.Metric(
+          mdp.reward_success,
+          cube_xpos_key="object/xpos",
+          target_xpos_key=TARGET_MOCAP_POS,
+          distance_threshold=0.10,
+          lift_height_threshold=0.04,
+          reduce="last",
+      ),
+  }
+
   resetters = {
       "pick_cube": config.Component(
           reset.PickCubeResetter,
@@ -195,6 +224,7 @@ def pick_cube_env() -> config.Environment:
           ),
       },
       rewards=rewards,
+      metrics=metrics,
   )
 
   devices = {

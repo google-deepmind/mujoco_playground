@@ -99,8 +99,12 @@ class TrackingEnvTest(parameterized.TestCase):
 
     motion_ref = built_env.task_layer.get_component_by_name("motion")
     self.assertIsInstance(motion_ref, motion_command.MotionReferenceProducer)
-    self.assertIn("error_anchor_pos", motion_ref.metrics)
-    self.assertIn("sampling_entropy", motion_ref.metrics)
+    ep_metrics = built_env.task_layer.get_episode_metrics(
+        torch.ones(1, dtype=torch.bool)
+    )
+    self.assertIn("motion/error_anchor_pos", ep_metrics)
+    self.assertIn("motion/sampling_entropy", ep_metrics)
+    self.assertEqual(ep_metrics["motion/error_anchor_pos"].shape, ())
 
   def test_play_and_ghost_modes(self):
     built_env = self._build(play=True, enable_ghost=True)

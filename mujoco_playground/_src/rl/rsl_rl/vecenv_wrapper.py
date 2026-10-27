@@ -92,17 +92,6 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     # Reset at the start since rsl_rl does not call reset.
     self._timestep = self.env.reset()
     self._episode_sums = {}
-    # TODO(b/559319596): Replace this _metric_components duck-typing hack with
-    # first-class metric support in Environment.
-    self._metric_components = [
-        c
-        for c in self.env.task_layer._components_by_name.values()  # pylint: disable=protected-access
-        if isinstance(getattr(c, "metrics", None), dict)
-    ]
-    env_reset = self.env.environment_reset
-    for r in (env_reset, *getattr(env_reset, "_resetters", ())):
-      if isinstance(getattr(r, "metrics", None), dict):
-        self._metric_components.append(r)
 
   @property
   def cfg(self):  # pyrefly: ignore[bad-override]
@@ -230,11 +219,9 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     # For terminated envs, get S_0 observations. This is the auto-reset behavior
     # that RSL-RL expects.
     if done_mask.any():
-      # Snapshot per-env metrics before the auto-reset overwrites them.
-      for c in self._metric_components:
-        name = c.name() if callable(c.name) else c.name
-        for k, v in c.metrics.items():
-          extras["log"][f"Metrics/{name}/{k}"] = v[done_mask].mean()
+      # Snapshot episode metrics before the auto-reset overwrites them.
+      for k, val in self.env.task_layer.get_episode_metrics(done_mask).items():
+        extras["log"][f"Metrics/{k}"] = val
       for k in self._episode_sums:
         extras["log"]["reward_episode/" + k] = self._episode_sums[k][
             done_mask

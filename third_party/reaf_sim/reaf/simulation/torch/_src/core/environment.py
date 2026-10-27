@@ -424,6 +424,7 @@ class Environment(core_environment.Environment):
 
     # Compute the elements of the timestep.
     reward = self._task_layer.compute_reward(features)
+    self._task_layer.update_metrics(features)
 
     # Combine termination from task layer (features-based) and resetter (sim-state).
     tl_termination = self._task_layer.check_for_termination(features)

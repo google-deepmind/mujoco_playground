@@ -28,6 +28,7 @@ from reaf.simulation.torch._src.core import device as device_module
 from reaf.simulation.torch._src.core import device_layer as device_layer_module
 from reaf.simulation.torch._src.core import discount_provider as discount_provider_module
 from reaf.simulation.torch._src.core import environment
+from reaf.simulation.torch._src.core import metric_provider as metric_provider_module
 from reaf.simulation.torch._src.core import observation_space_adapter
 from reaf.simulation.torch._src.core import reward_provider
 from reaf.simulation.torch._src.core import simulator as simulator_module
@@ -235,6 +236,39 @@ class PendulumObservationAdapter(
     return {"joint_pos", "time"}
 
 
+class StepSumMetricProvider(metric_provider_module.MetricProvider):
+  """Accumulates `scale * time` and step count per episode."""
+
+  def __init__(self, nworld: int, xpu_device: str):
+    self.scale = torch.ones(nworld, dtype=torch.float32, device=xpu_device)
+    self._sums = torch.zeros(nworld, dtype=torch.float32, device=xpu_device)
+    self._steps = torch.zeros(nworld, dtype=torch.int64, device=xpu_device)
+
+  def update_metrics(self, features: Mapping[str, torch.Tensor]) -> None:
+    self._sums += self.scale * features["time"]
+    self._steps += 1
+
+  def reset(self, env_mask: torch.Tensor | None = None) -> None:
+    if env_mask is None:
+      self._sums.zero_()
+      self._steps.zero_()
+    else:
+      self._sums.masked_fill_(env_mask, 0.0)
+      self._steps.masked_fill_(env_mask, 0)
+
+  def get_episode_metrics(
+      self, env_mask: torch.Tensor
+  ) -> dict[str, torch.Tensor]:
+    denom = env_mask.sum().clamp(min=1).to(torch.float32)
+    return {
+        "time_sum": torch.where(env_mask, self._sums, 0.0).sum() / denom,
+        "steps": (
+            torch.where(env_mask, self._steps.to(torch.float32), 0.0).sum()
+            / denom
+        ),
+    }
+
+
 def _build_pendulum_env(
     nworld: int,
     xpu_device: str,
@@ -243,6 +277,7 @@ def _build_pendulum_env(
     home_qpos: float = 0.0,
     environment_reset_fn: environment.EnvironmentReset | None = None,
     auto_reset_mode: environment.AutoResetMode = environment.AutoResetMode.SYNC,
+    metric_provider: metric_provider_module.MetricProvider | None = None,
 ) -> environment.Environment:
   """Builds a simple pendulum environment for testing."""
   mj_spec = mujoco.MjSpec.from_string(_PENDULUM_XML)
@@ -274,6 +309,7 @@ def _build_pendulum_env(
       commands_processors=[],
       features_producers=[],
       reward_provider=reward,
+      metric_provider=metric_provider,
       termination_checkers=terminations,
       discount_provider=discount,
       features_observers=[],
@@ -296,7 +332,7 @@ def _build_pendulum_env(
   )
 
 
-class WarpEnvironmentTest(absltest.TestCase):
+class WarpEnvironmentTest(parameterized.TestCase):
   """Environment tests using the Warp backend."""
 
   IMPL = types.Impl.WARP
@@ -511,6 +547,117 @@ class WarpEnvironmentTest(absltest.TestCase):
     ts_next = env_disabled.step(action)
     # With DISABLED, envs 0,1 are NOT automatically reset to FIRST.
     self.assertFalse(torch.any(ts_next.step_type[:2] == dm_env.StepType.FIRST))
+
+  @parameterized.parameters(
+      environment.AutoResetMode.SYNC,
+      environment.AutoResetMode.NO_SYNC,
+      environment.AutoResetMode.DISABLED,
+  )
+  def test_metrics_staggered_auto_reset(self, mode):
+    """Verify metric lifecycle across reset, partial reset, and auto-reset."""
+    metrics = StepSumMetricProvider(nworld=2, xpu_device=self.XPU_DEVICE)
+    metrics.scale[:] = torch.tensor([1.0, 2.0], device=self.XPU_DEVICE)
+    timeouts = torch.tensor(
+        [0.03, 0.07], dtype=torch.float32, device=self.XPU_DEVICE
+    )
+    env = _build_pendulum_env(
+        nworld=2,
+        xpu_device=self.XPU_DEVICE,
+        timeouts=timeouts,
+        impl=self.IMPL,
+        auto_reset_mode=mode,
+        metric_provider=metrics,
+    )
+    action = {
+        "motor_ctrl": torch.zeros(
+            1, dtype=torch.float32, device=self.XPU_DEVICE
+        )
+    }
+
+    w0 = torch.tensor([True, False], device=self.XPU_DEVICE)
+    w1 = torch.tensor([False, True], device=self.XPU_DEVICE)
+
+    def assert_world_metrics(
+        w0_sum: float, w1_sum: float, w0_steps: float, w1_steps: float
+    ) -> None:
+      ep_w0 = env.task_layer.get_episode_metrics(w0)
+      ep_w1 = env.task_layer.get_episode_metrics(w1)
+      torch.testing.assert_close(
+          ep_w0["time_sum"], torch.tensor(w0_sum, device=self.XPU_DEVICE)
+      )
+      torch.testing.assert_close(
+          ep_w1["time_sum"], torch.tensor(w1_sum, device=self.XPU_DEVICE)
+      )
+      torch.testing.assert_close(
+          ep_w0["steps"], torch.tensor(w0_steps, device=self.XPU_DEVICE)
+      )
+      torch.testing.assert_close(
+          ep_w1["steps"], torch.tensor(w1_steps, device=self.XPU_DEVICE)
+      )
+
+    env.reset()
+    assert_world_metrics(0.0, 0.0, 0.0, 0.0)
+
+    # Step 1 (0.02s, MID) -> Step 2 (0.04s): world 0 hits LAST, world 1 MID.
+    env.step(action)
+    ts = env.step(action)
+    self.assertEqual(ts.last().tolist(), [True, False])
+    assert_world_metrics(0.06, 0.12, 2.0, 2.0)
+
+    # Change world 0 scale so Ep 2 (0.60) cannot match a stale Ep 1 (0.06).
+    metrics.scale[0] = 10.0
+
+    if mode == environment.AutoResetMode.DISABLED:
+      # Manual partial reset between steps must wipe world 0 without updating 1.
+      env.reset_with_options(
+          options=env.default_reset_options(), env_mask=ts.last()
+      )
+      assert_world_metrics(0.0, 0.12, 0.0, 2.0)
+
+      # Two more steps: world 0 (Ep 2, 2 steps = 0.60) and world 1 (Ep 1, 4
+      # steps = 0.40) both hit LAST simultaneously -> mean = 0.50, steps = 3.0.
+      env.step(action)
+      ts = env.step(action)
+      self.assertEqual(ts.last().tolist(), [True, True])
+      assert_world_metrics(0.60, 0.40, 2.0, 4.0)
+      ep_both = env.task_layer.get_episode_metrics(ts.last())
+      torch.testing.assert_close(
+          ep_both["time_sum"], torch.tensor(0.50, device=self.XPU_DEVICE)
+      )
+      torch.testing.assert_close(
+          ep_both["steps"], torch.tensor(3.0, device=self.XPU_DEVICE)
+      )
+    else:
+      # Step 3: world 0 auto-resets to FIRST (sums & steps wiped), world 1 at 3.
+      ts = env.step(action)
+      self.assertEqual(ts.first().tolist(), [True, False])
+      assert_world_metrics(0.0, 0.24, 0.0, 3.0)
+
+      # Step 4: world 0 on step 1 of Ep 2; world 1 hits LAST with all 4 steps.
+      ts = env.step(action)
+      self.assertEqual(ts.last().tolist(), [False, True])
+      assert_world_metrics(0.20, 0.40, 1.0, 4.0)
+
+      # Step 5: world 0 hits LAST (Ep 2) on the same step world 1 resets FIRST.
+      ts = env.step(action)
+      self.assertEqual(ts.last().tolist(), [True, False])
+      self.assertEqual(ts.first().tolist(), [False, True])
+      assert_world_metrics(0.60, 0.0, 2.0, 0.0)
+
+    # Mid-episode full reset clears non-zero state; 1-step FIRST -> LAST works.
+    timeouts[:] = 0.01
+    env.reset()
+    assert_world_metrics(0.0, 0.0, 0.0, 0.0)
+    ts = env.step(action)
+    self.assertEqual(ts.last().tolist(), [True, True])
+    assert_world_metrics(0.20, 0.04, 1.0, 1.0)
+    ep_one_step = env.task_layer.get_episode_metrics(ts.last())
+    torch.testing.assert_close(
+        ep_one_step["time_sum"], torch.tensor(0.12, device=self.XPU_DEVICE)
+    )
+    torch.testing.assert_close(
+        ep_one_step["steps"], torch.tensor(1.0, device=self.XPU_DEVICE)
+    )
 
 
 class OverridePendulumReset(environment.EnvironmentReset):

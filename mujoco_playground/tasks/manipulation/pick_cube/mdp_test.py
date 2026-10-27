@@ -101,6 +101,33 @@ class RewardTest(absltest.TestCase):
     self.assertAlmostEqual(float(bring_rew[0]), 0.0, places=5)
     self.assertGreater(float(bring_rew[1]), 0.0)
 
+  def test_metric_distance_and_cube_lifted(self):
+    features = {
+        "ee/xpos": torch.tensor(
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+        ),
+        "object/xpos": torch.tensor(
+            [[0.0, 3.0, 4.0], [1.0, 0.0, 0.02], [0.0, 0.0, 0.10]]
+        ),
+        "target/mocap_pos": torch.tensor(
+            [[0.0, 3.0, 4.05], [1.0, 0.0, 0.02], [0.0, 0.0, 0.30]]
+        ),
+    }
+    dist = mdp.metric_distance(
+        features, pos_a_key="ee/xpos", pos_b_key="object/xpos"
+    )
+    lifted = mdp.metric_cube_lifted(
+        features, cube_xpos_key="object/xpos", lift_height_threshold=0.04
+    )
+    success = mdp.reward_success(
+        features, distance_threshold=0.08, lift_height_threshold=0.04
+    )
+    torch.testing.assert_close(dist, torch.tensor([5.0, 0.02, 0.10]))
+    torch.testing.assert_close(lifted, torch.tensor([1.0, 0.0, 1.0]))
+    # World 0: lifted & close -> 1; world 1: close but not lifted -> 0;
+    # world 2: lifted but far -> 0.
+    torch.testing.assert_close(success, torch.tensor([1.0, 0.0, 0.0]))
+
 
 if __name__ == "__main__":
   absltest.main()

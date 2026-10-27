@@ -358,9 +358,6 @@ class NanTerminationResetterTest(absltest.TestCase):
             dtype=torch.int32,
         ),
     )
-    torch.testing.assert_close(
-        res.metrics["nan_terminated"], torch.zeros(4, dtype=torch.float32)
-    )
 
     # Inject NaN/Inf across qpos, qvel, qacc, and qacc_warmstart.
     for field_name, bad_val in (
@@ -383,10 +380,6 @@ class NanTerminationResetterTest(absltest.TestCase):
           dtype=torch.int32,
       )
       torch.testing.assert_close(result, expected)
-      torch.testing.assert_close(
-          res.metrics["nan_terminated"],
-          torch.tensor([0.0, 1.0, 0.0, 0.0], dtype=torch.float32),
-      )
 
   def test_build_env_nan_termination_disabled_by_default(self):
     env = _create_env()

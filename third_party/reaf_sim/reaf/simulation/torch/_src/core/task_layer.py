@@ -29,6 +29,7 @@ from reaf.core import logger as logger_module
 from reaf.simulation.torch._src.common import default_discount_provider
 from reaf.simulation.torch._src.common import zero_reward_provider
 from reaf.simulation.torch._src.core import discount_provider as torch_discount_provider
+from reaf.simulation.torch._src.core import metric_provider as torch_metric_provider
 from reaf.simulation.torch._src.core import reward_provider as torch_reward_provider
 from reaf.simulation.torch._src.core import termination_checker as core_termination_checker
 import torch
@@ -53,6 +54,7 @@ class TaskLayer:
           core_termination_checker.TerminationChecker
       ],
       reward_provider: torch_reward_provider.RewardProvider | None = None,
+      metric_provider: torch_metric_provider.MetricProvider | None = None,
       discount_provider: torch_discount_provider.DiscountProvider | None = None,
       features_observers: Sequence[
           core_features_observer.FeaturesObserver
@@ -70,6 +72,7 @@ class TaskLayer:
             nworld=nworld, xpu_device=xpu_device, name="zero_reward"
         )
     )
+    self._metric_provider = metric_provider
     self._termination_checkers = termination_checkers
     self._discount_provider = (
         discount_provider
@@ -91,6 +94,7 @@ class TaskLayer:
         self._features_producers,
         self._termination_checkers,
         [self._reward_provider],
+        ([self._metric_provider] if self._metric_provider is not None else []),
         [self._discount_provider],
     ):
       resettable_object_id = id(resettable_object)
@@ -197,6 +201,28 @@ class TaskLayer:
   ) -> torch_reward_provider.RewardValue:
     """Computes the reward given the features."""
     return self._reward_provider.compute_reward(features)
+
+  def update_metrics(self, features: Mapping[str, torch.Tensor]) -> None:
+    """Evaluates per-step metrics and updates internal episodic accumulators.
+
+    Modifies internal state; should only be called once per control step by
+    `Environment.step`.
+    """
+    if self._metric_provider is None:
+      return
+    self._metric_provider.update_metrics(features)
+
+  def get_episode_metrics(
+      self,
+      env_mask: torch.Tensor,
+  ) -> dict[str, torch.Tensor]:
+    """Returns 0-D mean reduced episode metrics over the masked worlds.
+
+    Read-only; does not modify internal state.
+    """
+    if self._metric_provider is None:
+      return {}
+    return self._metric_provider.get_episode_metrics(env_mask)
 
   def compute_discount(
       self,

@@ -257,3 +257,65 @@ def termination_bad_motion_body_pos_z_only(
   )
   failed = torch.any(error > threshold, dim=-1)
   return _bool_to_termination(failed)
+
+
+def metric_error_anchor_pos(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return torch.norm(
+      f["motion/anchor_pos_ref"] - f["motion/anchor_pos_robot"], dim=-1
+  )
+
+
+def metric_error_anchor_rot(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return pg_math.quat_error_magnitude2(
+      f["motion/anchor_quat_ref"], f["motion/anchor_quat_robot"]
+  )
+
+
+def metric_error_anchor_lin_vel(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return torch.norm(
+      f["motion/anchor_lin_vel_ref"] - f["motion/anchor_lin_vel_robot"], dim=-1
+  )
+
+
+def metric_error_anchor_ang_vel(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return torch.norm(
+      f["motion/anchor_ang_vel_ref"] - f["motion/anchor_ang_vel_robot"], dim=-1
+  )
+
+
+def metric_error_body_pos(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return torch.norm(
+      f["motion/body_pos_relative"] - f["motion/body_pos_robot"], dim=-1
+  ).mean(dim=-1)
+
+
+def metric_error_body_rot(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return pg_math.quat_error_magnitude2(
+      f["motion/body_quat_relative"], f["motion/body_quat_robot"]
+  ).mean(dim=-1)
+
+
+def metric_error_body_lin_vel(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return torch.norm(
+      f["motion/body_lin_vel_ref"] - f["motion/body_lin_vel_robot"], dim=-1
+  ).mean(dim=-1)
+
+
+def metric_error_body_ang_vel(f: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return torch.norm(
+      f["motion/body_ang_vel_ref"] - f["motion/body_ang_vel_robot"], dim=-1
+  ).mean(dim=-1)
+
+
+def metric_error_joint_pos(
+    f: Mapping[str, torch.Tensor],
+    qpos_key: str = "robot/joint_pos",
+) -> torch.Tensor:
+  return torch.norm(f["motion/joint_pos_ref"] - f[qpos_key].float(), dim=-1)
+
+
+def metric_error_joint_vel(
+    f: Mapping[str, torch.Tensor],
+    qvel_key: str = "robot/joint_vel",
+) -> torch.Tensor:
+  return torch.norm(f["motion/joint_vel_ref"] - f[qvel_key].float(), dim=-1)
