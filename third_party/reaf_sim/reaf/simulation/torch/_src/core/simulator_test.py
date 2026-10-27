@@ -30,6 +30,7 @@ _TEST_XML = """
     <body name="body1" pos="0 0 1">
       <joint name="joint1" type="slide" axis="0 0 1"/>
       <geom name="geom1" type="sphere" size="0.1"/>
+      <camera name="cam1"/>
     </body>
   </worldbody>
 </mujoco>
@@ -172,23 +173,33 @@ class SimulatorTest(parameterized.TestCase):
     )
     self.assertEqual(sim.set_const(), torch_wrapper.SetConstLevel.NONE)
 
+    sim.model.body_mass[:, body_id] = 3.0
+    self.assertEqual(sim.set_const(), torch_wrapper.SetConstLevel.FULL)
+    torch.testing.assert_close(
+        sim.model.body_subtreemass[:, body_id],
+        torch.full_like(sim.model.body_subtreemass[:, body_id], 3.0),
+    )
+
     # Non-NONE levels dispatch to mjw.set_const with groups and restore=False.
     cases = [
         ("geom_margin", torch_wrapper.SetConstLevel.FIXED),
-        (None, torch_wrapper.SetConstLevel.KIN0),
+        ("cam_pos", torch_wrapper.SetConstLevel.KIN0),
         ("dof_armature", torch_wrapper.SetConstLevel.INERT0),
         ("body_mass", torch_wrapper.SetConstLevel.FULL),
     ]
     for field, level in cases:
       with self.subTest(level=level):
-        if field is not None:
-          getattr(sim.model, field)[:] = 0.25
-        else:
-          object.__setattr__(sim.model, "_pending_set_const", level)
+        getattr(sim.model, field)[:] = 0.25
+        self.assertEqual(sim.set_const(), level)
+        getattr(sim.model, field)[:] = 0.5
         if impl == types.Impl.CPP:
           with mock.patch.object(simulator.mujoco, "mj_setConst") as fn:
             self.assertEqual(sim.set_const(), level)
           fn.assert_called_once_with(sim.mj_model, sim.mj_data)
+        elif sim._use_cuda_graph:
+          with mock.patch.object(simulator.wp, "capture_launch") as fn:
+            self.assertEqual(sim.set_const(), level)
+          fn.assert_called_once_with(sim._set_const_graph_captures[level])
         else:
           with mock.patch.object(simulator.mjw, "set_const") as fn:
             self.assertEqual(sim.set_const(), level)

@@ -84,8 +84,8 @@ Write tracking relies on :class:`~reaf.simulation.torch.TorchTensor` ``__setitem
 CUDA graphs
 -----------
 
-On CUDA devices (``Impl.WARP``), :class:`~reaf.simulation.torch.Simulator` captures ``step()``, ``forward()``, and
-``reset()`` as CUDA graphs via ``wp.ScopedCapture`` and replays them with ``wp.capture_launch``. Tensor attributes on
-``sim.model`` and ``sim.data`` are read-only so device pointers remain fixed across graph replays.
+On CUDA devices (``Impl.WARP``), :class:`~reaf.simulation.torch.Simulator` captures ``step()``, ``forward()``,
+``reset()``, and ``set_const()`` as CUDA graphs via ``wp.ScopedCapture`` and replays them with ``wp.capture_launch``.
+Tensor attributes on ``sim.model`` and ``sim.data`` are read-only so device pointers remain fixed across graph replays.
 
 For full signature details, see :class:`reaf.simulation.torch.Simulator` in the :doc:`API reference <../api>`.
