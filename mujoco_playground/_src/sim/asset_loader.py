@@ -136,5 +136,6 @@ def get_from_git(
   future = executor.submit(
       _sparse_checkout, repo_url, commit, paths_list, cache_dir
   )
+  executor.shutdown(wait=False)
 
   return AssetFuture(future, cache_paths, single)
