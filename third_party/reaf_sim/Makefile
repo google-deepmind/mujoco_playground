@@ -1,6 +1,11 @@
 # reaf builds from git until its next PyPI release; its CMake does not pin a
 # C++ standard and abseil requires >= 17.
 export CMAKE_ARGS := -DCMAKE_CXX_STANDARD=17
+# Workaround until reaf updates its abseil-cpp pin upstream: under GCC 15 with
+# -march=x86-64-v3, bmi2intrin.h requires immintrin.h to be included first.
+ifeq ($(shell uname -m),x86_64)
+  export CMAKE_ARGS += -DCMAKE_CXX_FLAGS="-include immintrin.h"
+endif
 
 .PHONY: install
 install:
