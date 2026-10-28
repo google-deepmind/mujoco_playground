@@ -86,7 +86,6 @@ class ArticulatedDevice(device.Device):
 
   @override
   def initialize(self, simulator: simulator_module.Simulator) -> None:
-    self._simulator = simulator
     self._data = simulator.data
     mj_spec = simulator.mj_spec
 

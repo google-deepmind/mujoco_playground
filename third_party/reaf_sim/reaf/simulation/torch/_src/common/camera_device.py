@@ -129,7 +129,6 @@ class CameraDevice(device.Device):
           self._update_interval_in_substeps,
           1.0 / actual_period,
       )
-    self._simulator = simulator
     mj_spec = simulator.mj_spec
     mj_model = simulator.mj_model
     data = simulator.data

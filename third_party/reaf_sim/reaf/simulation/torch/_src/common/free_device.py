@@ -55,7 +55,6 @@ class FreeDevice(device.Device):
     self._reference_site_name = reference_site_name
 
     # Set in initialize().
-    self._simulator: simulator_module.Simulator | None = None
     self._data: types.Data | None = None
     self._body_id: int | None = None
     self._joint_id: int | None = None
@@ -100,7 +99,6 @@ class FreeDevice(device.Device):
 
   def initialize(self, simulator: simulator_module.Simulator) -> None:
     """Resolve body/joint IDs from compiled model."""
-    self._simulator = simulator
     data = simulator.data
     mj_model = simulator.mj_model
     self._data = data
@@ -264,7 +262,6 @@ class MocapDevice(device.Device):
 
   def initialize(self, simulator: simulator_module.Simulator) -> None:
     """Resolve mocap ID from compiled model."""
-    self._simulator = simulator
     self._data = simulator.data
     body_id = simulator.mj_model.body(self._body_name).id
     self._mocap_id = simulator.mj_model.body_mocapid[body_id]

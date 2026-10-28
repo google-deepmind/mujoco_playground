@@ -280,7 +280,6 @@ class ActuatorDevice(device.Device):
   @override
   def initialize(self, simulator: simulator_module.Simulator) -> None:
     """Resolve joint, actuator, and tendon indices."""
-    self._simulator = simulator
     self._data = simulator.data
     mj_model = simulator.mj_model
     mj_spec = simulator.mj_spec
