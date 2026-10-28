@@ -24,10 +24,10 @@ from gdm_robotics.interfaces import environment as gdmr_env
 from gdm_robotics.interfaces import policy as gdmr_policy
 from gdm_robotics.interfaces import types as gdmr_types
 import mujoco
-from mujoco.experimental.studio import launch_web
-from mujoco.experimental.studio import plugin
-from mujoco.experimental.studio import viewer_app
-from mujoco.experimental.studio import viewer_protocol
+from mujoco.studio import launch_web
+from mujoco.studio import plugin
+from mujoco.studio import viewer_app
+from mujoco.studio import viewer_protocol
 from reaf.simulation.torch import environment as environment_module
 from reaf.simulation.torch import simulator as simulator_module
 from reaf.simulation.torch import types
@@ -100,7 +100,7 @@ def launch(
     plugins: Optional viewer and sim plugins.
     hot_reload: What is reloaded when modified. Options are '', 'plugins',
       'all', 'Plugin1,Plugin2,...'. Default is '', meaning nothing. See
-      ``mujoco.experimental.studio.hot_reload``.
+      ``mujoco.studio.hot_reload``.
   """
   if simulator is None:
     if isinstance(environment, environment_module.Environment):
@@ -150,9 +150,7 @@ def launch(
   run_fn = launch_web.run
   if gfx not in ('web', 'webgl'):
     try:
-      run_fn = importlib.import_module(
-          'mujoco.experimental.studio.launch_native'
-      ).run
+      run_fn = importlib.import_module('mujoco.studio.launch_native').run
     except ImportError:
       pass
 

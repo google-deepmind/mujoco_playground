@@ -20,9 +20,9 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 import dm_env
-from mujoco.experimental.studio import messages
-from mujoco.experimental.studio import viewer_app
-from mujoco.experimental.studio import viewer_protocol
+from mujoco.studio import messages
+from mujoco.studio import viewer_app
+from mujoco.studio import viewer_protocol
 import numpy as np
 from reaf.simulation.viewer import messages as reaf_messages
 from reaf.simulation.viewer import viewer_plugin

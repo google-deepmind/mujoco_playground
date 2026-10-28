@@ -16,10 +16,10 @@
 from absl.testing import absltest
 import dm_env
 import mujoco
-from mujoco.experimental.studio import launch_thread
-from mujoco.experimental.studio import messages
-from mujoco.experimental.studio import sim
-from mujoco.experimental.studio import viewer_handle
+from mujoco.studio import launch_thread
+from mujoco.studio import messages
+from mujoco.studio import sim
+from mujoco.studio import viewer_handle
 import numpy as np
 from reaf.simulation.viewer import messages as reaf_messages
 from reaf.simulation.viewer import sim_plugin

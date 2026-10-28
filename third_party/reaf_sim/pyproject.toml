@@ -137,6 +137,8 @@ search-path = [
 ]
 replace-imports-with-any = [
     "mujoco.experimental.*",
+    "mujoco.studio",
+    "mujoco.studio.*",
     "tracy_client",
     "tracy_client.*",
 ]

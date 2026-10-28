@@ -19,7 +19,7 @@ from unittest import mock
 
 from absl.testing import absltest
 from etils import epath
-from mujoco.experimental.studio import messages
+from mujoco.studio import messages
 from mujoco_playground._src.rl.rsl_rl.viewer.plugins import policy
 
 

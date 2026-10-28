@@ -21,10 +21,10 @@ from collections.abc import Sequence
 import logging
 from typing import Any
 
-from mujoco.experimental.studio import messages
-from mujoco.experimental.studio import plugin
-from mujoco.experimental.studio import sim
-from mujoco.experimental.studio import viewer_app
+from mujoco.studio import messages
+from mujoco.studio import plugin
+from mujoco.studio import sim
+from mujoco.studio import viewer_app
 import numpy as np
 from reaf.simulation.viewer import line_plots
 from reaf.simulation.viewer import messages as reaf_messages

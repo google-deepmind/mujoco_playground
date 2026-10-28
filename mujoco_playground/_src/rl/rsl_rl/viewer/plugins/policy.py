@@ -20,9 +20,9 @@ from typing import Any
 
 from absl import logging
 from etils import epath
-from mujoco.experimental.studio import messages
-from mujoco.experimental.studio import plugin
-from mujoco.experimental.studio import viewer_app
+from mujoco.studio import messages
+from mujoco.studio import plugin
+from mujoco.studio import viewer_app
 from mujoco_playground._src.rl.rsl_rl import checkpoint
 
 imgui = viewer_app.imgui

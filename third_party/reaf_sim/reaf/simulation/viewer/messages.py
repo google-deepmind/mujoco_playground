@@ -16,7 +16,7 @@
 import dataclasses
 
 import dm_env
-from mujoco.experimental.studio import messages
+from mujoco.studio import messages
 
 
 @dataclasses.dataclass(frozen=True)

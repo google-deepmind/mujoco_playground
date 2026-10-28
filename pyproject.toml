@@ -187,6 +187,8 @@ replace-imports-with-any = [
     "cv2",
     "cv2.*",
     "mujoco.experimental.*",
+    "mujoco.studio",
+    "mujoco.studio.*",
     "tensorflow",
     "tensorflow.*",
     "tracy_client",

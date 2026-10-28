@@ -20,9 +20,9 @@ from typing import runtime_checkable
 
 import dm_env
 import mujoco
-from mujoco.experimental.studio import messages
-from mujoco.experimental.studio import plugin
-from mujoco.experimental.studio import sim
+from mujoco.studio import messages
+from mujoco.studio import plugin
+from mujoco.studio import sim
 import numpy as np
 from reaf.simulation.viewer import messages as reaf_messages
 
