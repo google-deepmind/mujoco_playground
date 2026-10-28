@@ -41,6 +41,7 @@ from reaf.simulation.torch._src.common import processors
 from reaf.simulation.torch._src.common import resetter
 from reaf.simulation.torch._src.common import site_device
 from reaf.simulation.torch._src.common import spec_helper
+from reaf.simulation.torch._src.common import tactile_device
 from reaf.simulation.torch._src.common import tensors
 from reaf.simulation.torch._src.common import timeout_termination_checker
 from reaf.simulation.torch._src.common import zero_reward_provider
@@ -94,6 +95,7 @@ from reaf.simulation.torch._src.common.resetter import TerminationResetter
 from reaf.simulation.torch._src.common.site_device import SiteDevice
 from reaf.simulation.torch._src.common.spec_helper import SpecHelper
 from reaf.simulation.torch._src.common.spec_helper import SpecTemplate
+from reaf.simulation.torch._src.common.tactile_device import TactileDevice
 from reaf.simulation.torch._src.common.timeout_termination_checker import TimeoutTerminationChecker
 from reaf.simulation.torch._src.common.zero_reward_provider import ZeroRewardProvider
 from reaf.simulation.torch._src.core import clock

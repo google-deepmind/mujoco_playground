@@ -74,6 +74,7 @@ Built-in devices
     bodies reside inside volumetric site bounds.
   - :class:`~reaf.simulation.torch.ContactSensorDevice`: Captures contact forces, normal pressures, and collision
     impulses between bodies or geom pairs.
+  - :class:`~reaf.simulation.torch.TactileDevice`: Attaches a ``mjSENS_TACTILE`` sensor with optional post-processing.
 
 - **Cameras & visual rendering**:
 

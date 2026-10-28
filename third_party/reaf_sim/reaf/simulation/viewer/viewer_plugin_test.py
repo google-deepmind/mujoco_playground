@@ -196,7 +196,7 @@ class ReafViewerPluginTest(parameterized.TestCase):
     self.mock_set_dock.assert_called_once_with(42, imgui.Cond.Once)
     self.mock_set_focus.assert_called_once()
     self.mock_begin.assert_any_call('Inspector')
-    self.mock_begin.assert_called_with('Camera RGB')
+    self.mock_begin.assert_called_with('Obs 2D')
     self.mock_image.assert_called_once()
     tex_id, size = self.mock_image.call_args.args
     self.assertEqual(tex_id, 1)
@@ -207,7 +207,7 @@ class ReafViewerPluginTest(parameterized.TestCase):
     self._step()
     self.assertEqual(self.viewer.upload_image.call_count, 2)
     self.assertEqual(self.viewer.upload_image.call_args.args[0], 1)
-    self.mock_begin.assert_called_once_with('Camera RGB')
+    self.mock_begin.assert_called_once_with('Obs 2D')
     self.mock_set_dock.assert_called_once()
     self.assertEqual(self.mock_set_focus.call_count, 2)
 
@@ -350,8 +350,24 @@ class ReafViewerPluginTest(parameterized.TestCase):
     })
     self.assertEqual(
         [c.args[0] for c in self.mock_tree_node.call_args_list],
-        ['camera', 'front_rgb'],
+        ['camera', 'front_rgb', 'front_depth'],
     )
+
+  @parameterized.named_parameters(
+      dict(testcase_name='single_world_small_grid', shape=(1, 4, 4)),
+      dict(testcase_name='three_worlds_three_by_three', shape=(3, 3, 3)),
+      dict(testcase_name='four_worlds_four_by_four', shape=(4, 4, 4)),
+      dict(testcase_name='multi_world_rectangular_grid', shape=(2, 6, 8)),
+  )
+  def test_batched_2d_observation_unwrapping(self, shape):
+    raw = torch.full(shape, 42, dtype=torch.uint8)
+    self._step({'tactile': raw})
+    self.viewer.upload_image.assert_called_once()
+    _, img_bytes, width, height = self.viewer.upload_image.call_args.args
+    self.assertEqual((width, height), (shape[2], shape[1]))
+    arr = np.frombuffer(img_bytes, dtype=np.uint8)
+    self.assertEqual(int(arr.min()), 42)
+    self.assertEqual(int(arr.max()), 42)
 
     # Non-mapping observation produces no window.
     self.mock_tree_node.reset_mock()

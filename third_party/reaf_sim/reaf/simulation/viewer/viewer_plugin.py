@@ -51,9 +51,10 @@ _REWARD_AXIS_FLAGS = (
 class Image2D:
   """Manages 2D image textures and Studio sidebar GUI state."""
 
-  def __init__(self, title: str = 'Camera RGB', scale: int = 1) -> None:
+  def __init__(self, title: str = 'Obs 2D', scale: int = 1) -> None:
     self._title = title
-    self._scale = max(1, int(scale))
+    self._default_scale = max(1, int(scale))
+    self._scales: dict[str, int] = {}
     self._images: dict[str, np.ndarray] = {}
     self._textures: dict[str, int] = {}
     self._dirty: set[str] = set()
@@ -66,9 +67,10 @@ class Image2D:
     self._images = {}
     for key, img in images.items():
       try:
+        # Unwrap outer batch dimensions until reaching a 2D map or 3D image.
         while len(img.shape) > 3:
           img = img[0]
-      except AttributeError:
+      except (AttributeError, IndexError):
         continue
       try:
         img = img.detach().cpu().numpy()
@@ -99,9 +101,10 @@ class Image2D:
       return
     for name, img in self._images.items():
       if name in self._dirty and name in self._shown:
+        scale = self._scales.get(name, self._default_scale)
         scaled = (
-            np.repeat(np.repeat(img, self._scale, axis=0), self._scale, axis=1)
-            if self._scale > 1
+            np.repeat(np.repeat(img, scale, axis=0), scale, axis=1)
+            if scale > 1
             else img
         )
         self._textures[name] = viewer.upload_image(
@@ -135,19 +138,21 @@ class Image2D:
     shown: set[str] = set()
     opened, _ = imgui.Begin(self._title)
     if opened:
-      changed, self._scale = imgui.SliderInt('Scale', self._scale, 1, 16, '%dx')
-      if changed:
-        self._dirty = set(self._images)
       for name, img in self._images.items():
         if imgui.TreeNodeEx(name, node_flags):
           shown.add(name)
+          scale = self._scales.get(name, self._default_scale)
+          changed, new_scale = imgui.SliderInt(
+              f'Scale##{name}', scale, 1, 16, '%dx'
+          )
+          if changed:
+            self._scales[name] = new_scale
+            self._dirty.add(name)
           tex_id = self._textures.get(name, 0)
           if tex_id:
             imgui.Image(
                 tex_id,
-                imgui.Vec2(
-                    img.shape[1] * self._scale, img.shape[0] * self._scale
-                ),
+                imgui.Vec2(img.shape[1] * scale, img.shape[0] * scale),
             )
           imgui.TreePop()
     imgui.End()
@@ -309,8 +314,12 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
         images = {}
         for k, v in obs.items():
           try:
-            if len(v.shape) >= 4:
+            shape = v.shape
+            # Filter for batched camera images (4D+) or 2D spatial maps (3D).
+            if len(shape) >= 4:
               images[k] = v
+            elif len(shape) == 3 and min(shape[1:]) > 1:
+              images[k] = v[0]
           except AttributeError:
             continue
         self._image2d.set_images(images)
