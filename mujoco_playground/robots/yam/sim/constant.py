@@ -29,6 +29,58 @@ FINGER_JOINTS = ("left_finger", "right_finger")
 GRIPPER_ACTUATOR = "gripper"
 DESK_GEOM = "floor"
 
+# Joint and position-actuator dynamics, per actuator (the six arm joints, then
+# the gripper, whose values apply to both finger joints). Identified with
+# `tasks/sysid/yam` on a real YAM Pro driven through I2RT's SDK (50 Hz
+# position commands into its 250 Hz PD with gravity compensation): they cut
+# the simulated arm's held-out tracking error from 11.5 to 4.8 mrad RMS.
+# These are effective values of that closed loop, not motor settings.
+# Values the excitation data couldn't identify keep Menagerie's: the kp of
+# joints 1 and 4 (the SDK's gains), the armature of joints 2-4, joint 4's
+# friction, joint 6 (whose tracking depends on the wrist camera's load, which
+# the MJCF doesn't model) and the gripper.
+
+# Reflected rotor inertia, in kg m^2.
+ARMATURE = {
+    "joint1": 0.175,
+    "joint2": 0.032,
+    "joint3": 0.032,
+    "joint4": 0.0018,
+    "joint5": 0.00959,
+    "joint6": 0.0018,
+    "gripper": 0.1,
+}
+# MuJoCo dry (Coulomb) friction, in N m (N for the gripper's slide joints).
+FRICTIONLOSS = {
+    "joint1": 0.567,
+    "joint2": 1.26,
+    "joint3": 1.07,
+    "joint4": 0.1,
+    "joint5": 0.0805,
+    "joint6": 0.1,
+    "gripper": 0.1,
+}
+# Position actuator stiffness (kp), in N m/rad (N/m for the gripper).
+STIFFNESS = {
+    "joint1": 80.0,
+    "joint2": 60.9,
+    "joint3": 37.4,
+    "joint4": 40.0,
+    "joint5": 7.34,
+    "joint6": 10.0,
+    "gripper": 2000.0,
+}
+# Position actuator damping (kv), in N m s/rad (N s/m for the gripper).
+DAMPING = {
+    "joint1": 6.01,
+    "joint2": 3.82,
+    "joint3": 2.45,
+    "joint4": 2.28,
+    "joint5": 1.21,
+    "joint6": 1.5,
+    "gripper": 150.0,
+}
+
 # Nominal `linear_4310` finger travel in meters (from the menagerie MJCF slide
 # joint range).
 GRIPPER_M_RANGE = (0.0, 0.0475)

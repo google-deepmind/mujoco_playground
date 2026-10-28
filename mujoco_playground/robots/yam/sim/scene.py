@@ -22,6 +22,7 @@ import mujoco
 from mujoco_playground import asset
 from mujoco_playground._src.objects import furniture
 from mujoco_playground._src.objects import primitive
+from mujoco_playground.robots.yam.real import constant
 from mujoco_playground.robots.yam.sim import constant as sim_constant
 import numpy as np
 
@@ -39,10 +40,45 @@ def _name_unnamed_geoms(spec: mujoco.MjSpec) -> mujoco.MjSpec:
   return spec
 
 
-def yam() -> mujoco.MjSpec:
-  """The YAM with the linear_4310 gripper and wrist D405 camera."""
+def yam_menagerie() -> mujoco.MjSpec:
+  """The YAM from menagerie, with Menagerie's joint and actuator values."""
   spec = asset.get(YAM_XML_URI).spec()
   return _name_unnamed_geoms(spec)
+
+
+def yam() -> mujoco.MjSpec:
+  """The YAM from menagerie, dynamics are overwritten using sim_constant.
+
+  The YAM Pro with the linear_4310 gripper and wrist D405 camera, with the
+  armature, frictionloss and position-actuator gains identified on the real
+  arm (see `sim_constant`).
+  """
+  return _joint_dynamics(yam_menagerie())
+
+
+def _joint_dynamics(spec: mujoco.MjSpec) -> mujoco.MjSpec:
+  """Sets each actuator's joint armature, frictionloss and kp / kv."""
+  for name in constant.JOINTS:
+    actuator = spec.actuator(name)
+    if actuator is None:  # MjSpec.actuator lookup bug; see ActuatorDevice.
+      actuator = next((a for a in spec.actuators if a.name == name), None)
+    if actuator is None:
+      raise ValueError(f"Actuator not found: {name}")
+    kp, kv = sim_constant.STIFFNESS[name], sim_constant.DAMPING[name]
+    actuator.gainprm[0] = kp
+    actuator.biasprm[1] = -kp
+    actuator.biasprm[2] = -kv
+    # The gripper actuator drives the left finger; the right one mirrors it
+    # through an equality constraint, so both get the gripper's values.
+    joints = (
+        sim_constant.FINGER_JOINTS
+        if name == sim_constant.GRIPPER_ACTUATOR
+        else (name,)
+    )
+    for joint in joints:
+      spec.joint(joint).armature = sim_constant.ARMATURE[name]
+      spec.joint(joint).frictionloss = sim_constant.FRICTIONLOSS[name]
+  return spec
 
 
 # Height of the table surface above the ground plane.
