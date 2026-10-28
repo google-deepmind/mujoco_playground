@@ -99,6 +99,19 @@ class ActuatorDevice(device.Device):
         act = spec.add_actuator(name=target_name, target=target_name)
       elif use_existing:
         continue  # Keep actuator as configured in MJCF
+      # TODO(team): Use act.set_to_position, act.set_to_velocity, and
+      # act.set_to_motor so reconfiguring existing actuators resets all
+      # parameters cleanly instead of raising NotImplementedError.
+      elif (
+          act.gaintype != mujoco.mjtGain.mjGAIN_FIXED
+          or act.dyntype != mujoco.mjtDyn.mjDYN_NONE
+      ):
+        raise NotImplementedError(
+            f"Actuator {target_name!r} has non-standard gain"
+            f" ({mujoco.mjtGain(act.gaintype).name}) or dynamics"
+            f" ({mujoco.mjtDyn(act.dyntype).name}); pass use_existing=True to"
+            " preserve its MJCF configuration."
+        )
 
       # Get per-target or uniform values
       kp = stiffness[target_name] if isinstance(stiffness, dict) else stiffness
@@ -233,12 +246,14 @@ class ActuatorDevice(device.Device):
         )
       self._home_ctrl = home_ctrl.to(xpu_device)
     else:
-      self._home_ctrl = torch.zeros(self._num_targets, device=xpu_device)
+      self._home_ctrl = None
 
     # Indices resolved in initialize()
     self._joint_qpos_ids: torch.Tensor | None = None
     self._joint_qvel_ids: torch.Tensor | None = None
     self._actuator_ids: torch.Tensor | None = None
+    self._ctrl_ids: torch.Tensor | None = None
+    self._out_ids: torch.Tensor | None = None
     self._tendon_ids: torch.Tensor | None = None
     self._joint_range: torch.Tensor | None = None  # Static (njoint, 2)
     self._joints: list[Any] = []
@@ -254,7 +269,12 @@ class ActuatorDevice(device.Device):
 
   @property
   def home_ctrl(self) -> torch.Tensor:
-    """Home control values. Shape: (num_targets,)."""
+    """Home control values. Shape: (num_ctrl,)."""
+    if self._home_ctrl is None:
+      raise RuntimeError(
+          f"ActuatorDevice {self._name!r} must be initialized via"
+          " initialize(simulator) before accessing home_ctrl."
+      )
     return self._home_ctrl
 
   @override
@@ -269,12 +289,23 @@ class ActuatorDevice(device.Device):
     joint_qpos_ids = []
     joint_qvel_ids = []
     actuator_ids = []
+    ctrl_ids = []
+    out_ids = []
     tendon_ids = []
     self._joints = []
 
     for target_name in self._target_names:
       act = mj_model.actuator(target_name)
       actuator_ids.append(act.id)
+      # Map actuator control and output spans (e.g. multi-input <dcmotor>).
+      ctrl_adr = int(mj_model.actuator_ctrladr[act.id])
+      ctrl_ids.extend(
+          range(ctrl_adr, ctrl_adr + int(mj_model.actuator_ctrlnum[act.id]))
+      )
+      out_adr = int(mj_model.actuator_outadr[act.id])
+      out_ids.extend(
+          range(out_adr, out_adr + int(mj_model.actuator_outnum[act.id]))
+      )
 
       if self._transmission == "joint":
         joint_id = mj_model.actuator_trnid[act.id, 0]
@@ -297,6 +328,20 @@ class ActuatorDevice(device.Device):
     self._actuator_ids = torch.tensor(
         actuator_ids, dtype=torch.long, device=self._xpu_device
     )
+    self._ctrl_ids = torch.tensor(
+        ctrl_ids, dtype=torch.long, device=self._xpu_device
+    )
+    if self._home_ctrl is None:
+      self._home_ctrl = torch.zeros(len(ctrl_ids), device=self._xpu_device)
+    elif self._home_ctrl.shape != (len(ctrl_ids),):
+      raise ValueError(
+          f"home_ctrl shape {tuple(self._home_ctrl.shape)} does not match"
+          f" resolved control width ({len(ctrl_ids)},) for targets"
+          f" {self._target_names}."
+      )
+    self._out_ids = torch.tensor(
+        out_ids, dtype=torch.long, device=self._xpu_device
+    )
     self._tendon_ids = torch.tensor(
         tendon_ids, dtype=torch.long, device=self._xpu_device
     )
@@ -318,19 +363,33 @@ class ActuatorDevice(device.Device):
 
   @override
   def substep_commands_spec(self) -> Mapping[str, specs.Array]:
+    assert self._ctrl_ids is not None, (
+        f"ActuatorDevice {self._name!r} must be initialized via"
+        " initialize(simulator) before querying specs."
+    )
     return {
         f"{self._name}/ctrl": specs.Array(
-            shape=(len(self._target_names),), dtype=np.float32
+            shape=(self._ctrl_ids.numel(),), dtype=np.float32
         ),
     }
 
   @override
   def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
+    assert self._ctrl_ids is not None and self._out_ids is not None, (
+        f"ActuatorDevice {self._name!r} must be initialized via"
+        " initialize(simulator) before querying specs."
+    )
     result = {}
     for m in self._measurements:
-      shape = (self._num_targets,)
-      if m == "joint_range":
-        shape += (2,)
+      # Use resolved control/output widths for multi-input/output actuators.
+      if m in ("ctrl", "home_ctrl"):
+        shape = (self._ctrl_ids.numel(),)
+      elif m == "actuator_force":
+        shape = (self._out_ids.numel(),)
+      else:
+        shape = (self._num_targets,)
+        if m == "joint_range":
+          shape += (2,)
       result[f"{self._name}/{m}"] = specs.Array(shape=shape, dtype=np.float32)
     return result
 
@@ -341,7 +400,7 @@ class ActuatorDevice(device.Device):
       consumed_substep_commands: Mapping[str, torch.Tensor],
   ) -> None:
     ctrl = consumed_substep_commands[f"{self._name}/ctrl"]
-    simulator.data.ctrl[:, self._actuator_ids] = ctrl.to(
+    simulator.data.ctrl[:, self._ctrl_ids] = ctrl.to(
         dtype=simulator.data.ctrl.dtype
     )
 
@@ -358,7 +417,7 @@ class ActuatorDevice(device.Device):
       elif m == "joint_vel":
         return data.qvel[:, self._joint_qvel_ids]
       elif m == "actuator_force":
-        return data.actuator_force[:, self._actuator_ids]
+        return data.actuator_force[:, self._out_ids]
       elif m == "tendon_length":
         return data.ten_length[:, self._tendon_ids]
       elif m == "tendon_velocity":
@@ -367,9 +426,9 @@ class ActuatorDevice(device.Device):
         bound_model = simulator.model.bind(self._joints)
         return bound_model.range
       elif m == "ctrl":
-        return data.ctrl[:, self._actuator_ids]
+        return data.ctrl[:, self._ctrl_ids]
       elif m == "home_ctrl":
-        return self._home_ctrl
+        return self.home_ctrl
       raise KeyError(m)
 
     return {f"{self._name}/{m}": get(m) for m in self._measurements}
@@ -379,9 +438,9 @@ class ActuatorDevice(device.Device):
   def set_ctrl(self, env_mask: torch.Tensor | None, ctrl: torch.Tensor) -> None:
     """Set actuator control for specified environments."""
     if env_mask is None:
-      self._data.ctrl[:, self._actuator_ids] = ctrl
+      self._data.ctrl[:, self._ctrl_ids] = ctrl
     else:
-      curr = self._data.ctrl[:, self._actuator_ids]
-      self._data.ctrl[:, self._actuator_ids] = torch.where(
+      curr = self._data.ctrl[:, self._ctrl_ids]
+      self._data.ctrl[:, self._ctrl_ids] = torch.where(
           env_mask.unsqueeze(1), ctrl, curr
       )

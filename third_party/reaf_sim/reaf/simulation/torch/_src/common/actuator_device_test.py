@@ -15,6 +15,7 @@
 """Tests for ActuatorDevice - compares MjSpec config vs reference XML."""
 
 from absl.testing import absltest
+from absl.testing import parameterized
 import mujoco
 import numpy as np
 from reaf.simulation.torch._src.common import actuator_device
@@ -326,9 +327,60 @@ class ConfigureSpecTest(absltest.TestCase):
     model = scene_spec.compile()
     self.assertIsNotNone(model)
 
+  def test_configure_spec_nonstandard_actuator_requires_use_existing(self):
+    """Overwriting a <dcmotor> with use_existing=False raises NotImplementedError."""
+    xml = """
+    <mujoco>
+      <worldbody>
+        <body>
+          <joint name="j1" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <dcmotor name="j1" joint="j1" motorconst="0.05" resistance="2.0"/>
+      </actuator>
+    </mujoco>
+    """
+    spec = mujoco.MjSpec.from_string(xml)
+    dev = actuator_device.ActuatorDevice(
+        name="dc", xpu_device="cpu", targets=["j1"]
+    )
+    with self.assertRaises(NotImplementedError):
+      dev.configure_spec(spec, use_existing=False)
 
-class RuntimeTest(absltest.TestCase):
+
+class RuntimeTest(parameterized.TestCase):
   """Tests for ActuatorDevice runtime behavior."""
+
+  def _make_sim_with_actuator(
+      self,
+      xml: str,
+      impl: types.Impl,
+      targets: list[str],
+      measurements: list[str] | None = None,
+      nworld: int = 1,
+  ) -> tuple[actuator_device.ActuatorDevice, simulator_module.Simulator]:
+    """Builds and initializes an ActuatorDevice and Simulator from XML."""
+    xpu_device = (
+        "cpu"
+        if impl == types.Impl.CPP or not torch.cuda.is_available()
+        else "cuda:0"
+    )
+    spec = mujoco.MjSpec.from_string(xml)
+    dev = actuator_device.ActuatorDevice(
+        name="dc",
+        nworld=nworld,
+        xpu_device=xpu_device,
+        targets=targets,
+        measurements=measurements or ["actuator_force"],
+    )
+    dev.configure_spec(spec, use_existing=True)
+    sim = simulator_module.Simulator(
+        mj_spec=spec, nworld=nworld, impl=impl, xpu_device=xpu_device
+    )
+    dev.initialize(sim)
+    return dev, sim
 
   def test_measurements_match_mj_data(self):
     """Measurements from entity match raw mj_data values."""
@@ -442,6 +494,135 @@ class RuntimeTest(absltest.TestCase):
         mj_data.ten_velocity[0],
         rtol=1e-5,
     )
+
+  @parameterized.product(
+      impl=[types.Impl.CPP, types.Impl.WARP],
+      case=[
+          # Zero-input passive mode (ctrlnum=0).
+          ('input="none" damping="0.1"', []),
+          # Single-input voltage mode (ctrlnum=1).
+          ("", [12.0]),
+          # Multi-input position + velocity mode (ctrlnum=2).
+          ('controller="10 0 5 0 0 0" input="pos vel"', [1.0, 0.2]),
+      ],
+  )
+  def test_dcmotor(self, impl: types.Impl, case: tuple[str, list[float]]):
+    """ActuatorDevice maps ctrl inputs and force outputs across dcmotor spans."""
+    attrs, ctrl_vals = case
+    num_ctrl = len(ctrl_vals)
+    nworld = 1 if impl == types.Impl.CPP else 2
+    xml = f"""
+    <mujoco>
+      <worldbody>
+        <body>
+          <joint name="j0" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+        <body>
+          <joint name="j1" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <motor name="j0" joint="j0"/>
+        <dcmotor name="j1" joint="j1" motorconst="0.05" resistance="2.0"
+                 {attrs}/>
+      </actuator>
+    </mujoco>
+    """
+    dev, sim = self._make_sim_with_actuator(
+        xml,
+        impl,
+        ["j1"],
+        measurements=["ctrl", "home_ctrl", "actuator_force"],
+        nworld=nworld,
+    )
+    xpu_device = sim.data.ctrl.device
+
+    # Verify command and measurement specs match resolved control/output spans.
+    self.assertEqual(dev.substep_commands_spec()["dc/ctrl"].shape, (num_ctrl,))
+    self.assertEqual(
+        dev.substep_measurements_spec()["dc/ctrl"].shape, (num_ctrl,)
+    )
+    self.assertEqual(
+        dev.substep_measurements_spec()["dc/home_ctrl"].shape, (num_ctrl,)
+    )
+    self.assertEqual(
+        dev.substep_measurements_spec()["dc/actuator_force"].shape, (1,)
+    )
+
+    # Verify set_substep_commands writes to ctrl_adr=1..1+num_ctrl only.
+    ctrl = torch.tensor(
+        [ctrl_vals] * nworld, dtype=torch.float32, device=xpu_device
+    )
+    dev.set_substep_commands(sim, {"dc/ctrl": ctrl})
+    sim.data.qvel[:, 1] = 1.0
+    sim.step()
+    sim.forward()
+
+    # Verify get_substep_measurements reads mapped ctrl and force slices.
+    m = dev.get_substep_measurements(sim)
+    np.testing.assert_allclose(m["dc/ctrl"].cpu().numpy(), ctrl.cpu().numpy())
+    np.testing.assert_allclose(
+        sim.data.ctrl[:, 1 : 1 + num_ctrl].cpu().numpy(), ctrl.cpu().numpy()
+    )
+    np.testing.assert_allclose(
+        m["dc/actuator_force"].cpu().numpy(),
+        sim.data.actuator_force[:, [1]].cpu().numpy(),
+    )
+    self.assertTrue(m["dc/actuator_force"].ne(0.0).all())
+    self.assertTrue((sim.data.ctrl[:, 0] == 0.0).all())
+
+    # Verify set_ctrl updates the mapped ctrl span with and without env_mask.
+    dev.set_ctrl(None, dev.home_ctrl)
+    self.assertTrue((sim.data.ctrl[:, 1 : 1 + num_ctrl] == 0.0).all())
+    if nworld > 1 and num_ctrl > 0:
+      mask = torch.tensor([True, False], device=xpu_device)
+      dev.set_ctrl(mask, ctrl)
+      np.testing.assert_allclose(
+          sim.data.ctrl[0, 1 : 1 + num_ctrl].cpu().numpy(), ctrl_vals
+      )
+      self.assertTrue((sim.data.ctrl[1, 1 : 1 + num_ctrl] == 0.0).all())
+
+  def test_dcmotor_multi_output_offset(self):
+    """ActuatorDevice after a 3-output <orientation> actuator maps out_adr."""
+    xml = """
+    <mujoco>
+      <worldbody>
+        <body>
+          <joint name="ball" type="ball"/>
+          <geom size="0.1"/>
+        </body>
+        <body>
+          <joint name="hinge" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <orientation name="so3" joint="ball" kp="1"/>
+        <dcmotor name="dc" joint="hinge" motorconst="0.05" resistance="2.0"/>
+      </actuator>
+    </mujoco>
+    """
+    dev, sim = self._make_sim_with_actuator(xml, types.Impl.CPP, ["dc"])
+
+    # Actuator id is 1, but output address is 3 (<orientation> has 3 outputs).
+    self.assertEqual(sim.mj_model.actuator_outadr[1], 3)
+    dev.set_substep_commands(sim, {"dc/ctrl": torch.tensor([[12.0]])})
+    sim.forward()
+    m = dev.get_substep_measurements(sim)
+    self.assertNotEqual(float(m["dc/actuator_force"][0, 0]), 0.0)
+    np.testing.assert_allclose(
+        m["dc/actuator_force"].numpy(),
+        sim.data.actuator_force[:, [3]].numpy(),
+    )
+
+    # Mismatched custom home_ctrl shape raises ValueError in initialize().
+    bad_dev = actuator_device.ActuatorDevice(
+        name="dc", xpu_device="cpu", targets=["dc"], home_ctrl=[0.0, 0.0]
+    )
+    with self.assertRaises(ValueError):
+      bad_dev.initialize(sim)
 
 
 if __name__ == "__main__":

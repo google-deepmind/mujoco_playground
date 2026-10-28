@@ -507,12 +507,6 @@ class TorchWrapper(Generic[T], NoSetAttr):
       if nworld is not None and nworld != 1:
         raise ValueError("nworld must be 1 when wrapping MjData or MjModel.")
       nworld = 1
-      if isinstance(obj, mujoco.MjModel):
-        if obj.nu != obj.nactuator or obj.nu != obj.nout:
-          raise NotImplementedError(
-              f"MIMO actuators (nu={obj.nu}, nactuator={obj.nactuator}, "
-              f"nout={obj.nout}) are not supported by the Torch wrapper yet."
-          )
 
     object.__setattr__(self, "_obj", obj)
     object.__setattr__(self, "_obj_type", MjObjType.from_obj(obj))
@@ -824,6 +818,29 @@ class BoundDataAccessor:
     self.device = data_wrapper.qpos.device
     self.id = torch.tensor(ids, dtype=torch.int, device=self.device)
     self._index_cache = {}
+    if self.prefix == "sensor_":
+      self.sensordata_id = _span_indices(
+          model_wrapper.sensor_adr[self.id],
+          model_wrapper.sensor_dim[self.id],
+      )
+    elif self.prefix == "jnt_":
+      typ = model_wrapper.jnt_type[self.id]
+      qpos_num = sum((typ == jt) * jt.qpos_width() for jt in JointType)
+      dof_num = sum((typ == jt) * jt.dof_width() for jt in JointType)
+      self.qpos_id = _span_indices(
+          model_wrapper.jnt_qposadr[self.id],
+          torch.as_tensor(qpos_num, device=self.device),
+      )
+      self.dof_id = _span_indices(
+          model_wrapper.jnt_dofadr[self.id],
+          torch.as_tensor(dof_num, device=self.device),
+      )
+    elif self.prefix == "actuator_":
+      self.ctrl_id = _span_indices(
+          model_wrapper.actuator_ctrladr[self.id],
+          model_wrapper.actuator_ctrlnum[self.id],
+      )
+      self.out_id = _actuator_out_indices(model_wrapper, self.id)
 
   def __getname(self, name: str):  # pylint: disable=unused-private-member
     """Get the name of the attribute and check if the type is correct."""
@@ -850,33 +867,17 @@ class BoundDataAccessor:
 
   def _get_indices(self, name: str) -> torch.Tensor:
     """Get the indices for the bound object(s) across all worlds."""
-    if name in ("sensordata", "qpos", "qvel", "qacc") or (
-        name.startswith("qfrc_")
-    ):
-      adr: Any = 0
-      num: Any = 0
-      if name == "sensordata":
-        adr = self.model.sensor_adr[self.id]
-        num = self.model.sensor_dim[self.id]
-      elif name == "qpos":
-        adr = self.model.jnt_qposadr[self.id]
-        typ = self.model.jnt_type[self.id]
-        num = sum((typ == jt) * jt.qpos_width() for jt in JointType)
-      elif name == "qvel" or name == "qacc" or name.startswith("qfrc_"):
-        adr = self.model.jnt_dofadr[self.id]
-        typ = self.model.jnt_type[self.id]
-        num = sum((typ == jt) * jt.dof_width() for jt in JointType)
-
-      if self.id.shape:
-        idx = []
-        for a, n in zip(adr, num):
-          idx.extend(a + j for j in range(n))
-        return torch.tensor(idx, dtype=torch.int, device=self.device)
-
-      if num > 1:
-        return torch.arange(adr, adr + num, dtype=torch.int, device=self.device)
-      return adr
-
+    if name == "sensordata":
+      return self.sensordata_id
+    if name == "qpos":
+      return self.qpos_id
+    if name == "qvel" or name == "qacc" or name.startswith("qfrc_"):
+      return self.dof_id
+    if name == "ctrl":
+      return self.ctrl_id
+    if self.prefix == "actuator_" and name in ("length", "velocity", "force"):
+      # Map actuator IDs to output spans (length, velocity, force).
+      return self.out_id
     if name in ("mocap_pos", "mocap_quat"):
       return self.model.body_mocapid[self.id]
 
@@ -986,6 +987,12 @@ class BoundModelAccessor:
       ids_1d = self.id.unsqueeze(0) if self.id.ndim == 0 else self.id
       mask_dof = ids_1d.unsqueeze(1) == model_wrapper.dof_jntid.unsqueeze(0)
       self.dof_id = mask_dof.nonzero(as_tuple=True)[1].to(self.id.dtype)
+    elif self.prefix == "actuator_":
+      self.ctrl_id = _span_indices(
+          model_wrapper.actuator_ctrladr[self.id],
+          model_wrapper.actuator_ctrlnum[self.id],
+      )
+      self.out_id = _actuator_out_indices(model_wrapper, self.id)
 
   def __getname(self, name: str) -> str:  # pylint: disable=unused-private-member
     candidate = self.prefix + name
@@ -1002,6 +1009,18 @@ class BoundModelAccessor:
     """Returns cached indices for the bound accessor."""
     if name.startswith("dof_") and self.prefix == "jnt_":
       return self.dof_id
+    if self.prefix == "actuator_":
+      # Map per-control model fields (nu) via ctrladr and ctrlnum.
+      if name in ("actuator_ctrllimited", "actuator_ctrlrange"):
+        return self.ctrl_id
+      # Map per-output model fields (nout) via outadr and outnum.
+      if name in (
+          "actuator_gear",
+          "actuator_acc0",
+          "actuator_length0",
+          "actuator_lengthrange",
+      ):
+        return self.out_id
     return self.id
 
   def __getattr__(self, name: str) -> torch.Tensor:
@@ -1034,6 +1053,31 @@ class BoundModelAccessor:
       curr = target_tensor[:, indices]
       mask = env_mask.view(-1, *([1] * (curr.ndim - 1)))
       target_tensor[:, indices] = torch.where(mask, value, curr)
+
+
+def _span_indices(adr: torch.Tensor, num: torch.Tensor) -> torch.Tensor:
+  """Expands start addresses and counts into an index tensor."""
+  if adr.shape:
+    idx = []
+    for a, n in zip(adr.tolist(), num.tolist()):
+      idx.extend(range(a, a + n))
+    return torch.tensor(idx, dtype=torch.int, device=adr.device)
+  n = int(num)
+  if n != 1:
+    a = int(adr)
+    return torch.arange(a, a + n, dtype=torch.int, device=adr.device)
+  return adr
+
+
+def _actuator_out_indices(
+    model: TorchWrapper[mjw.Model | mujoco.MjModel], idx: torch.Tensor
+) -> torch.Tensor:
+  """Maps actuator IDs to output indices."""
+  if isinstance(model.obj, mujoco.MjModel):
+    outadr = torch.from_numpy(model.obj.actuator_outadr).to(idx.device)
+    outnum = torch.from_numpy(model.obj.actuator_outnum).to(idx.device)
+    return _span_indices(outadr[idx], outnum[idx])
+  return idx
 
 
 def _tile_field(wp_array: wp.array, nworld: int) -> wp.array:

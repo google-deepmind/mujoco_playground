@@ -994,6 +994,98 @@ class BindTest(parameterized.TestCase):
         bound_single.pos.cpu().numpy()[0], m.geom_pos[0]
     )
 
+  def test_mimo_actuators_bind(self):
+    """Port of mujoco bindings_test.test_named_indexing_mimo_actuators."""
+    xml = """
+    <mujoco>
+      <worldbody>
+        <body>
+          <joint name="j0" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+        <body>
+          <joint name="ball" type="ball"/>
+          <geom size="0.1"/>
+        </body>
+        <body>
+          <joint name="j2" type="slide"/>
+          <geom size="0.1"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <motor name="a0" joint="j0" gear="2" ctrlrange="-1 1"/>
+        <orientation name="a1" joint="ball" kp="10" input="quat"
+                     ctrlrange="-2 2"/>
+        <motor name="a2" joint="j2" gear="3" ctrlrange="-3 3"/>
+      </actuator>
+    </mujoco>
+    """
+    spec = mujoco.MjSpec.from_string(xml)
+    m = spec.compile()
+    d = mujoco.MjData(m)
+    d.ctrl[:] = np.arange(1, m.nu + 1, dtype=float)
+    d.qpos[1:5] = [0.9, 0.2, -0.3, 0.1]
+    mujoco.mj_normalizeQuat(m, d.qpos)
+    mujoco.mj_forward(m, d)
+
+    self.assertEqual((m.nactuator, m.nu, m.nout), (3, 6, 5))
+    mw = wrap_model(types.Impl.CPP, m, nworld=1)
+    dw = wrap_data(types.Impl.CPP, m, d, nworld=1)
+
+    for i, act_spec in enumerate(spec.actuators):
+      cadr = int(m.actuator_ctrladr[i])
+      cnum = int(m.actuator_ctrlnum[i])
+      oadr = int(m.actuator_outadr[i])
+      onum = int(m.actuator_outnum[i])
+      ctrls = slice(cadr, cadr + cnum) if cnum != 1 else cadr
+      outs = slice(oadr, oadr + onum) if onum != 1 else oadr
+
+      np.testing.assert_allclose(
+          dw.bind(mw, act_spec).ctrl.cpu().numpy()[0], d.ctrl[ctrls]
+      )
+      np.testing.assert_allclose(
+          dw.bind(mw, act_spec).force.cpu().numpy()[0], d.actuator_force[outs]
+      )
+      np.testing.assert_allclose(
+          dw.bind(mw, act_spec).length.cpu().numpy()[0], d.actuator_length[outs]
+      )
+      np.testing.assert_allclose(
+          dw.bind(mw, act_spec).velocity.cpu().numpy()[0],
+          d.actuator_velocity[outs],
+      )
+      np.testing.assert_allclose(
+          mw.bind(act_spec).ctrlrange.cpu().numpy()[0],
+          m.actuator_ctrlrange[ctrls],
+      )
+      np.testing.assert_allclose(
+          mw.bind(act_spec).forcerange.cpu().numpy()[0],
+          m.actuator_forcerange[i],
+      )
+      np.testing.assert_allclose(
+          mw.bind(act_spec).gear.cpu().numpy()[0], m.actuator_gear[outs]
+      )
+      np.testing.assert_allclose(
+          mw.bind(act_spec).lengthrange.cpu().numpy()[0],
+          m.actuator_lengthrange[outs],
+      )
+      np.testing.assert_allclose(
+          mw.bind(act_spec).acc0.cpu().numpy()[0], m.actuator_acc0[outs]
+      )
+
+    # Verify list binding across all 3 actuators (6 ctrls, 5 outs).
+    np.testing.assert_allclose(
+        dw.bind(mw, spec.actuators).ctrl.cpu().numpy()[0], d.ctrl
+    )
+    np.testing.assert_allclose(
+        dw.bind(mw, spec.actuators).force.cpu().numpy()[0], d.actuator_force
+    )
+
+    # Writing through a bound MIMO actuator updates the underlying slice.
+    dw.bind(mw, spec.actuators[2]).set(
+        "ctrl", torch.tensor([[99.0]], dtype=dw.ctrl.dtype)
+    )
+    self.assertEqual(d.ctrl[5], 99.0)
+
 
 def _dtype_matches(mj_dtype: torch.dtype, mjw_dtype: torch.dtype) -> bool:
   """Checks dtypes match, allowing 64-bit CPU vs 32-bit GPU."""
