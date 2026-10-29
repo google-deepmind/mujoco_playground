@@ -194,6 +194,42 @@ class WrapperTest(parameterized.TestCase):
     else:
       np.testing.assert_allclose(state.obs, first_obs, rtol=1e-6)
 
+  @parameterized.named_parameters(
+      ('full_reset', True),
+      ('cache_reset', False),
+  )
+  def test_auto_reset_keeps_episode_info_at_episode_end(self, full_reset):
+    """Tests that a time-limit end is reported the same for both reset modes."""
+    episode_length = 3
+    num_envs = 2
+
+    env = dm_control_suite.load(
+        'CartpoleBalance', config_overrides={'impl': 'jax'}
+    )
+    env = wrapper.wrap_for_brax_training(
+        env, episode_length=episode_length, full_reset=full_reset
+    )
+    jit_step = jax.jit(env.step)
+    state = jax.jit(env.reset)(
+        jax.random.split(jax.random.PRNGKey(0), num_envs)
+    )
+    action = jp.zeros((num_envs, env.action_size))
+
+    # The last step of the episode hits the time limit.
+    for _ in range(episode_length):
+      state = jit_step(state, action)
+    np.testing.assert_array_equal(state.done, 1)
+    np.testing.assert_array_equal(state.info['truncation'], 1)
+    np.testing.assert_array_equal(state.info['episode_done'], 1)
+    np.testing.assert_array_equal(
+        state.info['episode_metrics']['length'], episode_length
+    )
+
+    # The next step starts a new episode.
+    state = jit_step(state, action)
+    np.testing.assert_array_equal(state.info['episode_done'], 0)
+    np.testing.assert_array_equal(state.info['episode_metrics']['length'], 1)
+
   def test_domain_randomization_wrapper(self):
     def randomization_fn(model, rng):
       @jax.vmap
