@@ -12,3 +12,6 @@ MUJOCO_LOG.txt
 # Profiling logs and generated nightly data
 profiling/nightly/
 /tmp/playground_benchmark_logs/
+
+# Documentation
+docs/_build/

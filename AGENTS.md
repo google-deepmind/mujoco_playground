@@ -18,6 +18,7 @@ make sync-cpu      # CPU-only
 make format        # pyink + isort over the repo
 make typecheck     # pyrefly type check
 make test          # pytest over mujoco_playground/ and third_party/reaf_sim/
+make docs          # build HTML docs (or `make serve-docs` to preview locally)
 uv run --no-sync --group dev pre-commit run -a
 ```
 

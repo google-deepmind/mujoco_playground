@@ -54,3 +54,13 @@ NO_EXTRAS_ENV := .venv-no-extras
 check-imports:
 	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv sync --no-default-groups --upgrade-package mujoco --upgrade-package mujoco-warp --default-index https://pypi.org/simple
 	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv run --no-sync python -m mujoco_playground.import_check
+
+DOCS_PORT ?= 8888
+
+.PHONY: docs
+docs:
+	uv run --no-project --with-requirements third_party/reaf_sim/docs/requirements.txt --default-index https://pypi.org/simple sphinx-build -M html third_party/reaf_sim/docs docs/_build
+
+.PHONY: serve-docs
+serve-docs: docs
+	uv run --no-project --default-index https://pypi.org/simple python -m http.server $(DOCS_PORT) --directory docs/_build/html

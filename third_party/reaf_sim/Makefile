@@ -48,3 +48,13 @@ sync-test:
 .PHONY: test
 test: sync-test
 	$(MUJOCO_GL_ENV) uv run --no-sync --group dev pytest reaf/simulation/ docs/ -n $(N_WORKERS) --dist worksteal -v
+
+DOCS_PORT ?= 8888
+
+.PHONY: docs
+docs:
+	uv run --no-project --with-requirements docs/requirements.txt --default-index https://pypi.org/simple sphinx-build -M html docs docs/_build
+
+.PHONY: serve-docs
+serve-docs: docs
+	uv run --no-project --default-index https://pypi.org/simple python -m http.server $(DOCS_PORT) --directory docs/_build/html

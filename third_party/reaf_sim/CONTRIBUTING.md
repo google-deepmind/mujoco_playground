@@ -32,6 +32,7 @@ test suite:
 ```bash
 uv run --no-sync pre-commit run --all-files  # Format and type-check (or `make format` / `make typecheck`)
 make test                                    # Run pytest in parallel
+make docs                                    # Build HTML docs (or `make serve-docs` to preview locally)
 ```
 
 ## Code Reviews

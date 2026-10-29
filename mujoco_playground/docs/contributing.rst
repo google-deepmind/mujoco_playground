@@ -37,6 +37,7 @@ and optional imports via ``make check-imports``, and type-checks with ``pyrefly`
 
     uv run pre-commit run --all-files  # Format, check imports, and type-check (or `make format` / `make typecheck`)
     make test                          # Run pytest in parallel
+    make docs                          # Build HTML docs (or `make serve-docs` to preview locally)
 
 To iterate quickly on a single test file on Linux:
 
