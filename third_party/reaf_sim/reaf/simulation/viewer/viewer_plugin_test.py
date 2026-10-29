@@ -28,7 +28,7 @@ from reaf.simulation.viewer import messages as reaf_messages
 from reaf.simulation.viewer import viewer_plugin
 import torch
 
-from mujoco.experimental.dear_imgui import dear_imgui as imgui  # isort: skip
+from mujoco.studio.dear_imgui import dear_imgui as imgui  # isort: skip
 
 # A nested spec, as returned by the Torch FunctionalRewardProvider.
 _NESTED_SPEC = {

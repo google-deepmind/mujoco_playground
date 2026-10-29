@@ -30,8 +30,8 @@ from reaf.simulation.viewer import line_plots
 from reaf.simulation.viewer import messages as reaf_messages
 import tree
 
-from mujoco.experimental.dear_imgui import dear_imgui as imgui  # isort: skip
-from mujoco.experimental.implot import implot  # isort: skip
+from mujoco.studio.dear_imgui import dear_imgui as imgui  # isort: skip
+from mujoco.studio.implot import implot  # isort: skip
 
 _module_logger = logging.getLogger(__name__)
 

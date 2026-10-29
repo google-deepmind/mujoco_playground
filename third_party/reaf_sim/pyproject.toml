@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "reaf-sim"
 version = "0.0.1"
 description = "Robotics Environment Authoring Framework - Simulation Modules."
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.15"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
 ]
 
