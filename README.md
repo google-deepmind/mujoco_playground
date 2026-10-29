@@ -114,7 +114,8 @@ uv run --no-sync python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
 | [SO-101 Hardware Setup](mujoco_playground/robots/so101/real/README.md) | USB port & wrist camera identification and arm calibration |
 | [i2rt YAM Hardware Setup](mujoco_playground/robots/yam/README.md) | SocketCAN bring-up and RealSense D405 camera setup |
 | [Sim & Real Teleoperation](mujoco_playground/tasks/teleop/so101/README.md) | Leader-follower teleoperation, foot-pedal gating, and MCAP episode logging |
-| [System Identification](mujoco_playground/tasks/sysid/so101/README.md) | Fit simulated joint dynamics to logged hardware trajectories with `mujoco.sysid` |
+| [SO-101 System Identification](mujoco_playground/tasks/sysid/so101/README.md) | Fit simulated SO-101 joint dynamics to teleoperation MCAP logs with `mujoco.sysid` |
+| [i2rt YAM System Identification](mujoco_playground/tasks/sysid/yam/README.md) | Play scripted excitation trajectories and fit YAM joint dynamics with `mujoco.sysid` |
 | [Sim-to-Real Pick-Cube Deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md) | Train vision policies and deploy zero-shot to `--mode=sim` and `--mode=real` |
 | [G1 Whole-Body Motion Tracking](mujoco_playground/tasks/whole_body/tracking/README.md) | Retarget motion capture clips and train humanoid tracking policies |
 | [Agentic Tabletop Manipulation](mujoco_playground/tasks/agentic/tabletop_v0/README.md) | Zero-shot sim-to-real VLM code-as-policies harness (`SO-101`, `i2rt YAM`) |
