@@ -172,6 +172,8 @@ class BraxAutoResetWrapper(Wrapper):
     * info is fully reset, except for info under the key
       `AutoResetWrapper_preserve_info`, which is passed through from the prior
       step. This can be used for curriculum learning.
+    * brax's episode bookkeeping (`truncation`, `episode_done`,
+      `episode_metrics`) keeps the values of the step that ended the episode.
 
   Attributes:
     env: The wrapped environment.
@@ -238,6 +240,10 @@ class BraxAutoResetWrapper(Wrapper):
 
       if 'steps' in next_info:
         next_info['steps'] = state.info['steps']
+      # Keep this step's episode bookkeeping from brax's EpisodeWrapper.
+      for key in ('truncation', 'episode_done', 'episode_metrics'):
+        if key in state.info:
+          next_info[key] = state.info[key]
       preserve_info_key = f'{self._info_key}_preserve_info'
       if preserve_info_key in next_info:
         next_info[preserve_info_key] = state.info[preserve_info_key]
