@@ -16,7 +16,6 @@
 
 from collections.abc import Mapping
 from typing import Any
-from typing import Literal
 from typing import override
 
 from dm_env import specs
@@ -26,195 +25,16 @@ from reaf.simulation.torch._src.core import device
 from reaf.simulation.torch._src.core import simulator as simulator_module
 import torch
 
-# Type aliases - strings only for serialization
-ControlMode = Literal["position", "velocity", "motor"]
-TransmissionType = Literal["joint", "tendon", "site"]
-
-_TRNTYPE_MAP = {
-    "joint": mujoco.mjtTrn.mjTRN_JOINT,
-    "tendon": mujoco.mjtTrn.mjTRN_TENDON,
-    "site": mujoco.mjtTrn.mjTRN_SITE,
-}
-
 
 class ActuatorDevice(device.Device):
-  """Actuate joints, tendons, or sites with position, velocity, or motor control."""
-
-  @override
-  def configure_spec(  # pyrefly: ignore[bad-override]
-      self,
-      spec: mujoco.MjSpec,
-      *,
-      mode: ControlMode = "position",
-      stiffness: dict[str, float] | float = 100.0,
-      damping: dict[str, float] | float = 10.0,
-      forcerange: dict[str, float] | float | None = 30.0,
-      ctrlrange: (
-          dict[str, tuple[float, float]] | tuple[float, float] | None
-      ) = None,
-      armature: dict[str, float] | float | None = None,
-      frictionloss: dict[str, float] | float | None = None,
-      gear: dict[str, float | list[float]] | float | list[float] = 1.0,
-      use_existing: bool = False,
-  ) -> mujoco.MjSpec:
-    """Configure MjSpec with actuators (build time).
-
-    Args:
-      spec: The MjSpec to modify.
-      mode: Control mode - "position", "velocity", "motor", or mujoco.mjtGain.*.
-      stiffness: PD stiffness (kp). Only used for position mode.
-      damping: PD damping (kd). Used for position and velocity modes.
-      forcerange: Max actuator force. None = no limit.
-      ctrlrange: Ctrl limits as (min, max) per target or uniform. When provided,
-        sets ctrllimited=True on the actuator. None = no limit.
-      armature: Reflected rotor inertia. None = don't modify (joint/tendon
-        only).
-      frictionloss: Dry friction. None = don't modify (joint/tendon only).
-      gear: Actuator gear ratio. For sites, can be 6-element list [trans_x,
-        trans_y, trans_z, rot_x, rot_y, rot_z]. For joints/tendons, scalar or
-        gear[0].
-      use_existing: If True, skip reconfiguration of actuators that already
-        exist in the MJCF. This preserves the original gainprm, biasprm, gear,
-        and other parameters defined in the XML.
-    """
-    spec = super().configure_spec(spec)
-    targets = self._target_names
-    transmission = self._transmission
-    trntype = _TRNTYPE_MAP[transmission]
-
-    for target_name in targets:
-      # Find or create actuator
-      act = spec.actuator(target_name)
-      # Fallback manual search because of MuJoCo MjSpec.actuator bug.
-      # TODO(btaba): Fix the bug upstream and remove this fallback.
-      # see the test case test_configure_spec_existing_velocity_actuator in
-      # third_party/py/reaf/simulation/torch/common/actuator_entity_test.py
-      if act is None:
-        for a in spec.actuators:
-          if a.name == target_name:
-            act = a
-            break
-
-      if act is None:
-        act = spec.add_actuator(name=target_name, target=target_name)
-      elif use_existing:
-        continue  # Keep actuator as configured in MJCF
-      # TODO(team): Use act.set_to_position, act.set_to_velocity, and
-      # act.set_to_motor so reconfiguring existing actuators resets all
-      # parameters cleanly instead of raising NotImplementedError.
-      elif (
-          act.gaintype != mujoco.mjtGain.mjGAIN_FIXED
-          or act.dyntype != mujoco.mjtDyn.mjDYN_NONE
-      ):
-        raise NotImplementedError(
-            f"Actuator {target_name!r} has non-standard gain"
-            f" ({mujoco.mjtGain(act.gaintype).name}) or dynamics"
-            f" ({mujoco.mjtDyn(act.dyntype).name}); pass use_existing=True to"
-            " preserve its MJCF configuration."
-        )
-
-      # Get per-target or uniform values
-      kp = stiffness[target_name] if isinstance(stiffness, dict) else stiffness
-      kd = damping[target_name] if isinstance(damping, dict) else damping
-      gr = gear[target_name] if isinstance(gear, dict) else gear
-
-      if trntype == mujoco.mjtTrn.mjTRN_JOINT:
-        target_obj = spec.joint(target_name)
-        if target_obj is None:
-          raise ValueError(f"Joint not found: {target_name}")
-      elif trntype == mujoco.mjtTrn.mjTRN_TENDON:
-        target_obj = spec.tendon(target_name)
-        if target_obj is None:
-          raise ValueError(f"Tendon not found: {target_name}")
-      elif trntype == mujoco.mjtTrn.mjTRN_SITE:
-        target_obj = spec.site(target_name)
-        if target_obj is None:
-          raise ValueError(f"Site not found: {target_name}")
-        target_obj = None  # Set to None so we skip armature/frictionloss below
-      else:
-        raise ValueError(f"Unknown transmission type: {transmission}")
-
-      if target_obj is not None:
-        if armature is not None:
-          arm = (
-              armature[target_name] if isinstance(armature, dict) else armature
-          )
-          target_obj.armature = arm
-        if frictionloss is not None:
-          fl = (
-              frictionloss[target_name]
-              if isinstance(frictionloss, dict)
-              else frictionloss
-          )
-          target_obj.frictionloss = fl
-
-      # Set transmission type and gear
-      act.trntype = trntype
-      if isinstance(gr, list):
-        # Full 6-element gear for sites
-        for i, g in enumerate(gr[:6]):
-          act.gear[i] = g
-      else:
-        # Scalar gear for joint/tendon
-        act.gear[0] = gr
-
-      act.dyntype = mujoco.mjtDyn.mjDYN_NONE
-      act.gaintype = mujoco.mjtGain.mjGAIN_FIXED
-      if mode == "position":
-        # <position> actuator
-        act.biastype = mujoco.mjtBias.mjBIAS_AFFINE
-        act.gainprm[0] = kp
-        act.biasprm[1] = -kp
-        act.biasprm[2] = -kd
-        # no ctrl limits (position target can exceed joint range)
-        act.ctrllimited = False
-      elif mode == "velocity":
-        # <velocity> actuator - ctrl=velocity target
-        act.biastype = mujoco.mjtBias.mjBIAS_AFFINE
-        act.gainprm[0] = kd
-        act.biasprm[2] = -kd
-        # TODO: either pipe through ctrlrange explicitly or use inheritrange
-        act.ctrllimited = False
-      elif mode == "motor":
-        # <motor> actuator
-        act.biastype = mujoco.mjtBias.mjBIAS_NONE
-        act.ctrllimited = True
-      else:
-        raise ValueError(f"Unknown mode: {mode}")
-
-      # Set force limits
-      if forcerange is not None:
-        fr = (
-            forcerange[target_name]
-            if isinstance(forcerange, dict)
-            else forcerange
-        )
-        act.forcelimited = True
-        act.forcerange = [-fr, fr]
-        if mode == "motor":
-          act.ctrlrange = [-fr, fr]  # Motor: ctrl=force
-      else:
-        act.forcelimited = False
-        if mode == "motor":
-          act.ctrllimited = False
-
-      if ctrlrange is not None:
-        cr = (
-            ctrlrange[target_name] if isinstance(ctrlrange, dict) else ctrlrange
-        )
-        act.ctrllimited = True
-        act.ctrlrange = list(cr)
-
-    return spec
+  """Actuate joints, tendons, or sites using existing MJCF actuators."""
 
   def __init__(
       self,
       name: str = "",
-      nworld: int = 1,
       xpu_device: str = "cuda:0",
       *,
       targets: list[str],
-      transmission: TransmissionType = "joint",
       measurements: list[str] | None = None,
       home_ctrl: torch.Tensor | list[float] | None = None,
   ):
@@ -222,20 +42,16 @@ class ActuatorDevice(device.Device):
 
     Args:
       name: Entity name for lookup.
-      nworld: Number of parallel worlds.
       xpu_device: Torch device.
-      targets: List of target names (must match configure_spec).
-      transmission: Transmission type - must match configure_spec.
+      targets: List of actuator names in the compiled MjModel.
       measurements: Which measurements to expose. Options: "joint_pos",
         "joint_vel", "joint_range", "actuator_force", "tendon_length",
         "tendon_velocity", "ctrl". Default: [].
       home_ctrl: Default home control values.
     """
     self._name = name
-    self._nworld = nworld
     self._xpu_device = xpu_device
     self._target_names = targets
-    self._transmission = transmission
     self._measurements = list(measurements) if measurements is not None else []
     self._num_targets = len(targets)
 
@@ -251,11 +67,9 @@ class ActuatorDevice(device.Device):
     # Indices resolved in initialize()
     self._joint_qpos_ids: torch.Tensor | None = None
     self._joint_qvel_ids: torch.Tensor | None = None
-    self._actuator_ids: torch.Tensor | None = None
     self._ctrl_ids: torch.Tensor | None = None
     self._out_ids: torch.Tensor | None = None
     self._tendon_ids: torch.Tensor | None = None
-    self._joint_range: torch.Tensor | None = None  # Static (njoint, 2)
     self._joints: list[Any] = []
 
   @property
@@ -284,10 +98,8 @@ class ActuatorDevice(device.Device):
     mj_model = simulator.mj_model
     mj_spec = simulator.mj_spec
 
-    joint_ids = []
     joint_qpos_ids = []
     joint_qvel_ids = []
-    actuator_ids = []
     ctrl_ids = []
     out_ids = []
     tendon_ids = []
@@ -295,7 +107,6 @@ class ActuatorDevice(device.Device):
 
     for target_name in self._target_names:
       act = mj_model.actuator(target_name)
-      actuator_ids.append(act.id)
       # Map actuator control and output spans (e.g. multi-input <dcmotor>).
       ctrl_adr = int(mj_model.actuator_ctrladr[act.id])
       ctrl_ids.extend(
@@ -306,16 +117,19 @@ class ActuatorDevice(device.Device):
           range(out_adr, out_adr + int(mj_model.actuator_outnum[act.id]))
       )
 
-      if self._transmission == "joint":
+      trntype = mujoco.mjtTrn(mj_model.actuator_trntype[act.id])
+      if trntype in (
+          mujoco.mjtTrn.mjTRN_JOINT,
+          mujoco.mjtTrn.mjTRN_JOINTINPARENT,
+      ):
         joint_id = mj_model.actuator_trnid[act.id, 0]
-        joint_ids.append(joint_id)
         joint_qpos_ids.append(mj_model.jnt_qposadr[joint_id])
         joint_qvel_ids.append(mj_model.jnt_dofadr[joint_id])
         joint_name = mj_model.joint(joint_id).name
         self._joints.append(mj_spec.joint(joint_name))
-      elif self._transmission == "tendon":
-        ten = mj_model.tendon(target_name)
-        tendon_ids.append(ten.id)
+      elif trntype == mujoco.mjtTrn.mjTRN_TENDON:
+        tendon_id = mj_model.actuator_trnid[act.id, 0]
+        tendon_ids.append(tendon_id)
 
     # Store as tensors on the entity's device
     self._joint_qpos_ids = torch.tensor(
@@ -323,9 +137,6 @@ class ActuatorDevice(device.Device):
     )
     self._joint_qvel_ids = torch.tensor(
         joint_qvel_ids, dtype=torch.long, device=self._xpu_device
-    )
-    self._actuator_ids = torch.tensor(
-        actuator_ids, dtype=torch.long, device=self._xpu_device
     )
     self._ctrl_ids = torch.tensor(
         ctrl_ids, dtype=torch.long, device=self._xpu_device
@@ -344,13 +155,6 @@ class ActuatorDevice(device.Device):
     self._tendon_ids = torch.tensor(
         tendon_ids, dtype=torch.long, device=self._xpu_device
     )
-
-    # Store static joint range if transmission is joint
-    if self._transmission == "joint" and "joint_range" in self._measurements:
-      jnt_range = mj_model.jnt_range[joint_ids]
-      self._joint_range = torch.tensor(
-          jnt_range, dtype=torch.float32, device=self._xpu_device
-      )
 
   @override
   def reset(
@@ -374,10 +178,17 @@ class ActuatorDevice(device.Device):
 
   @override
   def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
-    assert self._ctrl_ids is not None and self._out_ids is not None, (
-        f"ActuatorDevice {self._name!r} must be initialized via"
-        " initialize(simulator) before querying specs."
-    )
+    if (
+        self._ctrl_ids is None
+        or self._out_ids is None
+        or self._joint_qpos_ids is None
+        or self._joint_qvel_ids is None
+        or self._tendon_ids is None
+    ):
+      raise AssertionError(
+          f"ActuatorDevice {self._name!r} must be initialized via"
+          " initialize(simulator) before querying specs."
+      )
     result = {}
     for m in self._measurements:
       # Use resolved control/output widths for multi-input/output actuators.
@@ -385,10 +196,16 @@ class ActuatorDevice(device.Device):
         shape = (self._ctrl_ids.numel(),)
       elif m == "actuator_force":
         shape = (self._out_ids.numel(),)
+      elif m == "joint_pos":
+        shape = (self._joint_qpos_ids.numel(),)
+      elif m == "joint_vel":
+        shape = (self._joint_qvel_ids.numel(),)
+      elif m == "joint_range":
+        shape = (len(self._joints), 2)
+      elif m in ("tendon_length", "tendon_velocity"):
+        shape = (self._tendon_ids.numel(),)
       else:
-        shape = (self._num_targets,)
-        if m == "joint_range":
-          shape += (2,)
+        raise KeyError(m)
       result[f"{self._name}/{m}"] = specs.Array(shape=shape, dtype=np.float32)
     return result
 

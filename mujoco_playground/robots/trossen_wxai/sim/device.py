@@ -35,16 +35,6 @@ STIFFNESS = {
     "right_carriage_joint": 339.018069,
 }
 
-DAMPING = {
-    "joint_0": 14.17367,
-    "joint_1": 8.0188,
-    "joint_2": 0.725663,
-    "joint_3": 2.315707,
-    "joint_4": 2.368174,
-    "joint_5": 0.684856,
-    "right_carriage_joint": 2.373963,
-}
-
 FORCERANGE = {
     "joint_0": 35.0,
     "joint_1": 144.0,
@@ -80,10 +70,6 @@ GRIPPER_HALF = (
 ) / 2.0
 
 RIGHT_ARM_JOINTS = [f"right/{j}" for j in JOINTS]
-RIGHT_ARM_STIFFNESS = {f"right/{k}": v for k, v in STIFFNESS.items()}
-RIGHT_ARM_DAMPING = {f"right/{k}": v for k, v in DAMPING.items()}
-RIGHT_ARM_FORCERANGE = {f"right/{k}": v for k, v in FORCERANGE.items()}
-RIGHT_ARM_CTRLRANGE = {f"right/{k}": v for k, v in CTRLRANGE.items()}
 
 # Action scale and offset for the controlled arm.
 ARM_SCALES = [0.5 * FORCERANGE[j] / STIFFNESS[j] for j in JOINTS[:-1]]

@@ -18,10 +18,10 @@ from mujoco_playground.robots.trossen_wxai.sim import scene
 
 class SceneTest(absltest.TestCase):
 
-  @absltest.skip("Could not resolve path for aloha scene.xml")
   def test_table(self):
     spec = scene.trossen_wxai_biarm_table()
-    self.assertIsNotNone(spec)
+    model = spec.compile()
+    self.assertGreater(model.nu, 0)
 
 
 if __name__ == "__main__":

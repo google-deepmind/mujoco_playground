@@ -103,7 +103,7 @@ language.
             devices={
                 "arm": flat_scene.Component(
                     ActuatorDevice, targets=["joint1", "joint2"]
-                ).configure_spec(mode="position"),
+                ),
                 "camera": flat_scene.Component(
                     CameraDevice,
                     cam_name="wrist",

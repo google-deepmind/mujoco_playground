@@ -70,10 +70,7 @@ def _configure_so101_robot(cfg: config.Environment) -> None:
   cfg.device_layer.devices["robot"] = config.Component(
       sim_device.ActuatorDevice,
       targets=robot_joints,
-      transmission="joint",
       home_ctrl=list(real_constant.HOVER_POSE_OPEN_GRIPPER),
-  ).configure_spec(
-      use_existing=True,  # `scene.so101()` ships the tuned actuators.
   )
 
   cfg.device_layer.devices["ee"] = config.Component(

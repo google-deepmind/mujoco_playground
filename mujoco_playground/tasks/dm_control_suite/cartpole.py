@@ -124,7 +124,7 @@ def _cartpole_env(swing_up: bool) -> config.Environment:
       ),
       "slider_actuator": config.Component(
           device.ActuatorDevice,
-          targets=["slider"],
+          targets=["slide"],
           measurements=["ctrl"],
       ),
   }

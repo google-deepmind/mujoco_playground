@@ -34,7 +34,7 @@ Environments are defined using :class:`~reaf.simulation.torch.flat_scene.Environ
                     ActuatorDevice,
                     targets=["joint1", "joint2"],
                     measurements=["joint_pos"],
-                ).configure_spec(mode="position"),
+                ),
                 "camera": flat_scene.Component(
                     CameraDevice,
                     cam_name="wrist",

@@ -27,14 +27,11 @@ TABLE_HEIGHT = 0.75
 
 
 def _load_biarm_trossen_wxai() -> mujoco.MjSpec:
-  """Loads the biarm spec and removes actuators and keyframes."""
+  """Loads the biarm spec and removes keyframes."""
   uri = "github:google-deepmind/mujoco_menagerie/trossen_wxai/wxai_follower_biarm.xml"
   spec = asset.get(uri).spec()
   spec.option.timestep = 0.005
 
-  # Remove actuators and keyframes (added later by the task pipeline)
-  for act in list(spec.actuators):
-    spec.delete(act)
   while spec.keys:
     spec.delete(spec.keys[0])
 

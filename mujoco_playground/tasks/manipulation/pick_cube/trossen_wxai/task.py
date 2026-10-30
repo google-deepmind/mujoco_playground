@@ -56,14 +56,7 @@ def right_arm_pick_cube_env() -> config.Environment:
   cfg.device_layer.devices["robot"] = config.Component(
       device.ActuatorDevice,
       targets=trossen_device.RIGHT_ARM_JOINTS,
-      transmission="joint",
       home_ctrl=trossen_device.PICKUP_CTRL,
-  ).configure_spec(
-      mode="position",
-      stiffness=trossen_device.RIGHT_ARM_STIFFNESS,
-      damping=trossen_device.RIGHT_ARM_DAMPING,
-      forcerange=trossen_device.RIGHT_ARM_FORCERANGE,
-      ctrlrange=trossen_device.RIGHT_ARM_CTRLRANGE,
   )
 
   # Update ee site

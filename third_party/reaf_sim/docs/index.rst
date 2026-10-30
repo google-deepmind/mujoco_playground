@@ -49,7 +49,7 @@ and capture visual rollouts:
             devices={
                 "slider": flat_scene.Component(
                     ActuatorDevice, targets=["slider"]
-                ).configure_spec(mode="motor"),
+                ),
                 "camera": flat_scene.Component(
                     CameraDevice,
                     cam_name="fixed",

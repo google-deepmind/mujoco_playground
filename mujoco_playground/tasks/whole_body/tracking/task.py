@@ -141,12 +141,10 @@ def g1_env(
   ##
 
   devices: dict[str, config.Component] = {
-      "robot": (
-          config.Component(
-              device.ActuatorDevice,
-              targets=list(g1_device.JOINT_NAMES),
-              measurements=["joint_pos", "joint_vel"],
-          ).configure_spec(use_existing=True,)
+      "robot": config.Component(
+          device.ActuatorDevice,
+          targets=list(g1_device.JOINT_NAMES),
+          measurements=["joint_pos", "joint_vel"],
       ),
       "body_tracking": config.Component(
           motion_command.BodyTrackingDevice,

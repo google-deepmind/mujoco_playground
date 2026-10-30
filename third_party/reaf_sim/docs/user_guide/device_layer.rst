@@ -54,8 +54,8 @@ Built-in devices
 
 - **Actuation**:
 
-  - :class:`~reaf.simulation.torch.ActuatorDevice`: Configures joint, tendon, or slider actuators with position,
-    velocity, or torque (motor) control modes.
+  - :class:`~reaf.simulation.torch.ActuatorDevice`: Controls existing MJCF joint, tendon, or site actuators and exposes
+    their state and force measurements.
   - :class:`~reaf.simulation.torch.ArticulatedDevice`: Manages articulated robot mechanisms, exposing joint positions,
     velocities, effort limits, and home pose resets.
 

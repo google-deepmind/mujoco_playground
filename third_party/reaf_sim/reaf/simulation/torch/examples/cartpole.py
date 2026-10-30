@@ -54,6 +54,9 @@ CARTPOLE_XML = """
       </body>
     </body>
   </worldbody>
+  <actuator>
+    <motor name="slider" joint="slider" forcerange="-10 10" ctrlrange="-10 10" ctrllimited="true" forcelimited="true"/>
+  </actuator>
 </mujoco>
 """
 
@@ -105,13 +108,10 @@ def create_cartpole_env(
       ),
       device_layer=flat_scene.DeviceLayer(
           devices={
-              "slider_actuator": (
-                  flat_scene.Component(
-                      ActuatorDevice,
-                      targets=["slider"],
-                      transmission="joint",
-                      measurements=["joint_pos", "joint_vel"],
-                  ).configure_spec(mode="motor", forcerange=10.0,)
+              "slider_actuator": flat_scene.Component(
+                  ActuatorDevice,
+                  targets=["slider"],
+                  measurements=["joint_pos", "joint_vel"],
               ),
               "camera": camera_comp,
           }

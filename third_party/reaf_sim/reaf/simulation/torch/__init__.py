@@ -47,8 +47,6 @@ from reaf.simulation.torch._src.common import timeout_termination_checker
 from reaf.simulation.torch._src.common import zero_reward_provider
 from reaf.simulation.torch._src.common.action_history import ActionHistory
 from reaf.simulation.torch._src.common.actuator_device import ActuatorDevice
-from reaf.simulation.torch._src.common.actuator_device import ControlMode
-from reaf.simulation.torch._src.common.actuator_device import TransmissionType
 from reaf.simulation.torch._src.common.articulated_device import ArticulatedDevice
 from reaf.simulation.torch._src.common.batched_camera_device import BatchedMujocoCameraDevice
 from reaf.simulation.torch._src.common.camera_device import CameraDevice
