@@ -15,22 +15,22 @@ Each turn, a local HTTP bridge serves the robot's state (``obs.json``) and an an
 .. list-table::
     :widths: 50 50
 
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_mug_real/2/yam_mug_real.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/yam_mug_real/0/yam_mug_real.webp
             :alt: YAM Agentic Hardware Manipulation
             :width: 100%
 
             YAM agentic manipulation (Real)
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_pantry_spice/3/yam_pantry_spice.webp
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/yam_pantry_spice/0/yam_pantry_spice.webp
             :alt: YAM Agentic Pantry Spices
             :width: 100%
 
             YAM agentic pantry spices (Sim)
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_chess/3/yam_chess.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/yam_chess/0/yam_chess.webp
             :alt: YAM Agentic Chess Manipulation
             :width: 100%
 
             YAM agentic chess (Sim)
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_rock_cairn/3/yam_rock_cairn.webp
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/yam_rock_cairn/0/yam_rock_cairn.webp
             :alt: YAM Agentic Rock Balancing
             :width: 100%
 

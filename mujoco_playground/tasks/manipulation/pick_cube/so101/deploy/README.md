@@ -5,10 +5,10 @@ This directory implements sim2real policy deployment for the SO101 pick-cube tas
 <table>
   <tr>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/3/so101_pick_cube_sim2real.webp" alt="SO-101 Pick-Cube Sim-to-Real Deployment">
+      <img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/0/so101_pick_cube_sim2real.webp" alt="SO-101 Pick-Cube Sim-to-Real Deployment">
     </td>
     <td align="center" width="50%">
-      <img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real2/0/so101_pick_cube_sim2real2.webp" alt="SO-101 Pick-Cube Sim-to-Real Deployment on a separately verified robot">
+      <img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real2/0/so101_pick_cube_sim2real2.webp" alt="SO-101 Pick-Cube Sim-to-Real Deployment on a separately verified robot">
     </td>
   </tr>
 </table>

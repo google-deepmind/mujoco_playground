@@ -34,32 +34,32 @@ Highlights
 .. list-table::
     :widths: 50 50
 
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/2/g1_lafan_dance.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp
             :alt: Whole body motion tracking
             :width: 100%
 
             :doc:`Whole-body motion tracking <rl_training>`
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/2/so101_sim_teleop.webp
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_sim_teleop/0/so101_sim_teleop.webp
             :alt: SO-101 Simulation Teleoperation Demo
             :width: 100%
 
             :doc:`Sim teleoperation <teleop>`
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/2/so101_real_teleop.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_real_teleop/0/so101_real_teleop.webp
             :alt: SO-101 Real Teleoperation Demo
             :width: 100%
 
             :doc:`Real teleoperation <teleop>`
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_sysid/2/so101_sysid.webp
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp
             :alt: SO-101 System Identification Rollout
             :width: 100%
 
             :doc:`System identification <sysid>`
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/3/so101_pick_cube_sim2real.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/0/so101_pick_cube_sim2real.webp
             :alt: Sim2Real and interactive viewer
             :width: 100%
 
             :doc:`Sim-to-real deployment <sim2real>`
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/yam_mug_real/2/yam_mug_real.webp
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/yam_mug_real/0/yam_mug_real.webp
             :alt: YAM Agentic Tabletop Manipulation
             :width: 100%
 

@@ -7,12 +7,12 @@ simulation or on hardware (complete :doc:`robots` first to identify and calibrat
 .. list-table::
     :widths: 50 50
 
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/2/so101_sim_teleop.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_sim_teleop/0/so101_sim_teleop.webp
             :alt: SO-101 Simulation Teleoperation Demo
             :width: 100%
 
             Sim Teleop (``--sim``)
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/2/so101_real_teleop.webp
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_real_teleop/0/so101_real_teleop.webp
             :alt: SO-101 Real Teleoperation Demo
             :width: 100%
 

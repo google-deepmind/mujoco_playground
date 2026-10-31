@@ -8,7 +8,7 @@ The optimizer fits a 24-parameter model (`armature`, `frictionloss`, `stiffness`
 tracking error in MuJoCo physics.
 
 <p align="center">
-  <img width="640" src="https://www.gstatic.com/mujoco/playground/demos/so101_sysid/2/so101_sysid.webp" alt="SO-101 System Identification Rollout Comparison">
+  <img width="640" src="https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp" alt="SO-101 System Identification Rollout Comparison">
 </p>
 
 ## 1. Collect excitation trajectory

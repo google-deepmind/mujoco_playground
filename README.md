@@ -3,7 +3,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/google-deepmind/mujoco_playground/ci.yml?branch=main)](https://github.com/google-deepmind/mujoco_playground/actions)
 [![Documentation Status](https://readthedocs.org/projects/reaf-sim/badge/?version=latest)](https://reaf-sim.readthedocs.io/en/latest/playground/index.html)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-![Banner for playground](https://www.gstatic.com/mujoco/playground/banner/1/banner.png)
+![Banner for playground](https://www.gstatic.com/reaf-sim/banner/0/banner.png)
 
 MuJoCo Playground is a suite of robot environments, reinforcement learning tasks, and hardware workflows written in [PyTorch](https://pytorch.org/) and built on [`reaf-sim`](https://github.com/google-deepmind/reaf-sim), [MuJoCo](https://github.com/google-deepmind/mujoco), and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp).
 
@@ -18,31 +18,31 @@ Robots exist in `mujoco_playground/robots/`, either in simulation or paired with
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/whole_body/tracking/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/2/g1_lafan_dance.webp" alt="Whole body motion tracking"></a>
+      <a href="mujoco_playground/tasks/whole_body/tracking/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp" alt="Whole body motion tracking"></a>
       <br><b><a href="mujoco_playground/tasks/whole_body/tracking/README.md">Whole body motion tracking</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sim_teleop/2/so101_sim_teleop.webp" alt="SO-101 Simulation Teleoperation Demo"></a>
+      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_sim_teleop/0/so101_sim_teleop.webp" alt="SO-101 Simulation Teleoperation Demo"></a>
       <br><b><a href="mujoco_playground/tasks/teleop/so101/README.md">Sim teleoperation</a></b>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_real_teleop/2/so101_real_teleop.webp" alt="SO-101 Real Teleoperation Demo"></a>
+      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_real_teleop/0/so101_real_teleop.webp" alt="SO-101 Real Teleoperation Demo"></a>
       <br><b><a href="mujoco_playground/tasks/teleop/so101/README.md">Real teleoperation</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/sysid/so101/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_sysid/2/so101_sysid.webp" alt="SO-101 System Identification Rollout"></a>
+      <a href="mujoco_playground/tasks/sysid/so101/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp" alt="SO-101 System Identification Rollout"></a>
       <br><b><a href="mujoco_playground/tasks/sysid/so101/README.md">System identification</a></b>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/3/so101_pick_cube_sim2real.webp" alt="Sim2Real and interactive viewer"></a>
+      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/0/so101_pick_cube_sim2real.webp" alt="Sim2Real and interactive viewer"></a>
       <br><b><a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md">Sim2Real and interactive viewer</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md"><img width="420" src="https://www.gstatic.com/mujoco/playground/demos/yam_mug_real/2/yam_mug_real.webp" alt="YAM Agentic Tabletop Manipulation"></a>
+      <a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/yam_mug_real/0/yam_mug_real.webp" alt="YAM Agentic Tabletop Manipulation"></a>
       <br><b><a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md">Agentic manipulation</a></b>
     </td>
   </tr>

@@ -10,7 +10,7 @@ SDK. Every trajectory is first verified in simulation before moving the arm on
 hardware.
 
 <p align="center">
-  <img width="640" src="https://www.gstatic.com/mujoco/playground/demos/yam_sysid/0/yam_sysid.webp" alt="YAM System Identification Rollout Comparison">
+  <img width="640" src="https://www.gstatic.com/reaf-sim/demos/yam_sysid/0/yam_sysid.webp" alt="YAM System Identification Rollout Comparison">
 </p>
 
 ## 1. Collect excitation trajectories

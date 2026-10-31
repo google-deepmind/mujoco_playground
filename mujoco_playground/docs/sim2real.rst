@@ -9,12 +9,12 @@ Sim-to-Real
 .. list-table::
     :widths: 50 50
 
-    * - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real/3/so101_pick_cube_sim2real.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/0/so101_pick_cube_sim2real.webp
             :alt: SO-101 Pick-Cube Sim-to-Real Deployment
             :width: 100%
 
             Sim-to-real deployment & interactive viewer
-      - .. figure:: https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_sim2real2/0/so101_pick_cube_sim2real2.webp
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real2/0/so101_pick_cube_sim2real2.webp
             :alt: SO-101 Pick-Cube Sim-to-Real Deployment on a separately verified robot
             :width: 100%
 

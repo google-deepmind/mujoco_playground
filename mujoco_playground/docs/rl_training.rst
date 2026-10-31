@@ -71,17 +71,10 @@ browser to monitor training rewards, episode length, policy entropy, and losses:
 
     uv run --no-sync tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube
 
-.. image:: https://www.gstatic.com/mujoco/playground/demos/so101_pick_cube_tensorboard/0/so101_pick_cube_tensorboard.png
-    :align: center
-    :alt: TensorBoard SO101PickCube training metrics
-    :width: 100%
-
-|
-
 Unitree G1 Whole-Body Tracking
 ------------------------------
 
-.. image:: https://www.gstatic.com/mujoco/playground/demos/g1_lafan_dance/2/g1_lafan_dance.webp
+.. image:: https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp
     :align: center
     :alt: Unitree G1 Whole-Body Motion Tracking
     :width: 80%

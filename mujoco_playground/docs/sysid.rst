@@ -12,7 +12,7 @@ SO-101 Example
 In ``tasks/sysid/so101``, ``mujoco.sysid`` fits ``armature``, ``frictionloss``, ``stiffness``, and ``damping`` across
 all 6 SO-101 joints from teleoperation MCAP logs.
 
-.. image:: https://www.gstatic.com/mujoco/playground/demos/so101_sysid/2/so101_sysid.webp
+.. image:: https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp
     :align: center
     :alt: SO-101 System Identification Rollout Comparison
     :width: 80%
@@ -44,7 +44,7 @@ contacts, desk clearance, and joint limits) before replaying and logging them on
 then fits ``armature``, ``frictionloss``, ``kp``, and ``kv`` with ``mujoco.sysid``, reports tracking RMSE on training
 and held-out validation episodes, and prints a ``--freeze_params`` flag for any parameters the data does not identify.
 
-.. image:: https://www.gstatic.com/mujoco/playground/demos/yam_sysid/0/yam_sysid.webp
+.. image:: https://www.gstatic.com/reaf-sim/demos/yam_sysid/0/yam_sysid.webp
     :align: center
     :alt: YAM System Identification Rollout Comparison
     :width: 80%
