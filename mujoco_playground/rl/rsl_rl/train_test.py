@@ -33,6 +33,8 @@ class TrainTest(parameterized.TestCase):
       "CartpoleBalanceVision",
       "SO101PickCube",
       "SO101PickCubeVision",
+      "TrossenPickCube",
+      "TrossenPickCubeVision",
       "G1WholeBodyTracking",
   )
   def test_train_one_step(self, env_id: str):

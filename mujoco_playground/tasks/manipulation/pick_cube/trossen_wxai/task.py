@@ -14,14 +14,13 @@
 
 """Trossen WXAI robot configuration for pick task."""
 
-from mujoco_playground.robots.trossen_wxai.sim import device as trossen_device
+from mujoco_playground.robots.trossen_wxai.sim import constant as trossen_constant
 from mujoco_playground.robots.trossen_wxai.sim import scene as trossen_scene
 from mujoco_playground.tasks.manipulation.pick_cube import mdp
 from mujoco_playground.tasks.manipulation.pick_cube import task as pick_task
 from mujoco_playground.tasks.manipulation.pick_cube.trossen_wxai import mdp as trossen_mdp
 import numpy as np
 from reaf.simulation import torch as device
-from reaf.simulation.torch import action_history
 from reaf.simulation.torch import flat_scene as config
 from reaf.simulation.torch import noise
 from reaf.simulation.torch import processors
@@ -38,13 +37,13 @@ def right_arm_pick_cube_env() -> config.Environment:
   # Split robot_state into arm and gripper
   cfg.device_layer.devices["arm_state"] = config.Component(
       device.ArticulatedDevice,
-      home_qpos=trossen_device.PICKUP_QPOS[:6],
+      home_qpos=trossen_constant.PICKUP_QPOS[:6],
       measurements=["home_qpos", "joint_pos", "joint_vel", "joint_range"],
-      joint_names=trossen_device.RIGHT_ARM_JOINTS[:6],
+      joint_names=trossen_constant.RIGHT_ARM_JOINTS[:6],
   )
   cfg.device_layer.devices["gripper_state"] = config.Component(
       device.ArticulatedDevice,
-      home_qpos=trossen_device.PICKUP_QPOS[6:],
+      home_qpos=trossen_constant.PICKUP_QPOS[6:],
       measurements=["home_qpos", "joint_pos", "joint_vel", "joint_range"],
       joint_names=[
           "right/right_carriage_joint",
@@ -55,8 +54,8 @@ def right_arm_pick_cube_env() -> config.Environment:
   # Update robot actuator
   cfg.device_layer.devices["robot"] = config.Component(
       device.ActuatorDevice,
-      targets=trossen_device.RIGHT_ARM_JOINTS,
-      home_ctrl=trossen_device.PICKUP_CTRL,
+      targets=trossen_constant.RIGHT_ARM_JOINTS,
+      home_ctrl=trossen_constant.PICKUP_CTRL,
   )
 
   # Update ee site
@@ -73,8 +72,8 @@ def right_arm_pick_cube_env() -> config.Environment:
     )
 
   # Action processing.
-  action_scale_val = trossen_device.RIGHT_ARM_ACTION_SCALE
-  action_offset = trossen_device.RIGHT_ARM_ACTION_OFFSET
+  action_scale_val = trossen_constant.RIGHT_ARM_ACTION_SCALE
+  action_offset = trossen_constant.RIGHT_ARM_ACTION_OFFSET
 
   cfg.task_layer.command_processors = {
       "action_scale": config.Component(
@@ -86,15 +85,10 @@ def right_arm_pick_cube_env() -> config.Environment:
   }
 
   # Action history.
-  ctrl_shape = (len(trossen_device.PICKUP_CTRL),)
-  cfg.task_layer.command_feature_producers = {
-      "action_history": config.Component(
-          action_history.ActionHistory,
-          key="actions",
-          history_length=1,
-          feature_shape=ctrl_shape,
-      ),
-  }
+  ctrl_shape = (len(trossen_constant.PICKUP_CTRL),)
+  cfg.task_layer.command_feature_producers["action_history"].runtime_params[
+      "feature_shape"
+  ] = ctrl_shape
 
   # serial bus latency: 5–10 ms ≈ 1–2 substeps @ 5 ms dt.
   usb_delay = (0.005, 0.010)
@@ -172,12 +166,35 @@ def right_arm_pick_cube_env() -> config.Environment:
       "critic": config.ObsGroup(terms=trossen_obs, enable_noise=False),
   }
 
-  # Rewards
+  # Ground rewards in grasping, lifting, bringing the cube to target, and
+  # hardware safety.
+  table_z = trossen_scene.TABLE_HEIGHT + 0.025
   rewards = cfg.task_layer.rewards
   rewards["reaching"].params["reaching_std"] = 0.1
-  rewards["action_rate"].params["penalty_scale"] = -0.03
+  rewards["grasp"] = config.Reward(
+      mdp.reward_gripper_close,
+      ee_xpos_key="ee/xpos",
+      cube_xpos_key="object/xpos",
+      qpos_key="gripper_state/joint_pos",
+      gripper_joint_idx=0,
+      open_pos=0.044,
+      closed_pos=0.024,
+      reaching_std=0.025,
+      weight=1.5,
+  )
+  rewards["lift"].params["table_z"] = table_z
+  rewards["bringing"].params["table_z"] = table_z
+  rewards["bringing"].params["std"] = 0.08
+  rewards["success"].params["distance_threshold"] = 0.05
+  rewards["success"].params["lift_height_threshold"] = (
+      trossen_scene.TABLE_HEIGHT + 0.04
+  )
+  rewards["floor_contact"].params["penalty_scale"] = -1.0
+  rewards["action_rate"].params["penalty_scale"] = -0.02
   # fmt: off
   rewards["joint_vel_hinge"].params["qvel_key"] = "arm_state/joint_vel"
+  rewards["joint_vel_hinge"].params["max_vel"] = 0.4
+  rewards["joint_vel_hinge"].params["penalty_scale"] = -0.015
   rewards["joint_pos_limits"].params["qpos_key"] = "arm_state/joint_pos"
   rewards["joint_pos_limits"].params["joint_range_key"] = "arm_state/joint_range"
   # fmt: on
@@ -215,7 +232,7 @@ def right_arm_pick_cube_env() -> config.Environment:
           ),
       ),
       target_pos_range=((0.10, 0.20), (-0.1, 0.1), (0.85, 1.0)),
-      resampling_time_range=(8.0, 12.0),
+      resampling_time_range=(4.0, 7.0),
       joint_perturbation=0.1,
   )
 

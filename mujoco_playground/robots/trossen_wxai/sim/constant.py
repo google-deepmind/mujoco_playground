@@ -35,13 +35,25 @@ STIFFNESS = {
     "right_carriage_joint": 339.018069,
 }
 
+DAMPING = {
+    "joint_0": 14.17367,
+    "joint_1": 8.0188,
+    "joint_2": 0.725663,
+    "joint_3": 2.315707,
+    "joint_4": 2.368174,
+    "joint_5": 0.684856,
+    "right_carriage_joint": 2.373963,
+}
+
+# Effective force limits: min(actuator forcerange, joint actuatorfrcrange) in
+# wxai_follower_biarm.xml.
 FORCERANGE = {
-    "joint_0": 35.0,
-    "joint_1": 144.0,
-    "joint_2": 59.0,
-    "joint_3": 22.0,
-    "joint_4": 35.0,
-    "joint_5": 35.0,
+    "joint_0": 27.0,
+    "joint_1": 27.0,
+    "joint_2": 27.0,
+    "joint_3": 7.0,
+    "joint_4": 7.0,
+    "joint_5": 7.0,
     "right_carriage_joint": 35.0,
 }
 
@@ -58,8 +70,8 @@ CTRLRANGE = {
 INIT_CTRL = [0.0, 1.57, 1.57, 0.0, 0.0, 0.0, 0.0]
 INIT_QPOS = [0.0, 1.57, 1.57, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-PICKUP_QPOS = [0.0, 0.785, 1.25, -1.25, 0.0, 0.0, 0.02728, 0.0272195]
-PICKUP_CTRL = [0.0, 0.785, 1.25, -1.25, 0.0, 0.0, 0.02728]
+PICKUP_QPOS = [0.0, 0.785, 1.25, -1.25, 0.0, 0.0, 0.044, 0.044]
+PICKUP_CTRL = [0.0, 0.785, 1.25, -1.25, 0.0, 0.0, 0.044]
 
 # Gripper midpoint and half-range.
 GRIPPER_MID = (

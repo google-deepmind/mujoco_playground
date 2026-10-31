@@ -21,16 +21,53 @@ import mujoco
 from mujoco_playground import asset
 from mujoco_playground._src.objects import furniture
 from mujoco_playground._src.objects import primitive
+from mujoco_playground.robots.trossen_wxai.sim import constant
 
 # Height of the table surface above the ground plane.
 TABLE_HEIGHT = 0.75
 
 
+def _position_actuators(spec: mujoco.MjSpec) -> mujoco.MjSpec:
+  """Configures position actuators and joint damping from `constant`."""
+  for side in ("left", "right"):
+    for joint in constant.JOINTS:
+      name = f"{side}/{joint}"
+      jnt = spec.joint(name)
+      if jnt is None:
+        raise ValueError(f"Joint not found: {name}")
+      jnt.damping[0] = constant.DAMPING[joint]
+
+      actuator = spec.actuator(name)
+      if actuator is None:
+        actuator = next((a for a in spec.actuators if a.name == name), None)
+      if actuator is None:
+        actuator = spec.add_actuator(name=name, target=name)
+
+      kp = constant.STIFFNESS[joint]
+      fr = constant.FORCERANGE[joint]
+      actuator.target = name
+      actuator.trntype = mujoco.mjtTrn.mjTRN_JOINT
+      actuator.dyntype = mujoco.mjtDyn.mjDYN_NONE
+      actuator.gaintype = mujoco.mjtGain.mjGAIN_FIXED
+      actuator.biastype = mujoco.mjtBias.mjBIAS_AFFINE
+      actuator.gainprm[0] = kp
+      actuator.biasprm[1] = -kp
+      actuator.biasprm[2] = 0.0
+      actuator.forcelimited = True
+      actuator.forcerange = [-fr, fr]
+      actuator.ctrllimited = True
+      actuator.ctrlrange = list(constant.CTRLRANGE[joint])
+  return spec
+
+
 def _load_biarm_trossen_wxai() -> mujoco.MjSpec:
-  """Loads the biarm spec and removes keyframes."""
-  uri = "github:google-deepmind/mujoco_menagerie/trossen_wxai/wxai_follower_biarm.xml"
-  spec = asset.get(uri).spec()
+  """Loads the biarm spec, configures actuators, and removes keyframes."""
+  spec = asset.get(
+      "github:google-deepmind/mujoco_menagerie/trossen_wxai/"
+      "wxai_follower_biarm.xml"
+  ).spec()
   spec.option.timestep = 0.005
+  spec = _position_actuators(spec)
 
   while spec.keys:
     spec.delete(spec.keys[0])
