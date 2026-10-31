@@ -21,10 +21,10 @@ from collections.abc import Sequence
 import logging
 from typing import Any
 
+from mujoco.studio import app as studio_app
 from mujoco.studio import messages
 from mujoco.studio import plugin
 from mujoco.studio import sim
-from mujoco.studio import viewer_app
 import numpy as np
 from reaf.simulation.viewer import line_plots
 from reaf.simulation.viewer import messages as reaf_messages
@@ -249,7 +249,7 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
         shown if empty.
       instruction: The initial task instruction shown in the prompt.
     """
-    self._app: viewer_app.ViewerApp | None = None
+    self._app: studio_app.App | None = None
 
     self.show_reward: bool = True
     self.episode_count: int = 0
@@ -271,10 +271,10 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
     self._image2d = Image2D()
 
   @messages.handler
-  def on_viewer_app_init(self, event: viewer_app.ViewerAppInitEvent) -> None:
-    """Caches the ViewerApp reference on startup."""
-    assert isinstance(event.viewer_app, viewer_app.ViewerApp)
-    self._app = event.viewer_app
+  def on_studio_app_init(self, event: studio_app.InitEvent) -> None:
+    """Caches the studio_app App reference on startup."""
+    assert isinstance(event.app, studio_app.App)
+    self._app = event.app
 
   @messages.handler
   def on_timestep(self, event: reaf_messages.TimestepEvent) -> None:

@@ -24,9 +24,9 @@ from gdm_robotics.interfaces import environment as gdmr_env
 from gdm_robotics.interfaces import policy as gdmr_policy
 from gdm_robotics.interfaces import types as gdmr_types
 import mujoco
+from mujoco.studio import app as studio_app
 from mujoco.studio import launch_web
 from mujoco.studio import plugin
-from mujoco.studio import viewer_app
 from mujoco.studio import viewer_protocol
 from reaf.simulation.torch import environment as environment_module
 from reaf.simulation.torch import simulator as simulator_module
@@ -170,7 +170,7 @@ def launch(
       model=model,
       data=data,
       plugins=[
-          viewer_app.ViewerApp(),
+          studio_app.App(),
           reaf_viewer_plugin,
           torch_sim_plugin,
           *(plugins or ()),

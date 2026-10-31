@@ -20,8 +20,8 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 import dm_env
+from mujoco.studio import app as studio_app
 from mujoco.studio import messages
-from mujoco.studio import viewer_app
 from mujoco.studio import viewer_protocol
 import numpy as np
 from reaf.simulation.viewer import messages as reaf_messages
@@ -104,12 +104,10 @@ class ReafViewerPluginTest(parameterized.TestCase):
     self.viewer.upload_image.side_effect = (
         lambda tex_id, img, width, height, bpp: tex_id or next(next_id)
     )
-    self.app = viewer_app.ViewerApp()
+    self.app = studio_app.App()
     self.app.viewer = self.viewer
     self.plugin = viewer_plugin.ReafViewerPlugin()
-    self.plugin.on_viewer_app_init(
-        viewer_app.ViewerAppInitEvent(viewer_app=self.app)
-    )
+    self.plugin.on_studio_app_init(studio_app.InitEvent(app=self.app))
 
     self.mock_context = self.enter_context(
         mock.patch.object(imgui, 'GetCurrentContext', return_value=True)

@@ -22,10 +22,12 @@ from absl import logging
 from etils import epath
 from mujoco.studio import messages
 from mujoco.studio import plugin
-from mujoco.studio import viewer_app
 from mujoco_playground._src.rl.rsl_rl import checkpoint
 
-imgui = viewer_app.imgui
+try:
+  from mujoco_playground._src.internal_imports.dear_imgui import imgui  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
+except ImportError:
+  from mujoco.studio.dear_imgui import dear_imgui as imgui  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
 
 
 class PolicyPlugin(plugin.ViewerPlugin):
