@@ -331,7 +331,7 @@ def _so101_spec() -> mujoco.MjSpec:
 
 def _yam_spec() -> mujoco.MjSpec:
   """YAM with `grasp_site` aligned to the agentic tool frame (x: closing, z: approach)."""
-  spec = yam_scene.yam()
+  spec = yam_scene.yam_linear_4310()
   # `arm` has its origin 1 cm above the base plate bottom.
   spec.worldbody.first_body().pos = [0.0, 0.0, 0.01]
   site = spec.site(yam_sim.EE_SITE_NAME)

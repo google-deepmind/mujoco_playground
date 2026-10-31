@@ -33,37 +33,35 @@ import numpy as np
 from scipy import optimize as scipy_optimize
 
 ACTUATORS = constant.ARM_JOINTS + (sim_constant.GRIPPER_ACTUATOR,)
-# Bounds per parameter, by motor: DM4340 on joints 1-3, DM4310 on joints 4-6,
-# and the gripper's slide joints.
+# Bounds per parameter, by motor type (`constant.MOTOR_TYPES`), and for the
+# gripper's slide joints.
 _BOUNDS = types.MappingProxyType({
-    "dm4340": dict(
+    "DM4340": dict(
         armature=(1e-4, 0.5),
         frictionloss=(0.0, 3.0),
         kp=(5.0, 400.0),
         kv=(0.05, 50.0),
     ),
-    "dm4310": dict(
+    "DM4310": dict(
         armature=(1e-5, 0.2),
         frictionloss=(0.0, 2.0),
         kp=(1.0, 250.0),
         kv=(0.01, 30.0),
     ),
-    "gripper": dict(
+    sim_constant.GRIPPER_ACTUATOR: dict(
         armature=(1e-3, 5.0),
         frictionloss=(0.0, 20.0),
         kp=(50.0, 20000.0),
         kv=(1.0, 2000.0),
     ),
 })
-_MOTOR = types.MappingProxyType({
-    "joint1": "dm4340",
-    "joint2": "dm4340",
-    "joint3": "dm4340",
-    "joint4": "dm4310",
-    "joint5": "dm4310",
-    "joint6": "dm4310",
-    "gripper": "gripper",
-})
+
+
+def _bounds(name: str) -> dict[str, tuple[float, float]]:
+  if name == sim_constant.GRIPPER_ACTUATOR:
+    return _BOUNDS[name]
+  return _BOUNDS[constant.MOTOR_TYPES[name]]
+
 
 # The wrist camera (D405 and bracket) is the arm's only body without gravity
 # compensation, in the MJCF as on the real arm (I2RT's model leaves it out).
@@ -72,7 +70,9 @@ WRIST_CAMERA_IPOS_RANGE = 0.04  # m, around the CAD center of mass.
 
 
 def _joints(name: str) -> tuple[str, ...]:
-  return sim_constant.FINGER_JOINTS if name == "gripper" else (name,)
+  if name == sim_constant.GRIPPER_ACTUATOR:
+    return sim_constant.FINGER_JOINTS
+  return (name,)
 
 
 def _set_joint_attr(
@@ -129,7 +129,7 @@ def build_parameters(
   nominal = nominal_values(spec or scene.yam_menagerie())
   params = sysid.ParameterDict()
   for name in ACTUATORS:
-    bounds = _BOUNDS[_MOTOR[name]]
+    bounds = _bounds(name)
     for attr in ("armature", "frictionloss"):
       params.add(
           sysid.Parameter(
@@ -200,7 +200,7 @@ def build_parameters(
     params[name].frozen = True
   if freeze_gripper:
     for attr in ("armature", "frictionloss", "kp", "kv"):
-      params[f"gripper_{attr}"].frozen = True
+      params[f"{sim_constant.GRIPPER_ACTUATOR}_{attr}"].frozen = True
   return params
 
 

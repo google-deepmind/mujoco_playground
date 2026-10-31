@@ -13,10 +13,10 @@
 # limitations under the License.
 """Loads YAM excitation logs (.npz, from `collect`) for system identification."""
 
+from collections.abc import Sequence
 import dataclasses
 import glob
 import os
-from typing import Sequence
 
 from etils import epath
 import mujoco

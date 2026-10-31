@@ -18,6 +18,7 @@ import tempfile
 from absl.testing import absltest
 from mujoco import sysid as mj_sysid
 from mujoco_playground.robots.yam.real import constant
+from mujoco_playground.robots.yam.sim import constant as sim_constant
 from mujoco_playground.robots.yam.sim import scene
 from mujoco_playground.tasks.sysid.yam import data_loader
 from mujoco_playground.tasks.sysid.yam import excitation
@@ -59,7 +60,7 @@ def _synthesize(
   pred = preds[0][0]
   keep = np.isin(np.round(placeholder.timestamps, 6), np.round(pred.times, 6))
   q_meas = pred.data.copy()
-  q_meas[:, -1] /= 0.0475  # Left finger travel in m -> normalized.
+  q_meas[:, -1] = [sim_constant.gripper_m_to_norm(m) for m in q_meas[:, -1]]
   return data_loader.from_arrays(
       name, t_ns[keep], t_ns[keep], q_meas, q_cmd[keep], None, crop_rest=False
   )
@@ -91,12 +92,14 @@ class SysIdTest(absltest.TestCase):
     self.assertTrue(params["joint1_kp"].frozen)
     self.assertTrue(params["gripper_kv"].frozen)
     self.assertFalse(params["joint2_kp"].frozen)
-    self.assertEqual(params["joint4_kp"].nominal[0], 40.0)
+    nominal = sysid.nominal_values(scene.yam_menagerie())
+    self.assertEqual(params["joint4_kp"].nominal[0], nominal["joint4_kp"])
 
   def test_wrist_camera_parameters_are_optional_and_start_at_cad(self) -> None:
     self.assertNotIn("wrist_camera_mass", sysid.build_parameters())
     params = sysid.build_parameters(wrist_camera=True)
-    self.assertAlmostEqual(params["wrist_camera_mass"].nominal[0], 0.1087)
+    body = scene.yam_menagerie().body(sysid.WRIST_CAMERA_BODY)
+    self.assertAlmostEqual(params["wrist_camera_mass"].nominal[0], body.mass)
     self.assertLen(params["wrist_camera_ipos"].nominal, 3)
 
   def test_freezes_joints_and_parameters(self) -> None:

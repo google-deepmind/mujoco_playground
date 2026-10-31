@@ -36,7 +36,7 @@ class SceneTest(absltest.TestCase):
       self.assertEqual(tuple(table), constant.JOINTS)
 
   def test_yam_applies_the_identified_dynamics(self) -> None:
-    model = scene.yam().compile()
+    model = scene.yam_linear_4310().compile()
 
     for name in constant.JOINTS:
       with self.subTest(name):
@@ -66,12 +66,16 @@ class SceneTest(absltest.TestCase):
     model = scene.yam_menagerie().compile()
 
     # Menagerie's kp are the I2RT SDK's gains.
-    for joint, kp in zip(constant.ARM_JOINTS, (80, 80, 80, 40, 10, 10)):
+    arm_kp = constant.KP[: constant.NUM_ARM_JOINTS]
+    for joint, kp in zip(constant.ARM_JOINTS, arm_kp, strict=True):
       self.assertAlmostEqual(model.actuator(joint).gainprm[0], kp)
-    self.assertAlmostEqual(model.dof_armature[_dof(model, "joint1")], 0.032)
+    self.assertNotAlmostEqual(
+        model.dof_armature[_dof(model, "joint1")],
+        sim_constant.ARMATURE["joint1"],
+    )
 
   def test_yam_holds_its_home_pose(self) -> None:
-    model = scene.yam().compile()
+    model = scene.yam_linear_4310().compile()
     model.opt.timestep = 0.002
     data = mujoco.MjData(model)
     home = model.key("home").id

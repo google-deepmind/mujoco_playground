@@ -115,10 +115,12 @@ def _run_episode(
 
 def main(argv: Sequence[str]) -> None:
   del argv
+  unknown = set(_EPISODES.value) - set(excitation.EPISODES)
+  if unknown:
+    raise ValueError(f"Unknown episodes {sorted(unknown)}; see --episodes.")
+  selected = {excitation.EPISODES[k] for k in _EPISODES.value}
   episodes = {
-      e.name: e
-      for e in excitation.all_episodes()
-      if e.name in {excitation.EPISODES[k] for k in _EPISODES.value}
+      e.name: e for e in excitation.all_episodes() if e.name in selected
   }
   for episode in episodes.values():
     result = preflight.check_episode(episode)

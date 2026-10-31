@@ -29,18 +29,12 @@ FINGER_JOINTS = ("left_finger", "right_finger")
 GRIPPER_ACTUATOR = "gripper"
 DESK_GEOM = "floor"
 
-# Joint and position-actuator dynamics, per actuator (the six arm joints, then
-# the gripper, whose values apply to both finger joints). Identified with
-# `tasks/sysid/yam` on a real YAM Pro driven through I2RT's SDK (50 Hz
-# position commands into its 250 Hz PD with gravity compensation): they cut
-# the simulated arm's held-out tracking error from 11.5 to 4.8 mrad RMS.
-# These are effective values of that closed loop, not motor settings.
-# Values the excitation data couldn't identify keep Menagerie's: the kp of
-# joints 1 and 4 (the SDK's gains), the armature of joints 2-4, joint 4's
-# friction, joint 6 (whose tracking depends on the wrist camera's load, which
-# the MJCF doesn't model) and the gripper.
+# Joint and position-actuator dynamics, keyed by actuator name; the gripper's
+# entries apply to both finger joints. Identified on a real YAM Pro driven at
+# 50 Hz through I2RT's SDK, so these are effective closed-loop values, not
+# motor settings. Entries the data could not identify keep Menagerie's values.
 
-# Reflected rotor inertia, in kg m^2.
+# Reflected rotor inertia, in kg m^2 (kg for the gripper's slide joints).
 ARMATURE = {
     "joint1": 0.175,
     "joint2": 0.032,

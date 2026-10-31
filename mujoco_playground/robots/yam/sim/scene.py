@@ -46,7 +46,7 @@ def yam_menagerie() -> mujoco.MjSpec:
   return _name_unnamed_geoms(spec)
 
 
-def yam() -> mujoco.MjSpec:
+def yam_linear_4310() -> mujoco.MjSpec:
   """The YAM from menagerie, dynamics are overwritten using sim_constant.
 
   The YAM Pro with the linear_4310 gripper and wrist D405 camera, with the
@@ -76,8 +76,11 @@ def _joint_dynamics(spec: mujoco.MjSpec) -> mujoco.MjSpec:
         else (name,)
     )
     for joint in joints:
-      spec.joint(joint).armature = sim_constant.ARMATURE[name]
-      spec.joint(joint).frictionloss = sim_constant.FRICTIONLOSS[name]
+      j = spec.joint(joint)
+      if j is None:
+        raise ValueError(f"Joint not found: {joint}")
+      j.armature = sim_constant.ARMATURE[name]
+      j.frictionloss = sim_constant.FRICTIONLOSS[name]
   return spec
 
 
@@ -101,7 +104,7 @@ def yam_aloha_table() -> mujoco.MjSpec:
   table = furniture.aloha_table()
   spec.attach(table, prefix="table/", frame=spec.worldbody.add_frame())
 
-  arm = yam()
+  arm = yam_linear_4310()
   frame = spec.worldbody.add_frame(
       pos=np.array(ALOHA_TABLE_ATTACHMENT_POS),
       quat=np.array(ALOHA_TABLE_ATTACHMENT_QUAT),

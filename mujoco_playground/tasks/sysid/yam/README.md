@@ -130,7 +130,7 @@ Copy the identified values into `ARMATURE`, `FRICTIONLOSS`, `STIFFNESS`, and
 [`mujoco_playground/robots/yam/sim/constant.py`](../../../robots/yam/sim/constant.py),
 retaining the nominal value for any frozen parameter.
 
-- `scene.yam()` (used by YAM simulation scenes and tasks) applies the
+- `scene.yam_linear_4310()` (used by YAM simulation scenes and tasks) applies the
   identified constants in `sim/constant.py` on top of Menagerie's model.
 - `scene.yam_menagerie()` preserves the unmodified Menagerie parameters so
   subsequent `sysid` runs always start from the same baseline.
