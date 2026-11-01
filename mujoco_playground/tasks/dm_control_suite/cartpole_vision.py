@@ -23,6 +23,11 @@ from reaf.simulation.torch import resetter
 import torch
 
 
+def _obs_grayscale(features: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  rgb = features["fixed_rgb"].permute(0, 3, 1, 2).float()
+  return (rgb[:, 0:1] + rgb[:, 1:2] + rgb[:, 2:3]) * (1.0 / 765.0) - 0.5
+
+
 def _reward_vision(features: Mapping[str, torch.Tensor]) -> torch.Tensor:
   """Additive dense reward for vision-based cartpole balance."""
   qpos = features["cartpole/joint_pos"]
@@ -67,11 +72,9 @@ def cartpole_balance_vision_env() -> config.Environment:
       "policy": config.ObsGroup(
           terms={
               "pixels": (
-                  config.Obs(
-                      lambda d, **_: (d["fixed_rgb"].float() / 255.0).permute(
-                          0, 3, 1, 2
-                      ),
-                  ).configure(output_shape=(3, 64, 64))
+                  config.Obs(_obs_grayscale).configure(
+                      output_shape=(1, 64, 64), history_length=2
+                  )
               )
           },
           enable_noise=False,

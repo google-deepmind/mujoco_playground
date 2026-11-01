@@ -33,6 +33,9 @@ def right_arm_pick_cube_env() -> config.Environment:
   cfg.sim.njmax = 450
 
   cfg.base_scene = trossen_scene.trossen_wxai_biarm_table()
+  for actuator in list(cfg.base_scene.actuators):
+    if actuator.name.startswith("left/"):
+      cfg.base_scene.delete(actuator)
 
   # Split robot_state into arm and gripper
   cfg.device_layer.devices["arm_state"] = config.Component(
