@@ -38,7 +38,7 @@ Robots exist in `mujoco_playground/robots/`, either in simulation or paired with
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/0/so101_pick_cube_sim2real.webp" alt="Sim2Real and interactive viewer"></a>
+      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.webp" alt="Sim2Real and interactive viewer"></a>
       <br><b><a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md">Sim2Real and interactive viewer</a></b>
     </td>
     <td align="center" width="50%">

@@ -54,7 +54,7 @@ Highlights
             :width: 100%
 
             :doc:`System identification <sysid>`
-    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/0/so101_pick_cube_sim2real.webp
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.webp
             :alt: Sim2Real and interactive viewer
             :width: 100%
 
