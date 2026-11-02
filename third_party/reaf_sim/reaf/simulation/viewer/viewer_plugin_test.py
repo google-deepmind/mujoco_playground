@@ -274,7 +274,13 @@ class ReafViewerPluginTest(parameterized.TestCase):
       ),
       dict(
           testcase_name='chw_stacked',
-          img=torch.ones((2, 9, 12, 16), dtype=torch.float32),
+          img=torch.cat(
+              [
+                  torch.zeros((2, 6, 12, 16), dtype=torch.float32),
+                  torch.ones((2, 3, 12, 16), dtype=torch.float32),
+              ],
+              dim=1,
+          ),
           expected_shape=(16, 12, 3),
           expected_val=255,
       ),

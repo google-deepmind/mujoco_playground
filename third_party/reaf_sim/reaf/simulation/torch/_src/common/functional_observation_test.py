@@ -202,15 +202,25 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     obs0 = provider.observations_from_features({"a": a0})
     torch.testing.assert_close(obs0["obs"], torch.ones(nworld, 9))
 
-    # Step 1: current=[2,2,2], history=[1,1,1, 1,1,1]
+    # Step 1: [t-2, t-1, t] = [1,1,1, 1,1,1, 2,2,2]
     a1 = torch.full((nworld, 3), 2.0, requires_grad=True)
-    obs = provider.observations_from_features({"a": a1})
-    torch.testing.assert_close(obs["obs"][:, :3], torch.full((nworld, 3), 2.0))
-    torch.testing.assert_close(obs["obs"][:, 3:6], torch.ones(nworld, 3))
-    torch.testing.assert_close(obs["obs"][:, 6:], torch.ones(nworld, 3))
-    (obs0["obs"].sum() + obs["obs"].sum()).backward()
+    obs1 = provider.observations_from_features({"a": a1})
+    torch.testing.assert_close(obs1["obs"][:, :3], torch.ones(nworld, 3))
+    torch.testing.assert_close(obs1["obs"][:, 3:6], torch.ones(nworld, 3))
+    torch.testing.assert_close(obs1["obs"][:, 6:], torch.full((nworld, 3), 2.0))
+
+    # Step 2: [t-2, t-1, t] = [1,1,1, 2,2,2, 3,3,3]
+    a2 = torch.full((nworld, 3), 3.0, requires_grad=True)
+    obs2 = provider.observations_from_features({"a": a2})
+    torch.testing.assert_close(obs2["obs"][:, :3], torch.ones(nworld, 3))
+    torch.testing.assert_close(
+        obs2["obs"][:, 3:6], torch.full((nworld, 3), 2.0)
+    )
+    torch.testing.assert_close(obs2["obs"][:, 6:], torch.full((nworld, 3), 3.0))
+    (obs0["obs"].sum() + obs1["obs"].sum() + obs2["obs"].sum()).backward()
     self.assertIsNotNone(a0.grad)
     self.assertIsNotNone(a1.grad)
+    self.assertIsNotNone(a2.grad)
 
   def test_image_history(self):
     nworld = 2
@@ -243,15 +253,28 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     self.assertEqual(obs["camera"].shape, (nworld, 9, 32, 32))
     torch.testing.assert_close(obs["camera"], torch.ones(nworld, 9, 32, 32))
 
-    # Step 1: current=2.0 (channels 0:3), past=1.0 (channels 3:9).
+    # Step 1: past=1.0 (channels 0:6), current=2.0 (channels 6:9).
     features = {"rgb": torch.full((nworld, 3, 32, 32), 2.0)}
     obs = provider.observations_from_features(features)
     self.assertEqual(obs["camera"].shape, (nworld, 9, 32, 32))
     torch.testing.assert_close(
-        obs["camera"][:, :3], torch.full((nworld, 3, 32, 32), 2.0)
+        obs["camera"][:, :6], torch.ones(nworld, 6, 32, 32)
     )
     torch.testing.assert_close(
-        obs["camera"][:, 3:], torch.ones(nworld, 6, 32, 32)
+        obs["camera"][:, 6:], torch.full((nworld, 3, 32, 32), 2.0)
+    )
+
+    # Step 2: oldest=1.0 (0:3), prev=2.0 (3:6), current=3.0 (6:9).
+    features = {"rgb": torch.full((nworld, 3, 32, 32), 3.0)}
+    obs = provider.observations_from_features(features)
+    torch.testing.assert_close(
+        obs["camera"][:, :3], torch.ones(nworld, 3, 32, 32)
+    )
+    torch.testing.assert_close(
+        obs["camera"][:, 3:6], torch.full((nworld, 3, 32, 32), 2.0)
+    )
+    torch.testing.assert_close(
+        obs["camera"][:, 6:], torch.full((nworld, 3, 32, 32), 3.0)
     )
 
   def test_scale_vectorized(self):
@@ -391,12 +414,14 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     # non-reset envs keep their previous history (1.0).
     features = {"a": torch.full((nworld, 2), 5.0)}
     obs = provider.observations_from_features(features)
-    # History portion (last 2 values of dim=-1).
-    history = obs["obs"][:, 2:]
+    # History portion (first 2 values of dim=-1); current portion (last 2).
+    history = obs["obs"][:, :2]
+    current = obs["obs"][:, 2:]
     torch.testing.assert_close(history[0], torch.full((2,), 5.0))  # filled
     torch.testing.assert_close(history[1], torch.ones(2))  # kept
     torch.testing.assert_close(history[2], torch.full((2,), 5.0))  # filled
     torch.testing.assert_close(history[3], torch.ones(2))  # kept
+    torch.testing.assert_close(current, torch.full((nworld, 2), 5.0))
 
   def test_history_reset_no_zeros(self):
     """First obs after reset contains no zeros — history filled with current."""
@@ -418,7 +443,7 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     )
     provider.reset(None)
     obs = provider.observations_from_features({"a": torch.full((1, 2), 3.0)})
-    # All 6 values (current + 2 history slots) should be 3.0, not zero.
+    # All 6 values (2 history slots + current) should be 3.0, not zero.
     torch.testing.assert_close(obs["obs"], torch.full((1, 6), 3.0))
 
   def test_plain_term_unchanged(self):

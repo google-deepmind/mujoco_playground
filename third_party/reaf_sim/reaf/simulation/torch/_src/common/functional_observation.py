@@ -57,7 +57,8 @@ class FunctionalObservationAdapter(
   * ``scale`` — optional multiplicative factor.
   * ``offset`` — optional additive offset.
   * ``clip`` — optional ``{"min": ..., "max": ...}`` clamp bounds.
-  * ``history_length`` — optional int number of past steps to stack.
+  * ``history_length`` — optional int number of past steps to stack (oldest to
+    newest: ``[t - H, ..., t - 1, t]``).
   """
 
   def __init__(
@@ -295,16 +296,16 @@ class FunctionalObservationAdapter(
           buf = torch.where(mask, value.unsqueeze(1), buf)
 
           if value.ndim == 4:
-            # (B, C, H, W) + (B, history_length, C, H, W) -> (B, (1+H)*C, H, W)
-            value_with_history = torch.cat([value, buf.flatten(1, 2)], dim=1)
+            # (B, history_length, C, H, W) + (B, C, H, W) -> (B, (1+H)*C, H, W)
+            value_with_history = torch.cat([buf.flatten(1, 2), value], dim=1)
           else:
-            # Output: [current, past_0, past_1, ...] flattened.
+            # Output: [t-H, ..., t-1, t] flattened.
             value_with_history = torch.cat(
-                [value.unsqueeze(1), buf], dim=1
+                [buf, value.unsqueeze(1)], dim=1
             ).flatten(start_dim=1)
-          # Update buffer: shift right, insert current at position 0.
+          # Update buffer: shift left, append current at the end.
           self._history_buffers[group_name][name] = torch.cat(
-              [value.unsqueeze(1), buf[:, :-1]], dim=1
+              [buf[:, 1:], value.unsqueeze(1)], dim=1
           )
           value = value_with_history
 

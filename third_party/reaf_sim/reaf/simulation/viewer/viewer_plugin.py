@@ -85,7 +85,7 @@ class Image2D:
       if img.shape[-1] == 1:
         img = np.repeat(img, 3, axis=-1)
       elif img.shape[-1] > 4:
-        img = img[..., :3]
+        img = img[..., -3:]
       if img.dtype != np.uint8:
         img = (np.clip(img, 0.0, 1.0) * 255.0).astype(np.uint8)
       self._images[key] = img

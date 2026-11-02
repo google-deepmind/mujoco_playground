@@ -108,17 +108,19 @@ class ViewTypeTest(absltest.TestCase):
 
 class NewestFrameTest(absltest.TestCase):
 
-  def test_takes_the_leading_channels_as_rgb(self):
-    # Two 1x1 RGB frames, the current one leading.
-    frame = view_log.newest_frame([1.0, 0.5, 0.0, 0.9, 0.9, 0.9], (6, 1, 1))
+  def test_takes_the_trailing_channels_as_rgb(self):
+    # Two 2x2 RGB frames, the current one trailing.
+    frame = view_log.newest_frame(
+        [0.9] * 12 + [1.0] * 4 + [0.5] * 4 + [0.0] * 4, (6, 2, 2)
+    )
 
     self.assertEqual(frame.dtype, np.uint8)
-    np.testing.assert_array_equal(frame, [[[255, 127, 0]]])
+    np.testing.assert_array_equal(frame, np.full((2, 2, 3), [255, 127, 0]))
 
   def test_handles_hwc_format(self):
-    frame = view_log.newest_frame([1.0, 0.5, 0.0], (1, 1, 3))
+    frame = view_log.newest_frame([1.0, 0.5, 0.0] * 4, (2, 2, 3))
     self.assertEqual(frame.dtype, np.uint8)
-    np.testing.assert_array_equal(frame, [[[255, 127, 0]]])
+    np.testing.assert_array_equal(frame, np.full((2, 2, 3), [255, 127, 0]))
 
 
 if __name__ == "__main__":

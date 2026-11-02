@@ -116,22 +116,15 @@ def newest_frame(values: Sequence[float], shape: Sequence[int]) -> np.ndarray:
   if len(shape) != _IMAGE_NDIM:
     return np.asarray(values)
 
-  # (C, H, W) where leading channels are the newest RGB frame.
-  if (
-      shape[0] == 3
-      or (shape[0] % 3 == 0 and shape[0] > 3)
-      or (shape[0] in (1, 4) and shape[2] not in (1, 3, 4))
-  ):
-    channels, height, width = shape
-    frame = np.asarray(values, np.float32).reshape(channels, height, width)[:3]
-    if frame.max() <= 1.0 and frame.min() >= 0.0 and frame.dtype != np.uint8:
-      frame = frame * 255.0
-    return (frame.transpose(1, 2, 0)).clip(0.0, 255.0).astype(np.uint8)
-
-  # Otherwise assume (H, W, C).
-  h, w, c = shape
-  frame = np.asarray(values, np.float32).reshape(h, w, c)
-  if frame.max() <= 1.0 and frame.min() >= 0.0 and frame.dtype != np.uint8:
+  frame = np.asarray(values, np.float32).reshape(shape)
+  # If last dim isn't a channel count (1, 3, 4), convert CHW -> HWC.
+  if frame.shape[-1] not in (1, 3, 4):
+    frame = np.transpose(frame, (1, 2, 0))
+  # For channel-stacked history (oldest -> newest), take the newest RGB frame.
+  if frame.shape[-1] > 4:
+    frame = frame[..., -3:]
+  # Rescale normalized [0, 1] floats to [0, 255] uint8.
+  if frame.max() <= 1.0 and frame.min() >= 0.0:
     frame = frame * 255.0
   return frame.clip(0.0, 255.0).astype(np.uint8)
 
