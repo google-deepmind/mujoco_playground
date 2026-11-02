@@ -40,6 +40,17 @@ class TestSuite(parameterized.TestCase):
     self.assertEqual(state.obs.shape[0], env.observation_size)
     self.assertFalse(jp.isnan(state.data.qpos).any())
 
+  def test_nested_vmap(self) -> None:
+    # HopperHop has touch sensors, which used to break under nested vmap. The
+    # batch sizes differ so that swapped batch axes would show up.
+    env = dm_control_suite.load("HopperHop", config_overrides={"impl": "jax"})
+    keys = jax.random.split(jax.random.PRNGKey(0), 6).reshape(2, 3, -1)
+    state = jax.jit(jax.vmap(jax.vmap(env.reset)))(keys)
+    actions = jp.zeros((2, 3, env.action_size))
+    state = jax.jit(jax.vmap(jax.vmap(env.step)))(state, actions)
+    self.assertEqual(state.obs.shape, (2, 3, env.observation_size))
+    self.assertFalse(jp.isnan(state.data.sensordata).any())
+
   def test_warn_overflow_filtered_warp(self) -> None:
     from mujoco.mjx.warp import mujoco_warp as mjw  # pylint: disable=g-import-not-at-top
 
