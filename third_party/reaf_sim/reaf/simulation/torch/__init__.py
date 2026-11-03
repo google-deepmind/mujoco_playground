@@ -59,9 +59,6 @@ from reaf.simulation.torch._src.common.default_discount_provider import DefaultD
 from reaf.simulation.torch._src.common.delay_buffer import DelayBuffer
 from reaf.simulation.torch._src.common.free_device import FreeDevice
 from reaf.simulation.torch._src.common.free_device import MocapDevice
-from reaf.simulation.torch._src.common.functional_device import joint
-from reaf.simulation.torch._src.common.functional_device import joint_pos
-from reaf.simulation.torch._src.common.functional_device import joint_vel
 from reaf.simulation.torch._src.common.functional_device import MeasurementDevice
 from reaf.simulation.torch._src.common.functional_metric import FunctionalMetricProvider
 from reaf.simulation.torch._src.common.functional_metric import MetricReduceMode

@@ -15,11 +15,10 @@
 
 from collections.abc import Callable
 from collections.abc import Mapping
-from typing import Any
 
 from dm_env import specs
-import mujoco
 import numpy as np
+from reaf.simulation.torch._src.builders.flat_scene import config
 from reaf.simulation.torch._src.core import device
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import types
@@ -33,19 +32,23 @@ class MeasurementDevice(device.Device):
       self,
       *,
       name: str = "",
-      measurements: Mapping[str, "types.Term"],
+      measurements: Mapping[str, types.Term | Callable[..., torch.Tensor]],
   ):
     """Initialize MeasurementDevice.
 
     Args:
       name: Entity name.
-      measurements: Dict mapping measurement names to Term objects.
+      measurements: Dict mapping measurement names to Term objects or callables.
     """
     self._name = name
-    self._measurements = measurements
-    self._specs = {
+    self._measurements: dict[str, types.Term] = {
+        k: config.Term(v) if isinstance(v, Callable) else v
+        for k, v in measurements.items()
+    }
+    self._specs: dict[str, specs.Array] = {
         f"{name}/{k}": specs.Array(shape=term.output_shape, dtype=np.float32)
-        for k, term in measurements.items()
+        for k, term in self._measurements.items()
+        if term.output_shape is not None
     }
 
   @property
@@ -60,14 +63,20 @@ class MeasurementDevice(device.Device):
     del simulator, env_mask
 
   def initialize(self, simulator: simulator_module.Simulator) -> None:
-    """Forward initialize to terms."""
-    for term in self._measurements.values():
-      if hasattr(term.func, "initialize"):
-        term.func.initialize(
-            simulator.mj_spec,
-            simulator.mj_model,
-            simulator.model,
-            simulator.data,
+    """Move tensor params to simulator device and infer missing output shapes."""
+    for k, term in self._measurements.items():
+      term.params = {
+          pk: (
+              pv.to(simulator.xpu_device)
+              if isinstance(pv, torch.Tensor)
+              else pv
+          )
+          for pk, pv in term.params.items()
+      }
+      if term.output_shape is None:
+        out = term.func(simulator.model, simulator.data, **term.params)
+        self._specs[f"{self._name}/{k}"] = specs.Array(
+            shape=tuple(out.shape[1:]), dtype=np.float32
         )
 
   def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
@@ -79,37 +88,8 @@ class MeasurementDevice(device.Device):
   ) -> Mapping[str, torch.Tensor]:
     """Compute measurements by calling the provided functions."""
     return {
-        f"{self._name}/{name}": term.func(simulator.model, simulator.data)
+        f"{self._name}/{name}": term.func(
+            simulator.model, simulator.data, **term.params
+        )
         for name, term in self._measurements.items()
     }
-
-
-def joint(joint_name: str, extractor: Callable[[Any], torch.Tensor]):
-  """Returns a measurement function for a joint feature."""
-
-  def func(_model: types.Model, _data: types.Data) -> torch.Tensor:
-    return extractor(func.bound_joint)  # pyrefly: ignore[missing-attribute]
-
-  func.bound_joint = None  # pyrefly: ignore[missing-attribute]
-
-  def initialize(
-      mj_spec: mujoco.MjSpec,
-      mj_model: mujoco.MjModel,
-      model: types.Model,
-      data: types.Data,
-  ):
-    del mj_model
-    func.bound_joint = data.bind(model, [mj_spec.joint(joint_name)])  # pyrefly: ignore[missing-attribute]
-
-  func.initialize = initialize  # pyrefly: ignore[missing-attribute]
-  return func
-
-
-def joint_pos(joint_name: str):
-  """Returns a measurement function for a joint's position."""
-  return joint(joint_name, lambda b: b.qpos)
-
-
-def joint_vel(joint_name: str):
-  """Returns a measurement function for a joint's velocity."""
-  return joint(joint_name, lambda b: b.qvel)

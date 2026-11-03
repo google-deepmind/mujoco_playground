@@ -75,6 +75,8 @@ Built-in devices
   - :class:`~reaf.simulation.torch.ContactSensorDevice`: Captures contact forces, normal pressures, and collision
     impulses between bodies or geom pairs.
   - :class:`~reaf.simulation.torch.TactileDevice`: Attaches a ``mjSENS_TACTILE`` sensor with optional post-processing.
+  - :class:`~reaf.simulation.torch.MeasurementDevice`: Evaluates custom callable or :class:`~reaf.simulation.torch.Term`
+    functions over ``(model, data)`` for simulation-only state measurements.
 
 - **Cameras & visual rendering**:
 
