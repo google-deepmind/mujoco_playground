@@ -65,10 +65,7 @@ class SceneTest(absltest.TestCase):
         self.assertAlmostEqual(
             float(model.dof_damping[dof]), constant.DAMPING[joint]
         )
-        expected_forcerange = min(
-            float(xml_model.actuator(name).forcerange[1]),
-            float(model.jnt_actfrcrange[jnt.id, 1]),
-        )
+        expected_forcerange = float(xml_model.actuator(name).forcerange[1])
         self.assertAlmostEqual(
             float(actuator.forcerange[0]), -expected_forcerange
         )

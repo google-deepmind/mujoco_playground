@@ -45,8 +45,7 @@ DAMPING = {
     "right_carriage_joint": 2.373963,
 }
 
-# Effective force limits: min(actuator forcerange, joint actuatorfrcrange) in
-# wxai_follower_biarm.xml.
+# Actuator force limits (forcerange) in wxai_follower_biarm.xml.
 FORCERANGE = {
     "joint_0": 27.0,
     "joint_1": 27.0,
