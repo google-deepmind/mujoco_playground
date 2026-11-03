@@ -78,7 +78,7 @@ class FunctionalRewardProvider(reward_provider.RewardProvider):
   def required_features_keys(self) -> Set[str]:  # pyrefly: ignore[bad-override]
     return self._required_keys
 
-  def reward_spec(self) -> RewardSpecDict:
+  def reward_spec(self) -> RewardSpecDict:  # pyrefly: ignore[bad-override]
     if self._dtype is None:
       raise RuntimeError("Must call initialize() before reward_spec().")
     dtype = types.TORCH_TO_NUMPY_DTYPE[self._dtype]
