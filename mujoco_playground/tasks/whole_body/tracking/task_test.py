@@ -105,6 +105,8 @@ class TrackingEnvTest(parameterized.TestCase):
     self.assertIn("motion/error_anchor_pos", ep_metrics)
     self.assertIn("motion/sampling_entropy", ep_metrics)
     self.assertEqual(ep_metrics["motion/error_anchor_pos"].shape, ())
+    for metric in task.g1_env().task_layer.metrics.values():
+      self.assertEqual(metric.reduce, "last")
 
   def test_play_and_ghost_modes(self):
     built_env = self._build(play=True, enable_ghost=True)

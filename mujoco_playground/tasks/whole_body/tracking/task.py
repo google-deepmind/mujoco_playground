@@ -296,34 +296,34 @@ def g1_env(
 
   metrics = {
       "motion/error_anchor_pos": config.Metric(
-          mdp.metric_error_anchor_pos, reduce="mean"
+          mdp.metric_error_anchor_pos, reduce="last"
       ),
       "motion/error_anchor_rot": config.Metric(
-          mdp.metric_error_anchor_rot, reduce="mean"
+          mdp.metric_error_anchor_rot, reduce="last"
       ),
       "motion/error_anchor_lin_vel": config.Metric(
-          mdp.metric_error_anchor_lin_vel, reduce="mean"
+          mdp.metric_error_anchor_lin_vel, reduce="last"
       ),
       "motion/error_anchor_ang_vel": config.Metric(
-          mdp.metric_error_anchor_ang_vel, reduce="mean"
+          mdp.metric_error_anchor_ang_vel, reduce="last"
       ),
       "motion/error_body_pos": config.Metric(
-          mdp.metric_error_body_pos, reduce="mean"
+          mdp.metric_error_body_pos, reduce="last"
       ),
       "motion/error_body_rot": config.Metric(
-          mdp.metric_error_body_rot, reduce="mean"
+          mdp.metric_error_body_rot, reduce="last"
       ),
       "motion/error_body_lin_vel": config.Metric(
-          mdp.metric_error_body_lin_vel, reduce="mean"
+          mdp.metric_error_body_lin_vel, reduce="last"
       ),
       "motion/error_body_ang_vel": config.Metric(
-          mdp.metric_error_body_ang_vel, reduce="mean"
+          mdp.metric_error_body_ang_vel, reduce="last"
       ),
       "motion/error_joint_pos": config.Metric(
-          mdp.metric_error_joint_pos, reduce="mean"
+          mdp.metric_error_joint_pos, reduce="last"
       ),
       "motion/error_joint_vel": config.Metric(
-          mdp.metric_error_joint_vel, reduce="mean"
+          mdp.metric_error_joint_vel, reduce="last"
       ),
       "motion/sampling_entropy": config.Metric(
           "motion/sampling_entropy", reduce="last"
