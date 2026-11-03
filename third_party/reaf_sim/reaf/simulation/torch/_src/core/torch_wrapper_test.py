@@ -46,6 +46,90 @@ XML = """
 </mujoco>
 """
 
+# Fields extracted from mjx.Data, mjx.Model, and mjx.Option public API that TorchWrapper supports.
+# fmt: off
+_ESSENTIAL_DATA_FIELDS = {
+    "time", "qpos", "qvel", "act", "history", "qacc_warmstart", "plastic",
+    "ctrl", "qfrc_applied", "xfrc_applied", "eq_active", "mocap_pos",
+    "mocap_quat", "qacc", "act_dot", "userdata", "sensordata", "xpos",
+    "xquat", "xmat", "xipos", "ximat", "xanchor", "xaxis", "ten_length",
+    "geom_xpos", "geom_xmat", "site_xpos", "site_xmat", "cam_xpos",
+    "cam_xmat", "subtree_com", "cvel", "cdof", "cdof_dot", "qfrc_bias",
+    "qfrc_gravcomp", "qfrc_fluid", "qfrc_passive", "qfrc_actuator",
+    "actuator_force", "actuator_length", "qfrc_smooth", "qacc_smooth",
+    "qfrc_constraint", "qfrc_inverse",
+}
+# Excludes mat_texid, key_mpos, and key_mquat (not yet supported by _shape_annotations_compatible).
+_ESSENTIAL_MODEL_FIELDS = {
+    "nq", "nv", "nu", "na", "nbody", "njnt", "ngeom", "nsite", "ncam",
+    "nlight", "nflex", "nmesh", "nmeshvert", "nmeshnormal", "nmeshface",
+    "nmeshgraph", "nmeshpoly", "nmeshpolyvert", "nmeshpolymap", "nhfield",
+    "nhfielddata", "nmat", "npair", "nexclude", "neq", "ntendon", "nwrap",
+    "nsensor", "nkey", "nmocap", "nM", "nC", "nD", "nJmom", "nJten",
+    "flg_surfacevel", "nuserdata", "nsensordata", "nhistory", "nplastic",
+    "opt", "qpos0", "qpos_spring", "body_parentid", "body_mocapid",
+    "body_rootid", "body_weldid", "body_jntnum", "body_jntadr",
+    "body_dofnum", "body_dofadr", "body_treeid", "body_geomnum",
+    "body_geomadr", "body_simple", "body_pos", "body_quat", "body_ipos",
+    "body_iquat", "body_mass", "body_subtreemass", "body_inertia",
+    "body_gravcomp", "body_contype", "body_conaffinity", "body_invweight0",
+    "jnt_type", "jnt_qposadr", "jnt_dofadr", "jnt_bodyid", "jnt_limited",
+    "jnt_actfrclimited", "jnt_actgravcomp", "jnt_solref", "jnt_solimp",
+    "jnt_pos", "jnt_axis", "jnt_stiffness", "jnt_stiffnesspoly",
+    "jnt_range", "jnt_actfrcrange", "jnt_margin", "dof_bodyid",
+    "dof_jntid", "dof_parentid", "dof_treeid", "dof_solref", "dof_solimp",
+    "dof_frictionloss", "dof_armature", "dof_damping", "dof_dampingpoly",
+    "dof_invweight0", "geom_type", "geom_contype", "geom_conaffinity",
+    "geom_condim", "geom_bodyid", "geom_dataid", "geom_group", "geom_matid",
+    "geom_priority", "geom_solmix", "geom_solref", "geom_solimp",
+    "geom_size", "geom_aabb", "geom_rbound", "geom_pos", "geom_quat",
+    "geom_friction", "geom_margin", "geom_gap", "geom_fluid", "geom_rgba",
+    "site_type", "site_bodyid", "site_size", "site_pos", "site_quat",
+    "cam_mode", "cam_bodyid", "cam_targetbodyid", "cam_pos", "cam_quat",
+    "cam_poscom0", "cam_pos0", "cam_mat0", "cam_fovy", "cam_resolution",
+    "cam_sensorsize", "cam_intrinsic", "light_mode", "light_type",
+    "light_active", "light_castshadow", "light_pos", "light_dir",
+    "light_poscom0", "light_pos0", "light_dir0", "light_cutoff",
+    "light_ambient", "light_attenuation", "light_diffuse",
+    "light_exponent", "light_specular", "mesh_vertadr", "mesh_vertnum",
+    "mesh_faceadr", "mesh_octadr", "mesh_normaladr", "mesh_normalnum",
+    "mesh_graphadr", "mesh_vert", "mesh_normal", "mesh_face", "mesh_graph",
+    "mesh_pos", "mesh_quat", "flex_vertadr", "flex_vertnum", "flex_interp",
+    "flex_vert0", "flex_nodeadr", "flex_nodenum", "flex_nodebodyid",
+    "flex_node0", "hfield_size", "hfield_nrow", "hfield_ncol",
+    "hfield_adr", "hfield_data", "mat_rgba", "mat_emission",
+    "mat_specular", "mat_shininess", "pair_dim", "pair_geom1",
+    "pair_geom2", "pair_solref", "pair_solreffriction", "pair_solimp",
+    "pair_margin", "pair_gap", "pair_friction", "exclude_signature",
+    "eq_type", "eq_obj1id", "eq_obj2id", "eq_objtype", "eq_active0",
+    "eq_solref", "eq_solimp", "eq_data", "tendon_type", "tendon_adr",
+    "tendon_num", "tendon_limited", "tendon_actfrclimited",
+    "tendon_solref_lim", "tendon_solimp_lim", "tendon_solref_fri",
+    "tendon_solimp_fri", "tendon_range", "tendon_actfrcrange",
+    "tendon_margin", "tendon_stiffness", "tendon_stiffnesspoly",
+    "tendon_damping", "tendon_dampingpoly", "tendon_armature",
+    "tendon_frictionloss", "tendon_lengthspring", "tendon_length0",
+    "tendon_invweight0", "wrap_type", "wrap_objid", "wrap_prm",
+    "actuator_trntype", "actuator_dyntype", "actuator_gaintype",
+    "actuator_biastype", "actuator_trnid", "actuator_actadr",
+    "actuator_actnum", "actuator_ctrllimited", "actuator_forcelimited",
+    "actuator_actlimited", "actuator_dynprm", "actuator_gainprm",
+    "actuator_biasprm", "actuator_actearly", "actuator_ctrlrange",
+    "actuator_forcerange", "actuator_actrange", "actuator_gear",
+    "actuator_cranklength", "actuator_acc0", "actuator_lengthrange",
+    "sensor_type", "sensor_datatype", "sensor_objtype", "sensor_objid",
+    "sensor_reftype", "sensor_refid", "sensor_intprm", "sensor_dim",
+    "sensor_adr", "sensor_cutoff", "key_time", "key_qpos", "key_qvel",
+    "key_act", "key_ctrl", "key_plastic", "dof_Madr", "M_rowadr",
+    "M_rownnz", "M_colind",
+}
+_ESSENTIAL_OPTION_FIELDS = {
+    "iterations", "ls_iterations", "tolerance", "ls_tolerance", "gravity",
+    "density", "viscosity", "magnetic", "wind", "cone", "disableflags",
+    "enableflags", "integrator", "solver", "timestep",
+}
+# fmt: on
+
 
 class TorchTensorTest(absltest.TestCase):
 
@@ -1196,29 +1280,15 @@ class TorchWrapperXPU(absltest.TestCase):
     """Ensures critical fields are not accidentally filtered out."""
     union = torch_wrapper._union_mj_fields()
 
-    essential_data = {
-        "qpos", "qvel", "qacc", "ctrl", "time", "xpos", "xquat", "sensordata",
-        "act", "qacc_warmstart", "qfrc_applied", "xfrc_applied", "eq_active",
-        "mocap_pos", "mocap_quat", "act_dot", "xmat", "xipos", "geom_xpos",
-        "geom_xmat",
-    }  # fmt: skip
-    essential_model = {
-        "nq", "nv", "nu", "na", "nbody", "njnt", "ngeom",
-        "body_pos", "geom_pos", "jnt_qposadr", "jnt_dofadr",
-        "sensor_adr", "sensor_dim", "jnt_type", "jnt_type",
-        "body_mocapid",
-    }  # fmt: skip
-    essential_option = {"gravity", "timestep", "wind", "integrator"}
-
-    for name in essential_data:
+    for name in _ESSENTIAL_DATA_FIELDS:
       self.assertIn(
           name, union["Data"], f"Essential field 'Data.{name}' missing"
       )
-    for name in essential_model:
+    for name in _ESSENTIAL_MODEL_FIELDS:
       self.assertIn(
           name, union["Model"], f"Essential field 'Model.{name}' missing"
       )
-    for name in essential_option:
+    for name in _ESSENTIAL_OPTION_FIELDS:
       self.assertIn(
           name, union["Option"], f"Essential field 'Option.{name}' missing"
       )
