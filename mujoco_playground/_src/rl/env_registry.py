@@ -68,7 +68,9 @@ def register(
     env_cfg = env_cfg_fn(**kwargs)
     env_cfg.sim.nworld = nworld
     env_cfg.sim.xpu_device = device
-    env_cfg.sim.impl = impl or ("warp" if device.startswith("cuda") else "cpp")
+    # The C++ impl only supports a single world, so batched CPU runs use Warp.
+    use_warp = device.startswith("cuda") or nworld > 1
+    env_cfg.sim.impl = impl or ("warp" if use_warp else "cpp")
     return build_env.build_env(env_cfg)
 
   _REGISTRY[env_id] = RegistryEntry(

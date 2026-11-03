@@ -81,7 +81,7 @@ make test
 Train a PPO policy across parallel GPU environments with [RSL-RL](https://github.com/leggedrobotics/rsl_rl) (available environments: `CartpoleBalance`, `CartpoleSwingUp`, `CartpoleBalanceVision`, `SO101PickCube`, `SO101PickCubeVision`, `TrossenPickCube`, `TrossenPickCubeVision`, `G1WholeBodyTracking`):
 
 ```bash
-# Train SO-101 Pick-Cube on GPU
+# Train SO-101 Pick-Cube on GPU (on CPU, add --overrides='{"nworld": 64}')
 uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
   --env=SO101PickCube \
   --logdir=/tmp/rslrl_logs/so101_pick_cube
@@ -107,31 +107,26 @@ uv run --no-sync python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
   --mode=sim --robot=so101 --task=cube_in_bowl --agent=oracle --viewer
 ```
 
+> [!NOTE]
+> On macOS, `--viewer` requires `mjpython` in place of `python`. Before the
+> first run, link `libpython` into the virtualenv so `mjpython` can load it:
+>
+> ```bash
+> ln -sf "$(uv run python -c 'import sys; print(sys.base_prefix)')"/lib/libpython3.13.dylib .venv/lib/
+> ```
+
 ### 3. Workflow Guides
 
 | Guide | Description |
 |-------|-------------|
-| [SO-101 Hardware Setup](mujoco_playground/robots/so101/real/README.md) | USB port & wrist camera identification and arm calibration |
-| [i2rt YAM Hardware Setup](mujoco_playground/robots/yam/README.md) | SocketCAN bring-up and RealSense D405 camera setup |
-| [Sim & Real Teleoperation](mujoco_playground/tasks/teleop/so101/README.md) | Leader-follower teleoperation, foot-pedal gating, and MCAP episode logging |
-| [SO-101 System Identification](mujoco_playground/tasks/sysid/so101/README.md) | Fit simulated SO-101 joint dynamics to teleoperation MCAP logs with `mujoco.sysid` |
-| [i2rt YAM System Identification](mujoco_playground/tasks/sysid/yam/README.md) | Play scripted excitation trajectories and fit YAM joint dynamics with `mujoco.sysid` |
-| [Sim-to-Real Pick-Cube Deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md) | Train vision policies and deploy zero-shot to `--mode=sim` and `--mode=real` |
-| [G1 Whole-Body Motion Tracking](mujoco_playground/tasks/whole_body/tracking/README.md) | Retarget motion capture clips and train humanoid tracking policies |
-| [Agentic Tabletop Manipulation](mujoco_playground/tasks/agentic/tabletop_v0/README.md) | Zero-shot sim-to-real VLM code-as-policies harness (`SO-101`, `i2rt YAM`) |
-
-## Profiling with Tracy
-
-MuJoCo Playground includes [Tracy](https://github.com/wolfpld/tracy) instrumentation for profiling physics substeps, environment MDP loops, and RL training (see [`profiling/README.md`](profiling/README.md)):
-
-```bash
-# Capture 10s of headless telemetry from a running training script and export stats
-tracy-capture -o /tmp/training_profile.tracy -f -s 10
-tracy-csvexport /tmp/training_profile.tracy
-
-# Or connect the interactive GUI profiler (127.0.0.1:8086) / open a saved trace
-tracy-profiler /tmp/training_profile.tracy
-```
+| [SO-101 Hardware Setup](mujoco_playground/robots/so101/real) | USB port & wrist camera identification and arm calibration |
+| [i2rt YAM Hardware Setup](mujoco_playground/robots/yam) | SocketCAN bring-up and RealSense D405 camera setup |
+| [Sim & Real Teleoperation](mujoco_playground/tasks/teleop/so101) | Leader-follower teleoperation, foot-pedal gating, and MCAP episode logging |
+| [SO-101 System Identification](mujoco_playground/tasks/sysid/so101) | Fit simulated SO-101 joint dynamics to teleoperation MCAP logs with `mujoco.sysid` |
+| [i2rt YAM System Identification](mujoco_playground/tasks/sysid/yam) | Play scripted excitation trajectories and fit YAM joint dynamics with `mujoco.sysid` |
+| [Sim-to-Real Pick-Cube Deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy) | Train vision policies and deploy zero-shot to `--mode=sim` and `--mode=real` |
+| [G1 Whole-Body Motion Tracking](mujoco_playground/tasks/whole_body/tracking) | Retarget motion capture clips and train humanoid tracking policies |
+| [Agentic Tabletop Manipulation](mujoco_playground/tasks/agentic/tabletop_v0) | Zero-shot sim-to-real VLM code-as-policies harness (`SO-101`, `i2rt YAM`) |
 
 ## Documentation & Contributing
 

@@ -394,13 +394,14 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
     if self.show_reward and self.reward_plot is not None:
       fig = self.reward_plot.figure
 
+      # Anchor to the bottom center so the plot doesn't cover the scene.
       io = imgui.GetIO()
       imgui.SetNextWindowPos(
-          imgui.Vec2(io.DisplaySize.x * 0.5, io.DisplaySize.y * 0.5),
+          imgui.Vec2(io.DisplaySize.x * 0.5, io.DisplaySize.y - 10),
           imgui.Cond.FirstUseEver,
-          imgui.Vec2(0.5, 0.5),
+          imgui.Vec2(0.5, 1.0),
       )
-      imgui.SetNextWindowSize(imgui.Vec2(900, 450), imgui.Cond.FirstUseEver)
+      imgui.SetNextWindowSize(imgui.Vec2(900, 250), imgui.Cond.FirstUseEver)
       if imgui.Begin('Reward###RewardPlot'):
         avail = imgui.GetContentRegionAvail()
         plot_size = imgui.Vec2(avail.x, avail.y)
