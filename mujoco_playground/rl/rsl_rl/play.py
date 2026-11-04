@@ -64,7 +64,7 @@ _ZERO_ACTIONS = flags.DEFINE_bool(
 # TODO(taylorhowell, matijak): Consider a more user-friendly flag name than gfx
 # (e.g. graphics_mode).
 _GFX = flags.DEFINE_string(
-    "gfx", "", 'Graphics mode ("" for native, "web" for browser).'
+    "gfx", "web", 'Graphics mode ("" for native, "web" for browser).'
 )
 _PORT = flags.DEFINE_integer(
     "port", 0, "Web viewer port (0 picks first free port >= 8080)."

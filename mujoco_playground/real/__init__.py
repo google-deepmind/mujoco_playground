@@ -19,6 +19,10 @@ from mujoco_playground._src.real.common.camera_device import OpenCVCamera as Ope
 from mujoco_playground._src.real.common.camera_device import OpenCVCameraConfig as OpenCVCameraConfig
 from mujoco_playground._src.real.common.camera_device import OpenCVCameraDevice as OpenCVCameraDevice
 from mujoco_playground._src.real.common.clock_device import ClockDevice as ClockDevice
+from mujoco_playground._src.real.common.foot_pedal import FootPedalState as FootPedalState
+from mujoco_playground._src.real.common.foot_pedal import KeyboardFootPedal as KeyboardFootPedal
+from mujoco_playground._src.real.common.instruction_feature import INSTRUCTION_KEY as INSTRUCTION_KEY
+from mujoco_playground._src.real.common.instruction_feature import InstructionFeaturesProducer as InstructionFeaturesProducer
 from mujoco_playground._src.real.common.log_reader import iter_features as iter_features
 from mujoco_playground._src.real.common.logger import create_logger as create_logger
 from mujoco_playground._src.real.common.motion import cosine_interpolate as cosine_interpolate

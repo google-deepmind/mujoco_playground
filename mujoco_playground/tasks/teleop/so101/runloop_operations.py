@@ -20,7 +20,7 @@ from typing import Any
 import dm_env
 from gdm_robotics.runtime import runloop as runloop_lib
 import mujoco
-from mujoco_playground.real import foot_pedal
+from mujoco_playground import real
 from mujoco_playground.tasks.teleop.so101 import env as teleop_env
 from mujoco_playground.tasks.teleop.so101 import leader_agent
 from reaf.common import time_trigger
@@ -50,7 +50,7 @@ class FootPedalOperation(runloop_lib.RunloopRuntimeOperations):
   The outcome becomes the episode's log label.
   """
 
-  def __init__(self, pedal: foot_pedal.KeyboardFootPedal, termination: Any):
+  def __init__(self, pedal: real.KeyboardFootPedal, termination: Any):
     self._pedal = pedal
     self._termination = termination
     self._episode = 0

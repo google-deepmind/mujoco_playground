@@ -36,7 +36,6 @@ from absl import logging
 from etils import epath
 from gdm_robotics.runtime import runloop as runloop_lib
 from mujoco_playground import real
-from mujoco_playground.real import foot_pedal
 from mujoco_playground.robots.so101.real import constant
 from mujoco_playground.robots.so101.real import device as so101_device
 from mujoco_playground.tasks.teleop.so101 import env as teleop_env
@@ -176,7 +175,7 @@ def main(argv):
   )
 
   # Create other runloop operations.
-  pedal = foot_pedal.KeyboardFootPedal()
+  pedal = real.KeyboardFootPedal()
   pedal_operations = runloop_operations.FootPedalOperation(pedal, termination)
   episode_logger = _create_logger(env, policy, pedal_operations)
   operations: list[runloop_lib.RunloopRuntimeOperations] = [pedal_operations]

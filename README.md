@@ -7,13 +7,13 @@
 
 MuJoCo Playground is a suite of robot environments, reinforcement learning tasks, and hardware workflows written in [PyTorch](https://pytorch.org/) and built on [`reaf-sim`](https://github.com/google-deepmind/reaf-sim), [MuJoCo](https://github.com/google-deepmind/mujoco), and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp).
 
-Robots exist in `mujoco_playground/robots/`, either in simulation or paired with a hardware counterpart, enabling end-to-end workflows across simulation and hardware:
+Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either in simulation or paired with a hardware counterpart, enabling end-to-end workflows across simulation and hardware:
 
-- **Large-batch RL training on GPU**: with state and vision observations across control, manipulation, and humanoid whole-body tracking.
-- **Sim & real teleoperation**: with leader-follower control and episodic MCAP logging.
-- **System identification**: fitting simulated joint dynamics to logged hardware trajectories via `mujoco.sysid`.
-- **Zero-shot sim-to-real policy deployment**: running the same task layer and policy in simulation (`--mode=sim`) and on hardware (`--mode=real`).
-- **Agentic manipulation**: for vision-language model (VLM) examples across simulation and hardware (`SO-101`, `i2rt YAM`).
+- **[Large-batch RL training on GPU](mujoco_playground/rl/rsl_rl)**: with state and vision observations across control, manipulation, and humanoid whole-body tracking.
+- **[Sim & real teleoperation](mujoco_playground/tasks/teleop/so101)**: with leader-follower control and episodic MCAP logging.
+- **[System identification](mujoco_playground/tasks/sysid)**: fitting simulated joint dynamics to logged hardware trajectories via `mujoco.sysid`.
+- **[Zero-shot sim-to-real policy deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy)**: running the same task layer and policy in simulation (`--mode=sim`) and on hardware (`--mode=real`).
+- **[Agentic manipulation](mujoco_playground/tasks/agentic/tabletop_v0)**: for vision-language model (VLM) examples across simulation and hardware (`SO-101`, `i2rt YAM`).
 
 <table>
   <tr>
@@ -72,71 +72,65 @@ make test
 ```
 
 > [!NOTE]
-> Real-robot hardware SDKs are optional extras so simulation-only checkouts stay lightweight. To install hardware drivers for a specific robot, add `--extra so101` or `--extra yam` (e.g., `uv sync --extra cpu --extra so101`).
+> Real-robot hardware SDKs are optional extras so simulation-only stays lightweight. To install hardware drivers for a specific robot, add `--extra so101` or `--extra yam` (e.g., `uv sync --extra cpu --extra so101`).
 
 ## Getting Started
 
-### 1. Train & Visualize an RL Policy
+To get started, either try training an RL policy, or try agentic manipulation in simulation or on the real hardware.
 
-Train a PPO policy across parallel GPU environments with [RSL-RL](https://github.com/leggedrobotics/rsl_rl) (available environments: `CartpoleBalance`, `CartpoleSwingUp`, `CartpoleBalanceVision`, `SO101PickCube`, `SO101PickCubeVision`, `TrossenPickCube`, `TrossenPickCubeVision`, `G1WholeBodyTracking`):
+### Train & Visualize an RL Policy
+
+Train a PPO policy across parallel GPU environments with [RSL-RL](https://github.com/leggedrobotics/rsl_rl):
 
 ```bash
-# Train SO-101 Pick-Cube on GPU
+# Train SO-101 Pick-Cube on GPU (on CPU, add --overrides='{"nworld": 64}')
 uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
-  --env=SO101PickCube \
-  --logdir=/tmp/rslrl_logs/so101_pick_cube
+  --env=SO101PickCubeVision \
+  --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
 
-# Play back the trained policy in the interactive MuJoCo viewer
+# Play back the trained policy in the interactive viewer
 uv run --no-sync python -m mujoco_playground.rl.rsl_rl.play \
-  --env=SO101PickCube \
-  --resume_path=/tmp/rslrl_logs/so101_pick_cube
+  --env=SO101PickCubeVision \
+  --resume_path=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
 
 Monitor training curves in TensorBoard:
 
 ```bash
-uv run --no-sync tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube
+uv run --no-sync tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
 
-### 2. Try Agentic Manipulation in Simulation
-
-Run the tabletop manipulation harness in simulation with the built-in scripted oracle (or connect a VLM via `--agent=bridge`):
+Optionally [set up the SO-101 hardware](mujoco_playground/robots/so101/real) and [deploy to the real arm](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy):
 
 ```bash
-uv run --no-sync python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
-  --mode=sim --robot=so101 --task=cube_in_bowl --agent=oracle --viewer
+# Deploy the trained policy on the physical SO-101 follower arm
+uv run --extra so101 --extra rl python -m \
+  mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+  --mode=real \
+  --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
 
-### 3. Workflow Guides
+### Try Agentic Manipulation
 
-| Guide | Description |
-|-------|-------------|
-| [SO-101 Hardware Setup](mujoco_playground/robots/so101/real) | USB port & wrist camera identification and arm calibration |
-| [i2rt YAM Hardware Setup](mujoco_playground/robots/yam) | SocketCAN bring-up and RealSense D405 camera setup |
-| [Sim & Real Teleoperation](mujoco_playground/tasks/teleop/so101) | Leader-follower teleoperation, foot-pedal gating, and MCAP episode logging |
-| [SO-101 System Identification](mujoco_playground/tasks/sysid/so101) | Fit simulated SO-101 joint dynamics to teleoperation MCAP logs with `mujoco.sysid` |
-| [i2rt YAM System Identification](mujoco_playground/tasks/sysid/yam) | Play scripted excitation trajectories and fit YAM joint dynamics with `mujoco.sysid` |
-| [Sim-to-Real Pick-Cube Deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy) | Train vision policies and deploy zero-shot to `--mode=sim` and `--mode=real` |
-| [G1 Whole-Body Motion Tracking](mujoco_playground/tasks/whole_body/tracking) | Retarget motion capture clips and train humanoid tracking policies |
-| [Agentic Tabletop Manipulation](mujoco_playground/tasks/agentic/tabletop_v0) | Zero-shot sim-to-real VLM code-as-policies harness (`SO-101`, `i2rt YAM`) |
+Spin up the [agentic tabletop manipulation task](mujoco_playground/tasks/agentic/tabletop_v0) directly from your coding agent with a prompt in `sim` or `real`:
 
-## Profiling with Tracy
+> "Start the tabletop_v0 bridge for the yam in sim and get it to \<your task\>, following [`mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md`](mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md)"
+>
+> *(Swap `sim` for `real` to run on hardware, or `so101` for `yam`.)*
 
-MuJoCo Playground includes [Tracy](https://github.com/wolfpld/tracy) instrumentation for profiling physics substeps, environment MDP loops, and RL training (see [`profiling/`](profiling)):
-
-```bash
-# Capture 10s of headless telemetry from a running training script and export stats
-tracy-capture -o /tmp/training_profile.tracy -f -s 10
-tracy-csvexport /tmp/training_profile.tracy
-
-# Or connect the interactive GUI profiler (127.0.0.1:8086) / open a saved trace
-tracy-profiler /tmp/training_profile.tracy
-```
+> [!NOTE]
+> On macOS, `--viewer` requires `mjpython` in place of `python`. Before the
+> first run, link `libpython` into the virtualenv so `mjpython` can load it:
+>
+> ```bash
+> ln -sf "$(uv run python -c 'import sys; print(sys.base_prefix)')"/lib/libpython3.13.dylib .venv/lib/
+> ```
 
 ## Documentation & Contributing
 
-- **Contributing:** See [mujoco_playground/docs/contributing.rst](mujoco_playground/docs/contributing.rst) for contribution guidelines (`uv run pre-commit run --all-files`, `make test`).
-- **Changelog:** See [mujoco_playground/docs/changelog.rst](mujoco_playground/docs/changelog.rst).
+- **Documentation:** See the [MuJoCo Playground documentation](https://reaf-sim.readthedocs.io/en/latest/playground/index.html).
+- **Contributing:** See the [contributing guide](https://reaf-sim.readthedocs.io/en/latest/playground/contributing.html) for contribution guidelines.
+- **Changelog:** See the [changelog](https://reaf-sim.readthedocs.io/en/latest/playground/changelog.html).
 
 ## Citation
 

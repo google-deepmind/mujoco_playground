@@ -197,11 +197,15 @@ def main(argv):
   configure_torch_backends()
 
   local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-  torch.cuda.set_device(local_rank)
+  if torch.cuda.is_available():
+    torch.cuda.set_device(local_rank)
   rank = int(os.environ.get("RANK", "0"))
 
   os.environ["MUJOCO_EGL_DEVICE_ID"] = str(local_rank)
-  device = f"cuda:{local_rank}"
+  if torch.cuda.is_available():
+    device = f"cuda:{local_rank}"
+  else:
+    device = "cpu"
 
   seed = _SEED.value + local_rank
   rng.seed(seed)

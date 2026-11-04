@@ -15,7 +15,7 @@ The benchmark suite:
 
 ## Running Benchmarks
 
-### 1. Single-Commit Benchmark (`profiling/benchmark.py`)
+### Single-Commit Benchmark (`profiling/benchmark.py`)
 
 Run benchmarks for all registered environments in the repository:
 
@@ -49,7 +49,7 @@ uv run --no-sync python -m profiling.benchmark --json
 
 ---
 
-### 2. Standalone Throughput Benchmark (`profiling/testspeed.py`)
+### Standalone Throughput Benchmark (`profiling/testspeed.py`)
 
 Measure raw physics simulation SPS, environment stepping SPS, and framework overhead percentage:
 

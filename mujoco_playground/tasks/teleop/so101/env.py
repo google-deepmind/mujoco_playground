@@ -26,10 +26,10 @@ from typing import Literal
 
 from etils import epath
 from mujoco_playground import paths
+from mujoco_playground import real
 from mujoco_playground import wrapper as wrapper_lib
 from mujoco_playground._src.objects import primitive
 from mujoco_playground._src.real.common import motion
-from mujoco_playground.real import instruction_feature
 from mujoco_playground.robots.so101.real import constant
 from mujoco_playground.robots.so101.real import device as so101_device
 from mujoco_playground.robots.so101.sim import device as so101_sim_device
@@ -131,7 +131,7 @@ def _build_teleop_environment(
           timestamp_features_producer.TimestampFeaturesProducer(
               timestamp_key=constant.TIMESTAMP
           ),
-          instruction_feature.InstructionFeaturesProducer(instruction),
+          real.InstructionFeaturesProducer(instruction),
       ),
       termination_checkers=termination_checkers,
       reward_provider=None,

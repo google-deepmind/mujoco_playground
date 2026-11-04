@@ -101,6 +101,13 @@ class Viewer:
   def __init__(self, env, is_real: bool, emb: embodiment.Embodiment):
     import mujoco.viewer  # pylint: disable=g-import-not-at-top
 
+    if sys.platform == "darwin" and mujoco.viewer._MJPYTHON is None:  # pylint: disable=protected-access
+      # macOS requires the viewer to own the main thread.
+      raise SystemExit(
+          "On macOS the viewer must run under mjpython:\n\n  uv run --no-sync"
+          f" mjpython -m {__package__}.run {' '.join(sys.argv[1:])}\n"
+      )
+
     self._is_real = is_real
     self._env = env
     self._emb = emb
