@@ -73,6 +73,57 @@ def _qpos_to_numpy(qpos: torch.Tensor) -> np.ndarray:
   return qpos.detach().cpu().numpy().copy()
 
 
+def get_scene_data(
+    data: types.Data,
+    impl: types.Impl,
+    model: mujoco.MjModel,
+    scratch_data: mujoco.MjData | None,
+    qpos: np.ndarray | None = None,
+) -> mujoco.MjData:
+  """Returns an `MjData` positioned at the state that `Renderer` should draw.
+
+  On `Impl.CPP` when `qpos` is `None`, `data.obj` is already a live
+  `mujoco.MjData` and is returned untouched. Otherwise (`Impl.WARP` or an
+  explicit historical `qpos`), `scratch_data` is populated and updated via
+  `mj_kinematics` and `mj_camlight`.
+
+  Args:
+    data: The live simulation data.
+    impl: Simulation backend implementation (`CPP` or `WARP`).
+    model: Compiled `mujoco.MjModel`.
+    scratch_data: Host `mujoco.MjData` workspace used when `impl != Impl.CPP` or
+      `qpos` is provided.
+    qpos: Optional host `(nq,)` generalized positions to render instead of
+      `data.qpos` (used for delayed rendering).
+
+  Returns:
+    An `MjData` positioned at the state that should be rendered.
+
+  Raises:
+    ValueError: If `data.obj` is not a `mujoco.MjData` on the direct path.
+    RuntimeError: If `scratch_data` is `None` when required.
+  """
+  if impl == types.Impl.CPP and qpos is None:
+    mj_data = data.obj
+    if not isinstance(mj_data, mujoco.MjData):
+      raise ValueError(
+          f'Expected data.obj to be mujoco.MjData when impl={impl}, '
+          f'got {type(mj_data)}'
+      )
+    return mj_data
+
+  if scratch_data is None:
+    raise RuntimeError('Scratch MjData is not initialized.')
+
+  if model.nq > 0:
+    scratch_data.qpos[:] = (
+        qpos if qpos is not None else _qpos_to_numpy(data.qpos)
+    )
+  mujoco.mj_kinematics(model, scratch_data)
+  mujoco.mj_camlight(model, scratch_data)
+  return scratch_data
+
+
 class MujocoCameraDevice(device.Device):
   """Entity that renders the scene using MuJoCo rendering."""
 
@@ -354,6 +405,41 @@ class MujocoCameraDevice(device.Device):
     """
     return self._render_with_interval(simulator)
 
+  def render_now(
+      self, simulator: simulator_module.Simulator
+  ) -> dict[str, torch.Tensor]:
+    """Renders the camera immediately without affecting device measurements.
+
+    Side-channel call for `Impl.CPP` single-world environments that renders the
+    current physics state (or the state from `delay_ms` ago when a delay is
+    configured) without modifying cached substep measurements, the
+    `render_rate_hz` schedule, or the delay history buffer.
+
+    Args:
+      simulator: The simulator instance.
+
+    Returns:
+      A dictionary containing the freshly rendered images.
+
+    Raises:
+      RuntimeError: If the device has not been initialized.
+      ValueError: If `self._impl != types.Impl.CPP` or `data.nworld` is greater
+        than 1.
+    """
+    if self._impl is None:
+      raise RuntimeError('Device not initialized.')
+
+    if self._impl != types.Impl.CPP:
+      raise ValueError(f'render_now only supports Impl.CPP, got {self._impl}')
+
+    data = simulator.data
+    if data.nworld > 1:
+      raise ValueError(
+          f'MujocoCameraDevice only supports nworld=1, got {data.nworld}'
+      )
+
+    return self._render(data)
+
   def _render_with_interval(
       self, simulator: simulator_module.Simulator
   ) -> Mapping[str, torch.Tensor]:
@@ -422,48 +508,20 @@ class MujocoCameraDevice(device.Device):
     return measurements
 
   def _get_scene_data(self, data: types.Data) -> mujoco.MjData:
-    """Returns the `MjData` holding the state the renderer should draw.
-
-    There are two ways to obtain it:
-
-    -   Use the live data directly. On CPP with no delay, `data.obj` already is
-        a `mujoco.MjData` sitting at exactly the state we want to draw, so it
-        is returned untouched.
-    -   Update the scratch `MjData` from a `qpos`, via `mj_kinematics` and
-        `mj_camlight`. The `qpos` comes from the history buffer when
-        `delay_ms > 0`, or off the device under Warp.
-
-    Args:
-      data: The live simulation data.
-
-    Returns:
-      An `MjData` positioned at the state that should be rendered.
-
-    Raises:
-      ValueError: If `data.obj` is not a `mujoco.MjData` on the direct path.
-    """
-    if self._impl == types.Impl.CPP and self._delay_in_substeps == 0:
-      mj_data = data.obj
-      if not isinstance(mj_data, mujoco.MjData):
-        raise ValueError(
-            f'Expected data.obj to be mujoco.MjData when impl={self._impl}, '
-            f'got {type(mj_data)}'
-        )
-      return mj_data
-
-    # Guaranteed by `initialize`, which allocates the scratch `MjData` under
-    # exactly the condition that lands us here (Warp, or a non-zero delay).
-    assert self._data is not None
-
-    if self._model.nq > 0:
-      self._data.qpos[:] = (
-          self._get_delayed_qpos()
-          if self._delay_in_substeps > 0
-          else _qpos_to_numpy(data.qpos)
-      )
-    mujoco.mj_kinematics(self._model, self._data)
-    mujoco.mj_camlight(self._model, self._data)
-    return self._data
+    """Returns the `MjData` holding the state the renderer should draw."""
+    assert self._impl is not None
+    delayed_qpos = (
+        self._get_delayed_qpos()
+        if self._delay_in_substeps > 0 and self._total_stored > 0
+        else None
+    )
+    return get_scene_data(
+        data=data,
+        impl=self._impl,
+        model=self._model,
+        scratch_data=self._data,
+        qpos=delayed_qpos,
+    )
 
   def _record_qpos(self, data: types.Data) -> None:
     """Stores the current qpos into the ring buffer (delayed rendering)."""

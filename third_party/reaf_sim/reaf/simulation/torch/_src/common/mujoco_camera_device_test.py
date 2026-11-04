@@ -161,6 +161,10 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
           )
           self.assertEqual(measurements[key].dtype, torch.int32)
 
+    if impl == types.Impl.WARP:
+      with self.assertRaisesRegex(ValueError, "only supports Impl.CPP"):
+        entity.render_now(device.sim)
+
   @parameterized.product(
       impl=[
           ("cpp", types.Impl.CPP),
@@ -201,9 +205,16 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
 
     # Step 2: Advance physics again to reach interval 2 -> should render again with new qpos
     device.sim.step()
+    side = (
+        entity.render_now(device.sim)[measurement_key]
+        if impl == types.Impl.CPP
+        else None
+    )
     device.update_measurements()
     m2 = device.get_measurements()
     self.assertFalse(torch.equal(m0[measurement_key], m2[measurement_key]))
+    if side is not None:
+      self.assertTrue(torch.equal(m2[measurement_key], side))
 
   @parameterized.product(
       impl=[types.Impl.CPP, types.Impl.WARP],
@@ -342,6 +353,47 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     device.update_measurements()
     self.assertFalse(torch.equal(device.get_measurements()["fixed_rgb"], first))
 
+  def test_render_now_renders_current_state_without_side_effects(self):
+    entity = self._create_entity(
+        mujoco_camera_device.RenderMode.RGB, render_rate_hz=None
+    )
+    device = self._create_device(entity)
+
+    uninitialized = mujoco_camera_device.MujocoCameraDevice(
+        camera_name="fixed",
+        width=self._width,
+        height=self._height,
+        render_rate_hz=None,
+    )
+    with self.assertRaisesRegex(RuntimeError, "Device not initialized"):
+      uninitialized.render_now(device.sim)
+
+    # Side-channel render before the first measurement leaves cache empty.
+    pre_step = entity.render_now(device.sim)
+    self.assertEqual(
+        pre_step["fixed_rgb"].shape, (1, self._height, self._width, 3)
+    )
+    self.assertEqual(entity._last_measurements, {})
+
+    device.update_measurements()
+    first = device.get_measurements()["fixed_rgb"].clone()
+
+    # Without `render_rate_hz`, later measurements keep the reset frame.
+    device.sim.data.qpos[0] = 1.0
+    device.sim.forward()
+    device.sim.step()
+    device.update_measurements()
+    self.assertTrue(torch.equal(device.get_measurements()["fixed_rgb"], first))
+
+    # `render_now` returns the current state without mutating measurements.
+    rendered = entity.render_now(device.sim)
+    self.assertEqual(
+        rendered["fixed_rgb"].shape, (1, self._height, self._width, 3)
+    )
+    self.assertFalse(torch.equal(rendered["fixed_rgb"], first))
+    device.update_measurements()
+    self.assertTrue(torch.equal(device.get_measurements()["fixed_rgb"], first))
+
   def test_delay_ms_validation(self):
     with self.assertRaises(ValueError):
       mujoco_camera_device.MujocoCameraDevice(
@@ -398,6 +450,20 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     )
     device = self._create_device_layer([baseline, delayed], impl=impl)
 
+    if impl == types.Impl.CPP:
+      # Before any substep is recorded, `render_now` renders live state without
+      # mutating `_qpos_buffer`.
+      device.sim.data.qpos[0] = 0.25
+      device.sim.forward()
+      self.assertTrue(
+          torch.equal(
+              delayed.render_now(device.sim)["delayed_rgb"],
+              baseline.render_now(device.sim)["base_rgb"],
+          )
+      )
+      self.assertEqual(delayed._total_stored, 0)
+      self.assertEqual(delayed._last_recorded_substep, -1)
+
     total_substeps = 6
     imgs_base = []
     imgs_delayed = []
@@ -436,6 +502,18 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
       self.assertTrue(
           torch.equal(imgs_delayed[t], imgs_base[t - delay_substeps]),
           f"delayed[{t}] should match baseline[{t - delay_substeps}]",
+      )
+
+    if impl == types.Impl.CPP:
+      stored_before = delayed._total_stored
+      write_before = delayed._write_idx
+      delayed_now = delayed.render_now(device.sim)["delayed_rgb"]
+      self.assertEqual(delayed._total_stored, stored_before)
+      self.assertEqual(delayed._write_idx, write_before)
+      self.assertTrue(
+          torch.equal(
+              delayed_now, imgs_base[total_substeps - 1 - delay_substeps]
+          )
       )
 
   @parameterized.product(

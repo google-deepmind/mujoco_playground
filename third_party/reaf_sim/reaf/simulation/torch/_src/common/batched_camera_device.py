@@ -28,6 +28,7 @@ from dm_env import specs
 import mujoco
 import mujoco_warp as mjw
 import numpy as np
+from reaf.simulation.torch._src.common import mujoco_camera_device
 from reaf.simulation.torch._src.core import device
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import types
@@ -123,7 +124,7 @@ class BatchedMujocoCameraDevice(device.Device):
             1.0 / actual_period,
         )
     self._mj_model = simulator.mj_model
-    self._xpu_device = getattr(simulator.data, 'device', 'cpu')
+    self._xpu_device = simulator.xpu_device
     if isinstance(simulator.model.obj, mjw.Model):
       self._impl = types.Impl.WARP
     else:
@@ -163,51 +164,109 @@ class BatchedMujocoCameraDevice(device.Device):
   ) -> Mapping[str, torch.Tensor]:
     """Render all cameras using Python mujoco.Renderer."""
     if self._renderer is None:
-      raise RuntimeError('Entity not initialized')
+      raise RuntimeError('Device not initialized')
 
-    data = simulator.data
     global_substep = simulator.clock.global_substep
     if not self._last_measurements or (
         self._render_rate_hz is not None
         and self._last_rendered_substep != global_substep
         and (global_substep % self._update_interval_in_substeps) == 0
     ):
-      measurements = {}
-
-      # Get mj_data for rendering
-      if self._impl == types.Impl.CPP:
-        mj_data = data.obj
-      else:
-        # WARP: copy qpos to host and run kinematics
-        qpos_tensor = data.qpos
-        if qpos_tensor.ndim == 2:
-          qpos = qpos_tensor[0].cpu().numpy()
-        else:
-          qpos = qpos_tensor.cpu().numpy()
-        self._mj_data.qpos = qpos  # pyrefly: ignore[missing-attribute]
-        mujoco.mj_kinematics(self._mj_model, self._mj_data)  # pyrefly: ignore[bad-argument-type]
-        mujoco.mj_camlight(self._mj_model, self._mj_data)  # pyrefly: ignore[bad-argument-type]
-        mj_data = self._mj_data
-
-      # Render all cameras
-      for cfg, cam_id in zip(self._camera_configs, self._camera_ids):
-        output_name = cfg['output_name']
-
-        self._renderer.update_scene(
-            mj_data, camera=cam_id, scene_option=self._scene_option  # pyrefly: ignore[bad-argument-type]
-        )
-        img = self._renderer.render()
-
-        # Convert to tensor with batch dim
-        tensor = torch.from_numpy(img.copy()).unsqueeze(0)
-        if self._impl == types.Impl.WARP:
-          tensor = tensor.to(self._xpu_device)
-        measurements[f'{output_name}_rgb'] = tensor
-
-      self._last_measurements = measurements
+      self._last_measurements = self._render(simulator)
       self._last_rendered_substep = global_substep
 
     return self._last_measurements
+
+  def render_now(
+      self,
+      simulator: simulator_module.Simulator,
+      output_names: Sequence[str] | None = None,
+  ) -> dict[str, torch.Tensor]:
+    """Renders cameras immediately without affecting device measurements.
+
+    Side-channel call for `Impl.CPP` single-world environments that renders from
+    the current simulator state and returns only the requested cameras, without
+    modifying cached substep measurements or the `render_rate_hz` schedule.
+
+    Args:
+      simulator: The simulator instance.
+      output_names: Optional subset of camera `output_name`s to render. `None`
+        renders all cameras configured on this device.
+
+    Returns:
+      A dictionary mapping `{output_name}_rgb` to the freshly rendered tensor
+      for each requested camera.
+
+    Raises:
+      RuntimeError: If the device has not been initialized.
+      ValueError: If `self._impl != types.Impl.CPP`, `data.nworld` is greater
+        than 1, or `output_names` is a bare string, empty, or contains an
+        unknown camera.
+    """
+    if self._renderer is None or self._impl is None:
+      raise RuntimeError('Device not initialized')
+
+    if self._impl != types.Impl.CPP:
+      raise ValueError(f'render_now only supports Impl.CPP, got {self._impl}')
+
+    target_names: set[str] | None = None
+    if output_names is not None:
+      # In Python typing, `str` satisfies `Sequence[str]`.
+      if isinstance(output_names, str) or not output_names:
+        raise ValueError(
+            'output_names must be a non-empty sequence of camera output names.'
+        )
+
+      known = {cfg['output_name'] for cfg in self._camera_configs}
+      unknown = set(output_names) - known
+      if unknown:
+        raise ValueError(
+            f'Unknown camera output names {sorted(unknown)}; expected a subset'
+            f' of {sorted(known)}.'
+        )
+      target_names = set(output_names)
+
+    return self._render(simulator, target_names)
+
+  def _render(
+      self,
+      simulator: simulator_module.Simulator,
+      output_names: set[str] | None = None,
+  ) -> dict[str, torch.Tensor]:
+    """Renders `output_names` (all cameras if `None`) from the current state."""
+    renderer = self._renderer
+    if renderer is None or self._impl is None or self._mj_model is None:
+      raise RuntimeError('Device not initialized')
+
+    data = simulator.data
+    if data.nworld > 1:
+      raise ValueError(
+          f'BatchedMujocoCameraDevice only supports nworld=1, got {data.nworld}'
+      )
+
+    mj_data = mujoco_camera_device.get_scene_data(
+        data=data,
+        impl=self._impl,
+        model=self._mj_model,
+        scratch_data=self._mj_data,
+    )
+
+    measurements = {}
+    for cfg, cam_id in zip(self._camera_configs, self._camera_ids):
+      output_name = cfg['output_name']
+      if output_names is not None and output_name not in output_names:
+        continue
+
+      renderer.update_scene(
+          mj_data, camera=cam_id, scene_option=self._scene_option
+      )
+      img = renderer.render()
+      tensor = torch.from_numpy(img).unsqueeze(0)
+      if self._impl == types.Impl.WARP:
+        tensor = tensor.to(self._xpu_device)
+      measurements[f'{output_name}_rgb'] = tensor
+
+    return measurements
 
   def substep_commands_spec(self) -> Mapping[str, specs.Array]:
     return {}
