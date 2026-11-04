@@ -18,32 +18,32 @@ Robots exist in `mujoco_playground/robots/`, either in simulation or paired with
 <table>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/whole_body/tracking/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp" alt="Whole body motion tracking"></a>
-      <br><b><a href="mujoco_playground/tasks/whole_body/tracking/README.md">Whole body motion tracking</a></b>
+      <a href="mujoco_playground/tasks/whole_body/tracking"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp" alt="Whole body motion tracking"></a>
+      <br><b><a href="mujoco_playground/tasks/whole_body/tracking">Whole body motion tracking</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_sim_teleop/0/so101_sim_teleop.webp" alt="SO-101 Simulation Teleoperation Demo"></a>
-      <br><b><a href="mujoco_playground/tasks/teleop/so101/README.md">Sim teleoperation</a></b>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/teleop/so101/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_real_teleop/0/so101_real_teleop.webp" alt="SO-101 Real Teleoperation Demo"></a>
-      <br><b><a href="mujoco_playground/tasks/teleop/so101/README.md">Real teleoperation</a></b>
-    </td>
-    <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/sysid/so101/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp" alt="SO-101 System Identification Rollout"></a>
-      <br><b><a href="mujoco_playground/tasks/sysid/so101/README.md">System identification</a></b>
+      <a href="mujoco_playground/tasks/teleop/so101"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_sim_teleop/0/so101_sim_teleop.webp" alt="SO-101 Simulation Teleoperation Demo"></a>
+      <br><b><a href="mujoco_playground/tasks/teleop/so101">Sim teleoperation</a></b>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.webp" alt="Sim2Real and interactive viewer"></a>
-      <br><b><a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md">Sim2Real and interactive viewer</a></b>
+      <a href="mujoco_playground/tasks/teleop/so101"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_real_teleop/0/so101_real_teleop.webp" alt="SO-101 Real Teleoperation Demo"></a>
+      <br><b><a href="mujoco_playground/tasks/teleop/so101">Real teleoperation</a></b>
     </td>
     <td align="center" width="50%">
-      <a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/yam_mug_real/0/yam_mug_real.webp" alt="YAM Agentic Tabletop Manipulation"></a>
-      <br><b><a href="mujoco_playground/tasks/agentic/tabletop_v0/README.md">Agentic manipulation</a></b>
+      <a href="mujoco_playground/tasks/sysid/so101"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp" alt="SO-101 System Identification Rollout"></a>
+      <br><b><a href="mujoco_playground/tasks/sysid/so101">System identification</a></b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.webp" alt="Sim2Real and interactive viewer"></a>
+      <br><b><a href="mujoco_playground/tasks/manipulation/pick_cube/so101/deploy">Sim2Real and interactive viewer</a></b>
+    </td>
+    <td align="center" width="50%">
+      <a href="mujoco_playground/tasks/agentic/tabletop_v0"><img width="420" src="https://www.gstatic.com/reaf-sim/demos/yam_mug_real/0/yam_mug_real.webp" alt="YAM Agentic Tabletop Manipulation"></a>
+      <br><b><a href="mujoco_playground/tasks/agentic/tabletop_v0">Agentic manipulation</a></b>
     </td>
   </tr>
 </table>
@@ -111,18 +111,18 @@ uv run --no-sync python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
 
 | Guide | Description |
 |-------|-------------|
-| [SO-101 Hardware Setup](mujoco_playground/robots/so101/real/README.md) | USB port & wrist camera identification and arm calibration |
-| [i2rt YAM Hardware Setup](mujoco_playground/robots/yam/README.md) | SocketCAN bring-up and RealSense D405 camera setup |
-| [Sim & Real Teleoperation](mujoco_playground/tasks/teleop/so101/README.md) | Leader-follower teleoperation, foot-pedal gating, and MCAP episode logging |
-| [SO-101 System Identification](mujoco_playground/tasks/sysid/so101/README.md) | Fit simulated SO-101 joint dynamics to teleoperation MCAP logs with `mujoco.sysid` |
-| [i2rt YAM System Identification](mujoco_playground/tasks/sysid/yam/README.md) | Play scripted excitation trajectories and fit YAM joint dynamics with `mujoco.sysid` |
-| [Sim-to-Real Pick-Cube Deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/README.md) | Train vision policies and deploy zero-shot to `--mode=sim` and `--mode=real` |
-| [G1 Whole-Body Motion Tracking](mujoco_playground/tasks/whole_body/tracking/README.md) | Retarget motion capture clips and train humanoid tracking policies |
-| [Agentic Tabletop Manipulation](mujoco_playground/tasks/agentic/tabletop_v0/README.md) | Zero-shot sim-to-real VLM code-as-policies harness (`SO-101`, `i2rt YAM`) |
+| [SO-101 Hardware Setup](mujoco_playground/robots/so101/real) | USB port & wrist camera identification and arm calibration |
+| [i2rt YAM Hardware Setup](mujoco_playground/robots/yam) | SocketCAN bring-up and RealSense D405 camera setup |
+| [Sim & Real Teleoperation](mujoco_playground/tasks/teleop/so101) | Leader-follower teleoperation, foot-pedal gating, and MCAP episode logging |
+| [SO-101 System Identification](mujoco_playground/tasks/sysid/so101) | Fit simulated SO-101 joint dynamics to teleoperation MCAP logs with `mujoco.sysid` |
+| [i2rt YAM System Identification](mujoco_playground/tasks/sysid/yam) | Play scripted excitation trajectories and fit YAM joint dynamics with `mujoco.sysid` |
+| [Sim-to-Real Pick-Cube Deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy) | Train vision policies and deploy zero-shot to `--mode=sim` and `--mode=real` |
+| [G1 Whole-Body Motion Tracking](mujoco_playground/tasks/whole_body/tracking) | Retarget motion capture clips and train humanoid tracking policies |
+| [Agentic Tabletop Manipulation](mujoco_playground/tasks/agentic/tabletop_v0) | Zero-shot sim-to-real VLM code-as-policies harness (`SO-101`, `i2rt YAM`) |
 
 ## Profiling with Tracy
 
-MuJoCo Playground includes [Tracy](https://github.com/wolfpld/tracy) instrumentation for profiling physics substeps, environment MDP loops, and RL training (see [`profiling/README.md`](profiling/README.md)):
+MuJoCo Playground includes [Tracy](https://github.com/wolfpld/tracy) instrumentation for profiling physics substeps, environment MDP loops, and RL training (see [`profiling/`](profiling)):
 
 ```bash
 # Capture 10s of headless telemetry from a running training script and export stats
@@ -151,7 +151,7 @@ If you use MuJoCo Playground in your work, please cite it as follows (see the [G
 }
 ```
 
-For the RSS 2025 benchmark suite that was built on JAX/MJX (see [`mujoco_playground/rss2025`](mujoco_playground/rss2025/README.md)), please cite:
+For the RSS 2025 benchmark suite that was built on JAX/MJX (see [`mujoco_playground/rss2025`](mujoco_playground/rss2025)), please cite:
 
 ```bibtex
 @misc{mujoco_playground_2025,

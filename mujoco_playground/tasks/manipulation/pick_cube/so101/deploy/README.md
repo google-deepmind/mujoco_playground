@@ -21,7 +21,7 @@ Sync both extras before training or deploying:
 uv sync --extra so101 --extra rl
 ```
 
-For real hardware deployment, ensure the SO101 follower arm and wrist camera are identified and calibrated first—see [the SO101 hardware setup](../../../../../robots/so101/real/README.md).
+For real hardware deployment, ensure the SO101 follower arm and wrist camera are identified and calibrated first—see [the SO101 hardware setup](../../../../../robots/so101/real).
 
 ---
 

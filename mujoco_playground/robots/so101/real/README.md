@@ -133,7 +133,7 @@ starts from this pose.
 ## 4. Next: collect episodes
 
 The hardware is ready. You can now teleop the robot:
-[`tasks/teleop/so101/`](../../../tasks/teleop/so101/README.md).
+[`tasks/teleop/so101/`](../../../tasks/teleop/so101).
 
 ## Joint ordering
 

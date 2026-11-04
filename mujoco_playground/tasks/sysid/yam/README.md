@@ -16,7 +16,7 @@ hardware.
 ## 1. Collect excitation trajectories
 
 Set up the arm and bring up the SocketCAN interface as described in
-[`mujoco_playground/robots/yam/README.md`](../../../robots/yam/README.md).
+[`mujoco_playground/robots/yam`](../../../robots/yam).
 Clear the desk around the arm and start near `REST_POSE` (all joints at zero):
 
 ```bash

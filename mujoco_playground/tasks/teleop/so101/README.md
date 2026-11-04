@@ -21,7 +21,7 @@ they produce are interchangeable.
 ## Before you start
 
 We assume the arms are already identified and calibrated. Work through
-[the SO101 hardware setup](../../../robots/so101/real/README.md) first to identify
+[the SO101 hardware setup](../../../robots/so101/real) first to identify
 and calibrate the hardware.
 
 ## Running
