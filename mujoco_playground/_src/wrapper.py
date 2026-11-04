@@ -173,6 +173,10 @@ class BraxAutoResetWrapper(Wrapper):
       `AutoResetWrapper_preserve_info`, which is passed through from the prior
       step. This can be used for curriculum learning.
 
+  In both cases `AutoResetWrapper_final_obs` holds the observation the step
+  produced before any reset, which is what a learner has to bootstrap from when
+  `info['truncation']` says the episode was cut short rather than ended.
+
   Attributes:
     env: The wrapped environment.
     full_reset: Whether to call `env.reset` during `env.step` on done.
@@ -189,6 +193,7 @@ class BraxAutoResetWrapper(Wrapper):
     state = self.env.reset(key)
     state.info[f'{self._info_key}_first_data'] = state.data
     state.info[f'{self._info_key}_first_obs'] = state.obs
+    state.info[f'{self._info_key}_final_obs'] = state.obs
     state.info[f'{self._info_key}_rng'] = rng
     state.info[f'{self._info_key}_done_count'] = jp.zeros(
         key.shape[:-1], dtype=int
@@ -241,6 +246,11 @@ class BraxAutoResetWrapper(Wrapper):
       preserve_info_key = f'{self._info_key}_preserve_info'
       if preserve_info_key in next_info:
         next_info[preserve_info_key] = state.info[preserve_info_key]
+
+    # The observation the episode ended on, before it was replaced by the reset
+    # observation. A learner needs it to bootstrap V(s_{t+1}) when an episode is
+    # truncated rather than terminated (see info['truncation']).
+    next_info[f'{self._info_key}_final_obs'] = state.obs
 
     next_info[done_count_key] += state.done.astype(int)
     next_info[f'{self._info_key}_rng'] = reset_rng
