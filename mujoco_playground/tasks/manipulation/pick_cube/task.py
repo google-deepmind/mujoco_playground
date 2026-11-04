@@ -320,10 +320,7 @@ def pick_cube_pixels_env() -> config.Environment:
                   config.Obs(
                       mdp.obs_camera,
                       camera_key="PLACEHOLDER_CAM_rgb",
-                  ).configure(
-                      history_length=2,
-                      output_shape=(3, 32, 32),
-                  )
+                  ).configure(output_shape=(3, 32, 32))
               )
           },
           enable_noise=False,

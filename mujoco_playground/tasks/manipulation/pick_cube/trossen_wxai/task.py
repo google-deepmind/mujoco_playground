@@ -171,7 +171,8 @@ def right_arm_pick_cube_env() -> config.Environment:
 
   # Ground rewards in grasping, lifting, bringing the cube to target, and
   # hardware safety.
-  table_z = trossen_scene.TABLE_HEIGHT + 0.025
+  table_z = trossen_scene.TABLE_HEIGHT + 0.020
+  lift_height_threshold = trossen_scene.TABLE_HEIGHT + 0.04
   rewards = cfg.task_layer.rewards
   rewards["reaching"].params["reaching_std"] = 0.1
   rewards["grasp"] = config.Reward(
@@ -189,9 +190,7 @@ def right_arm_pick_cube_env() -> config.Environment:
   rewards["bringing"].params["table_z"] = table_z
   rewards["bringing"].params["std"] = 0.08
   rewards["success"].params["distance_threshold"] = 0.05
-  rewards["success"].params["lift_height_threshold"] = (
-      trossen_scene.TABLE_HEIGHT + 0.04
-  )
+  rewards["success"].params["lift_height_threshold"] = lift_height_threshold
   rewards["floor_contact"].params["penalty_scale"] = -1.0
   rewards["action_rate"].params["penalty_scale"] = -0.02
   # fmt: off
@@ -221,17 +220,21 @@ def right_arm_pick_cube_env() -> config.Environment:
       weight=0.05,
   )
 
+  metrics = cfg.task_layer.metrics
+  metrics["cube_lifted"].params["lift_height_threshold"] = lift_height_threshold
+  metrics["success"].params["distance_threshold"] = 0.05
+  metrics["success"].params["lift_height_threshold"] = lift_height_threshold
+
   # Reset logic
   cfg.resetters["pick_cube"] = config.Component(
       trossen_mdp.TrossenPickCubeResetter,
       object_pos_range=(
           (0.10, 0.25),
           (-0.1, 0.1),
-          # TABLE_HEIGHT (0.75) + max_DR_cube_half_size (0.025)
-          # + safety_margin (0.007)
+          # TABLE_HEIGHT (0.75) + max_DR_cube_half_size (0.025).
           (
-              trossen_scene.TABLE_HEIGHT + 0.032,
-              trossen_scene.TABLE_HEIGHT + 0.032,
+              trossen_scene.TABLE_HEIGHT + 0.025,
+              trossen_scene.TABLE_HEIGHT + 0.025,
           ),
       ),
       target_pos_range=((0.10, 0.20), (-0.1, 0.1), (0.85, 1.0)),
@@ -290,9 +293,18 @@ def right_arm_pick_cube_pixels_env() -> config.Environment:
       "last_action": base_obs["last_action"],
   }
 
+  base_critic_obs = cfg.observation_adapter["critic"].terms
+  assert isinstance(base_critic_obs, dict)
+  critic_obs = {
+      **base_critic_obs,
+      "ee_pos": policy_obs["ee_pos"],
+      "ee_orientation": policy_obs["ee_orientation"],
+      "goal_position": policy_obs["goal_position"],
+  }
+
   cfg.observation_adapter = {
       "policy": config.ObsGroup(terms=policy_obs, enable_noise=True),
-      "critic": cfg.observation_adapter["critic"],
+      "critic": config.ObsGroup(terms=critic_obs, enable_noise=False),
       "camera": config.ObsGroup(
           terms={
               "camera": (

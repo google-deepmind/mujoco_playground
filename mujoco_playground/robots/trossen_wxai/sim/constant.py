@@ -82,7 +82,7 @@ GRIPPER_HALF = (
 
 RIGHT_ARM_JOINTS = [f"right/{j}" for j in JOINTS]
 
-# Action scale and offset for the controlled arm.
-ARM_SCALES = [0.5 * FORCERANGE[j] / STIFFNESS[j] for j in JOINTS[:-1]]
+# Positional action scale (rad per unit action) and offset for the controlled arm.
+ARM_SCALES = [0.5, 0.85, 0.5, 0.5, 0.8, 0.8]
 RIGHT_ARM_ACTION_SCALE = ARM_SCALES + [GRIPPER_HALF]
 RIGHT_ARM_ACTION_OFFSET = list(PICKUP_CTRL[:-1]) + [GRIPPER_MID]
