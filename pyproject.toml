@@ -112,6 +112,7 @@ override-dependencies = ["evdev; sys_platform == 'linux'"]
 
 [[tool.uv.index]]
 url = "https://pypi.org/simple"
+default = true
 
 [[tool.uv.index]]
 name = "nvidia"
@@ -131,7 +132,6 @@ explicit = true
 [[tool.uv.index]]
 name = "mujoco"
 url = "https://py.mujoco.org/"
-explicit = true
 
 [tool.uv.sources]
 mujoco_warp = { git = "https://github.com/google-deepmind/mujoco_warp", branch = "deepmind" }
