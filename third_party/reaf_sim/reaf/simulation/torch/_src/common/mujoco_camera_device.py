@@ -192,9 +192,9 @@ class MujocoCameraDevice(device.Device):
   """Entity that renders the scene using MuJoCo rendering."""
 
   _camera_id: int = -1
-  _renderer: mujoco.Renderer | None
+  _renderer: mujoco.Renderer | None = None
   _model: mujoco.MjModel
-  _data: mujoco.MjData | None
+  _data: mujoco.MjData | None = None
   _xpu_device: str
 
   def __init__(
@@ -334,6 +334,7 @@ class MujocoCameraDevice(device.Device):
 
     self._last_measurements: dict[str, torch.Tensor] = {}
     self._last_rendered_substep: int = -1
+    self._renderer = None
     # Simulator has its own device, so override it only if we get an
     # explicit device assignment.
     self._xpu_device_arg = xpu_device
@@ -623,3 +624,9 @@ class MujocoCameraDevice(device.Device):
   ) -> None:
     """No commands are consumed."""
     del simulator, consumed_substep_commands
+
+  def close(self) -> None:
+    """Closes and releases the underlying MuJoCo renderer, if initialized."""
+    if self._renderer is not None:
+      self._renderer.close()
+      self._renderer = None

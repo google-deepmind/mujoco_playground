@@ -91,6 +91,21 @@ class NumpyDeviceLayerWrapperTest(absltest.TestCase):
     self.assertEqual(camera.dtype, np.uint8)
 
 
+class SingleDeviceLayerWrapperTest(absltest.TestCase):
+
+  def test_step_batches_scalar_and_vector_commands(self):
+    fake_layer = mock.MagicMock(nworld=1)
+    fake_layer.step.return_value = {"qpos": torch.tensor([[1.0, 2.0]])}
+    single = device_layer_wrapper.SingleDeviceLayerWrapper(fake_layer)
+
+    measured = single.step({"scalar": 0.5, "vec": np.array([0.4, -0.6])})
+
+    batched = fake_layer.step.call_args[0][0]
+    self.assertEqual(batched["scalar"].shape, (1,))
+    self.assertEqual(batched["vec"].shape, (1, 2))
+    self.assertEqual(measured["qpos"].shape, (2,))
+
+
 class TorchDeviceLayerWrapperTest(absltest.TestCase):
 
   def test_sim_property_returns_none_when_unprovided(self):

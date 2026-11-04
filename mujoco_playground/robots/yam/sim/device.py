@@ -21,14 +21,15 @@ the real one.
 
 from collections.abc import Mapping
 import time
-from typing import Any
 
 from dm_env import specs
 import mujoco
 from mujoco_playground.robots.yam.real import constant
 from mujoco_playground.robots.yam.sim import constant as sim_constant
 import numpy as np
+from reaf.simulation import torch as reaf_sim
 from reaf.simulation.torch import device as device_base
+from reaf.simulation.torch import flat_scene as config
 from reaf.simulation.torch import simulator as simulator_module
 import torch
 from typing_extensions import override
@@ -167,3 +168,31 @@ class YamFollower(device_base.Device):
         self._last_cmd_timestamp_ns, device=self._xpu_device, dtype=torch.int64
     ).expand(simulator.data.qpos.shape[0])
     return values
+
+
+def follower_device_config(
+    base_spec: mujoco.MjSpec,
+    control_period_seconds: float = constant.CONTROL_PERIOD,
+) -> config.Environment:
+  """Returns config for the follower arm and wrist camera devices."""
+  # the base_spec must contain both the robot and the scene.
+  cfg = config.Environment(base_scene=base_spec)
+  cfg.sim.nworld = 1
+  cfg.sim.xpu_device = "cpu"
+  cfg.sim.impl = "cpp"
+  cfg.sim.control_timestep = control_period_seconds
+  assert cfg.sim.control_timestep > cfg.sim.simulation_timestep
+
+  cfg.device_layer.devices["follower"] = config.Component(
+      YamFollower,
+  )
+  cfg.device_layer.devices["wrist_camera"] = config.Component(
+      reaf_sim.MujocoCameraDevice,
+      camera_name=sim_constant.WRIST_CAM_FULLNAME,
+      width=constant.CAMERA_WIDTH,
+      height=constant.CAMERA_HEIGHT,
+      render_rate_hz=constant.CAMERA_FPS,
+      image_output_name_prefix=constant.WRIST_CAMERA,
+      rgb_output_name_suffix="",
+  )
+  return cfg

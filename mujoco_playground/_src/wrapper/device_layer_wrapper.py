@@ -109,7 +109,7 @@ class SingleDeviceLayerWrapper(DeviceLayerWrapper):
 
   def step(self, commands: Mapping[str, Any]) -> Mapping[str, torch.Tensor]:
     batched = {
-        key: torch.as_tensor(value).reshape(1)
+        key: torch.as_tensor(value).unsqueeze(0)
         for key, value in commands.items()
     }
     return _squeeze(self._device_layer.step(batched))

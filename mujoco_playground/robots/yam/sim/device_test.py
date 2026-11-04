@@ -19,7 +19,6 @@ import types
 from typing import Any
 
 from absl.testing import absltest
-import mujoco
 from mujoco_playground import real
 from mujoco_playground import wrapper as wrapper_lib
 from mujoco_playground.robots.yam.real import constant
@@ -28,7 +27,6 @@ from mujoco_playground.robots.yam.sim import constant as sim_constant
 from mujoco_playground.robots.yam.sim import device as sim_device
 from mujoco_playground.robots.yam.sim import scene as yam_scene
 import numpy as np
-from reaf.simulation import torch as sim
 from reaf.simulation.torch import flat_scene as build
 
 
@@ -51,33 +49,11 @@ class _FakeRobot:
     self.positions = self.written.copy()
 
 
-def _follower_device_config(base_spec: mujoco.MjSpec) -> build.Environment:
-  cfg = build.Environment(base_scene=base_spec)
-  cfg.sim.nworld = 1
-  cfg.sim.xpu_device = "cpu"
-  cfg.sim.impl = "cpp"
-  cfg.sim.control_timestep = constant.CONTROL_PERIOD
-
-  cfg.device_layer.devices["follower"] = build.Component(
-      sim_device.YamFollower,
-  )
-  cfg.device_layer.devices["wrist_camera"] = build.Component(
-      sim.MujocoCameraDevice,
-      camera_name=sim_constant.WRIST_CAM_FULLNAME,
-      width=constant.CAMERA_WIDTH,
-      height=constant.CAMERA_HEIGHT,
-      render_rate_hz=constant.CAMERA_FPS,
-      image_output_name_prefix=constant.WRIST_CAMERA,
-      rgb_output_name_suffix="",
-  )
-  return cfg
-
-
 def _sim_device_layer() -> wrapper_lib.NumpyDeviceLayerWrapper:
   return wrapper_lib.NumpyDeviceLayerWrapper(
       wrapper_lib.SingleDeviceLayerWrapper(
           build.build_device_layer(
-              _follower_device_config(yam_scene.yam_aloha_table())
+              sim_device.follower_device_config(yam_scene.yam_aloha_table())
           )
       )
   )

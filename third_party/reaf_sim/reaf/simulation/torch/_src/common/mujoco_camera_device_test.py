@@ -52,10 +52,9 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     self._height = 240
     self._entities_to_close = []
 
-  def tearDown(self):
+  def tearDown(self) -> None:
     for entity in self._entities_to_close:
-      if getattr(entity, "_renderer", None) is not None:
-        entity._renderer.close()
+      entity.close()
     super().tearDown()
 
   def _create_entity(self, render_mode, render_rate_hz=10):
@@ -702,6 +701,30 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     self.assertEqual(
         measurements["fixed_rgb"].shape, (1, self._height, self._width, 3)
     )
+
+  def test_close_is_idempotent_before_and_after_initialize(self) -> None:
+    entity = self._create_entity(mujoco_camera_device.RenderMode.RGB)
+    self.assertIsNone(entity._renderer)
+    entity.close()
+    self.assertIsNone(entity._renderer)
+
+    device = self._create_device(entity, impl=types.Impl.CPP, nworld=1)
+    device.update_measurements()
+    self.assertIsNotNone(entity._renderer)
+    assert entity._renderer is not None
+
+    with mock.patch.object(
+        entity._renderer, "close", wraps=entity._renderer.close
+    ) as mock_close:
+      entity.close()
+      self.assertIsNone(entity._renderer)
+      entity.close()
+      self.assertIsNone(entity._renderer)
+
+    mock_close.assert_called_once()
+    device.reset()
+    with self.assertRaisesRegex(RuntimeError, "Renderer is not initialized"):
+      device.update_measurements()
 
 
 if __name__ == "__main__":
