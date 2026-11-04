@@ -84,8 +84,13 @@ Built-in devices
     MuJoCo Warp.
   - :class:`~reaf.simulation.torch.MujocoCameraDevice`: Headless CPU camera rendering RGB, depth, and segmentation masks
     via ``mujoco.Renderer``.
-  - :class:`~reaf.simulation.torch.BatchedMujocoCameraDevice`: Multi-camera CPU entity rendering multiple cameras in a
-    single device via ``mujoco.Renderer``.
+  - :class:`~reaf.simulation.torch.BatchedMujocoCameraDevice`: Multi-camera CPU device rendering RGB, depth, and
+    segmentation masks across multiple cameras via ``mujoco.Renderer``.
+
+  Both ``mujoco.Renderer`` devices also offer ``render_now(...)`` for single-world ``Impl.CPP`` simulations, which
+  renders the current state (optionally a subset of cameras and render modes) without touching cached measurements.
+  Pass ``on_demand_only=True`` (with ``render_rate_hz=None``) for cameras that are only read through ``render_now``;
+  such devices publish no measurements and skip the render after each reset.
 
 - **Heterogeneous**:
 

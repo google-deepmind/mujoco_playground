@@ -35,6 +35,7 @@ from reaf.simulation.torch._src.core import types
 import torch
 
 _logger = logging.getLogger(__name__)
+RenderMode = mujoco_camera_device.RenderMode
 
 
 class BatchedMujocoCameraDevice(device.Device):
@@ -52,6 +53,8 @@ class BatchedMujocoCameraDevice(device.Device):
       width: int = 128,
       height: int = 128,
       scene_option: mujoco.MjvOption | None = None,
+      render_mode: RenderMode = RenderMode.RGB,
+      on_demand_only: bool = False,
   ):
     """Initialize camera entity.
 
@@ -60,17 +63,31 @@ class BatchedMujocoCameraDevice(device.Device):
       camera_configs: List of dicts with 'camera_name' and 'output_name' keys,
         e.g. [{'camera_name': 'front', 'output_name': 'front'}, {'camera_name':
         'wrist', 'output_name': 'wrist'}]. Each entry renders the named camera
-        and produces '{output_name}_rgb' in the measurements dict.
+        and produces '{output_name}_rgb', '{output_name}_depth', and/or
+        '{output_name}_segmentation' in the measurements dict according to
+        `render_mode`.
       render_rate_hz: Camera rendering rate in Hz, or None to render only the
         first measurement after each reset. Must be positive if set.
       width: Image width.
       height: Image height.
       scene_option: MuJoCo visualization options.
+      render_mode: Render modes enabled on this device (RGB, DEPTH,
+        SEGMENTATION).
+      on_demand_only: If True, the device publishes no substep measurements and
+        never renders on its own (not even after a reset); frames are produced
+        only by `render_now`. Requires `render_rate_hz=None`. Use this for
+        cameras read exclusively through `render_now`, so that a reset does not
+        render every camera in every enabled mode.
     """
     if render_rate_hz is not None and render_rate_hz <= 0:
       raise ValueError(
           f'render_rate_hz must be positive or None, got {render_rate_hz}'
       )
+    if on_demand_only and render_rate_hz is not None:
+      raise ValueError(
+          f'on_demand_only requires render_rate_hz=None, got {render_rate_hz}'
+      )
+    mujoco_camera_device.validate_render_mode(render_mode)
 
     self._name = name
     self._camera_configs = list(camera_configs)
@@ -79,14 +96,29 @@ class BatchedMujocoCameraDevice(device.Device):
     self._height = height
     self._update_interval_in_substeps = 1
     self._scene_option = scene_option or mujoco.MjvOption()
+    self._render_mode = render_mode
+    self._on_demand_only = on_demand_only
 
     # Build specs for all cameras
     self._measurements_spec: dict[str, specs.Array] = {}
     for cfg in camera_configs:
       output_name = cfg['output_name']
-      self._measurements_spec[f'{output_name}_rgb'] = specs.Array(
-          shape=(height, width, 3), dtype=np.uint8
-      )
+      if RenderMode.RGB in render_mode:
+        self._measurements_spec[f'{output_name}_rgb'] = specs.Array(
+            shape=(height, width, 3), dtype=np.uint8
+        )
+      if RenderMode.DEPTH in render_mode:
+        self._measurements_spec[f'{output_name}_depth'] = specs.Array(
+            shape=(height, width), dtype=np.float32
+        )
+      if RenderMode.SEGMENTATION in render_mode:
+        self._measurements_spec[f'{output_name}_segmentation'] = specs.Array(
+            shape=(height, width, 2), dtype=np.int32
+        )
+    if on_demand_only:
+      # `render_now` output keys follow the same naming, but nothing is
+      # published as a substep measurement.
+      self._measurements_spec = {}
 
     self._last_measurements: dict[str, torch.Tensor] = {}
     self._last_rendered_substep: int = -1
@@ -166,6 +198,9 @@ class BatchedMujocoCameraDevice(device.Device):
     if self._renderer is None:
       raise RuntimeError('Device not initialized')
 
+    if self._on_demand_only:
+      return {}
+
     global_substep = simulator.clock.global_substep
     if not self._last_measurements or (
         self._render_rate_hz is not None
@@ -181,33 +216,42 @@ class BatchedMujocoCameraDevice(device.Device):
       self,
       simulator: simulator_module.Simulator,
       output_names: Sequence[str] | None = None,
+      render_mode: RenderMode | None = None,
   ) -> dict[str, torch.Tensor]:
     """Renders cameras immediately without affecting device measurements.
 
     Side-channel call for `Impl.CPP` single-world environments that renders from
-    the current simulator state and returns only the requested cameras, without
-    modifying cached substep measurements or the `render_rate_hz` schedule.
+    the current simulator state and returns only the requested cameras and
+    modes, without modifying cached substep measurements or the `render_rate_hz`
+    schedule.
 
     Args:
       simulator: The simulator instance.
       output_names: Optional subset of camera `output_name`s to render. `None`
         renders all cameras configured on this device.
+      render_mode: Optional subset of enabled `RenderMode` flags to render.
+        `None` renders all modes configured on this device.
 
     Returns:
-      A dictionary mapping `{output_name}_rgb` to the freshly rendered tensor
-      for each requested camera.
+      A dictionary mapping `{output_name}_{mode}` to the freshly rendered
+      tensor for each requested camera and mode.
 
     Raises:
       RuntimeError: If the device has not been initialized.
       ValueError: If `self._impl != types.Impl.CPP`, `data.nworld` is greater
-        than 1, or `output_names` is a bare string, empty, or contains an
-        unknown camera.
+        than 1, `output_names` is a bare string, empty, or contains an unknown
+        camera, or `render_mode` is empty or includes modes not enabled on this
+        device.
     """
     if self._renderer is None or self._impl is None:
       raise RuntimeError('Device not initialized')
 
     if self._impl != types.Impl.CPP:
       raise ValueError(f'render_now only supports Impl.CPP, got {self._impl}')
+
+    active_mode = mujoco_camera_device.validate_render_mode(
+        render_mode, self._render_mode
+    )
 
     target_names: set[str] | None = None
     if output_names is not None:
@@ -226,12 +270,15 @@ class BatchedMujocoCameraDevice(device.Device):
         )
       target_names = set(output_names)
 
-    return self._render(simulator, target_names)
+    return self._render(
+        simulator, output_names=target_names, render_mode=active_mode
+    )
 
   def _render(
       self,
       simulator: simulator_module.Simulator,
       output_names: set[str] | None = None,
+      render_mode: RenderMode | None = None,
   ) -> dict[str, torch.Tensor]:
     """Renders `output_names` (all cameras if `None`) from the current state."""
     renderer = self._renderer
@@ -244,27 +291,34 @@ class BatchedMujocoCameraDevice(device.Device):
           f'BatchedMujocoCameraDevice only supports nworld=1, got {data.nworld}'
       )
 
+    active_mode = self._render_mode if render_mode is None else render_mode
     mj_data = mujoco_camera_device.get_scene_data(
         data=data,
         impl=self._impl,
         model=self._mj_model,
         scratch_data=self._mj_data,
     )
+    xpu_device = self._xpu_device if self._impl == types.Impl.WARP else None
 
-    measurements = {}
+    measurements: dict[str, torch.Tensor] = {}
     for cfg, cam_id in zip(self._camera_configs, self._camera_ids):
       output_name = cfg['output_name']
       if output_names is not None and output_name not in output_names:
         continue
 
-      renderer.update_scene(
-          mj_data, camera=cam_id, scene_option=self._scene_option
+      measurements.update(
+          mujoco_camera_device.render_camera(
+              renderer,
+              mj_data,
+              camera_id=cam_id,
+              scene_option=self._scene_option,
+              render_mode=active_mode,
+              rgb_key=f'{output_name}_rgb',
+              depth_key=f'{output_name}_depth',
+              segmentation_key=f'{output_name}_segmentation',
+              xpu_device=xpu_device,
+          )
       )
-      img = renderer.render()
-      tensor = torch.from_numpy(img).unsqueeze(0)
-      if self._impl == types.Impl.WARP:
-        tensor = tensor.to(self._xpu_device)
-      measurements[f'{output_name}_rgb'] = tensor
 
     return measurements
 

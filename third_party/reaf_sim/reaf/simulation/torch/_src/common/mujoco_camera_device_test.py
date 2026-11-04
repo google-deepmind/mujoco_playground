@@ -354,10 +354,27 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     self.assertFalse(torch.equal(device.get_measurements()["fixed_rgb"], first))
 
   def test_render_now_renders_current_state_without_side_effects(self):
-    entity = self._create_entity(
-        mujoco_camera_device.RenderMode.RGB, render_rate_hz=None
+    rgb_depth = (
+        mujoco_camera_device.RenderMode.RGB
+        | mujoco_camera_device.RenderMode.DEPTH
     )
-    device = self._create_device(entity)
+    entity = self._create_entity(rgb_depth, render_rate_hz=None)
+    # An on-demand-only device on the same camera publishes no measurements and
+    # never renders on reset or during `update_measurements`.
+    on_demand = mujoco_camera_device.MujocoCameraDevice(
+        camera_name="fixed",
+        width=self._width,
+        height=self._height,
+        render_rate_hz=None,
+        render_mode=rgb_depth,
+        on_demand_only=True,
+        name="on_demand_camera",
+        image_output_name_prefix="on_demand",
+    )
+    self._entities_to_close.append(on_demand)
+    self.assertEqual(on_demand.substep_measurements_spec(), {})
+    device = self._create_device_layer([entity, on_demand])
+    self.assertNotIn("on_demand_rgb", device.measurements_spec())
 
     uninitialized = mujoco_camera_device.MujocoCameraDevice(
         camera_name="fixed",
@@ -368,33 +385,87 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     with self.assertRaisesRegex(RuntimeError, "Device not initialized"):
       uninitialized.render_now(device.sim)
 
-    # Side-channel render before the first measurement leaves cache empty.
-    pre_step = entity.render_now(device.sim)
+    # Side-channel subset render before the first measurement leaves cache
+    # empty.
+    pre_step = entity.render_now(
+        device.sim, render_mode=mujoco_camera_device.RenderMode.RGB
+    )
+    self.assertEqual(set(pre_step.keys()), {"fixed_rgb"})
     self.assertEqual(
         pre_step["fixed_rgb"].shape, (1, self._height, self._width, 3)
     )
     self.assertEqual(entity._last_measurements, {})
 
-    device.update_measurements()
-    first = device.get_measurements()["fixed_rgb"].clone()
+    assert on_demand._renderer is not None
+    with mock.patch.object(
+        on_demand._renderer, "render", wraps=on_demand._renderer.render
+    ) as on_demand_spy:
+      device.reset()
+      device.update_measurements()
+      self.assertEqual(on_demand_spy.call_count, 0)
+    self.assertNotIn("on_demand_rgb", device.get_measurements())
+    first_rgb = device.get_measurements()["fixed_rgb"].clone()
+    first_depth = device.get_measurements()["fixed_depth"].clone()
 
-    # Without `render_rate_hz`, later measurements keep the reset frame.
+    # Without `render_rate_hz`, later measurements keep the reset frames.
     device.sim.data.qpos[0] = 1.0
     device.sim.forward()
     device.sim.step()
     device.update_measurements()
-    self.assertTrue(torch.equal(device.get_measurements()["fixed_rgb"], first))
-
-    # `render_now` returns the current state without mutating measurements.
-    rendered = entity.render_now(device.sim)
-    self.assertEqual(
-        rendered["fixed_rgb"].shape, (1, self._height, self._width, 3)
+    self.assertTrue(
+        torch.equal(device.get_measurements()["fixed_rgb"], first_rgb)
     )
-    self.assertFalse(torch.equal(rendered["fixed_rgb"], first))
+
+    # `render_now` returns the current state without mutating measurements, and
+    # `render_mode` runs only the requested pass.
+    rendered = entity.render_now(device.sim)
+    self.assertEqual(set(rendered.keys()), {"fixed_rgb", "fixed_depth"})
+    self.assertFalse(torch.equal(rendered["fixed_rgb"], first_rgb))
+    rendered_on_demand = on_demand.render_now(device.sim)
+    self.assertEqual(
+        set(rendered_on_demand.keys()), {"on_demand_rgb", "on_demand_depth"}
+    )
+    self.assertTrue(
+        torch.equal(rendered_on_demand["on_demand_rgb"], rendered["fixed_rgb"])
+    )
+
+    assert entity._renderer is not None
+    with mock.patch.object(
+        entity._renderer, "render", wraps=entity._renderer.render
+    ) as render_spy:
+      rgb_only = entity.render_now(
+          device.sim, render_mode=mujoco_camera_device.RenderMode.RGB
+      )
+      self.assertEqual(render_spy.call_count, 1)
+    self.assertEqual(set(rgb_only.keys()), {"fixed_rgb"})
+    self.assertTrue(torch.equal(rgb_only["fixed_rgb"], rendered["fixed_rgb"]))
     device.update_measurements()
-    self.assertTrue(torch.equal(device.get_measurements()["fixed_rgb"], first))
+    self.assertTrue(
+        torch.equal(device.get_measurements()["fixed_rgb"], first_rgb)
+    )
+    self.assertTrue(
+        torch.equal(device.get_measurements()["fixed_depth"], first_depth)
+    )
+
+    with self.assertRaisesRegex(ValueError, "not enabled on this device"):
+      entity.render_now(
+          device.sim,
+          render_mode=mujoco_camera_device.RenderMode.SEGMENTATION,
+      )
+    with self.assertRaisesRegex(ValueError, "At least one render mode"):
+      entity.render_now(
+          device.sim, render_mode=mujoco_camera_device.RenderMode(0)
+      )
 
   def test_delay_ms_validation(self):
+    with self.assertRaisesRegex(ValueError, "on_demand_only requires"):
+      mujoco_camera_device.MujocoCameraDevice(
+          camera_name="fixed",
+          width=self._width,
+          height=self._height,
+          render_rate_hz=10.0,
+          on_demand_only=True,
+      )
     with self.assertRaises(ValueError):
       mujoco_camera_device.MujocoCameraDevice(
           camera_name="fixed",

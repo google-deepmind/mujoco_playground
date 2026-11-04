@@ -65,6 +65,70 @@ class RenderMode(enum.Flag):
       raise ValueError(f'Unknown value: {value}')
 
 
+def validate_render_mode(
+    render_mode: RenderMode | None,
+    enabled_mode: RenderMode | None = None,
+) -> RenderMode:
+  """Validates `render_mode` and optionally checks it against `enabled_mode`."""
+  if render_mode is None:
+    if enabled_mode is None:
+      raise ValueError('Either render_mode or enabled_mode must be provided.')
+    return enabled_mode
+
+  if not render_mode:
+    raise ValueError(
+        'At least one render mode (RGB, DEPTH, or SEGMENTATION) must be'
+        ' selected.'
+    )
+
+  if enabled_mode is not None and (render_mode & ~enabled_mode):
+    raise ValueError(
+        f'Requested render_mode ({render_mode}) is not enabled on this'
+        f' device ({enabled_mode}).'
+    )
+
+  return render_mode
+
+
+def render_camera(
+    renderer: mujoco.Renderer,
+    mj_data: mujoco.MjData,
+    *,
+    camera_id: int,
+    scene_option: mujoco.MjvOption,
+    render_mode: RenderMode,
+    rgb_key: str,
+    depth_key: str,
+    segmentation_key: str,
+    xpu_device: str | None = None,
+) -> dict[str, torch.Tensor]:
+  """Renders the requested `render_mode` passes for one camera."""
+  renderer.update_scene(mj_data, camera=camera_id, scene_option=scene_option)
+  measurements: dict[str, torch.Tensor] = {}
+
+  if RenderMode.RGB in render_mode:
+    renderer.disable_depth_rendering()
+    renderer.disable_segmentation_rendering()
+    tensor = torch.from_numpy(renderer.render()).unsqueeze(0)
+    measurements[rgb_key] = tensor.to(xpu_device) if xpu_device else tensor
+
+  if RenderMode.DEPTH in render_mode:
+    renderer.disable_segmentation_rendering()
+    renderer.enable_depth_rendering()
+    tensor = torch.from_numpy(renderer.render()).unsqueeze(0)
+    measurements[depth_key] = tensor.to(xpu_device) if xpu_device else tensor
+
+  if RenderMode.SEGMENTATION in render_mode:
+    renderer.disable_depth_rendering()
+    renderer.enable_segmentation_rendering()
+    tensor = torch.from_numpy(renderer.render()).unsqueeze(0)
+    measurements[segmentation_key] = (
+        tensor.to(xpu_device) if xpu_device else tensor
+    )
+
+  return measurements
+
+
 def _qpos_to_numpy(qpos: torch.Tensor) -> np.ndarray:
   """Copies a `(nq,)` or `(nworld, nq)` qpos tensor to a host `(nq,)` array."""
   # Currently only supports nworld=1.
@@ -143,6 +207,7 @@ class MujocoCameraDevice(device.Device):
       delay_ms: float = 0.0,
       scene_option: mujoco.MjvOption | None = None,
       render_mode: RenderMode = RenderMode.RGB,
+      on_demand_only: bool = False,
       name: str | None = None,
       image_output_name_prefix: str | None = None,
       rgb_output_name_suffix: str = '_rgb',
@@ -167,6 +232,11 @@ class MujocoCameraDevice(device.Device):
         after a reset are clamped to the history available so far.
       scene_option: Mujoco scene options for rendering.
       render_mode: What to render (RGB, DEPTH, SEGMENTATION).
+      on_demand_only: If True, the device publishes no substep measurements and
+        never renders on its own (not even after a reset); frames are produced
+        only by `render_now`. Requires `render_rate_hz=None`. Use this for
+        cameras read exclusively through `render_now`, so that a reset does not
+        render every enabled mode.
       name: Name of the entity. If None the name will be auto-generated from the
         camera name and render mode(s).
       image_output_name_prefix: Prefix of the output image name. If None the
@@ -192,6 +262,11 @@ class MujocoCameraDevice(device.Device):
     if delay_ms < 0:
       raise ValueError(f'delay_ms must be non-negative, got {delay_ms}')
 
+    if on_demand_only and render_rate_hz is not None:
+      raise ValueError(
+          f'on_demand_only requires render_rate_hz=None, got {render_rate_hz}'
+      )
+
     if name is None:
       name = f'{_DEFAULT_NAME_PREFIX}_{camera_name}'
       if RenderMode.RGB in render_mode:
@@ -213,15 +288,7 @@ class MujocoCameraDevice(device.Device):
         f'{output_name_prefix}{segmentation_output_name_suffix}'
     )
 
-    if not (
-        RenderMode.RGB in render_mode
-        or RenderMode.DEPTH in render_mode
-        or RenderMode.SEGMENTATION in render_mode
-    ):
-      raise ValueError(
-          'At least one render mode (RGB, DEPTH, or SEGMENTATION) must be'
-          ' selected.'
-      )
+    validate_render_mode(render_mode)
 
     measurements_spec = {}
     if RenderMode.RGB in render_mode:
@@ -242,7 +309,10 @@ class MujocoCameraDevice(device.Device):
           shape=(height, width, 2),
           dtype=np.int32,
       )
-    self._measurements_spec = measurements_spec
+    # `render_now` output keys follow the same naming, but an on-demand-only
+    # device publishes nothing as a substep measurement.
+    self._measurements_spec = {} if on_demand_only else measurements_spec
+    self._on_demand_only = on_demand_only
 
     self._render_rate_hz = render_rate_hz
     self._width = width
@@ -406,7 +476,9 @@ class MujocoCameraDevice(device.Device):
     return self._render_with_interval(simulator)
 
   def render_now(
-      self, simulator: simulator_module.Simulator
+      self,
+      simulator: simulator_module.Simulator,
+      render_mode: RenderMode | None = None,
   ) -> dict[str, torch.Tensor]:
     """Renders the camera immediately without affecting device measurements.
 
@@ -417,14 +489,18 @@ class MujocoCameraDevice(device.Device):
 
     Args:
       simulator: The simulator instance.
+      render_mode: Optional subset of enabled `RenderMode` flags to render.
+        `None` renders all modes configured on this device.
 
     Returns:
-      A dictionary containing the freshly rendered images.
+      A dictionary containing the freshly rendered images for the requested
+      modes.
 
     Raises:
       RuntimeError: If the device has not been initialized.
-      ValueError: If `self._impl != types.Impl.CPP` or `data.nworld` is greater
-        than 1.
+      ValueError: If `self._impl != types.Impl.CPP`, `data.nworld` is greater
+        than 1, or `render_mode` is empty or includes modes not enabled on this
+        device.
     """
     if self._impl is None:
       raise RuntimeError('Device not initialized.')
@@ -432,13 +508,15 @@ class MujocoCameraDevice(device.Device):
     if self._impl != types.Impl.CPP:
       raise ValueError(f'render_now only supports Impl.CPP, got {self._impl}')
 
+    active_mode = validate_render_mode(render_mode, self._render_mode)
+
     data = simulator.data
     if data.nworld > 1:
       raise ValueError(
           f'MujocoCameraDevice only supports nworld=1, got {data.nworld}'
       )
 
-    return self._render(data)
+    return self._render(data, render_mode=active_mode)
 
   def _render_with_interval(
       self, simulator: simulator_module.Simulator
@@ -458,6 +536,9 @@ class MujocoCameraDevice(device.Device):
       self._record_qpos(data)
       self._last_recorded_substep = global_substep
 
+    if self._on_demand_only:
+      return {}
+
     if not self._last_measurements or (
         self._render_rate_hz is not None
         and self._last_rendered_substep != global_substep
@@ -468,44 +549,28 @@ class MujocoCameraDevice(device.Device):
 
     return self._last_measurements
 
-  def _render(self, data: types.Data) -> dict[str, torch.Tensor]:
+  def _render(
+      self,
+      data: types.Data,
+      render_mode: RenderMode | None = None,
+  ) -> dict[str, torch.Tensor]:
     """Performs the actual rendering."""
     renderer = self._renderer
     if renderer is None:
       raise RuntimeError('Renderer is not initialized.')
 
-    renderer.update_scene(
+    active_mode = self._render_mode if render_mode is None else render_mode
+    return render_camera(
+        renderer,
         self._get_scene_data(data),
-        camera=self._camera_id,
+        camera_id=self._camera_id,
         scene_option=self._scene_option,
+        render_mode=active_mode,
+        rgb_key=self.output_name_rgb,
+        depth_key=self.output_name_depth,
+        segmentation_key=self.output_name_segmentation,
+        xpu_device=self._xpu_device,
     )
-
-    measurements = {}
-
-    if RenderMode.RGB in self._render_mode:
-      renderer.disable_depth_rendering()
-      renderer.disable_segmentation_rendering()
-      img = renderer.render()
-      measurements[self.output_name_rgb] = (
-          torch.from_numpy(img).unsqueeze(0).to(self._xpu_device)
-      )
-
-    if RenderMode.DEPTH in self._render_mode:
-      renderer.disable_segmentation_rendering()
-      renderer.enable_depth_rendering()
-      img = renderer.render()
-      measurements[self.output_name_depth] = (
-          torch.from_numpy(img).unsqueeze(0).to(self._xpu_device)
-      )
-
-    if RenderMode.SEGMENTATION in self._render_mode:
-      renderer.enable_segmentation_rendering()
-      img = renderer.render()
-      measurements[self.output_name_segmentation] = (
-          torch.from_numpy(img).unsqueeze(0).to(self._xpu_device)
-      )
-
-    return measurements
 
   def _get_scene_data(self, data: types.Data) -> mujoco.MjData:
     """Returns the `MjData` holding the state the renderer should draw."""
