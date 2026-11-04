@@ -14,6 +14,8 @@
 
 """Tests for FunctionalObservationAdapter, verifying observations and specs."""
 
+import unittest
+
 from absl.testing import absltest
 from reaf.simulation.torch._src.builders.flat_scene.config import Obs
 from reaf.simulation.torch._src.builders.flat_scene.config import ObsGroup
@@ -445,6 +447,43 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     obs = provider.observations_from_features({"a": torch.full((1, 2), 3.0)})
     # All 6 values (2 history slots + current) should be 3.0, not zero.
     torch.testing.assert_close(obs["obs"], torch.full((1, 6), 3.0))
+
+  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
+  @unittest.expectedFailure
+  def test_observations_from_features_is_pure(self):
+    """Reading twice with the same features returns the same observations.
+
+    `Environment.reset_with_options(env_mask)` reads observations for every
+    world, so a read that advances history or redraws noise corrupts the worlds
+    outside `env_mask` (b/581877129).
+    """
+    nworld = 2
+    provider = functional_observation.FunctionalObservationAdapter(
+        observations={
+            "obs": ObsGroup(
+                terms={
+                    "t": (
+                        Obs("a").configure(
+                            noise=noise.Noise(
+                                dist=noise.Uniform(low=-0.1, high=0.1), op="add"
+                            ),
+                            history_length=2,
+                            output_shape=(2,),
+                            dtype="float32",
+                        )
+                    ),
+                },
+                enable_noise=True,
+            )
+        },
+        xpu_device="cpu",
+        nworld=nworld,
+    )
+    provider.reset(None)
+    features = {"a": torch.ones(nworld, 2)}
+    first = provider.observations_from_features(features)["obs"].clone()
+    second = provider.observations_from_features(features)["obs"]
+    torch.testing.assert_close(second, first)
 
   def test_plain_term_unchanged(self):
     """Plain Obs (no scale/clip/history) works as expected."""

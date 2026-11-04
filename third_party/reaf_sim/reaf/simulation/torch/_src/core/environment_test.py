@@ -14,7 +14,9 @@
 """Tests for the Environment class."""
 
 from collections.abc import Mapping
+from collections.abc import Sequence
 from typing import Any
+import unittest
 from unittest import mock
 
 from absl.testing import absltest
@@ -24,6 +26,10 @@ from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
 import mujoco
 import numpy as np
+from reaf.core import features_observer
+from reaf.core import logger as logger_module
+from reaf.simulation.torch._src.builders.flat_scene import config as flat_scene_config
+from reaf.simulation.torch._src.common import functional_observation
 from reaf.simulation.torch._src.core import device as device_module
 from reaf.simulation.torch._src.core import device_layer as device_layer_module
 from reaf.simulation.torch._src.core import discount_provider as discount_provider_module
@@ -269,6 +275,71 @@ class StepSumMetricProvider(metric_provider_module.MetricProvider):
     }
 
 
+class CountingFeaturesObserver(features_observer.FeaturesObserver):
+  """Counts `observe_features` calls."""
+
+  def __init__(self):
+    self.calls = 0
+
+  @property
+  def name(self) -> str:
+    return "counting_observer"
+
+  def observe_features(self, features: Mapping[str, Any]) -> None:
+    del features  # Unused.
+    self.calls += 1
+
+
+class CountingLogger(logger_module.Logger):
+  """Counts `record_measurements` and `record_features` calls."""
+
+  def __init__(self):
+    self.measurements_calls = 0
+    self.features_calls = 0
+
+  @property
+  def name(self) -> str:
+    return "counting_logger"
+
+  def record_measurements(self, measurements: Mapping[str, Any]) -> None:
+    del measurements  # Unused.
+    self.measurements_calls += 1
+
+  def record_features(self, features: Mapping[str, Any]) -> None:
+    del features  # Unused.
+    self.features_calls += 1
+
+
+def _time_feature(features: Mapping[str, torch.Tensor]) -> torch.Tensor:
+  return features["time"].unsqueeze(-1)
+
+
+def _time_history_adapter(
+    nworld: int,
+    xpu_device: str,
+    history_length: int = 2,
+) -> functional_observation.FunctionalObservationAdapter:
+  """Observes `time` as `[t - H, ..., t - 1, t]` (oldest to newest)."""
+  return functional_observation.FunctionalObservationAdapter(
+      observations={
+          "time_history": flat_scene_config.ObsGroup(
+              terms={
+                  "time": (
+                      flat_scene_config.Obs(_time_feature).configure(
+                          history_length=history_length,
+                          output_shape=(1,),
+                          dtype="float32",
+                      )
+                  ),
+              },
+              enable_noise=False,
+          ),
+      },
+      xpu_device=xpu_device,
+      nworld=nworld,
+  )
+
+
 def _build_pendulum_env(
     nworld: int,
     xpu_device: str,
@@ -278,6 +349,11 @@ def _build_pendulum_env(
     environment_reset_fn: environment.EnvironmentReset | None = None,
     auto_reset_mode: environment.AutoResetMode = environment.AutoResetMode.SYNC,
     metric_provider: metric_provider_module.MetricProvider | None = None,
+    observation_adapter: (
+        observation_space_adapter.ObservationSpaceAdapter | None
+    ) = None,
+    features_observers: Sequence[features_observer.FeaturesObserver] = (),
+    loggers: Sequence[logger_module.Logger] = (),
 ) -> environment.Environment:
   """Builds a simple pendulum environment for testing."""
   mj_spec = mujoco.MjSpec.from_string(_PENDULUM_XML)
@@ -312,8 +388,8 @@ def _build_pendulum_env(
       metric_provider=metric_provider,
       termination_checkers=terminations,
       discount_provider=discount,
-      features_observers=[],
-      loggers=[],
+      features_observers=features_observers,
+      loggers=loggers,
       xpu_device=xpu_device,
       nworld=nworld,
   )
@@ -322,7 +398,11 @@ def _build_pendulum_env(
       if environment_reset_fn is not None
       else PendulumReset()
   )
-  obs_adapter = PendulumObservationAdapter(nworld=nworld)
+  obs_adapter = (
+      observation_adapter
+      if observation_adapter is not None
+      else PendulumObservationAdapter(nworld=nworld)
+  )
   return environment.Environment(
       device_layer=dev_layer,
       task_layer=task_layer,
@@ -657,6 +737,202 @@ class WarpEnvironmentTest(parameterized.TestCase):
     )
     torch.testing.assert_close(
         ep_one_step["steps"], torch.tensor(1.0, device=self.XPU_DEVICE)
+    )
+
+  # TaskLayer lifecycle repros (b/581877129): `reset_with_options(env_mask)`
+  # recomputes features and observations for every world, so state advanced in
+  # `observations_from_features` and in observers/loggers advances twice for
+  # worlds that are not in `env_mask`.
+  #
+  # Tests marked `@unittest.expectedFailure` reproduce the bug. The fix must
+  # remove the marker: an unexpected success fails the test run.
+
+  def _zero_action(self) -> dict[str, torch.Tensor]:
+    return {
+        "motor_ctrl": torch.zeros(
+            1, dtype=torch.float32, device=self.XPU_DEVICE
+        )
+    }
+
+  def _assert_time_history(
+      self, observation: torch.Tensor, expected_steps: list[list[int]]
+  ) -> None:
+    """Asserts `observation` equals `expected_steps * control_timestep`."""
+    torch.testing.assert_close(
+        observation,
+        torch.tensor(
+            expected_steps, dtype=torch.float32, device=self.XPU_DEVICE
+        )
+        * 0.02,
+        atol=1e-5,
+        rtol=0.0,
+    )
+
+  def _check_history_without_resets(
+      self, mode: environment.AutoResetMode
+  ) -> None:
+    """History holds the last H distinct steps when no world resets."""
+    nworld = 2
+    env = _build_pendulum_env(
+        nworld=nworld,
+        xpu_device=self.XPU_DEVICE,
+        timeouts=torch.full((nworld,), 10.0, device=self.XPU_DEVICE),
+        impl=self.IMPL,
+        auto_reset_mode=mode,
+        observation_adapter=_time_history_adapter(
+            nworld=nworld, xpu_device=self.XPU_DEVICE
+        ),
+    )
+    ts = env.reset()
+    self._assert_time_history(ts.observation["time_history"], [[0, 0, 0]] * 2)
+    for k in range(1, 5):
+      ts = env.step(self._zero_action())
+      self._assert_time_history(
+          ts.observation["time_history"],
+          [[max(k - 2, 0), max(k - 1, 0), k]] * 2,
+      )
+
+  def _check_history_partial_reset(
+      self, mode: environment.AutoResetMode
+  ) -> None:
+    """A partial reset leaves the history of non-reset worlds unchanged."""
+    nworld = 2
+    env = _build_pendulum_env(
+        nworld=nworld,
+        xpu_device=self.XPU_DEVICE,
+        # World 0 is LAST after step 2 (0.04s) and resets on step 3.
+        timeouts=torch.tensor([0.03, 10.0], device=self.XPU_DEVICE),
+        impl=self.IMPL,
+        auto_reset_mode=mode,
+        observation_adapter=_time_history_adapter(
+            nworld=nworld, xpu_device=self.XPU_DEVICE
+        ),
+    )
+    env.reset()
+    env.step(self._zero_action())
+    ts = env.step(self._zero_action())
+    self.assertEqual(ts.last().tolist(), [True, False])
+    self._assert_time_history(
+        ts.observation["time_history"], [[0, 1, 2], [0, 1, 2]]
+    )
+
+    ts = env.step(self._zero_action())
+    self.assertEqual(ts.first().tolist(), [True, False])
+    self._assert_time_history(
+        ts.observation["time_history"], [[0, 0, 0], [1, 2, 3]]
+    )
+
+    ts = env.step(self._zero_action())
+    self._assert_time_history(
+        ts.observation["time_history"], [[0, 0, 1], [2, 3, 4]]
+    )
+
+  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
+  @unittest.expectedFailure
+  def test_no_sync_matches_sync(self):
+    """`NO_SYNC` and `SYNC` produce the same timesteps."""
+    nworld = 2
+    timesteps = {}
+    for mode in (
+        environment.AutoResetMode.SYNC,
+        environment.AutoResetMode.NO_SYNC,
+    ):
+      env = _build_pendulum_env(
+          nworld=nworld,
+          xpu_device=self.XPU_DEVICE,
+          timeouts=torch.tensor([0.03, 0.07], device=self.XPU_DEVICE),
+          impl=self.IMPL,
+          auto_reset_mode=mode,
+          observation_adapter=_time_history_adapter(
+              nworld=nworld, xpu_device=self.XPU_DEVICE
+          ),
+      )
+      ts = env.reset()
+      # Clone: `reset_with_options` splices into the last observation in place.
+      trajectory = [(
+          ts.step_type.clone(),
+          ts.observation["time_history"].clone(),
+      )]
+      for _ in range(8):
+        ts = env.step(self._zero_action())
+        trajectory.append(
+            (ts.step_type.clone(), ts.observation["time_history"].clone())
+        )
+      timesteps[mode] = trajectory
+
+    sync = timesteps[environment.AutoResetMode.SYNC]
+    no_sync = timesteps[environment.AutoResetMode.NO_SYNC]
+    for step, ((sync_type, sync_obs), (no_sync_type, no_sync_obs)) in enumerate(
+        zip(sync, no_sync)
+    ):
+      torch.testing.assert_close(
+          no_sync_type, sync_type, msg=f"step_type differs at step {step}"
+      )
+      torch.testing.assert_close(
+          no_sync_obs, sync_obs, msg=f"observation differs at step {step}"
+      )
+
+  def _check_observers_and_loggers_once_per_step(
+      self, mode: environment.AutoResetMode
+  ) -> None:
+    """Observers and loggers see each step once when no world resets."""
+    nworld = 2
+    observer = CountingFeaturesObserver()
+    logger = CountingLogger()
+    env = _build_pendulum_env(
+        nworld=nworld,
+        xpu_device=self.XPU_DEVICE,
+        timeouts=torch.full((nworld,), 10.0, device=self.XPU_DEVICE),
+        impl=self.IMPL,
+        auto_reset_mode=mode,
+        features_observers=[observer],
+        loggers=[logger],
+    )
+    env.reset()
+    observer.calls = 0
+    logger.measurements_calls = 0
+    logger.features_calls = 0
+
+    num_steps = 3
+    for _ in range(num_steps):
+      env.step(self._zero_action())
+
+    self.assertEqual(observer.calls, num_steps)
+    self.assertEqual(logger.measurements_calls, num_steps)
+    self.assertEqual(logger.features_calls, num_steps)
+
+  @parameterized.parameters(
+      environment.AutoResetMode.SYNC,
+      environment.AutoResetMode.DISABLED,
+  )
+  def test_observation_history_without_resets(self, mode):
+    self._check_history_without_resets(mode)
+
+  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
+  @unittest.expectedFailure
+  def test_observation_history_without_resets_no_sync(self):
+    self._check_history_without_resets(environment.AutoResetMode.NO_SYNC)
+
+  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
+  @unittest.expectedFailure
+  def test_observation_history_partial_reset_sync(self):
+    self._check_history_partial_reset(environment.AutoResetMode.SYNC)
+
+  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
+  @unittest.expectedFailure
+  def test_observation_history_partial_reset_no_sync(self):
+    self._check_history_partial_reset(environment.AutoResetMode.NO_SYNC)
+
+  def test_observers_and_loggers_run_once_per_step_sync(self):
+    self._check_observers_and_loggers_once_per_step(
+        environment.AutoResetMode.SYNC
+    )
+
+  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
+  @unittest.expectedFailure
+  def test_observers_and_loggers_run_once_per_step_no_sync(self):
+    self._check_observers_and_loggers_once_per_step(
+        environment.AutoResetMode.NO_SYNC
     )
 
 
