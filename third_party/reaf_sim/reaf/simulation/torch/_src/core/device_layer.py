@@ -21,6 +21,7 @@ import itertools
 import math
 from typing import Any
 from typing import Optional
+import warnings
 
 from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
@@ -30,9 +31,20 @@ from reaf.simulation.torch._src.core import profile
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import substep_commands_processor as substeps_cmd_module
 from reaf.simulation.torch._src.core import substep_measurements_processor as substep_meas_module
-from reaf.simulation.torch._src.core import types
 import torch
 import tree
+
+_DEVICE_MEASUREMENT_METHODS = (
+    "on_substep",
+    "on_step",
+    "on_begin_stepping",
+    "get_measurements",
+)
+_PROCESSOR_MEASUREMENT_METHODS = (
+    "on_substep",
+    "on_begin_stepping",
+    "process_measurements",
+)
 
 
 class DeviceLayer:
@@ -113,10 +125,46 @@ class DeviceLayer:
 
     # Build specs by aggregating from devices and processors.
     self._build_specs()
+    self._check_legacy_components()
+
+  def _check_legacy_components(self) -> None:
+    """Identifies legacy devices and processors that use deprecated methods."""
+    # TODO: b/570300769 - Warn about legacy devices once the built-in devices
+    # are migrated, and remove the legacy paths once downstream callers are
+    # migrated.
+    self._legacy_device_ids = {
+        id(dev)
+        for dev in self._devices
+        if _is_legacy(
+            dev,
+            device_module.Device,
+            "get_substep_measurements",
+            _DEVICE_MEASUREMENT_METHODS,
+        )
+    }
+    self._legacy_processor_ids = set()
+    base = substep_meas_module.SubstepMeasurementsProcessor
+    for processor in self._substep_measurements_processors:
+      if _is_legacy(
+          processor,
+          base,
+          "process_substep_measurements",
+          _PROCESSOR_MEASUREMENT_METHODS,
+      ):
+        self._legacy_processor_ids.add(id(processor))
+      if _overrides(processor, base, "process_substep_measurements"):
+        warnings.warn(
+            f"{type(processor).__name__} overrides the deprecated"
+            " `SubstepMeasurementsProcessor.process_substep_measurements()`."
+            " Implement `on_substep()` and `process_measurements()` instead.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
 
   def _build_specs(self) -> None:
     # Build measurements spec
     measurements_spec = {}
+    self._expected_ndim: dict[str, int] = {}
     for dev in self._devices:
       substep_spec = dev.substep_measurements_spec()
 
@@ -124,6 +172,7 @@ class DeviceLayer:
       original_spec = {**substep_spec}
       updated_spec = {}
       for key, spec in original_spec.items():
+        self._expected_ndim[key] = 1 + len(spec.shape)
         updated_spec[key] = spec.replace(shape=(self._nworld,) + spec.shape)
       measurements_spec.update(updated_spec)
 
@@ -142,15 +191,12 @@ class DeviceLayer:
       )
       measurements_spec.update(updated_spec)
 
+    for key, spec in measurements_spec.items():
+      self._expected_ndim.setdefault(key, len(spec.shape))
+
     self._measurements_spec = measurements_spec
-    self._measurements = {
-        key: torch.empty(
-            spec.shape,
-            dtype=types.NUMPY_TO_TORCH_DTYPE[spec.dtype],
-            device=self._xpu_device,
-        )
-        for key, spec in measurements_spec.items()
-    }
+    self._output_buffers: dict[str, torch.Tensor] = {}
+    self._latest_measurements: dict[str, torch.Tensor] = {}
 
     # Build commands spec
     commands_spec = {}
@@ -208,11 +254,25 @@ class DeviceLayer:
   def begin_stepping(
       self, env_mask: torch.Tensor | None = None
   ) -> Mapping[str, torch.Tensor]:
-    del env_mask
-    # Collect initial measurements
-    self._update_measurements()
+    """Records the reset state, then reads, updating only `env_mask` rows."""
+    measurements: dict[str, torch.Tensor] = {}
+    for dev in self._devices:
+      if id(dev) in self._legacy_device_ids:
+        measurements.update(dev.get_substep_measurements(self.sim))
+      else:
+        dev.on_begin_stepping(self.sim, env_mask)
+        measurements.update(dev.get_measurements(self.sim))
 
-    return self._measurements
+    for processor in self._substep_measurements_processors:
+      if id(processor) in self._legacy_processor_ids:
+        processor.process_substep_measurements(self.sim, measurements)
+      else:
+        processor.on_begin_stepping(self.sim, measurements, env_mask)
+        processor.process_measurements(self.sim, measurements)
+
+    self._latest_measurements = measurements
+    self._commit_output_buffers(measurements, env_mask=env_mask)
+    return self._output_buffers
 
   def end_stepping(self, env_mask: torch.Tensor | None = None) -> None:
     pass
@@ -222,20 +282,52 @@ class DeviceLayer:
       self,
       commands: Mapping[str, torch.Tensor],
   ) -> Mapping[str, torch.Tensor]:
-    # Substep loop
-    for _ in range(self._n_substeps):
-      self._substep(commands)
+    """Runs one control step and returns the measurements of all worlds.
 
+    Args:
+      commands: The commands for this control step.
+
+    Returns:
+      The measurements of all worlds. The same tensors are returned and
+      overwritten in place by every `step()`, `begin_stepping()`, and
+      `update_measurements()`, so callers that keep measurements across these
+      calls (e.g. for a history) must `.clone()` them.
+    """
+    for i in range(self._n_substeps):
+      self._substep(commands, is_last_substep=i == self._n_substeps - 1)
+
+    self._commit_output_buffers(self._latest_measurements, env_mask=None)
     self._clock.tick_step()
     profile.frame_mark()
-    return self._measurements
+    return self._output_buffers
 
   @profile.trace(color=profile.Section.OBSERVATIONS)
   def update_measurements(self) -> None:
-    self._update_measurements()
+    """Reads all devices and processes their measurements, without hooks."""
+    measurements: dict[str, torch.Tensor] = {}
+    for dev in self._devices:
+      if id(dev) in self._legacy_device_ids:
+        measurements.update(dev.get_substep_measurements(self.sim))
+      else:
+        measurements.update(dev.get_measurements(self.sim))
+
+    for processor in self._substep_measurements_processors:
+      if id(processor) in self._legacy_processor_ids:
+        processor.process_substep_measurements(self.sim, measurements)
+      else:
+        processor.process_measurements(self.sim, measurements)
+
+    self._latest_measurements = measurements
+    self._commit_output_buffers(measurements, env_mask=None)
 
   def get_measurements(self) -> Mapping[str, torch.Tensor]:
-    return self._measurements
+    """Returns the latest measurements of all worlds.
+
+    The tensors are overwritten in place by every `step()`, `begin_stepping()`,
+    and `update_measurements()`, so callers that keep them across these calls
+    must `.clone()` them.
+    """
+    return self._output_buffers
 
   @property
   def control_timestep(self) -> float:
@@ -260,15 +352,18 @@ class DeviceLayer:
       dev.reset(self.sim, env_mask)
     for processor in self._resettable_processors:
       processor.reset(env_mask)
-    self._measurements.clear()
 
   @profile.trace(color=profile.Section.PHYSICS)
   def _substep(
-      self, commands: Optional[Mapping[str, torch.Tensor]] = None
+      self,
+      commands: Optional[Mapping[str, torch.Tensor]] = None,
+      *,
+      is_last_substep: bool = False,
   ) -> None:
+    """Runs one physics substep and the per-substep hooks and processing."""
     self._propagate_commands(commands)
     self.sim.step()
-    self._update_measurements()
+    self._substep_measurements(is_last_substep=is_last_substep)
 
   @profile.trace(color=profile.Section.COMMANDS)
   def _propagate_commands(
@@ -285,13 +380,95 @@ class DeviceLayer:
       dev.set_substep_commands(self.sim, current_substep_commands)
 
   @profile.trace(color=profile.Section.OBSERVATIONS)
-  def _update_measurements(self) -> None:
-    measurements: dict[str, Any] = {}
+  def _substep_measurements(self, *, is_last_substep: bool = False) -> None:
+    """Advances per-substep state and reads and processes measurements."""
+    measurements = self._latest_measurements
+    measurements.clear()
     for dev in self._devices:
-      produced_substep_measurements = dev.get_substep_measurements(self.sim)
-      measurements.update(produced_substep_measurements)
+      if id(dev) in self._legacy_device_ids:
+        measurements.update(dev.get_substep_measurements(self.sim))
+      else:
+        dev.on_substep(self.sim)
+        if is_last_substep:
+          dev.on_step(self.sim)
+        measurements.update(dev.get_measurements(self.sim))
 
     for processor in self._substep_measurements_processors:
-      processor.process_substep_measurements(self.sim, measurements)
+      if id(processor) in self._legacy_processor_ids:
+        processor.process_substep_measurements(self.sim, measurements)
+      else:
+        processor.on_substep(self.sim, measurements)
+        processor.process_measurements(self.sim, measurements)
 
-    self._measurements.update(measurements)
+  def _commit_output_buffers(
+      self,
+      measurements: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Copies `measurements` into `_output_buffers`, masked by `env_mask`."""
+    if not self._output_buffers.keys() <= measurements.keys():
+      missing = sorted(self._output_buffers.keys() - measurements.keys())
+      raise KeyError(f"Missing measurement keys: {missing}")
+    for key, val in measurements.items():
+      buf = self._output_buffers.get(key)
+      if buf is None:
+        # Runs once per key, when its buffer is allocated.
+        if key not in self._expected_ndim:
+          raise KeyError(
+              f"Measurement {key!r} is not in the spec of any device or"
+              " processor."
+          )
+        self._output_buffers[key] = val.clone(
+            memory_format=torch.contiguous_format
+        )
+        continue
+      if env_mask is None or val.ndim < self._expected_ndim[key]:
+        buf.copy_(val)
+      else:
+        mask = env_mask.to(device=val.device).view(
+            self._nworld, *([1] * (val.ndim - 1))
+        )
+        torch.where(mask, val, buf, out=buf)
+
+
+def _is_legacy(
+    obj: object,
+    base: type[object],
+    deprecated_method: str,
+    methods: Sequence[str],
+) -> bool:
+  """Whether `obj` overrides `deprecated_method` or none of `methods`.
+
+  Args:
+    obj: The device or processor.
+    base: Its base class.
+    deprecated_method: The deprecated method that `methods` replace.
+    methods: The methods that replace `deprecated_method`.
+
+  Returns:
+    Whether `obj` is polled through `deprecated_method`.
+
+  Raises:
+    TypeError: If `obj` overrides both `deprecated_method` and some of
+      `methods`, since `DeviceLayer` would silently skip the latter.
+  """
+  overridden = [method for method in methods if _overrides(obj, base, method)]
+  if not _overrides(obj, base, deprecated_method):
+    return not overridden
+
+  if overridden:
+    names = ", ".join(f"`{method}()`" for method in overridden)
+    raise TypeError(
+        f"{type(obj).__name__} overrides both the deprecated"
+        f" `{deprecated_method}()` and {names}, which would not be called."
+        " Implement only the new methods; if a base class overrides"
+        f" `{deprecated_method}()`, keep overriding it instead until the base"
+        " class is migrated."
+    )
+  return True
+
+
+def _overrides(obj: object, base: type[object], name: str) -> bool:
+  """Whether `type(obj)` overrides `base.name` (instance attributes don't)."""
+  base_method = getattr(base, name)
+  return getattr(type(obj), name, base_method) is not base_method

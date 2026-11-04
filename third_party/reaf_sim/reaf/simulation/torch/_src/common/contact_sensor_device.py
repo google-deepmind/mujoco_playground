@@ -154,8 +154,8 @@ class ContactSensorDevice(device.Device):
     - `{name}/{f}_history`: `(n_sensors, history_length, dim(f))`, only when
       `history_length > 0`. Index 0 is the most recent reading.
 
-    The history advances on every measurement update, i.e. once per physics
-    substep (plus once when measurements are refreshed after a reset).
+    The history advances once per physics substep. After a reset, every slot
+    holds the reset reading.
 
     Args:
       name: Entity name for measurement keys.
@@ -254,7 +254,33 @@ class ContactSensorDevice(device.Device):
         )
     return spec
 
-  def get_substep_measurements(
+  @override
+  def on_substep(self, simulator: simulator_module.Simulator) -> None:
+    """Pushes the current contact reading into the substep history."""
+    if self._history is None:
+      return
+    self._history[:] = torch.roll(self._history, shifts=1, dims=2)
+    self._history[:, :, 0] = self._read_sensor_data(simulator)
+
+  @override
+  def on_begin_stepping(
+      self,
+      simulator: simulator_module.Simulator,
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Fills the history of `env_mask` worlds with the reset reading."""
+    if self._history is None:
+      return
+    reading = self._read_sensor_data(simulator).unsqueeze(2)
+    if env_mask is None:
+      self._history[:] = reading
+    else:
+      self._history[:] = torch.where(
+          env_mask.view(-1, 1, 1, 1), reading, self._history
+      )
+
+  @override
+  def get_measurements(  # pyrefly: ignore[bad-override]
       self,
       simulator: simulator_module.Simulator,
       *,
@@ -268,14 +294,16 @@ class ContactSensorDevice(device.Device):
     """
     if self._dark and not force:
       return {}
-    flat = simulator.data.sensordata[:, self._sensor_indices]
-    sensor_data = flat.view(-1, self._n_sensors, self._total_dims)
+    sensor_data = self._read_sensor_data(simulator)
     out = {f"{self._name}/data": sensor_data}
-    if self._history is not None:
-      self._history[:] = torch.roll(self._history, shifts=1, dims=2)
-      self._history[:, :, 0] = sensor_data
     for field, s in self._field_slices.items():
       out[f"{self._name}/{field}"] = sensor_data[..., s]
       if self._history is not None:
         out[f"{self._name}/{field}_history"] = self._history[..., s]
     return out
+
+  def _read_sensor_data(
+      self, simulator: simulator_module.Simulator
+  ) -> torch.Tensor:
+    flat = simulator.data.sensordata[:, self._sensor_indices]
+    return flat.view(-1, self._n_sensors, self._total_dims)

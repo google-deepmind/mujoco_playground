@@ -455,3 +455,62 @@ def apply_bias(
   raise ValueError(
       f"Unknown bias operation: {op}. Available: add, scale, rotate"
   )
+
+
+def sample_noise(
+    sampler: Callable[[tuple[int, ...], torch.device], torch.Tensor],
+    op: OperationType,
+    shape: tuple[int, ...],
+    dtype: torch.dtype,
+    device: torch.device | str,
+) -> torch.Tensor:
+  """Samples a noise tensor for values of the given shape.
+
+  Applying the sample with `apply_noise()` is equivalent to the modifier of
+  `build_modifier()`, while letting the sample be stored and reapplied.
+
+  Args:
+    sampler: Bound sampler from `build_sampler()`.
+    op: Operation from `resolve_op()`.
+    shape: Shape of the values.
+    dtype: Dtype of the values.
+    device: Device of the values.
+
+  Returns:
+    The noise sample, shaped like the values (or as a quaternion for `"rotate"`
+    on 6D rotations).
+  """
+  torch_device = torch.device(device) if isinstance(device, str) else device
+  if op == "replace":
+    return sampler(shape, torch_device).to(dtype=dtype)
+  if op == "rotate":
+    if shape[-1] in (4, 6):
+      return sampler(shape[:-1] + (4,), torch_device).to(dtype=dtype)
+    raise ValueError(
+        f"Rotation noise is only supported for 4D or 6D features, got {shape}"
+    )
+  return sample_bias(sampler, op, shape, dtype, device)
+
+
+def apply_noise(
+    value: torch.Tensor,
+    noise: torch.Tensor,
+    op: OperationType,
+) -> torch.Tensor:
+  """Applies a noise sample from `sample_noise()` to `value`."""
+  if op == "replace":
+    return noise.to(dtype=value.dtype, device=value.device)
+  if op == "rotate":
+    noise = noise.to(dtype=value.dtype, device=value.device)
+    if value.shape[-1] == 4:
+      q_noisy = math.quat_mul(value, noise)
+      return q_noisy / torch.linalg.norm(q_noisy, dim=-1, keepdim=True)
+    if value.shape[-1] == 6:
+      r = math.rotation_6d_to_matrix(value)
+      r_noise = math.quat_to_matrix(noise)
+      return math.rot_matrix_to_6d(torch.matmul(r, r_noise))
+    raise ValueError(
+        "Rotation noise is only supported for 4D or 6D features, got"
+        f" {value.shape}"
+    )
+  return apply_bias(value, noise, op)

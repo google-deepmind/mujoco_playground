@@ -162,6 +162,14 @@ class StochasticSubstepCommandsTest(absltest.TestCase):
 
 class StochasticSubstepMeasurementsTest(absltest.TestCase):
 
+  def _substep_and_process(
+      self,
+      proc: processors.StochasticSubstepMeasurements,
+      meas: dict[str, torch.Tensor],
+  ) -> None:
+    proc.on_substep(_M, meas)
+    proc.process_measurements(_M, meas)
+
   def test_noise_only(self):
     proc = processors.StochasticSubstepMeasurements(
         keys="pos",
@@ -170,7 +178,7 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
         xpu_device="cpu",
     )
     meas = {"pos": torch.zeros(64, 3)}
-    proc.process_substep_measurements(_M, meas)
+    self._substep_and_process(proc, meas)
     self.assertTrue(torch.all(meas["pos"] > 0).item())
 
   def test_delay_only(self):
@@ -182,9 +190,9 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
         simulation_timestep=_SIM_DT,
     )
     meas1 = {"pos": torch.ones(1, 2)}
-    proc.process_substep_measurements(_M, meas1)
+    self._substep_and_process(proc, meas1)
     meas2 = {"pos": torch.ones(1, 2) * 5}
-    proc.process_substep_measurements(_M, meas2)
+    self._substep_and_process(proc, meas2)
     torch.testing.assert_close(meas2["pos"], torch.ones(1, 2))
 
   def test_reset(self):
@@ -196,11 +204,150 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
         simulation_timestep=_SIM_DT,
     )
     meas1 = {"pos": torch.ones(2, 2)}
-    proc.process_substep_measurements(_M, meas1)
+    self._substep_and_process(proc, meas1)
     proc.reset()
     meas2 = {"pos": torch.ones(2, 2) * 9}
-    proc.process_substep_measurements(_M, meas2)
+    proc.on_begin_stepping(_M, meas2)
+    proc.process_measurements(_M, meas2)
     torch.testing.assert_close(meas2["pos"], torch.ones(2, 2) * 9)
+
+  def test_partial_reset_holds_reset_reading_until_delay_passed(self):
+    proc = processors.StochasticSubstepMeasurements(
+        keys="pos",
+        delay=(0.005, 0.005),  # 1 substep lag.
+        nworld=2,
+        xpu_device="cpu",
+        simulation_timestep=_SIM_DT,
+    )
+
+    def substep(value: float) -> torch.Tensor:
+      meas = {"pos": torch.full((2, 1), value)}
+      self._substep_and_process(proc, meas)
+      return meas["pos"]
+
+    substep(1.0)
+    torch.testing.assert_close(substep(2.0), torch.full((2, 1), 1.0))
+
+    env_mask = torch.tensor([True, False])
+    proc.reset(env_mask)
+    proc.on_begin_stepping(_M, {"pos": torch.full((2, 1), 9.0)}, env_mask)
+    for _ in range(3):  # Reads do not advance the delay buffer.
+      meas = {"pos": torch.full((2, 1), 9.0)}
+      proc.process_measurements(_M, meas)
+      # World 0 reads its reset reading; world 1 still reads frame 1.
+      torch.testing.assert_close(meas["pos"], torch.tensor([[9.0], [1.0]]))
+
+    # World 0 holds its reset reading until the delay has passed; world 1
+    # reads frame 2 (no duplicated frame from the reset).
+    torch.testing.assert_close(substep(3.0), torch.tensor([[9.0], [2.0]]))
+    torch.testing.assert_close(substep(4.0), torch.tensor([[3.0], [3.0]]))
+
+  def test_bias_noise_and_delay_with_partial_reset(self):
+    torch.manual_seed(0)
+    proc = processors.StochasticSubstepMeasurements(
+        keys="pos",
+        bias=noise.uniform(10.0, 20.0, op="add"),
+        noise=noise.uniform(0.1, 0.9, op="add"),
+        delay=(0.005, 0.005),  # 1 substep lag.
+        nworld=2,
+        xpu_device="cpu",
+        simulation_timestep=_SIM_DT,
+    )
+
+    def substep(value: float) -> torch.Tensor:
+      meas = {"pos": torch.full((2, 3), value)}
+      self._substep_and_process(proc, meas)
+      return meas["pos"]
+
+    # Substep 1 buffers `0 + b0 + n1` and fills the initial history with it.
+    first = substep(0.0)
+    self.assertTrue(((first >= 10.1) & (first <= 20.9)).all())
+
+    # Substep 2 buffers `100 + b0 + n2` and outputs substep 1's frame.
+    torch.testing.assert_close(substep(100.0), first)
+
+    # Partial reset on world 0 resamples its bias (`b0'`) and fills its delay
+    # buffer with `50 + b0' + n_reset`; world 1 keeps its bias and buffered
+    # frames.
+    env_mask = torch.tensor([True, False])
+    proc.reset(env_mask)
+    proc.on_begin_stepping(_M, {"pos": torch.full((2, 3), 50.0)}, env_mask)
+    after_reset = {"pos": torch.zeros(2, 3)}
+    proc.process_measurements(_M, after_reset)
+    self.assertTrue(
+        (
+            (after_reset["pos"][0] >= 60.1) & (after_reset["pos"][0] <= 70.9)
+        ).all()
+    )
+    torch.testing.assert_close(after_reset["pos"][1], first[1])
+
+    # Next substep: world 0 holds its reset reading (1-substep lag); world 1
+    # advances to substep 2's `100 + b0 + n2`, with the same bias `b0`.
+    after_step = substep(0.0)
+    torch.testing.assert_close(after_step[0], after_reset["pos"][0])
+    # `(100 + n2) - n1` is in `(99.2, 100.8)`.
+    diff_world_1 = after_step[1] - first[1]
+    self.assertTrue(((diff_world_1 > 99.2) & (diff_world_1 < 100.8)).all())
+
+    # Substep after that: world 0 advances to `0 + b0' + n` (bias resampled vs
+    # `b0`, difference from `50 + b0' + n_reset` is `-50 + n - n_reset`).
+    next_step = substep(0.0)
+    diff_world_0 = next_step[0] - after_reset["pos"][0]
+    self.assertTrue(((diff_world_0 > -50.8) & (diff_world_0 < -49.2)).all())
+
+  def test_noise_is_only_sampled_in_hooks(self):
+    proc = processors.StochasticSubstepMeasurements(
+        keys="pos",
+        noise=noise.Noise(dist=noise.Uniform(low=0.5, high=1.0), op="add"),
+        nworld=2,
+        xpu_device="cpu",
+    )
+    zeros = {"pos": torch.zeros(2, 3)}
+
+    proc.on_substep(_M, zeros)
+    rng_state = torch.get_rng_state()
+    first = dict(zeros)
+    proc.process_measurements(_M, first)
+    for _ in range(3):  # Reads return the same reading and do not use the RNG.
+      meas = dict(zeros)
+      proc.process_measurements(_M, meas)
+      torch.testing.assert_close(meas["pos"], first["pos"])
+    torch.testing.assert_close(torch.get_rng_state(), rng_state)
+
+    # Only the reading of `env_mask` worlds is resampled after a reset.
+    env_mask = torch.tensor([True, False])
+    proc.reset(env_mask)
+    proc.on_begin_stepping(_M, zeros, env_mask)
+    meas = dict(zeros)
+    proc.process_measurements(_M, meas)
+    self.assertFalse(torch.allclose(meas["pos"][0], first["pos"][0]))
+    torch.testing.assert_close(meas["pos"][1], first["pos"][1])
+
+    # The noise sample is applied to the current reading (e.g. after a state
+    # change without stepping).
+    ones = {"pos": torch.ones(2, 3)}
+    proc.process_measurements(_M, ones)
+    torch.testing.assert_close(ones["pos"], meas["pos"] + 1.0)
+
+  def test_process_measurements_before_hooks_passes_through(self):
+    delayed = processors.StochasticSubstepMeasurements(
+        keys="pos",
+        delay=(0.005, 0.005),
+        nworld=2,
+        xpu_device="cpu",
+        simulation_timestep=_SIM_DT,
+    )
+    noisy = processors.StochasticSubstepMeasurements(
+        keys="pos",
+        noise=noise.uniform(0.5, 1.0),
+        bias=noise.uniform(0.1, 0.9),
+        nworld=2,
+        xpu_device="cpu",
+    )
+    for proc in (delayed, noisy):
+      meas = {"pos": torch.full((2, 1), 3.0)}
+      proc.process_measurements(_M, meas)
+      torch.testing.assert_close(meas["pos"], torch.full((2, 1), 3.0))
 
   def test_passthrough(self):
     """Empty modifier config = pure passthrough."""
@@ -212,7 +359,7 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
     pos = torch.randn(2, 6)
     vel = torch.randn(2, 6)
     meas = {"pos": pos, "vel": vel}
-    proc.process_substep_measurements(_M, meas)
+    self._substep_and_process(proc, meas)
     torch.testing.assert_close(meas["pos"], pos)
     torch.testing.assert_close(meas["vel"], vel)
 
@@ -263,8 +410,8 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
 
     meas0, meas1 = make_meas(), make_meas()
     for p in procs:
-      p.process_substep_measurements(_M, meas0)
-      p.process_substep_measurements(_M, meas1)
+      self._substep_and_process(p, meas0)
+      self._substep_and_process(p, meas1)
     for k in ("pos", "quat", "rot6d"):
       torch.testing.assert_close(meas0[k], meas1[k])
     self.assertTrue((meas0["pos"] >= 0.1).all() and (meas0["pos"] <= 0.9).all())
@@ -273,11 +420,11 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
     )
 
     mask = torch.tensor([True, False, True, False])
-    for p in procs:
-      p.reset(mask)
     meas2 = make_meas()
     for p in procs:
-      p.process_substep_measurements(_M, meas2)
+      p.reset(mask)
+      p.on_begin_stepping(_M, meas2, mask)
+      p.process_measurements(_M, meas2)
     for k in ("pos", "quat", "rot6d"):
       torch.testing.assert_close(meas2[k][1], meas0[k][1])
       self.assertFalse(torch.allclose(meas2[k][0], meas0[k][0]))
@@ -287,7 +434,8 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
         p.reset()
     meas50 = make_meas()
     for p in procs:
-      p.process_substep_measurements(_M, meas50)
+      p.on_begin_stepping(_M, meas50)
+      p.process_measurements(_M, meas50)
     self.assertTrue(
         (meas50["pos"] >= 0.1).all() and (meas50["pos"] <= 0.9).all()
     )

@@ -24,8 +24,8 @@ class DelayBuffer:
   serves values from `T - lag` timesteps ago, where `lag` is sampled
   independently per environment from `[min_lag, max_lag]`.
 
-  The buffer is lazily initialized on the first `append()` call so it adapts
-  to arbitrary tensor shapes without upfront configuration.
+  The buffer is lazily initialized on the first `append()` or `fill()` call so
+  it adapts to arbitrary tensor shapes without upfront configuration.
 
   Example usage::
 
@@ -83,6 +83,11 @@ class DelayBuffer:
   def max_lag(self) -> int:
     return self._max_lag
 
+  @property
+  def empty(self) -> bool:
+    """Whether no frame was appended or filled yet."""
+    return self._buffer is None
+
   def reset(self, env_mask: torch.Tensor | None = None) -> None:
     """Clears history and resamples lags for the given environments.
 
@@ -117,14 +122,7 @@ class DelayBuffer:
       x: Tensor of shape `(nworld, *shape)` containing the new frame for all
         environments.
     """
-    if self._buffer is None:
-      data_shape = x.shape[1:]
-      self._buffer = torch.zeros(
-          (self._capacity, self._nworld, *data_shape),
-          dtype=x.dtype,
-          device=self._xpu_device,
-      )
-      self._steps_since_reset[:] = 0  # Force init on first append
+    buffer = self._init_buffer_if_empty(x)
 
     # Fill all history slots with the first frame for the first step after
     # reset.
@@ -133,9 +131,9 @@ class DelayBuffer:
     # buffer shape: (capacity, nworld, *data_shape)
     mask_shape = (1, -1) + (1,) * len(x.shape[1:])
     mask = is_first_step.view(mask_shape)  # pyrefly: ignore[missing-attribute]
-    torch.where(mask, x.unsqueeze(0), self._buffer, out=self._buffer)
+    torch.where(mask, x.unsqueeze(0), buffer, out=buffer)
 
-    self._buffer[self._write_idx] = x
+    buffer[self._write_idx] = x
     self._write_idx = (self._write_idx + 1) % self._capacity
     self._steps_since_reset += 1
 
@@ -146,10 +144,10 @@ class DelayBuffer:
       Tensor of shape `(nworld, *shape)`.
 
     Raises:
-      RuntimeError: If no frames have been appended yet.
+      RuntimeError: If no frames have been appended or filled yet.
     """
     if self._buffer is None:
-      raise RuntimeError("Buffer is empty. Call append() first.")
+      raise RuntimeError("Buffer is empty. Call append() or fill() first.")
 
     # Clamp lags in case they are out of bounds.
     valid_lags = self._lags.clamp(max=self._capacity - 1).clamp(min=0)
@@ -158,3 +156,26 @@ class DelayBuffer:
     read_positions = (self._write_idx - 1 - valid_lags) % self._capacity
 
     return self._buffer[read_positions, self._batch_arange]
+
+  def fill(self, x: torch.Tensor, env_mask: torch.Tensor | None) -> None:
+    """Fills every slot of `env_mask` envs (None: all) with `x`."""
+    buffer = self._init_buffer_if_empty(x)
+    # Filled envs are initialized: the next `append()` must not overwrite them.
+    if env_mask is None:
+      buffer.copy_(x.unsqueeze(0).expand_as(buffer))
+      self._steps_since_reset.fill_(1)
+    else:
+      mask = env_mask.view(1, -1, *([1] * (x.ndim - 1)))
+      torch.where(mask, x.unsqueeze(0), buffer, out=buffer)
+      self._steps_since_reset.masked_fill_(env_mask, 1)
+
+  def _init_buffer_if_empty(self, x: torch.Tensor) -> torch.Tensor:
+    """Allocates the buffer for frames shaped like `x` on first use."""
+    if self._buffer is None:
+      self._buffer = torch.zeros(
+          (self._capacity, self._nworld, *x.shape[1:]),
+          dtype=x.dtype,
+          device=self._xpu_device,
+      )
+      self._steps_since_reset[:] = 0  # Force init on first append
+    return self._buffer

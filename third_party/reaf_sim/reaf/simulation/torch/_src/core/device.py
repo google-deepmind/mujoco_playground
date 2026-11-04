@@ -69,10 +69,83 @@ class Device(abc.ABC):
     """Sets the substep commands for this device."""
     del simulator, consumed_substep_commands
 
+  def on_substep(self, simulator: simulator_module.Simulator) -> None:
+    """Advances per-substep state after every physics substep.
+
+    E.g. pushes the current reading into a substep history buffer.
+
+    Args:
+      simulator: The simulator, after the physics substep.
+    """
+    del simulator
+
+  def on_step(self, simulator: simulator_module.Simulator) -> None:
+    """Advances per-control-step state on the final substep.
+
+    Runs on the last physics substep right after `on_substep()` and before
+    `get_measurements()` and substep processors, holding the prior step's value
+    across earlier substeps (zero-order hold). Does not run after resets:
+    `on_begin_stepping()` sets this state for reset worlds.
+
+    Args:
+      simulator: The simulator, after the last physics substep.
+    """
+    del simulator
+
+  def on_begin_stepping(
+      self,
+      simulator: simulator_module.Simulator,
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Records the reset state of the `env_mask` worlds.
+
+    `reset()` runs before the environment resetter, `Simulator.set_const()`,
+    and `Simulator.forward()`, so `simulator.data` does not hold the reset
+    state yet. This hook runs after them and before the reset state is read,
+    e.g. to fill history buffers with the reset reading. Worlds outside
+    `env_mask` must keep their state.
+
+    Args:
+      simulator: The simulator, holding the final reset state.
+      env_mask: Boolean mask of the reset worlds. None: all worlds.
+    """
+    del simulator, env_mask
+
+  def get_measurements(
+      self,
+      simulator: simulator_module.Simulator,
+  ) -> Mapping[str, torch.Tensor]:
+    """Returns the measurements for the current state.
+
+    Should not advance any state: `DeviceLayer` can call this method any number
+    of times and it should return valid measurements at any point in the step
+    lifecycle.
+
+    Args:
+      simulator: The simulator.
+
+    Returns:
+      The measurements, batched over worlds. They may be views of simulator or
+      device state, so callers must not modify them in place, and must copy
+      them to keep them across simulator updates.
+    """
+    del simulator
+    return {}
+
   def get_substep_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:
-    """Returns the substep measurements provided by this device."""
-    del simulator
-    return {}
+    """Deprecated: implement `on_substep()`, `on_step()`, and `get_measurements()`.
+
+    `DeviceLayer` calls overrides after every physics substep and after resets.
+
+    Args:
+      simulator: The simulator.
+
+    Returns:
+      The measurements, batched over worlds.
+    """
+    # TODO: b/570300769 - Remove once downstream devices are migrated.
+    self.on_substep(simulator)
+    return self.get_measurements(simulator)

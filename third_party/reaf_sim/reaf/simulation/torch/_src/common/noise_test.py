@@ -240,5 +240,38 @@ class BiasTest(absltest.TestCase):
       noise.apply_bias(torch.zeros(4, 3), torch.zeros(4, 3), "rotate")
 
 
+class SampleAndApplyNoiseTest(absltest.TestCase):
+
+  def test_matches_modifier(self):
+    identity = math.quat_to_matrix(torch.tensor([[1.0, 0.0, 0.0, 0.0]] * 4))
+    cases = (
+        (noise.uniform(1.0, 2.0, op="add"), torch.randn(4, 3)),
+        (noise.uniform(0.5, 1.5, op="scale"), torch.randn(4, 3)),
+        (noise.uniform(-1.0, 1.0, op="replace"), torch.randn(4, 3)),
+        (
+            noise.Noise(dist=noise.SO3Uniform(low=-0.2, high=0.2)),
+            torch.tensor([[1.0, 0.0, 0.0, 0.0]] * 4),
+        ),
+        (
+            noise.Noise(dist=noise.SO3Gaussian(mean=0.0, std=0.1)),
+            math.rot_matrix_to_6d(identity),
+        ),
+    )
+    for cfg, value in cases:
+      with self.subTest(op=noise.resolve_op(cfg), shape=tuple(value.shape)):
+        torch.manual_seed(0)
+        expected = noise.build_modifier(cfg, "cpu")(value)
+        torch.manual_seed(0)
+        sample = noise.sample_noise(
+            noise.build_sampler(cfg, "cpu"),
+            noise.resolve_op(cfg),
+            tuple(value.shape),
+            value.dtype,
+            "cpu",
+        )
+        actual = noise.apply_noise(value, sample, noise.resolve_op(cfg))
+        torch.testing.assert_close(actual, expected, atol=0.0, rtol=0.0)
+
+
 if __name__ == "__main__":
   absltest.main()

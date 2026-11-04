@@ -29,23 +29,47 @@ Each :class:`~reaf.simulation.torch.Device` follows a standardized lifecycle:
    cache indices or allocate runtime buffers.
 3. **Substep commands** (``set_substep_commands``): Before each physics substep, devices write control inputs into the
    simulation.
-4. **Substep measurements** (``get_substep_measurements``): After each physics substep, devices read fresh state from
-   ``sim.data`` (or cameras/sensors) and return this information in a dictionary of tensors.
-5. **Reset** (``reset``): Resets internal buffers, delay queues, or hardware caches for specified environments (via
-   ``env_mask``).
+4. **Substep update** (``on_substep``): After each physics substep, devices advance per-substep state (e.g. history
+   buffers or captures at a given substep).
+5. **Step update** (``on_step``): On the final physics substep, right after ``on_substep`` and before
+   ``get_measurements`` and substep processors, devices advance per-control-step state (holding the prior step's value
+   across earlier substeps).
+6. **Measurements** (``get_measurements``): Returns the current measurements in a dictionary of tensors. By convention,
+   it does not advance any state, since :class:`~reaf.simulation.torch.DeviceLayer` may read a device more than once at
+   any point in the device layer lifecycle.
+7. **Reset** (``reset``): Clears per-world buffers and sets the initial simulation state of the specified environments
+   (via ``env_mask``).
+8. **Begin stepping** (``on_begin_stepping``): Records the reset state of the reset environments (e.g. fills history
+   buffers with the reset reading). ``on_step`` does not run after resets, so devices that latch per-step state set it
+   for the reset environments here.
+
+.. note::
+
+   ``on_begin_stepping`` is separate from ``reset`` because ``reset`` runs before the environment resetter,
+   ``sim.set_const()``, and ``sim.forward()``, so ``sim.data`` (e.g. ``sensordata`` or ``xpos``) does not hold the reset
+   state yet. ``on_begin_stepping`` runs after them and before the reset state is read, which lets stateful devices seed
+   their buffers for the reset environments in a hook rather than in ``get_measurements``.
+
+Only measurements of the reset environments are refreshed after a partial reset; the other environments keep the
+measurements of their last control step. Measurements are committed into persistent contiguous output buffers, so
+returned tensors are isolated from subsequent ``sim.data`` updates and keep stable memory addresses across steps and
+resets.
 
 Substep loop (simulation)
 -------------------------
 
 :class:`~reaf.simulation.torch.DeviceLayer` runs ``n_substeps = round(control_timestep / simulation_timestep)`` physics
-steps per control step, with optional processors transforming commands and measurements at the physics frequency.
+steps per control step. Commands and measurements are processed at the physics frequency:
 
 - :class:`~reaf.simulation.torch.SubstepCommandsProcessor` (e.g.
   :class:`~reaf.simulation.torch.StochasticSubstepCommands`): Transforms commands before they reach devices (actuation
   latency, dropout, jitter).
 - :class:`~reaf.simulation.torch.SubstepMeasurementsProcessor` (e.g.
   :class:`~reaf.simulation.torch.StochasticSubstepMeasurements`): Post-processes raw device measurements before they
-  reach the task layer (sensor noise, latency, bias).
+  reach the task layer (sensor noise, latency, bias). Like devices, processors should advance state in ``on_substep``
+  and ``on_begin_stepping`` and, by convention, not in ``process_measurements``. Substep measurements are zero-copy
+  views of simulator or device state, so processors must not modify them in place, and must copy them into their own
+  buffers to keep them (e.g. as a history).
 
 Built-in devices
 ----------------
@@ -104,3 +128,12 @@ Custom devices subclass :class:`~reaf.simulation.torch.Device` and implement its
 
 For full signature details of all methods, see :class:`reaf.simulation.torch.DeviceLayer` and
 :class:`reaf.simulation.torch.Device` in the :doc:`API reference <../api>`.
+
+Deprecated methods
+------------------
+
+``Device.get_substep_measurements`` and ``SubstepMeasurementsProcessor.process_substep_measurements`` are deprecated in
+favor of the hooks above. Components that override them (or that override none of the replacement methods and declare
+measurements) keep their previous per-substep and post-reset behavior; :class:`~reaf.simulation.torch.DeviceLayer` emits
+a ``DeprecationWarning`` for legacy processors, and raises a ``TypeError`` if a component overrides both a deprecated
+method and one of its replacements.

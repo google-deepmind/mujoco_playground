@@ -191,7 +191,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
 
     # Step 0: Should render
     device.update_measurements()
-    m0 = dict(device.get_measurements())
+    m0 = {k: v.clone() for k, v in device.get_measurements().items()}
     self.assertIn(measurement_key, m0)
 
     # Step 1: Advance physics and verify cached measurement is returned.

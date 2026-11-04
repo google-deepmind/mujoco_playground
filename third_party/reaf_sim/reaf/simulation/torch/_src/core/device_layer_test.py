@@ -13,6 +13,7 @@
 # limitations under the License.
 from collections.abc import Mapping
 from collections.abc import MutableMapping
+from collections.abc import Sequence
 from typing import Any
 from unittest import mock
 
@@ -22,6 +23,7 @@ from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
 import mujoco
 import numpy as np
+from reaf.simulation.torch._src.common import processors as processors_module
 from reaf.simulation.torch._src.core import device as device_module
 from reaf.simulation.torch._src.core import device_layer
 from reaf.simulation.torch._src.core import simulator as simulator_module
@@ -180,6 +182,81 @@ class CounterPassthroughSubstepCommandsProcessor(
 
 
 _DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+_SPEC = specs.Array(shape=(1,), dtype=np.float32)
+
+
+def _nworld(impl: types.Impl) -> int:
+  return 1 if impl == types.Impl.CPP else 2
+
+
+def _make_device_layer(
+    impl: types.Impl,
+    xpu_device: str,
+    *,
+    n_substeps: int = 1,
+    devices: Sequence[device_module.Device] = (),
+    processors: Sequence[
+        substep_measurements_processor_module.SubstepMeasurementsProcessor
+    ] = (),
+) -> device_layer.DeviceLayer:
+  """Returns a device layer running `n_substeps` substeps of 2 ms per step."""
+  sim = simulator_module.Simulator(
+      mj_spec=mujoco.MjSpec.from_string(_TEST_XML),
+      impl=impl,
+      xpu_device=xpu_device,
+      nworld=_nworld(impl),
+  )
+  return device_layer.DeviceLayer(
+      simulator=sim,
+      control_timestep=0.002 * n_substeps,
+      devices=devices,
+      substep_measurements_processors=processors,
+  )
+
+
+class _Device(device_module.Device):
+  """Device measuring `keys`; subclasses override the measurement methods."""
+
+  def __init__(self, name: str, keys: Sequence[str] = ()):
+    self._name = name
+    self._keys = tuple(keys) or (name,)
+
+  @property
+  def name(self) -> str:
+    return self._name
+
+  def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
+    return {key: _SPEC for key in self._keys}
+
+  def reset(
+      self,
+      simulator: simulator_module.Simulator,
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    del simulator, env_mask
+
+
+class _Processor(
+    substep_measurements_processor_module.SubstepMeasurementsProcessor
+):
+  """Processor replacing `consumed` by `produced`; subclasses override hooks."""
+
+  def __init__(self, consumed: str, produced: str):
+    self.consumed = consumed
+    self.produced = produced
+
+  @property
+  def name(self) -> str:
+    return self.produced
+
+  def consumed_substep_measurements_keys(self) -> set[str]:
+    return {self.consumed}
+
+  def produced_substep_measurements_spec(self) -> Mapping[str, specs.Array]:
+    return {self.produced: _SPEC}
+
+  def reset(self, env_mask: torch.Tensor | None = None) -> None:
+    del env_mask
 
 
 @parameterized.named_parameters(
@@ -1176,6 +1253,542 @@ class DeviceLayerTest(parameterized.TestCase):
           torch.equal(deg_meas_now, rollout1_deg_meas[step_idx]),
           f"Measurement discrepancy at step {step_idx}",
       )
+
+  def test_split_devices_and_partial_reset(self, impl, xpu_device):
+    nworld = _nworld(impl)
+
+    class SubstepCounterDevice(_Device):
+      """Counts substeps per world in `on_substep`; reads have no effects."""
+
+      def __init__(self, name: str):
+        super().__init__(name)
+        self.counts = torch.zeros((nworld, 1), device=xpu_device)
+        self.num_on_substep = 0
+        self.num_on_step = 0
+        self.num_reads = 0
+        self.begin_stepping_masks = []
+
+      def on_substep(self, simulator: simulator_module.Simulator) -> None:
+        del simulator
+        self.num_on_substep += 1
+        self.counts += 1.0
+
+      def on_step(self, simulator: simulator_module.Simulator) -> None:
+        del simulator
+        self.num_on_step += 1
+
+      def on_begin_stepping(
+          self,
+          simulator: simulator_module.Simulator,
+          env_mask: torch.Tensor | None = None,
+      ) -> None:
+        del simulator
+        self.begin_stepping_masks.append(env_mask)
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        del simulator
+        self.num_reads += 1
+        return {self.name: self.counts.clone()}
+
+      def reset(
+          self,
+          simulator: simulator_module.Simulator,
+          env_mask: torch.Tensor | None = None,
+      ) -> None:
+        del simulator
+        self.counts[slice(None) if env_mask is None else env_mask] = 0.0
+
+    class SumProcessor(_Processor):
+      """Sums `a` over substeps into `a_sum`."""
+
+      def __init__(self):
+        super().__init__("a", "a_sum")
+        self.sums = torch.zeros((nworld, 1), device=xpu_device)
+        self.begin_stepping_calls = []
+        self.num_process = 0
+
+      def on_substep(
+          self,
+          simulator: simulator_module.Simulator,
+          substep_measurements: Mapping[str, torch.Tensor],
+      ) -> None:
+        del simulator
+        self.sums += substep_measurements["a"]
+
+      def on_begin_stepping(
+          self,
+          simulator: simulator_module.Simulator,
+          measurements: Mapping[str, torch.Tensor],
+          env_mask: torch.Tensor | None = None,
+      ) -> None:
+        del simulator
+        self.begin_stepping_calls.append((measurements["a"].clone(), env_mask))
+
+      def process_measurements(
+          self,
+          simulator: simulator_module.Simulator,
+          measurements: MutableMapping[str, torch.Tensor],
+      ) -> None:
+        del simulator
+        self.num_process += 1
+        measurements.pop("a")
+        measurements["a_sum"] = self.sums.clone()
+
+      def reset(self, env_mask: torch.Tensor | None = None) -> None:
+        self.sums[slice(None) if env_mask is None else env_mask] = 0.0
+
+    dev_a = SubstepCounterDevice("a")
+    dev_b = SubstepCounterDevice("b")
+    sum_processor = SumProcessor()
+    dl = _make_device_layer(
+        impl,
+        xpu_device,
+        n_substeps=3,
+        devices=[dev_a, dev_b],
+        processors=[sum_processor],
+    )
+
+    def full(value: float) -> torch.Tensor:
+      return torch.full((nworld, 1), value, device=xpu_device)
+
+    meas = dl.begin_stepping()
+    torch.testing.assert_close(meas["a_sum"], full(0.0))
+    torch.testing.assert_close(meas["b"], full(0.0))
+
+    meas = dl.step({})
+    torch.testing.assert_close(meas["a_sum"], full(1.0 + 2.0 + 3.0))
+    torch.testing.assert_close(meas["b"], full(3.0))
+    self.assertEqual(dev_a.num_on_substep, 3)
+    self.assertEqual(dev_b.num_on_substep, 3)
+    self.assertEqual(dev_a.num_reads, 1 + 3)
+    self.assertEqual(dev_b.num_reads, 1 + 3)
+    self.assertEqual(dev_a.num_on_step, 1)
+    self.assertEqual(dev_b.num_on_step, 1)
+    self.assertEqual(sum_processor.num_process, 1 + 3)
+
+    # Partial reset: only the `env_mask` rows are refreshed and no per-substep
+    # state is advanced for the other worlds.
+    env_mask = torch.tensor([True, False][:nworld], device=xpu_device)
+    mask = env_mask.view(-1, 1)
+    dl.reset(env_mask)
+    meas = dl.begin_stepping(env_mask)
+    torch.testing.assert_close(
+        meas["a_sum"], torch.where(mask, full(0.0), full(6.0))
+    )
+    torch.testing.assert_close(
+        meas["b"], torch.where(mask, full(0.0), full(3.0))
+    )
+    self.assertEqual(dev_a.num_on_substep, 3)
+    self.assertEqual(dev_a.num_on_step, 1)  # Not called after resets.
+    # `on_begin_stepping` hooks get the reset worlds and reset-state readings.
+    self.assertIs(dev_b.begin_stepping_masks[-1], env_mask)
+    reset_reading, processor_mask = sum_processor.begin_stepping_calls[-1]
+    self.assertIs(processor_mask, env_mask)
+    torch.testing.assert_close(
+        reset_reading, torch.where(mask, full(0.0), full(3.0))
+    )
+
+    # All-False mask (e.g. `AutoResetMode.NO_SYNC`) leaves every world as is.
+    no_reset_mask = torch.zeros(nworld, dtype=torch.bool, device=xpu_device)
+    dl.reset(no_reset_mask)
+    meas = dl.begin_stepping(no_reset_mask)
+    torch.testing.assert_close(
+        meas["a_sum"], torch.where(mask, full(0.0), full(6.0))
+    )
+
+    # Non-reset worlds continue from their state (4 + 5 + 6); reset worlds
+    # restart (1 + 2 + 3).
+    meas = dl.step({})
+    torch.testing.assert_close(
+        meas["a_sum"], torch.where(mask, full(6.0), full(6.0 + 15.0))
+    )
+    torch.testing.assert_close(
+        meas["b"], torch.where(mask, full(3.0), full(6.0))
+    )
+
+  def test_processor_chain_runs_every_substep(self, impl, xpu_device):
+    nworld = _nworld(impl)
+    trace: list[str] = []
+
+    class ConstantDevice(_Device):
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        del simulator
+        trace.append("x.get_measurements")
+        return {"x": torch.zeros((nworld, 1), device=xpu_device)}
+
+    class SubstepIncrementProcessor(_Processor):
+      """Replaces `consumed` by `consumed + 1` under the key `produced`."""
+
+      def on_substep(
+          self,
+          simulator: simulator_module.Simulator,
+          substep_measurements: Mapping[str, torch.Tensor],
+      ) -> None:
+        del simulator
+        keys = ",".join(sorted(substep_measurements))
+        trace.append(f"{self.produced}.on_substep({keys})")
+
+      def process_measurements(
+          self,
+          simulator: simulator_module.Simulator,
+          measurements: MutableMapping[str, torch.Tensor],
+      ) -> None:
+        del simulator
+        trace.append(f"{self.produced}.process_measurements")
+        measurements[self.produced] = measurements.pop(self.consumed) + 1.0
+
+    dl = _make_device_layer(
+        impl,
+        xpu_device,
+        n_substeps=2,
+        devices=[ConstantDevice("x")],
+        processors=[
+            SubstepIncrementProcessor("x", "y"),
+            SubstepIncrementProcessor("y", "z"),
+        ],
+    )
+    dl.begin_stepping()
+
+    trace.clear()
+    meas = dl.step({})
+    self.assertEqual(
+        trace,
+        [
+            "x.get_measurements",
+            "y.on_substep(x)",
+            "y.process_measurements",
+            "z.on_substep(y)",
+            "z.process_measurements",
+        ]
+        * 2,
+    )
+    torch.testing.assert_close(
+        meas["z"], torch.full((nworld, 1), 2.0, device=xpu_device)
+    )
+
+  def test_raises_for_deprecated_and_new_methods(self, impl, xpu_device):
+    class HalfMigratedDevice(CounterPassthroughDevice):
+      """Adds a new hook to a device overriding `get_substep_measurements`."""
+
+      def on_substep(self, simulator: simulator_module.Simulator) -> None:
+        del simulator
+
+    class HalfMigratedProcessor(CounterPassthroughSubstepMeasurementsProcessor):
+      """Adds a new method to a processor overriding the deprecated one."""
+
+      def process_measurements(
+          self,
+          simulator: simulator_module.Simulator,
+          measurements: MutableMapping[str, torch.Tensor],
+      ) -> None:
+        del simulator, measurements
+
+    with self.assertRaisesRegex(
+        TypeError,
+        "HalfMigratedDevice.*`get_substep_measurements\\(\\)`"
+        ".*`on_substep\\(\\)`",
+    ):
+      _make_device_layer(impl, xpu_device, devices=[HalfMigratedDevice()])
+    with self.assertRaisesRegex(
+        TypeError,
+        "HalfMigratedProcessor.*`process_substep_measurements\\(\\)`"
+        ".*`process_measurements\\(\\)`",
+    ):
+      _make_device_layer(impl, xpu_device, processors=[HalfMigratedProcessor()])
+
+  def test_warns_for_legacy_processors(self, impl, xpu_device):
+    with self.assertWarnsRegex(
+        DeprecationWarning,
+        "CounterPassthroughSubstepMeasurementsProcessor.*"
+        "process_substep_measurements",
+    ):
+      _make_device_layer(
+          impl,
+          xpu_device,
+          processors=[CounterPassthroughSubstepMeasurementsProcessor()],
+      )
+
+  def test_partial_reset_takes_unbatched_measurements_as_is(
+      self, impl, xpu_device
+  ):
+    nworld = _nworld(impl)
+
+    class ValueDevice(_Device):
+      """Returns `value` batched, as a 0-dim tensor, and not batched."""
+
+      def __init__(self):
+        super().__init__("value", keys=("batched", "scalar", "table"))
+        self.value = 1.0
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        del simulator
+        return {
+            "batched": torch.full((nworld, 1), self.value, device=xpu_device),
+            "scalar": torch.tensor(self.value, device=xpu_device),
+            "table": torch.full((nworld + 1,), self.value, device=xpu_device),
+        }
+
+    device = ValueDevice()
+    dl = _make_device_layer(impl, xpu_device, devices=[device])
+    dl.begin_stepping()
+
+    # No world is reset: the batched rows are kept, while measurements that
+    # are not batched over worlds are taken as is.
+    device.value = 2.0
+    env_mask = torch.zeros(nworld, dtype=torch.bool, device=xpu_device)
+    dl.reset(env_mask)
+    meas = dl.begin_stepping(env_mask)
+    torch.testing.assert_close(
+        meas["batched"], torch.full((nworld, 1), 1.0, device=xpu_device)
+    )
+    torch.testing.assert_close(
+        meas["scalar"], torch.tensor(2.0, device=xpu_device)
+    )
+    torch.testing.assert_close(
+        meas["table"], torch.full((nworld + 1,), 2.0, device=xpu_device)
+    )
+
+  def test_no_op_resets_do_not_advance_delay_buffers(self, impl, xpu_device):
+    nworld = _nworld(impl)
+
+    class SubstepCountDevice(_Device):
+      """Measures the number of substeps since the start."""
+
+      def __init__(self):
+        super().__init__("x")
+        self.count = torch.zeros((nworld, 1), device=xpu_device)
+
+      def on_substep(self, simulator: simulator_module.Simulator) -> None:
+        del simulator
+        self.count = self.count + 1.0
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        del simulator
+        return {"x": self.count}
+
+    dl = _make_device_layer(
+        impl,
+        xpu_device,
+        devices=[SubstepCountDevice()],
+        processors=[
+            processors_module.StochasticSubstepMeasurements(
+                keys="x",
+                delay=(0.004, 0.004),  # 2 substeps.
+                nworld=nworld,
+                xpu_device=xpu_device,
+                simulation_timestep=0.002,
+            )
+        ],
+    )
+    dl.begin_stepping()
+    no_reset = torch.zeros(nworld, dtype=torch.bool, device=xpu_device)
+    # The reset reading (0) is held until the delay has passed.
+    for expected in (0.0, 0.0, 1.0, 2.0):
+      meas = dl.step({})
+      torch.testing.assert_close(
+          meas["x"], torch.full((nworld, 1), expected, device=xpu_device)
+      )
+      # As under `AutoResetMode.NO_SYNC` when no world terminates.
+      dl.reset(no_reset)
+      dl.begin_stepping(no_reset)
+
+  def test_update_measurements_reads_and_processes_without_hooks(
+      self, impl, xpu_device
+  ):
+    nworld = _nworld(impl)
+    trace: list[str] = []
+
+    class ValueDevice(_Device):
+
+      def __init__(self):
+        super().__init__("x")
+        self.value = 0.0
+
+      def on_substep(self, simulator: simulator_module.Simulator) -> None:
+        del simulator
+        trace.append("x.on_substep")
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        del simulator
+        return {"x": torch.full((nworld, 1), self.value, device=xpu_device)}
+
+    class IncrementProcessor(_Processor):
+
+      def on_substep(
+          self,
+          simulator: simulator_module.Simulator,
+          substep_measurements: Mapping[str, torch.Tensor],
+      ) -> None:
+        del simulator, substep_measurements
+        trace.append("y.on_substep")
+
+      def process_measurements(
+          self,
+          simulator: simulator_module.Simulator,
+          measurements: MutableMapping[str, torch.Tensor],
+      ) -> None:
+        del simulator
+        measurements["y"] = measurements.pop("x") + 1.0
+
+    device = ValueDevice()
+    dl = _make_device_layer(
+        impl,
+        xpu_device,
+        devices=[device],
+        processors=[IncrementProcessor("x", "y")],
+    )
+    dl.begin_stepping()
+
+    # E.g. after a state change without stepping.
+    device.value = 5.0
+    trace.clear()
+    dl.update_measurements()
+    self.assertEmpty(trace)
+    torch.testing.assert_close(
+        dl.get_measurements()["y"],
+        torch.full((nworld, 1), 6.0, device=xpu_device),
+    )
+
+  def test_output_buffers_isolate_sim_views_and_preserve_data_ptr(
+      self, impl, xpu_device
+  ):
+    nworld = _nworld(impl)
+
+    class SimSliceDevice(_Device):
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        # Returns a strided (non-contiguous) view directly into `sim.data.qpos`.
+        return {"qpos_even": simulator.data.qpos[:, ::2]}
+
+      def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
+        return {"qpos_even": specs.Array((5,), np.float32)}
+
+    dl = _make_device_layer(impl, xpu_device, devices=[SimSliceDevice("sim")])
+    dl.sim.data.qpos[:] = 3.0
+    meas = dl.begin_stepping()
+    buf = meas["qpos_even"]
+    initial_ptr = buf.data_ptr()
+
+    self.assertTrue(buf.is_contiguous())
+    self.assertNotEqual(
+        buf.untyped_storage().data_ptr(),
+        dl.sim.data.qpos.untyped_storage().data_ptr(),
+    )
+
+    # Mutating `sim.data.qpos` directly + calling `forward()` must not alter
+    # the caller's held output buffer prior to `begin_stepping`.
+    dl.sim.data.qpos[:] = 99.0
+    dl.forward()
+    torch.testing.assert_close(
+        buf, torch.full_like(buf, 3.0), rtol=0.0, atol=0.0
+    )
+
+    mask = torch.zeros(nworld, dtype=torch.bool, device=xpu_device)
+    mask[0] = True
+    dl.reset(mask)
+    dl.forward()
+    meas = dl.begin_stepping(mask)
+    self.assertEqual(meas["qpos_even"].data_ptr(), initial_ptr)
+    if nworld > 1:
+      torch.testing.assert_close(
+          meas["qpos_even"][1:],
+          torch.full_like(meas["qpos_even"][1:], 3.0),
+      )
+
+    # `step()` and `update_measurements()` write into the same buffers.
+    self.assertEqual(dl.step({})["qpos_even"].data_ptr(), initial_ptr)
+    dl.update_measurements()
+    self.assertEqual(dl.get_measurements()["qpos_even"].data_ptr(), initial_ptr)
+
+  def test_output_buffers_raise_for_undeclared_or_missing_keys(
+      self, impl, xpu_device
+  ):
+    nworld = _nworld(impl)
+
+    class KeysDevice(_Device):
+
+      def __init__(self):
+        super().__init__("x", keys=("x", "y"))
+        self.keys: tuple[str, ...] = ("x", "y")
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        del simulator
+        return {
+            k: torch.zeros((nworld, 1), device=xpu_device) for k in self.keys
+        }
+
+    # A key outside the specs raises on its first (unmasked) commit.
+    dev = KeysDevice()
+    dev.keys = ("x", "y", "undeclared")
+    dl = _make_device_layer(impl, xpu_device, devices=[dev])
+    with self.assertRaisesRegex(KeyError, "'undeclared' is not in the spec"):
+      dl.begin_stepping()
+
+    # Omitting a previously emitted key raises instead of serving stale values.
+    dev = KeysDevice()
+    dl = _make_device_layer(impl, xpu_device, devices=[dev])
+    dl.begin_stepping()
+    dev.keys = ("x",)
+    with self.assertRaisesRegex(KeyError, "Missing measurement keys"):
+      dl.step({})
+
+  def test_on_step_zero_order_hold_on_final_substep(self, impl, xpu_device):
+    nworld = _nworld(impl)
+    seen_by_substep_proc: list[float] = []
+
+    class StepHeldDevice(_Device):
+
+      def __init__(self):
+        super().__init__("x")
+        self.step_val = 0.0
+
+      def on_step(self, simulator: simulator_module.Simulator) -> None:
+        self.step_val += 1.0
+
+      def get_measurements(
+          self, simulator: simulator_module.Simulator
+      ) -> Mapping[str, torch.Tensor]:
+        return {"x": torch.full((nworld, 1), self.step_val, device=xpu_device)}
+
+    class RecordingSubstepProcessor(_Processor):
+
+      def on_substep(
+          self,
+          simulator: simulator_module.Simulator,
+          substep_measurements: Mapping[str, torch.Tensor],
+      ) -> None:
+        seen_by_substep_proc.append(float(substep_measurements["x"][0, 0]))
+
+    dl = _make_device_layer(
+        impl,
+        xpu_device,
+        n_substeps=3,
+        devices=[StepHeldDevice()],
+        processors=[RecordingSubstepProcessor("x", "x")],
+    )
+    dl.begin_stepping()
+    meas = dl.step({})
+    # Substeps 0 and 1 hold `0.0` (zero-order hold); final substep 2 runs
+    # `on_step` before `get_measurements` and `proc.on_substep`, yielding `1.0`.
+    self.assertEqual(seen_by_substep_proc, [0.0, 0.0, 1.0])
+    torch.testing.assert_close(
+        meas["x"], torch.full((nworld, 1), 1.0, device=xpu_device)
+    )
 
 
 if __name__ == "__main__":

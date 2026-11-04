@@ -17,15 +17,13 @@
 from absl.testing import absltest
 from absl.testing import parameterized
 import mujoco
-import mujoco_warp as mjw
 from reaf.simulation.torch._src.common import contact_sensor_device
 from reaf.simulation.torch._src.common.contact_sensor_device import ContactField
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import types
 import torch
-import warp as wp
 
-_DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+_DEVICE = "cpu"
 
 
 def _make_contact_scene_spec(
@@ -158,8 +156,6 @@ class ContactSensorDeviceTest(parameterized.TestCase):
         refname="floor",
     )
 
-    if not torch.cuda.is_available():
-      self.skipTest("Warp put_model/put_data requires CUDA.")
     nworld = 2
 
     sim = simulator_module.Simulator(
@@ -177,7 +173,7 @@ class ContactSensorDeviceTest(parameterized.TestCase):
     self.assertEqual(meas_spec["contact/data"].shape, (2, expected_dims))
 
     # Check measurement values.
-    measurements = dev.get_substep_measurements(sim)
+    measurements = dev.get_measurements(sim)
     contact_data = measurements["contact/data"]
     self.assertEqual(contact_data.shape, (nworld, 2, expected_dims))
 
@@ -208,8 +204,6 @@ class ContactSensorDeviceTest(parameterized.TestCase):
         reftype="geom",
         refname="floor",
     )
-    if not torch.cuda.is_available():
-      self.skipTest("Warp put_model/put_data requires CUDA.")
     sim = simulator_module.Simulator(
         mj_spec=spec,
         nworld=2,
@@ -228,7 +222,10 @@ class ContactSensorDeviceTest(parameterized.TestCase):
     self.assertEqual(meas_spec["contact/force"].shape, (2, 3))
     self.assertNotIn("contact/found_history", meas_spec)
 
-    m = dev.get_substep_measurements(sim)
+    # Without history, the hooks have nothing to record.
+    dev.on_begin_stepping(sim)
+    dev.on_substep(sim)
+    m = dev.get_measurements(sim)
     self.assertEqual(set(m), set(meas_spec))
     torch.testing.assert_close(m["contact/found"], m["contact/data"][..., :1])
     torch.testing.assert_close(m["contact/force"], m["contact/data"][..., 1:])
@@ -243,7 +240,8 @@ class ContactSensorDeviceTest(parameterized.TestCase):
     self.assertEqual(meas_spec["contact/found_history"].shape, (2, 3, 1))
     self.assertEqual(meas_spec["contact/force_history"].shape, (2, 3, 3))
 
-    m = dev.get_substep_measurements(sim)
+    dev.on_substep(sim)
+    m = dev.get_measurements(sim)
     first = {k: m[f"contact/{k}"].clone() for k in ("found", "force")}
     for k in ("found", "force"):
       history = m[f"contact/{k}_history"]
@@ -256,18 +254,58 @@ class ContactSensorDeviceTest(parameterized.TestCase):
       )
 
     sim.step()
-    m = dev.get_substep_measurements(sim)
+    dev.on_substep(sim)
+    m = dev.get_measurements(sim)
     for k in ("found", "force"):
       history = m[f"contact/{k}_history"]
       torch.testing.assert_close(history[:, :, 0], m[f"contact/{k}"])
       torch.testing.assert_close(history[:, :, 1], first[k])
 
+    env_mask = torch.tensor([True, False], device=sim.xpu_device)
+    dev.reset(sim, env_mask=env_mask)
+    dev.on_begin_stepping(sim, env_mask)
+    m = dev.get_measurements(sim)
     force_history = m["contact/force_history"]
-    dev.reset(sim, env_mask=torch.tensor([True, False], device=sim.xpu_device))
-    torch.testing.assert_close(
-        force_history[0], torch.zeros_like(force_history[0])
-    )
+    # Reset world: every slot holds the reset reading; other world: kept.
+    for slot in range(3):
+      torch.testing.assert_close(
+          force_history[0, :, slot], m["contact/force"][0]
+      )
     torch.testing.assert_close(force_history[1, :, 1], first["force"][1])
+
+  def test_on_begin_stepping_without_mask_fills_all_worlds(self):
+    sim, dev = self._make_sim_and_device(("found", "force"), history_length=3)
+    for _ in range(2):
+      sim.step()
+      dev.on_substep(sim)
+
+    dev.reset(sim)
+    dev.on_begin_stepping(sim)
+    m = dev.get_measurements(sim)
+    for k in ("found", "force"):
+      history = m[f"contact/{k}_history"]
+      for slot in range(3):
+        torch.testing.assert_close(history[:, :, slot], m[f"contact/{k}"])
+
+  def test_get_measurements_does_not_advance_history(self):
+    sim, dev = self._make_sim_and_device(("found", "force"), history_length=3)
+    for _ in range(3):
+      sim.step()
+      dev.on_substep(sim)
+    before = dev.get_measurements(sim)["contact/force_history"].clone()
+
+    # Reading any number of times does not roll the history.
+    for _ in range(3):
+      after = dev.get_measurements(sim)["contact/force_history"]
+      torch.testing.assert_close(after, before)
+
+    # Only on_substep() advances it.
+    sim.step()
+    dev.on_substep(sim)
+    m = dev.get_measurements(sim)
+    torch.testing.assert_close(
+        m["contact/force_history"][:, :, 1:], before[:, :, :-1]
+    )
 
 
 if __name__ == "__main__":

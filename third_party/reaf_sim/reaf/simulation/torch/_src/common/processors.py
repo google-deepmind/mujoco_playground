@@ -297,13 +297,13 @@ class StochasticSubstepMeasurements(
 
     (
         self._buffers,
-        self._modifiers,
+        _,
         self._bias_samplers,
         self._bias_ops,
     ) = _build_noise_and_delay_modifiers(
         self._keys,
         delay,
-        noise,
+        None,
         bias,
         simulation_timestep,
         nworld,
@@ -311,6 +311,18 @@ class StochasticSubstepMeasurements(
         self._name,
     )
     self._bias_buffers: dict[str, torch.Tensor] = {}
+    self._noise_samplers: dict[
+        str, Callable[[tuple[int, ...], torch.device], torch.Tensor]
+    ] = {}
+    self._noise_ops: dict[str, noise_lib.OperationType] = {}
+    if noise is not None:
+      noise_op = noise_lib.resolve_op(noise)
+      for key in self._keys:
+        self._noise_samplers[key] = noise_lib.build_sampler(noise, xpu_device)
+        self._noise_ops[key] = noise_op
+    # Latest noise sample of each key without delay, applied to the current
+    # reading in `process_measurements()`.
+    self._noise_samples: dict[str, torch.Tensor] = {}
 
   @property
   def name(self) -> str:
@@ -333,35 +345,127 @@ class StochasticSubstepMeasurements(
   def consumed_substep_measurements_keys(self) -> set[str]:
     return set(self._keys)
 
-  def process_substep_measurements(
+  def on_substep(
       self,
       simulator: simulator_module.Simulator,
-      substep_measurements: MutableMapping[str, torch.Tensor],
+      substep_measurements: Mapping[str, torch.Tensor],
   ) -> None:
+    """Delays the biased and noisy readings, or samples their noise."""
     del simulator
-    for key, value in list(substep_measurements.items()):
-      # per-episode bias
-      if key in self._bias_samplers:
-        if key not in self._bias_buffers:
-          self._bias_buffers[key] = noise_lib.sample_bias(
-              self._bias_samplers[key],
-              self._bias_ops[key],
-              tuple(value.shape),
-              value.dtype,
-              self._xpu_device,
-          )
-        value = noise_lib.apply_bias(
-            value, self._bias_buffers[key], self._bias_ops[key]
+    for key in self._keys:
+      if key not in substep_measurements:
+        continue
+      value = substep_measurements[key]
+      self._sample_bias_if_missing(key, value)
+      sample = (
+          self._sample_noise(key, value)
+          if key in self._noise_samplers
+          else None
+      )
+      buf = self._buffers.get(key)
+      if buf is not None:
+        buf.append(self._apply_bias_and_noise(key, value, sample))
+      elif sample is not None:
+        self._noise_samples[key] = sample
+
+  def on_begin_stepping(
+      self,
+      simulator: simulator_module.Simulator,
+      measurements: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Fills the delay buffers and noise samples of `env_mask` worlds.
+
+    The noise is sampled for all worlds and only kept for `env_mask` worlds,
+    which avoids a host-device sync when no world is reset.
+
+    Args:
+      simulator: The simulator, holding the final reset state.
+      measurements: The measurements of the reset state.
+      env_mask: Boolean mask of the reset worlds. None: all worlds.
+    """
+    del simulator
+    for key in self._keys:
+      if key not in measurements:
+        continue
+      value = measurements[key]
+      self._sample_bias_if_missing(key, value)
+      sample = (
+          self._sample_noise(key, value)
+          if key in self._noise_samplers
+          else None
+      )
+      buf = self._buffers.get(key)
+      if buf is not None:
+        buf.fill(self._apply_bias_and_noise(key, value, sample), env_mask)
+        continue
+      if sample is None:
+        continue
+      old = self._noise_samples.get(key)
+      if env_mask is not None and old is not None:
+        mask = env_mask.to(device=sample.device).view(
+            -1, *([1] * (sample.ndim - 1))
         )
-      # per-substep noise
-      if key in self._modifiers:
-        value = self._modifiers[key](value)
-      # delay
-      if key in self._buffers:
-        buf = self._buffers[key]
-        buf.append(value)
-        value = buf.read()
-      substep_measurements[key] = value
+        torch.where(mask, sample, old, out=sample)
+      self._noise_samples[key] = sample
+
+  def process_measurements(
+      self,
+      simulator: simulator_module.Simulator,
+      measurements: MutableMapping[str, torch.Tensor],
+  ) -> None:
+    """Replaces readings by their delayed or biased and noisy values.
+
+    Keys without delay apply the bias and latest noise sample to the current
+    reading. Readings pass through until `on_substep()` or
+    `on_begin_stepping()` provides their delayed frame, bias, or noise.
+
+    Args:
+      simulator: The simulator.
+      measurements: The measurements, processed in place.
+    """
+    del simulator
+    for key in self._keys:
+      if key not in measurements:
+        continue
+      buf = self._buffers.get(key)
+      if buf is not None:
+        if not buf.empty:
+          measurements[key] = buf.read()
+        continue
+      measurements[key] = self._apply_bias_and_noise(
+          key, measurements[key], self._noise_samples.get(key)
+      )
+
+  def _sample_bias_if_missing(self, key: str, value: torch.Tensor) -> None:
+    """Samples the per-episode bias of `key` on first use."""
+    if key in self._bias_samplers and key not in self._bias_buffers:
+      self._bias_buffers[key] = noise_lib.sample_bias(
+          self._bias_samplers[key],
+          self._bias_ops[key],
+          tuple(value.shape),
+          value.dtype,
+          self._xpu_device,
+      )
+
+  def _sample_noise(self, key: str, value: torch.Tensor) -> torch.Tensor:
+    return noise_lib.sample_noise(
+        self._noise_samplers[key],
+        self._noise_ops[key],
+        tuple(value.shape),
+        value.dtype,
+        value.device,
+    )
+
+  def _apply_bias_and_noise(
+      self, key: str, value: torch.Tensor, sample: torch.Tensor | None
+  ) -> torch.Tensor:
+    bias = self._bias_buffers.get(key)
+    if bias is not None:
+      value = noise_lib.apply_bias(value, bias, self._bias_ops[key])
+    if sample is not None:
+      value = noise_lib.apply_noise(value, sample, self._noise_ops[key])
+    return value
 
 
 class TransformActions(commands_processor.CommandsProcessor):

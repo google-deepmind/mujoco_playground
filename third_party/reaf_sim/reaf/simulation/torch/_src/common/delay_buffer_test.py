@@ -167,6 +167,25 @@ class DelayBufferTest(absltest.TestCase):
     buf.reset()
     torch.testing.assert_close(buf.read(), torch.zeros(4, 1))
 
+  def test_fill_only_affects_masked_envs(self):
+    buf = _delay_buf(1, 1, nworld=2)  # capacity = 2
+    self.assertTrue(buf.empty)
+    # Fill before any append allocates the buffer.
+    buf.fill(torch.tensor([[5.0], [6.0]]), None)
+    self.assertFalse(buf.empty)
+    torch.testing.assert_close(buf.read(), torch.tensor([[5.0], [6.0]]))
+
+    buf.append(torch.tensor([[1.0], [1.0]]))
+    buf.append(torch.tensor([[2.0], [2.0]]))
+    buf.reset(torch.tensor([True, False]))
+    buf.fill(torch.tensor([[7.0], [99.0]]), torch.tensor([True, False]))
+    # env 0 holds the filled value; env 1 still reads its delayed frame.
+    torch.testing.assert_close(buf.read(), torch.tensor([[7.0], [1.0]]))
+
+    buf.append(torch.tensor([[3.0], [3.0]]))
+    # The next append does not overwrite the filled history of env 0.
+    torch.testing.assert_close(buf.read(), torch.tensor([[7.0], [2.0]]))
+
 
 if __name__ == "__main__":
   absltest.main()

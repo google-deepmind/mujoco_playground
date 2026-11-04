@@ -51,7 +51,65 @@ class SubstepMeasurementsProcessor(abc.ABC):
   def consumed_substep_measurements_keys(self) -> set[str]:
     """Keys of the substep measurements consumed by this processor."""
 
-  @abc.abstractmethod
+  def on_substep(
+      self,
+      simulator: simulator_module.Simulator,
+      substep_measurements: Mapping[str, torch.Tensor],
+  ) -> None:
+    """Advances per-substep state after every physics substep.
+
+    E.g. pushes the substep reading into a delay buffer.
+
+    Args:
+      simulator: The simulator, after the physics substep.
+      substep_measurements: The measurements of the substep, as processed by the
+        preceding processors. They may be views of simulator or device state, so
+        copy them into processor-owned buffers to keep them (e.g. in a history),
+        and do not modify them in place.
+    """
+    del simulator, substep_measurements
+
+  def on_begin_stepping(
+      self,
+      simulator: simulator_module.Simulator,
+      measurements: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Records the reset state of the `env_mask` worlds.
+
+    Runs after `reset()`, once the reset state is final and before it is
+    processed, e.g. to fill delay buffers with the reset reading. Worlds outside
+    `env_mask` must keep their state.
+
+    Args:
+      simulator: The simulator, holding the final reset state.
+      measurements: The measurements of the reset state, as processed by the
+        preceding processors. They may be views of simulator or device state, so
+        copy them into processor-owned buffers to keep them (e.g. in a history),
+        and do not modify them in place.
+      env_mask: Boolean mask of the reset worlds. None: all worlds.
+    """
+    del simulator, measurements, env_mask
+
+  def process_measurements(
+      self,
+      simulator: simulator_module.Simulator,
+      measurements: MutableMapping[str, torch.Tensor],
+  ) -> None:
+    """Transforms measurements in place.
+
+    Should not advance any state: `DeviceLayer` may call this method more than
+    once per substep (e.g. after resets or in `update_measurements()`).
+
+    Args:
+      simulator: The simulator.
+      measurements: Mutable dictionary of measurements. Processors can insert,
+        update, or remove measurement keys in place, but must not modify the
+        tensors of measurements in place (they may be views of simulator or
+        device state); they may write into tensors they own (e.g. `out=`).
+    """
+    del simulator, measurements
+
   def process_substep_measurements(
       self,
       simulator: simulator_module.Simulator,
@@ -59,8 +117,15 @@ class SubstepMeasurementsProcessor(abc.ABC):
   ) -> None:
     """Processes substep measurements by modifying the dictionary in place.
 
+    Deprecated: implement `on_substep()` and `process_measurements()` instead.
+    `DeviceLayer` calls overrides after every physics substep and after resets,
+    and emits a `DeprecationWarning` for them.
+
     Args:
       simulator: the simulator bound to the DeviceLayer.
       substep_measurements: mutable dictionary of substep measurements.
         Processors can insert, update, or remove measurement keys in place.
     """
+    # TODO: b/570300769 - Remove once downstream processors are migrated.
+    self.on_substep(simulator, substep_measurements)
+    self.process_measurements(simulator, substep_measurements)
