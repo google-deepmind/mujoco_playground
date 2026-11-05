@@ -404,39 +404,44 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
       imgui.SetNextWindowSize(imgui.Vec2(900, 250), imgui.Cond.FirstUseEver)
       if imgui.Begin('Reward###RewardPlot'):
         avail = imgui.GetContentRegionAvail()
-        plot_size = imgui.Vec2(avail.x, avail.y)
+        if avail.x > 50 and avail.y > 50:
+          plot_size = imgui.Vec2(avail.x, avail.y)
 
-        if implot.BeginPlot(
-            fig.title or 'Reward', plot_size, flags=_REWARD_PLOT_FLAGS
-        ):
-          implot.SetupAxis(
-              implot.Axis.X1, fig.xlabel or 'Step', _REWARD_AXIS_FLAGS
-          )
-          implot.SetupAxisLimits(
-              implot.Axis.X1,
-              float(fig.range[0][0]),
-              float(fig.range[0][1]),
-              cond=implot.Cond.Always,
-          )
-          implot.SetupAxis(
-              implot.Axis.Y1,
-              '',
-              _REWARD_AXIS_FLAGS | implot.AxisFlags.AutoFit.value,
-          )
+          if implot.BeginPlot(
+              fig.title or 'Reward', plot_size, flags=_REWARD_PLOT_FLAGS
+          ):
+            implot.SetupAxis(
+                implot.Axis.X1, fig.xlabel or 'Step', _REWARD_AXIS_FLAGS
+            )
+            x_min = float(fig.range[0][0])
+            x_max = float(fig.range[0][1])
+            if x_max <= x_min:
+              x_max = x_min + 1.0
+            implot.SetupAxisLimits(
+                implot.Axis.X1,
+                x_min,
+                x_max,
+                cond=implot.Cond.Always,
+            )
+            implot.SetupAxis(
+                implot.Axis.Y1,
+                '',
+                _REWARD_AXIS_FLAGS | implot.AxisFlags.AutoFit.value,
+            )
 
-          for i in range(len(fig.linepnt)):
-            n_pts = int(fig.linepnt[i])
-            if n_pts == 0:
-              continue
+            for i in range(len(fig.linepnt)):
+              n_pts = int(fig.linepnt[i])
+              if n_pts == 0:
+                continue
 
-            raw = fig.linedata[i, : 2 * n_pts]
-            xs = raw[0::2].tolist()
-            ys = raw[1::2].tolist()
+              raw = fig.linedata[i, : 2 * n_pts]
+              xs = raw[0::2].tolist()
+              ys = raw[1::2].tolist()
 
-            name = fig.linename[i] if fig.linename[i] else f'Line {i}'
-            implot.PlotLine(name, xs, ys)
+              name = fig.linename[i] if fig.linename[i] else f'Line {i}'
+              implot.PlotLine(name, xs, ys)
 
-          implot.EndPlot()
+            implot.EndPlot()
       imgui.End()
 
     # -- 2D image streams -----------------------------------------------------
