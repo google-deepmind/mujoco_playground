@@ -38,8 +38,13 @@ class CpuTrainTest(absltest.TestCase):
         env="CartpoleBalance",
         device="cpu",
         logdir=os.path.join(tmpdir, "logdir"),
-        overrides='{"max_iterations": 1, "nworld": 2, "num_steps_per_env": 8}',
         wp_kernel_cache_dir=os.path.join(tmpdir, "wp_kernel_cache"),
+        overrides=(
+            '{"max_iterations": 1, "nworld": 2, "num_steps_per_env": 2,'
+            ' "algorithm.num_learning_epochs": 1,'
+            ' "algorithm.num_mini_batches": 1, "actor.hidden_dims": [8],'
+            ' "critic.hidden_dims": [8]}'
+        ),
     ):
       train.main([])
 
