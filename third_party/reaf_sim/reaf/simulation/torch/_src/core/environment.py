@@ -141,19 +141,20 @@ class AutoResetMode(enum.Enum):
   """Controls how `Environment.step()` handles episode auto resets.
 
   Attributes:
-    SYNC: Default. Does a host-device sync check (`if is_last_timestep.any():`)
-      before auto-resetting. This avoids calling `reset_with_options()` if no
-      envs need resetting, avoiding expensive `mj_forward` calls that default
-      resetters (e.g. `EnvironmentReset`) execute.
-    NO_SYNC: Calls `self.reset_with_options(env_mask=...)` unconditionally at
-      the end of every `step()`. This avoids a host-device sync, but may
-      invoke an expensive `mj_forward` on every step (e.g. the default
-      `EnvironmentReset` implementation).
+    SYNC: Default. At the end of `step()`, checks on the host whether any
+      world's episode ended on the previous step (a host-device sync), and only
+      then resets those worlds. This avoids the expensive `mj_forward` calls
+      that default resetters (e.g. `EnvironmentReset`) execute when no world
+      needs resetting.
+    NO_SYNC: At the end of every `step()`, resets the worlds whose episode ended
+      on the previous step, without checking on the host first. This avoids a
+      host-device sync, but may invoke an expensive `mj_forward` on every step
+      (e.g. the default `EnvironmentReset` implementation).
     DISABLED: Disables automatic resetting inside `Environment.step()`. The
-      caller is responsible for calling
-      `reset_with_options(options=..., env_mask=...)` explicitly.
-      Gym/VecEnv style wrappers should use this option to avoid the default
-      auto-reset and CUDA syncs in `Environment.step()`.
+      caller is responsible for calling `reset_with_options(options=...,
+      env_mask=...)` explicitly. Gym/VecEnv style wrappers should use this
+      option to avoid the default auto-reset and CUDA syncs in
+      `Environment.step()`.
   """
 
   SYNC = "sync"  # Default. Does a host-device sync check before auto-reset.
@@ -268,6 +269,11 @@ class Environment(core_environment.Environment):
         self.nworld, dtype=torch.bool, device=self._xpu_device
     )
 
+    # Measurements and features of the latest timestep, recorded to observers
+    # and loggers once per returned timestep.
+    self._latest_measurements: Mapping[str, torch.Tensor] = {}
+    self._latest_features: Mapping[str, torch.Tensor] = {}
+
     self._environment_reset.set_env(self)
     self._environment_reset.on_startup()
     if self._device_layer.sim is not None:
@@ -349,7 +355,23 @@ class Environment(core_environment.Environment):
           if is_last_timestep is not None
           else self._all_env_mask
       )
+    self._reset(options, env_mask)
+    self._task_layer.record(self._latest_measurements, self._latest_features)
+    return self._last_timestep
 
+  def _reset(
+      self, options: gdmr_env.ResetOptions, env_mask: torch.Tensor
+  ) -> None:
+    """Resets the `env_mask` worlds and splices them into `_last_timestep`.
+
+    Recomputes features and observations for all worlds, but only splices the
+    `env_mask` worlds into `_last_timestep`. Does not record to observers or
+    loggers.
+
+    Args:
+      options: The reset options.
+      env_mask: Boolean mask of the worlds to reset.
+    """
     finalizing_env_mask = self._should_finalize_episode & env_mask
     self._finalize_episode(finalizing_env_mask)
 
@@ -369,6 +391,9 @@ class Environment(core_environment.Environment):
     measurements = self._device_layer.begin_stepping(env_mask)
     features = self._task_layer.compute_all_features(measurements)
     observations = self._compute_observations_from_features(features)
+
+    self._latest_features = features
+    self._latest_measurements = measurements
 
     # Update the observations for reset environments.
     observations_w_reset = self._last_timestep.observation
@@ -392,7 +417,6 @@ class Environment(core_environment.Environment):
 
     # Make sure any early reset after this one triggers `_finalize_episode`.
     self._should_finalize_episode |= env_mask
-    return self._last_timestep
 
   @torch.no_grad()
   @profile.trace(color=profile.Section.ENVIRONMENT)
@@ -405,10 +429,9 @@ class Environment(core_environment.Environment):
       # To abide by the `dm_env.Environment` contract (`FIRST -> MID -> ... ->
       # LAST -> FIRST`), `Environment.step()` captures `is_last_timestep =
       # self._last_timestep.last()` at the start of `step()`, steps all worlds,
-      # and then calls `self.reset_with_options(env_mask=is_last_timestep, ...)`
-      # at the end of `step()` to reset terminated worlds and splice their
-      # `StepType.FIRST` and initial reset observations into
-      # `self._last_timestep`.
+      # and then resets the terminated worlds (`self._reset(...)`) at the end of
+      # `step()`, splicing their `StepType.FIRST` and initial reset
+      # observations into `self._last_timestep`.
       is_last_timestep = self._last_timestep.last()
 
     # Call step reset before the actual step.
@@ -421,6 +444,8 @@ class Environment(core_environment.Environment):
 
     # Compute all the features.
     features = self._task_layer.compute_all_features(measurements)
+    self._latest_measurements = measurements
+    self._latest_features = features
 
     # Compute the elements of the timestep.
     reward = self._task_layer.compute_reward(features)
@@ -463,18 +488,16 @@ class Environment(core_environment.Environment):
     # worlds.
     if self._auto_reset_mode is AutoResetMode.NO_SYNC:
       assert is_last_timestep is not None
-      self.reset_with_options(
-          options=self.default_reset_options(),
-          env_mask=is_last_timestep,
-      )
+      self._reset(self.default_reset_options(), is_last_timestep)
     elif self._auto_reset_mode is AutoResetMode.SYNC:
       assert is_last_timestep is not None
       # CUDA sync, avoids forward calls if no envs need resetting.
       if is_last_timestep.any():
-        self.reset_with_options(
-            options=self.default_reset_options(),
-            env_mask=is_last_timestep,
-        )
+        self._reset(self.default_reset_options(), is_last_timestep)
+
+    # Record once per returned timestep. After an auto-reset, the latest
+    # features hold the reset (FIRST) features of the reset worlds.
+    self._task_layer.record(self._latest_measurements, self._latest_features)
 
     return self._last_timestep
 

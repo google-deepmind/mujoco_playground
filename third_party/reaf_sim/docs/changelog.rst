@@ -38,6 +38,8 @@ Bugs Fixed
   :class:`~reaf.simulation.torch.StochasticSubstepMeasurements` no longer advance their history and delay buffers for
   environments that are not reset.
 
+- Features observers and loggers no longer run twice per step when any environment resets.
+
 0.0.1
 -----
 

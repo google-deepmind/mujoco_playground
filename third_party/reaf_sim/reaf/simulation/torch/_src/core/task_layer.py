@@ -235,10 +235,16 @@ class TaskLayer:
   def compute_all_features(
       self, measurements: Mapping[str, torch.Tensor]
   ) -> Mapping[str, torch.Tensor]:
-    """Computes all the task layer features given the current measurements."""
-    for logger in self._loggers:
-      logger.record_measurements(measurements)
+    """Computes all the task layer features given the current measurements.
 
+    Records nothing to observers or loggers: see `record()`.
+
+    Args:
+      measurements: The device layer measurements.
+
+    Returns:
+      All the task layer features.
+    """
     current_features = dict(measurements)
     for feature_producer in self._features_producers:
       required_features = {
@@ -247,13 +253,25 @@ class TaskLayer:
       }
       produced_features = feature_producer.produce_features(required_features)
       current_features.update(produced_features)
-
-    for observer in self._features_observers:
-      observer.observe_features(current_features)
-    for logger in self._loggers:
-      logger.record_features(current_features)
-
     return current_features
+
+  def record(
+      self,
+      measurements: Mapping[str, torch.Tensor],
+      features: Mapping[str, torch.Tensor],
+  ) -> None:
+    """Passes measurements and features to the observers and loggers.
+
+    Args:
+      measurements: The device layer measurements.
+      features: All the task layer features.
+    """
+    for logger in self._loggers:
+      logger.record_measurements(measurements)
+    for observer in self._features_observers:
+      observer.observe_features(features)
+    for logger in self._loggers:
+      logger.record_features(features)
 
   def compute_final_commands(
       self, commands: Mapping[str, torch.Tensor]

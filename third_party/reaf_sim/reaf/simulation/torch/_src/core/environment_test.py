@@ -27,6 +27,7 @@ from gdm_robotics.interfaces import types as gdmr_types
 import mujoco
 import numpy as np
 from reaf.core import features_observer
+from reaf.core import features_producer as core_features_producer
 from reaf.core import logger as logger_module
 from reaf.simulation.torch._src.builders.flat_scene import config as flat_scene_config
 from reaf.simulation.torch._src.common import functional_observation
@@ -314,6 +315,23 @@ def _time_feature(features: Mapping[str, torch.Tensor]) -> torch.Tensor:
   return features["time"].unsqueeze(-1)
 
 
+class RecordingLogger(logger_module.Logger):
+  """Records clones of the given features on every `record_features` call."""
+
+  def __init__(self, keys: Sequence[str]):
+    self._keys = keys
+    self.records: list[dict[str, torch.Tensor]] = []
+
+  @property
+  def name(self) -> str:
+    return "recording_logger"
+
+  def record_features(  # pyrefly: ignore[bad-override]
+      self, features: Mapping[str, torch.Tensor]
+  ) -> None:
+    self.records.append({k: features[k].clone() for k in self._keys})
+
+
 def _time_history_adapter(
     nworld: int,
     xpu_device: str,
@@ -354,6 +372,7 @@ def _build_pendulum_env(
     ) = None,
     features_observers: Sequence[features_observer.FeaturesObserver] = (),
     loggers: Sequence[logger_module.Logger] = (),
+    features_producers: Sequence[core_features_producer.FeaturesProducer] = (),
 ) -> environment.Environment:
   """Builds a simple pendulum environment for testing."""
   mj_spec = mujoco.MjSpec.from_string(_PENDULUM_XML)
@@ -383,7 +402,7 @@ def _build_pendulum_env(
   ]
   task_layer = task_layer_module.TaskLayer(
       commands_processors=[],
-      features_producers=[],
+      features_producers=features_producers,
       reward_provider=reward,
       metric_provider=metric_provider,
       termination_checkers=terminations,
@@ -741,8 +760,8 @@ class WarpEnvironmentTest(parameterized.TestCase):
 
   # TaskLayer lifecycle repros (b/581877129): `reset_with_options(env_mask)`
   # recomputes features and observations for every world, so state advanced in
-  # `observations_from_features` and in observers/loggers advances twice for
-  # worlds that are not in `env_mask`.
+  # `observations_from_features` advances twice for worlds that are not in
+  # `env_mask`.
   #
   # Tests marked `@unittest.expectedFailure` reproduce the bug. The fix must
   # remove the marker: an unexpected success fails the test run.
@@ -928,11 +947,63 @@ class WarpEnvironmentTest(parameterized.TestCase):
         environment.AutoResetMode.SYNC
     )
 
-  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
-  @unittest.expectedFailure
   def test_observers_and_loggers_run_once_per_step_no_sync(self):
     self._check_observers_and_loggers_once_per_step(
         environment.AutoResetMode.NO_SYNC
+    )
+
+  @parameterized.parameters(
+      environment.AutoResetMode.SYNC,
+      environment.AutoResetMode.NO_SYNC,
+  )
+  def test_records_on_partial_reset(self, mode):
+    """One record per returned timestep, with FIRST features for reset worlds."""
+    logger = RecordingLogger(keys=("time",))
+    env = _build_pendulum_env(
+        nworld=2,
+        xpu_device=self.XPU_DEVICE,
+        # World 0 is LAST after step 2 (0.04s) and resets on step 3.
+        timeouts=torch.tensor([0.03, 10.0], device=self.XPU_DEVICE),
+        impl=self.IMPL,
+        auto_reset_mode=mode,
+        loggers=[logger],
+    )
+    env.reset()
+    for _ in range(4):
+      env.step(self._zero_action())
+
+    # Reset + 4 steps. On step 3, world 0 is recorded with its reset features.
+    self._assert_time_history(
+        torch.stack([r["time"] for r in logger.records]).float(),
+        [[0, 0], [1, 1], [2, 2], [0, 3], [1, 4]],
+    )
+
+  def test_records_on_manual_partial_reset(self):
+    """`DISABLED`: a manual partial reset records all worlds once."""
+    logger = RecordingLogger(keys=("time",))
+    env = _build_pendulum_env(
+        nworld=2,
+        xpu_device=self.XPU_DEVICE,
+        # World 0 is LAST after step 2 (0.04s).
+        timeouts=torch.tensor([0.03, 10.0], device=self.XPU_DEVICE),
+        impl=self.IMPL,
+        auto_reset_mode=environment.AutoResetMode.DISABLED,
+        loggers=[logger],
+    )
+    env.reset()
+    env.step(self._zero_action())
+    ts = env.step(self._zero_action())
+    self.assertEqual(ts.last().tolist(), [True, False])
+    env.reset_with_options(
+        options=env.default_reset_options(), env_mask=ts.last()
+    )
+    for _ in range(2):
+      env.step(self._zero_action())
+
+    # Reset + 2 steps + manual reset of world 0 + 2 steps.
+    self._assert_time_history(
+        torch.stack([r["time"] for r in logger.records]).float(),
+        [[0, 0], [1, 1], [2, 2], [0, 2], [1, 3], [2, 4]],
     )
 
 
