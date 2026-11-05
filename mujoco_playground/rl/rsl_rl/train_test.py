@@ -18,6 +18,7 @@ import os
 import tempfile
 import unittest
 
+from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from absl.testing import parameterized
@@ -27,6 +28,11 @@ import torch
 
 @unittest.skipUnless(torch.cuda.is_available(), "Requires CUDA")
 class TrainTest(parameterized.TestCase):
+
+  @classmethod
+  def setUpClass(cls) -> None:
+    super().setUpClass()
+    flags.FLAGS.mark_as_parsed()
 
   @parameterized.parameters(
       "CartpoleBalance",

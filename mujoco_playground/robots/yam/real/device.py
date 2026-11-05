@@ -167,6 +167,7 @@ def connect_robot(channel: str = constant.CAN_CHANNEL) -> MotorChainRobot:
   # pylint: disable=g-import-not-at-top
   from i2rt.robots import get_robot  # pyrefly: ignore[missing-import]
   from i2rt.robots import utils  # pyrefly: ignore[missing-import]
+
   # pylint: enable=g-import-not-at-top
 
   check_can_up(channel)

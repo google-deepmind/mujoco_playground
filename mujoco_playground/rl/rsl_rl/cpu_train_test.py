@@ -17,12 +17,18 @@
 import os
 import tempfile
 
+from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
 from mujoco_playground.rl.rsl_rl import train
 
 
 class CpuTrainTest(absltest.TestCase):
+
+  @classmethod
+  def setUpClass(cls) -> None:
+    super().setUpClass()
+    flags.FLAGS.mark_as_parsed()
 
   def test_train_one_step_cpu_device(self) -> None:
     """Test train.py runs successfully when explicitly targeting CPU."""

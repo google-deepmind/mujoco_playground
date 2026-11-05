@@ -59,6 +59,7 @@ def _scan_gs_usb() -> list[Any]:
   # pylint: disable=g-import-not-at-top
   from gs_usb import gs_usb as gs_usb_mod  # pyrefly: ignore[missing-import]
   from usb.backend import libusb1  # pyrefly: ignore[missing-import]
+
   # pylint: enable=g-import-not-at-top
 
   if libusb1.get_backend() is None:
@@ -95,6 +96,7 @@ def open_bus(
   from gs_usb import gs_usb_frame  # pyrefly: ignore[missing-import]
   from usb import core as usb_core  # pyrefly: ignore[missing-import]
   from usb import util as usb_util  # pyrefly: ignore[missing-import]
+
   # pylint: enable=g-import-not-at-top
 
   class _MacGsUsbBus(gs_usb_bus.GsUsbBus):
@@ -184,6 +186,7 @@ def register_socketcan_backend() -> None:
   """Redirects `python-can`'s `'socketcan'` backend to `open_bus` on macOS."""
   # pylint: disable=g-import-not-at-top
   from can import interfaces as can_interfaces  # pyrefly: ignore[missing-import]
+
   # pylint: enable=g-import-not-at-top
 
   can_interfaces.BACKENDS["socketcan"] = (__name__, "open_bus")
