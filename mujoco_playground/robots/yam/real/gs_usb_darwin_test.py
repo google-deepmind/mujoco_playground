@@ -14,7 +14,9 @@
 
 """Tests for the macOS `gs_usb` CAN transport shim."""
 
+import struct
 import sys
+import time
 import types
 from typing import Any
 from unittest import mock
@@ -23,10 +25,22 @@ from absl.testing import absltest
 from mujoco_playground.robots.yam.real import constant
 from mujoco_playground.robots.yam.real import gs_usb_darwin
 
+_FRAME_STRUCT = struct.Struct("<IIBB2x8sI")
+_NONE_ECHO_ID = 0xFFFFFFFF
+
+
+def _pack_frame(
+    can_id: int = 0x11,
+    data: bytes = b"\x01",
+    echo_id: int = _NONE_ECHO_ID,
+) -> bytes:
+  return _FRAME_STRUCT.pack(
+      echo_id, can_id, len(data), 0, data.ljust(8, b"\x00"), 0
+  )
+
 
 def _fake_darwin_usb_can_stack(
-    rx_queue: list[Any],
-    recv_timeouts: list[float | None],
+    rx_packets: list[bytes],
 ) -> tuple[dict[str, Any], Any, Any, Any, Any]:
   """Builds stub `can`, `gs_usb`, and `usb` modules matching `python-can==4.5.0`."""
 
@@ -34,6 +48,9 @@ def _fake_darwin_usb_can_stack(
     pass
 
   class FakeUSBError(OSError):
+    pass
+
+  class FakeUSBTimeoutError(FakeUSBError):
     pass
 
   class FakeNoBackendError(ValueError):
@@ -64,14 +81,29 @@ def _fake_darwin_usb_can_stack(
           "GsUsbBus.__init__ calls GsUsb.start() which resets USB on macOS."
       )
 
-    def _recv_internal(self, timeout: float | None) -> tuple[Any, bool]:
-      recv_timeouts.append(timeout)
-      return (rx_queue.pop(0) if rx_queue else None), False
-
     def shutdown(self) -> None:
       raise AssertionError(
           "GsUsbBus.shutdown calls GsUsb.start() which resets USB on macOS."
       )
+
+  class FakeGsUsbFrame:
+    GS_USB_NONE_ECHO_ID = _NONE_ECHO_ID
+
+    def __sizeof__(self, hw_timestamps: bool = True) -> int:
+      return _FRAME_STRUCT.size if hw_timestamps else 20
+
+    @staticmethod
+    def unpack_into(frame: Any, data: bytes, hw_timestamps: bool) -> None:
+      del hw_timestamps
+      echo_id, can_id, dlc, _, raw, ts = _FRAME_STRUCT.unpack(data)
+      frame.echo_id = echo_id
+      frame.arbitration_id = can_id & 0x1FFFFFFF
+      frame.is_extended_id = bool(can_id & 0x80000000)
+      frame.is_remote_frame = bool(can_id & 0x40000000)
+      frame.is_error_frame = bool(can_id & 0x20000000)
+      frame.can_dlc = dlc
+      frame.data = raw
+      frame.timestamp = ts / 1e6
 
   fake_can_interfaces: Any = types.ModuleType("can.interfaces")
   fake_can_interfaces.BACKENDS = {
@@ -84,6 +116,7 @@ def _fake_darwin_usb_can_stack(
   fake_can: Any = types.ModuleType("can")
   fake_can.BusABC = FakeBusABC
   fake_can.CanInitializationError = FakeCanInitializationError
+  fake_can.Message = types.SimpleNamespace
   fake_can.BitTiming = types.SimpleNamespace(
       from_sample_point=lambda **_: types.SimpleNamespace(
           tseg1=6, tseg2=1, sjw=1, brp=6
@@ -91,8 +124,27 @@ def _fake_darwin_usb_can_stack(
   )
   fake_can.interfaces = fake_can_interfaces
 
+  drained = False
+
+  def _usb_read(ep: int, size: int, timeout: int) -> bytes:
+    nonlocal drained
+    assert ep == 0x81 and size == 64
+    if timeout == 1:
+      if not drained:
+        drained = True
+        return b"\x00" * 24
+      raise FakeUSBTimeoutError("drained")
+    if rx_packets:
+      return rx_packets.pop(0)
+    time.sleep(0.002)
+    raise FakeUSBTimeoutError("idle")
+
   usb_dev = types.SimpleNamespace(
-      bus=1, address=1, default_timeout=1000, ctrl_transfer=mock.MagicMock()
+      bus=1,
+      address=1,
+      default_timeout=1000,
+      ctrl_transfer=mock.MagicMock(),
+      read=mock.MagicMock(side_effect=_usb_read),
   )
   fake_adapter = types.SimpleNamespace(
       gs_usb=usb_dev,
@@ -102,7 +154,6 @@ def _fake_darwin_usb_can_stack(
       start=mock.MagicMock(
           side_effect=AssertionError("GsUsb.start() must not be called")
       ),
-      read=mock.MagicMock(side_effect=[True, False]),
       stop=mock.MagicMock(),
   )
   fake_gs_usb_mod: Any = types.ModuleType("gs_usb.gs_usb")
@@ -113,7 +164,8 @@ def _fake_darwin_usb_can_stack(
       pack=lambda: bytes([mode, flags])
   )
   fake_gs_usb_frame: Any = types.ModuleType("gs_usb.gs_usb_frame")
-  fake_gs_usb_frame.GsUsbFrame = object
+  fake_gs_usb_frame.GsUsbFrame = FakeGsUsbFrame
+  fake_gs_usb_frame.GS_USB_NONE_ECHO_ID = _NONE_ECHO_ID
   fake_gs_usb_pkg: Any = types.ModuleType("gs_usb")
   fake_gs_usb_pkg.gs_usb = fake_gs_usb_mod
   fake_gs_usb_pkg.gs_usb_frame = fake_gs_usb_frame
@@ -124,6 +176,7 @@ def _fake_darwin_usb_can_stack(
   fake_usb_backend.libusb1 = fake_libusb1
   fake_usb_core: Any = types.ModuleType("usb.core")
   fake_usb_core.USBError = FakeUSBError
+  fake_usb_core.USBTimeoutError = FakeUSBTimeoutError
   fake_usb_core.NoBackendError = FakeNoBackendError
   fake_usb_util: Any = types.ModuleType("usb.util")
   fake_usb_util.claim_interface = mock.MagicMock()
@@ -161,18 +214,18 @@ class GsUsbDarwinTest(absltest.TestCase):
         gs_usb_darwin.parse_can_index(invalid)
 
   def test_check_can_up_and_adapter_sorting(self) -> None:
-    modules, _, low_adapter, _, _ = _fake_darwin_usb_can_stack([], [])
+    modules, _, low_adapter, _, _ = _fake_darwin_usb_can_stack([])
     high_adapter = types.SimpleNamespace(
         gs_usb=types.SimpleNamespace(
             bus=2,
             address=5,
             default_timeout=1000,
             ctrl_transfer=mock.MagicMock(),
+            read=low_adapter.gs_usb.read,
         ),
         device_capability=low_adapter.device_capability,
         device_flags=0,
         set_timing=mock.MagicMock(),
-        read=mock.MagicMock(return_value=False),
         stop=mock.MagicMock(),
     )
 
@@ -198,27 +251,37 @@ class GsUsbDarwinTest(absltest.TestCase):
       self.assertIs(bus.gs_usb, low_adapter)
       bus.shutdown()
 
-  def test_open_bus_skips_usb_reset_filters_tx_echoes_and_shuts_down(
+  def test_open_bus_coalesced_rx_filters_echoes_and_patches_clean_error(
       self,
   ) -> None:
-    rx_queue: list[Any] = [
-        types.SimpleNamespace(is_rx=False, is_error_frame=False),
-        types.SimpleNamespace(is_rx=True, is_error_frame=True),
-        types.SimpleNamespace(is_rx=True, is_error_frame=False, data=b"\x01"),
-        None,
-    ]
-    recv_timeouts: list[float | None] = []
+    coalesced = _pack_frame(echo_id=0) + _pack_frame(can_id=0x20000001)
+    valid = _pack_frame(can_id=0x14, data=b"\xab\xcd")
     modules, fake_can_interfaces, fake_adapter, usb_dev, fake_usb_util = (
-        _fake_darwin_usb_can_stack(rx_queue, recv_timeouts)
+        _fake_darwin_usb_can_stack([coalesced, valid])
+    )
+    events: list[str] = []
+
+    class FakeMotorIface:
+
+      def clean_error(self, motor_id: int) -> None:
+        events.append(f"clean:{motor_id}")
+
+      def _drain_bus(self, timeout_s: float, idle_count: int) -> None:
+        events.append(f"drain:{timeout_s}:{idle_count}")
+
+    modules["i2rt.motor_drivers.dm_driver"] = types.SimpleNamespace(
+        DMSingleMotorCanInterface=FakeMotorIface
     )
 
     with mock.patch.dict(sys.modules, modules):
       gs_usb_darwin.register_socketcan_backend()
       bus = gs_usb_darwin.open_bus("can0", bitrate=constant.CAN_BITRATE)
-      msg, _ = bus._recv_internal(0.0002)
-      none_msg, _ = bus._recv_internal(None)
+      msg, _ = bus._recv_internal(0.1)
+      none_timeout, _ = bus._recv_internal(0.0)
       bus.shutdown()
       bus.shutdown()
+      none_closed, _ = bus._recv_internal(None)
+      FakeMotorIface().clean_error(motor_id=4)
 
     self.assertEqual(
         fake_can_interfaces.BACKENDS["socketcan"],
@@ -231,11 +294,11 @@ class GsUsbDarwinTest(absltest.TestCase):
     fake_usb_util.claim_interface.assert_called_once_with(usb_dev, 0)
     fake_adapter.set_timing.assert_called_once_with(1, 5, 1, 1, 6)
     usb_dev.ctrl_transfer.assert_called_once_with(0x41, 2, 0, 0, b"\x01\x10")
-    self.assertEqual(fake_adapter.read.call_count, 2)
-    self.assertEqual(msg.data, b"\x01")
-    self.assertIsNone(none_msg)
-    self.assertEqual(recv_timeouts[0], 0.001)
-    self.assertEqual(recv_timeouts[-1], None)
+    self.assertEqual(bytes(msg.data), b"\xab\xcd")
+    self.assertEqual(msg.arbitration_id, 0x14)
+    self.assertIsNone(none_timeout)
+    self.assertIsNone(none_closed)
+    self.assertEqual(events, ["clean:4", "drain:0.05:5"])
     self.assertEqual(bus.stopped_periodic_tasks, 1)
     self.assertEqual(fake_adapter.stop.call_count, 2)
     fake_usb_util.dispose_resources.assert_called_once_with(usb_dev)
@@ -244,7 +307,7 @@ class GsUsbDarwinTest(absltest.TestCase):
       self,
   ) -> None:
     modules, _, fake_adapter, usb_dev, fake_usb_util = (
-        _fake_darwin_usb_can_stack([], [])
+        _fake_darwin_usb_can_stack([])
     )
     fake_adapter.set_timing.side_effect = modules["usb.core"].USBError("busy")
 

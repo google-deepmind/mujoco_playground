@@ -27,11 +27,17 @@ requires three macOS workarounds:
 2. `gs_usb` loops transmitted frames back on the bulk IN endpoint with
    `is_rx=False`; Linux `socketcan` suppresses local echoes by default, and
    returning them breaks `i2rt`'s request/reply motor loop.
-3. Sub-millisecond read timeouts round to `0` ms in `GsUsbBus._recv_internal`,
-   so we clamp non-`None` timeouts to at least `1` ms (`0.001` s).
+3. `GsUsb.read()` passes a 24-byte buffer (`LIBUSB_ERROR_OVERFLOW` when a TX
+   echo and RX reply coalesce into one 64-byte USB packet) and 1 ms synchronous
+   reads trigger `AbortPipe()` frame drops on macOS. A background thread reads
+   64-byte bulk IN packets into a queue, and `open_bus` drains extra `0xFB`
+   replies left unconsumed by `i2rt`'s `clean_error`.
 """
 
 import contextlib
+import queue
+import sys
+import threading
 import time
 from typing import Any
 
@@ -39,6 +45,9 @@ from mujoco_playground.robots.yam.real import constant
 
 _USB_REQ_HOST_TO_DEV_VENDOR_INTERFACE = 0x41
 _GS_USB_BREQ_MODE = 2
+_GS_USB_EP_IN = 0x81
+_USB_PACKET_BYTES = 64
+_USB_READ_TIMEOUT_MS = 25
 _USB_TIMEOUT_MS = 50
 _MAX_DRAIN_FRAMES = 64
 
@@ -103,6 +112,9 @@ def open_bus(
     """`GsUsbBus` subclass avoiding `USBDeviceReEnumerate` and TX echoes."""
 
     def __init__(self) -> None:
+      self._rx_queue: queue.SimpleQueue[Any] = queue.SimpleQueue()
+      self._closing = False
+      self._rx_thread: threading.Thread | None = None
       idx = parse_can_index(channel)
       try:
         devs = _scan_gs_usb()
@@ -116,15 +128,14 @@ def open_bus(
       try:
         usb_util.claim_interface(self.gs_usb.gs_usb, 0)
         self.gs_usb.stop()
+        with contextlib.suppress(usb_core.USBError):
+          for _ in range(_MAX_DRAIN_FRAMES):
+            self.gs_usb.gs_usb.read(_GS_USB_EP_IN, _USB_PACKET_BYTES, 1)
         flags = (
             gs_usb_mod.GS_CAN_MODE_HW_TIMESTAMP
             & self.gs_usb.device_capability.feature
         )
         self.gs_usb.device_flags = flags
-        frame = gs_usb_frame.GsUsbFrame()
-        for _ in range(_MAX_DRAIN_FRAMES):
-          if not self.gs_usb.read(frame, timeout_ms=1):
-            break
         timing = can.BitTiming.from_sample_point(
             f_clock=self.gs_usb.device_capability.fclk_can,
             bitrate=bitrate,
@@ -142,6 +153,8 @@ def open_bus(
             mode.pack(),
         )
         can.BusABC.__init__(self, channel=channel, **kwargs)
+        self._rx_thread = threading.Thread(target=self._rx_loop, daemon=True)
+        self._rx_thread.start()
       except usb_core.USBError as exc:
         self._close_usb()
         raise can.CanInitializationError(f"gs_usb init failed: {exc}") from exc
@@ -155,30 +168,80 @@ def open_bus(
       with contextlib.suppress(usb_core.USBError):
         usb_util.dispose_resources(self.gs_usb.gs_usb)
 
-    def _recv_internal(self, timeout: float | None) -> tuple[Any, bool]:
-      deadline = (
-          None if timeout is None else time.monotonic() + max(0.001, timeout)
+    def _rx_loop(self) -> None:
+      hw_ts = bool(
+          self.gs_usb.device_flags & gs_usb_mod.GS_CAN_MODE_HW_TIMESTAMP
       )
-      while True:
-        wait = (
-            None
-            if deadline is None
-            else max(0.001, deadline - time.monotonic())
-        )
-        msg, filtered = super()._recv_internal(wait)
-        if msg is None or (msg.is_rx and not msg.is_error_frame):
-          return msg, filtered
-        if deadline is not None and time.monotonic() >= deadline:
-          return None, False
+      size = gs_usb_frame.GsUsbFrame().__sizeof__(hw_ts)
+      while not self._closing:
+        try:
+          raw = bytes(
+              self.gs_usb.gs_usb.read(
+                  _GS_USB_EP_IN, _USB_PACKET_BYTES, _USB_READ_TIMEOUT_MS
+              )
+          )
+        except usb_core.USBTimeoutError:
+          continue
+        except usb_core.USBError:
+          if not self._closing:
+            time.sleep(0.005)
+          continue
+        for off in range(0, len(raw) - size + 1, size):
+          frame = gs_usb_frame.GsUsbFrame()
+          gs_usb_frame.GsUsbFrame.unpack_into(
+              frame, raw[off : off + size], hw_ts
+          )
+          if (
+              frame.echo_id == gs_usb_frame.GS_USB_NONE_ECHO_ID
+              and not frame.is_error_frame
+          ):
+            self._rx_queue.put(
+                can.Message(
+                    timestamp=frame.timestamp,
+                    arbitration_id=frame.arbitration_id,
+                    is_extended_id=frame.is_extended_id,
+                    is_remote_frame=frame.is_remote_frame,
+                    channel=self.channel_info,
+                    dlc=frame.can_dlc,
+                    data=bytearray(frame.data)[: frame.can_dlc],
+                    is_rx=True,
+                )
+            )
+
+    def _recv_internal(self, timeout: float | None) -> tuple[Any, bool]:
+      if self._closing:
+        return None, False
+      try:
+        wait = None if timeout is None else max(0.0, timeout)
+        return self._rx_queue.get(timeout=wait), False
+      except queue.Empty:
+        return None, False
 
     def shutdown(self) -> None:
       if self._is_shutdown:
         return
+      self._closing = True
+      if self._rx_thread is not None:
+        self._rx_thread.join(timeout=0.1)
+      self._rx_queue.put(None)
       try:
         can.BusABC.shutdown(self)
       finally:
         self._close_usb()
 
+  dm_driver = sys.modules.get("i2rt.motor_drivers.dm_driver")
+  if dm_driver is not None:
+    cls = dm_driver.DMSingleMotorCanInterface
+    if not getattr(cls.clean_error, "_drains_bus", False):
+      orig = cls.clean_error
+
+      def _clean_error(self: Any, *args: Any, **kwargs: Any) -> Any:
+        res = orig(self, *args, **kwargs)
+        self._drain_bus(timeout_s=0.05, idle_count=5)  # pylint: disable=protected-access
+        return res
+
+      setattr(_clean_error, "_drains_bus", True)
+      cls.clean_error = _clean_error
   return _MacGsUsbBus()
 
 
