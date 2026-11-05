@@ -16,11 +16,14 @@
 
 import os
 import tempfile
+from unittest import mock
 
 from absl.testing import absltest
+from etils import epath
 import mujoco
 from mujoco_playground._src import paths
 from mujoco_playground._src.sim import asset
+from mujoco_playground._src.sim import asset_loader
 
 _MINIMAL_XML = """\
 <mujoco>
@@ -163,6 +166,54 @@ class QueryTest(absltest.TestCase):
   def test_query_unknown_source_raises(self):
     with self.assertRaises(KeyError):
       list(asset.query('nosource:foo'))
+
+
+class SparseCheckoutTest(absltest.TestCase):
+  """Tests for sparse-checkout recovery when working-tree files are removed."""
+
+  def test_restores_deleted_sparse_checkout_directory(self) -> None:
+    tmp = epath.Path(self.enterContext(tempfile.TemporaryDirectory()))
+    cache_dir = tmp / 'HEAD'
+    sparse_file = cache_dir / '.git' / 'info' / 'sparse-checkout'
+    sparse_file.parent.mkdir(parents=True)
+    sparse_file.write_text('robotstudio_so101\n')
+
+    with mock.patch.object(asset_loader.subprocess, 'run') as run_mock:
+      asset_loader._sparse_checkout(
+          'https://example.com/repo.git',
+          'HEAD',
+          ['robotstudio_so101'],
+          cache_dir,
+      )
+
+    self.assertEqual(
+        run_mock.call_args_list,
+        [
+            mock.call(
+                [
+                    'git',
+                    '-C',
+                    str(cache_dir),
+                    'sparse-checkout',
+                    'add',
+                    'robotstudio_so101',
+                ],
+                check=True,
+            ),
+            mock.call(
+                [
+                    'git',
+                    '-C',
+                    str(cache_dir),
+                    'checkout',
+                    'HEAD',
+                    '--',
+                    'robotstudio_so101',
+                ],
+                check=True,
+            ),
+        ],
+    )
 
 
 if __name__ == '__main__':

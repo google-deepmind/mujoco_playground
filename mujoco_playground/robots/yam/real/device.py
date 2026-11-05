@@ -21,6 +21,7 @@ targets and reads the measured pose, in the canonical units of `constant.py`.
 
 from collections.abc import Mapping
 import datetime
+import sys
 import time
 from typing import Any
 from typing import Dict
@@ -32,6 +33,7 @@ from gdm_robotics.interfaces import types as gdmr_types
 from mujoco_playground import real
 from mujoco_playground.robots.yam.real import constant
 from mujoco_playground.robots.yam.real import get_cameras
+from mujoco_playground.robots.yam.real import gs_usb_darwin
 import numpy as np
 from reaf.common import device_sequence_coordinator
 from reaf.common import time_trigger
@@ -47,7 +49,10 @@ MotorChainRobot: TypeAlias = Any
 
 
 def check_can_up(channel: str = constant.CAN_CHANNEL) -> None:
-  """Raises with the fix if the SocketCAN interface is missing or down."""
+  """Raises with the fix if the CAN interface or USB-CAN adapter is missing."""
+  if sys.platform == "darwin":
+    gs_usb_darwin.check_can_up(channel)
+    return
   state = epath.Path(f"/sys/class/net/{channel}/operstate")
   if not state.exists():
     raise RuntimeError(
@@ -159,10 +164,14 @@ class YamFollowerDevice(reaf_device.Device):
 
 def connect_robot(channel: str = constant.CAN_CHANNEL) -> MotorChainRobot:
   """Connects to the I2RT `MotorChainRobot` on `channel`."""
-  from i2rt.robots import get_robot  # `yam` extra.  # pyrefly: ignore[missing-import]
-  from i2rt.robots import utils  # `yam` extra.  # pyrefly: ignore[missing-import]
+  # pylint: disable=g-import-not-at-top
+  from i2rt.robots import get_robot  # pyrefly: ignore[missing-import]
+  from i2rt.robots import utils  # pyrefly: ignore[missing-import]
+  # pylint: enable=g-import-not-at-top
 
   check_can_up(channel)
+  if sys.platform == "darwin":
+    gs_usb_darwin.register_socketcan_backend()
   return get_robot.get_yam_robot(
       channel=channel,
       arm_type=utils.ArmType(constant.ARM_TYPE),

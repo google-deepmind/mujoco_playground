@@ -14,12 +14,14 @@
 """benchmark.py: runs MuJoCo Playground RL training benchmarks on a single GPU.
 
 Usage:
-  uv run --no-sync python -m profiling.benchmark [flags]
+  uv run --extra rl python -m profiling.benchmark [flags]
 
 Examples:
-  uv run --no-sync python -m profiling.benchmark -f CartpoleBalance
-  uv run --no-sync python -m profiling.benchmark -f SO101PickCube
-  uv run --no-sync python -m profiling.benchmark --timeout_sec 600
+  uv run --extra rl python -m profiling.benchmark -f CartpoleBalance
+  uv run --extra rl python -m profiling.benchmark -f CartpoleBalance
+  --device=cpu
+  uv run --extra rl python -m profiling.benchmark -f SO101PickCube
+  uv run --extra rl python -m profiling.benchmark --timeout_sec 600
 """
 
 import json
@@ -40,8 +42,9 @@ _FILTER = flags.DEFINE_string(
 )
 _DEVICE = flags.DEFINE_string(
     "device",
-    "0",
-    "CUDA GPU device ID to use (e.g. 0)",
+    None,
+    "Device or CUDA index to use, e.g. cuda:0, 0, or cpu (default: cuda:0 if"
+    " available).",
 )
 _TIMEOUT_SEC = flags.DEFINE_integer(
     "timeout_sec",

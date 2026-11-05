@@ -1,65 +1,11 @@
-# Whole-Body Motion Tracking (REAF Showcase)
+# Whole-Body Motion Tracking
 
 This package implements whole-body motion tracking for the Unitree G1 humanoid
-([BeyondMimic](https://beyondmimic.github.io/)-style tracking) using the
-**Robotics Environment Authoring Framework (REAF)**.
+following [BeyondMimic](https://beyondmimic.github.io/)-style tracking.
 
 <p align="center">
   <img width="640" src="https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp" alt="Unitree G1 Whole-Body Motion Tracking">
 </p>
-
-## Architecture Overview
-
-The task is structured across the three canonical REAF layers:
-
-1.  **DeviceLayer**: the G1's 29 joint actuators, plus devices that read the
-    tracked body poses, the pelvis IMU, and self-collision forces. An optional
-    ghost robot replays the reference motion for visualization.
-
-2.  **TaskLayer**: turns policy actions into joint position targets and computes
-    reference-motion features from the trajectory. Observations, rewards, and
-    terminations are plain functions in `mdp.py` that `task.py` wires together.
-
-3.  **EnvironmentReset**: starts each episode from a frame of the reference
-    clip, sampling more often where the policy has been failing, and perturbs
-    the initial state. It also pushes the robot at random intervals and
-    randomizes the torso center of mass and foot friction.
-
-## Robot Model Assets
-
-The G1 model (`g1_mjlab.xml`) and its meshes are loaded from `mujoco_menagerie/unitree_g1`.
-
-## Commands
-
-All commands run from the repo root and need the `rl` extra (`--extra rl`). If
-GPU torch is unavailable entirely, pass `--device=cpu --nworld=1` to `play.py`
-or `--overrides='{"nworld": 1}'` to `train.py` (the CPU path uses the
-single-world cpp backend).
-
-**Train** (PPO config, 4096 envs, 30000 iterations):
-
-```bash
-uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
-  --env=G1WholeBodyTracking \
-  --env_overrides='{"trajectory_path": "/path/to/output.npz"}' \
-  --logdir=/tmp/g1_tracking/
-```
-
-Use `--overrides='{"max_iterations": 5000, "nworld": 2048}'` to customize runner
-settings.
-
-**Play a trained checkpoint** (play-mode semantics: no observation noise, no
-pushes, no initial-state perturbation, reset at motion start; `resume_path` may
-be a checkpoint file such as `/tmp/g1_tracking/model_XXX.pt` or a logdir, which
-loads the latest `model_*.pt`):
-
-```bash
-uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
-  --env=G1WholeBodyTracking \
-  --env_overrides='{"trajectory_path": "/path/to/output.npz", "play": true, "enable_ghost": true}' \
-  --resume_path=/tmp/g1_tracking/model_XXX.pt \
-  --nworld=1
-```
 
 ## Reference Motion Trajectories
 
@@ -81,26 +27,31 @@ datasets (like LAFAN1) to the target robot model.
 
 2.  **Conversion:** Convert the downloaded CSV motion files to the required
     `.npz` format using the `csv_to_npz` tool provided in this directory:
+
     ```bash
-    python -m mujoco_playground.tasks.whole_body.tracking.csv_to_npz \
+    uv run python -m mujoco_playground.tasks.whole_body.tracking.csv_to_npz \
       --input_csv=/path/to/input.csv --output_npz=/path/to/output.npz
     ```
 
 3.  **Verification:** Verify that the `.npz` file is properly formatted by
     running the `replay_npz` script on the newly converted trajectory:
+
     ```bash
-    python -m mujoco_playground.tasks.whole_body.tracking.replay_npz \
+    uv run python -m mujoco_playground.tasks.whole_body.tracking.replay_npz \
       --trajectory_path=/path/to/output.npz
     ```
 
-4.  **Training:** Train a policy to track the reference trajectory using RSL-RL.
+## Training a policy
+
+1.  **Training:** Train a policy to track the reference trajectory using RSL-RL.
     Using `uv run` manages your virtual environment and dependencies for you:
+
     ```bash
     uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
       --env=G1WholeBodyTracking \
       --env_overrides='{"trajectory_path": "/path/to/output.npz"}' \
-      --overrides='{"max_iterations": 5000}' \
       --logdir=/tmp/g1_tracking/
+      # --device=cpu --overrides='{"nworld": 1}'  # For CPU
     ```
 
     > [!TIP]
@@ -111,18 +62,20 @@ datasets (like LAFAN1) to the target robot model.
     > uv run --extra rl torchrun --standalone --nnodes=1 --nproc_per_node=2 -m mujoco_playground.rl.rsl_rl.train ...
     > ```
 
-5.  **Playback:** Play and visualize the trained policy checkpoint in the
+2.  **Playback:** Play and visualize the trained policy checkpoint in the
     simulation viewer:
+
     ```bash
     uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
       --env=G1WholeBodyTracking \
-      --env_overrides='{"trajectory_path": "/path/to/output.npz"}' \
-      --resume_path=/tmp/g1_tracking/model_XXX.pt \
+      --env_overrides='{"trajectory_path": "/path/to/output.npz", "play": true, "enable_ghost": true}' \
+      --resume_path=/tmp/g1_tracking/ \
       --nworld=1
     ```
 
-6.  **TensorBoard:** Monitor the training metrics in your browser during or
+3.  **TensorBoard:** Monitor the training metrics in your browser during or
     after training:
+
     ```bash
     uv run --extra rl tensorboard --logdir=/tmp/g1_tracking/
     ```

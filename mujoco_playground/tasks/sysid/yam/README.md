@@ -20,7 +20,7 @@ Set up the arm and bring up the SocketCAN interface as described in
 Clear the desk around the arm and start near `REST_POSE` (all joints at zero):
 
 ```bash
-uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
+uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
 ```
 
 `collect` runs three stages:
@@ -35,18 +35,16 @@ uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
    | `ep02_joint_chirp_and_reversals` | Single-joint slow reversal + `0.2–1.1 Hz` chirp | Fit (per-joint dry friction & damping) |
    | `ep03_heldout_validation` | Independent multisine + step doublets around a shifted center | Held-out validation |
 
-2. **Simulation pre-flight check (`preflight.py`)**: Replays each episode
+2. **Simulation pre-flight check**: Replays each episode
    kinematically and dynamically (`mj_step`) in the YAM desk scene and aborts
    before opening the CAN bus if the arm contacts the scene, comes within
    `15 cm` of the desk during active excitation, or violates joint-limit
    margins (`0.15 rad`).
 
    > [!IMPORTANT]
-   > The default scene only models the desk. Add any workcell obstacles (camera
-   > mounts, fixtures, objects) to `preflight.py` before running on hardware.
+   > The default scene only models the desk without any obstacles. Please remove obstacles from the desk area before running on hardware.
 
-3. **Hardware execution**: Sends 50 Hz position commands to the I2RT SDK's
-   250 Hz PD + gravity-compensation controller, aborting if any arm joint lags
+3. **Hardware execution**: Sends 50 Hz position commands, aborting if any arm joint lags
    its command by more than `0.65 rad`. Logs measured positions, velocities,
    commands, and timestamps to `.local/yam_sysid_logs/ep0*.npz`.
 
@@ -55,7 +53,7 @@ uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
 Fit the joint parameters on `ep01` and `ep02` and evaluate on `ep03`:
 
 ```bash
-uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.run
+uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.run
 ```
 
 `run` performs the following steps:
@@ -63,15 +61,9 @@ uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.run
 1. **Optimize dynamics**: Fits `armature`, `frictionloss`, `kp`, and `kv` per
    actuator starting from `scene.yam_menagerie()`, aligning command and
    measurement timestamps.
-   - `joint1_kp` is frozen at the SDK gain (`--freeze_kp=joint1`) because
-     Joint 1 carries no gravity torque, so position tracking only constrains
-     the ratio of `kp`, `kv`, `frictionloss`, and `armature`, not their absolute
-     scale.
-   - The gripper is frozen at nominal (`freeze_gripper=True`) because unloaded
-     finger tracking is insensitive to its dynamics.
 2. **Evaluate tracking RMSE**: Prints per-joint tracking RMSE (`mrad` for arm
    joints, `mm` for the finger) for the nominal and identified models on both
-   the training and held-out validation splits.
+   the training and held-out validation.
 3. **Flag unidentified parameters**: Estimates 95% confidence intervals from
    the Jacobian at the optimum and prints a `--freeze_params` flag listing any
    poorly identified parameters.
@@ -93,7 +85,7 @@ passing the printed `--freeze_params` flag (or `--freeze_joints` for an entire
 actuator):
 
 ```bash
-uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.run \
+uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.run \
   --freeze_params=joint2_armature,joint3_armature,joint4_armature,joint4_frictionloss,joint4_kp
 ```
 
@@ -111,10 +103,6 @@ tracking RMSE from `11.5 mrad` to `4.8 mrad`.
 ## 3. View the report
 
 Open the diagnostic report in your browser:
-
-```bash
-open .local/yam_sysid_results/report.html
-```
 
 - `report.html`: Time-series tracking overlays (measured vs. simulated
   rollouts), parameter comparison tables, residual distributions, and

@@ -14,8 +14,7 @@
 """Plays the excitation trajectories on a real YAM and logs them at 50 Hz.
 
 Usage:
-  uv run --no-sync --extra yam python -m
-  mujoco_playground.tasks.sysid.yam.collect
+  uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
 
 Every episode is first replayed in simulation (`preflight`); the run aborts
 before touching the CAN bus if any fails. On the arm, the I2RT SDK runs its

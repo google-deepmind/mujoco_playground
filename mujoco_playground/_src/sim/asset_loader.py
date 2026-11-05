@@ -109,6 +109,15 @@ def _sparse_checkout(
           ["git", "-C", target, "sparse-checkout", "add"] + missing_paths,
           check=True,
       )
+      still_missing = [
+          p for p in missing_paths if not (target_dir / p).exists()
+      ]
+      if still_missing:
+        _log.info("Restoring missing sparse-checkout paths: %s", still_missing)
+        subprocess.run(
+            ["git", "-C", target, "checkout", commit, "--"] + still_missing,
+            check=True,
+        )
 
   _log.info("Sparse checkout complete")
 

@@ -50,7 +50,6 @@ def _configure_so101_robot(cfg: config.Environment) -> None:
   if floor_geom is not None:
     floor_geom.material = ""
     floor_geom.rgba = [0.25, 0.25, 0.25, 1.0]
-  cfg.base_scene.stat.extent = 4.0
 
   robot_joints = [
       f"{sim_constant.ATTACHMENT_PREFIX}{j}" for j in real_constant.JOINTS
@@ -300,18 +299,16 @@ def randomize_contrasting_geom_rgba(
 
 
 def so101_pick_cube_pixels_env(
-    impl: Literal["cpp", "warp"] | None = None,
+    impl: Literal["cpp", "warp"] = "warp",
 ) -> config.Environment:
   """SO101 pick cube with camera observations.
 
   Args:
-    impl: "warp" or "cpp". Defaults to "warp" when CUDA is available and "cpp"
-      otherwise.
+    impl: "warp" or "cpp".
 
   Returns:
     The environment config.
   """
-  impl = impl or ("warp" if torch.cuda.is_available() else "cpp")
   cfg = pick_task.pick_cube_pixels_env()
   _configure_so101_robot(cfg)
   cfg.sim.ccd_iterations = 300

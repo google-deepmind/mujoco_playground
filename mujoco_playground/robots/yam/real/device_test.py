@@ -14,10 +14,15 @@
 
 """Tests for the YAM REAF devices and I2RT SDK wrapper."""
 
+import sys
+import tempfile
 import threading
+import types
+from typing import Any
 from unittest import mock
 
 from absl.testing import absltest
+from etils import epath
 from mujoco_playground.robots.yam.real import constant
 from mujoco_playground.robots.yam.real import device
 import numpy as np
@@ -181,49 +186,106 @@ class WristCameraDeviceTest(absltest.TestCase):
     )
 
 
+def _fake_i2rt_modules(
+    fake_robot: _FakeRobot,
+) -> tuple[dict[str, Any], mock.MagicMock]:
+  fake_get_robot: Any = types.ModuleType("i2rt.robots.get_robot")
+  fake_get_robot.get_yam_robot = mock.MagicMock(return_value=fake_robot)
+  fake_utils: Any = types.ModuleType("i2rt.robots.utils")
+  fake_utils.ArmType = lambda x: f"ArmType({x})"
+  fake_utils.GripperType = lambda x: f"GripperType({x})"
+  fake_robots: Any = types.ModuleType("i2rt.robots")
+  fake_robots.get_robot = fake_get_robot
+  fake_robots.utils = fake_utils
+  fake_i2rt: Any = types.ModuleType("i2rt")
+  fake_i2rt.robots = fake_robots
+  modules = {
+      "i2rt": fake_i2rt,
+      "i2rt.robots": fake_robots,
+      "i2rt.robots.get_robot": fake_get_robot,
+      "i2rt.robots.utils": fake_utils,
+  }
+  return modules, fake_get_robot.get_yam_robot
+
+
+class CheckCanUpTest(absltest.TestCase):
+
+  def test_linux_checks_sysfs_operstate(self) -> None:
+    tmp = epath.Path(self.enterContext(tempfile.TemporaryDirectory()))
+    operstate = tmp / "operstate"
+    with (
+        mock.patch.object(device.sys, "platform", "linux"),
+        mock.patch.object(device.epath, "Path", return_value=operstate),
+    ):
+      with self.assertRaisesRegex(RuntimeError, "No CAN interface 'can0'"):
+        device.check_can_up("can0")
+
+      operstate.write_text("down\n")
+      with self.assertRaisesRegex(RuntimeError, "sudo ip link set can0 up"):
+        device.check_can_up("can0")
+
+      operstate.write_text("up\n")
+      device.check_can_up("can0")
+
+  def test_darwin_delegates_to_gs_usb_darwin(self) -> None:
+    with (
+        mock.patch.object(device.sys, "platform", "darwin"),
+        mock.patch.object(device.gs_usb_darwin, "check_can_up") as darwin_mock,
+    ):
+      device.check_can_up("can0")
+
+    darwin_mock.assert_called_once_with("can0")
+
+
 class ConnectRobotTest(absltest.TestCase):
 
-  def test_connect_robot_configures_robot(self):
-    import sys
-    import types
-    from typing import Any
-
+  def test_connect_robot_linux_skips_macos_backend(self) -> None:
     fake_robot = _FakeRobot()
-    fake_get_robot: Any = types.ModuleType("i2rt.robots.get_robot")
-    fake_get_robot.get_yam_robot = mock.MagicMock(return_value=fake_robot)
-    fake_utils: Any = types.ModuleType("i2rt.robots.utils")
-    fake_utils.ArmType = lambda x: f"ArmType({x})"
-    fake_utils.GripperType = lambda x: f"GripperType({x})"
-    fake_robots: Any = types.ModuleType("i2rt.robots")
-    fake_robots.get_robot = fake_get_robot
-    fake_robots.utils = fake_utils
-    fake_i2rt: Any = types.ModuleType("i2rt")
-    fake_i2rt.robots = fake_robots
+    i2rt_mods, get_yam_mock = _fake_i2rt_modules(fake_robot)
 
     with (
-        mock.patch.object(device, "check_can_up"),
-        mock.patch.dict(
-            sys.modules,
-            {
-                "i2rt": fake_i2rt,
-                "i2rt.robots": fake_robots,
-                "i2rt.robots.get_robot": fake_get_robot,
-                "i2rt.robots.utils": fake_utils,
-            },
-        ),
+        mock.patch.object(device.sys, "platform", "linux"),
+        mock.patch.object(device, "check_can_up") as check_mock,
+        mock.patch.object(
+            device.gs_usb_darwin, "register_socketcan_backend"
+        ) as register_mock,
+        mock.patch.dict(sys.modules, i2rt_mods),
     ):
       result = device.connect_robot("can0")
 
     self.assertIs(result, fake_robot)
-    fake_get_robot.get_yam_robot.assert_called_once()
-    kwargs = fake_get_robot.get_yam_robot.call_args.kwargs
-    self.assertEqual(kwargs["channel"], "can0")
-    self.assertEqual(kwargs["arm_type"], f"ArmType({constant.ARM_TYPE})")
-    self.assertEqual(
-        kwargs["gripper_type"], f"GripperType({constant.GRIPPER_TYPE})"
+    check_mock.assert_called_once_with("can0")
+    register_mock.assert_not_called()
+    get_yam_mock.assert_called_once_with(
+        channel="can0",
+        arm_type=f"ArmType({constant.ARM_TYPE})",
+        gripper_type=f"GripperType({constant.GRIPPER_TYPE})",
+        zero_gravity_mode=False,
     )
-    self.assertFalse(kwargs["zero_gravity_mode"])
-    self.assertNotIn("gripper_limits_override", kwargs)
+
+  def test_connect_robot_darwin_registers_gs_usb_backend(self) -> None:
+    fake_robot = _FakeRobot()
+    i2rt_mods, get_yam_mock = _fake_i2rt_modules(fake_robot)
+
+    with (
+        mock.patch.object(device.sys, "platform", "darwin"),
+        mock.patch.object(device, "check_can_up") as check_mock,
+        mock.patch.object(
+            device.gs_usb_darwin, "register_socketcan_backend"
+        ) as register_mock,
+        mock.patch.dict(sys.modules, i2rt_mods),
+    ):
+      result = device.connect_robot("can0")
+
+    self.assertIs(result, fake_robot)
+    check_mock.assert_called_once_with("can0")
+    register_mock.assert_called_once_with()
+    get_yam_mock.assert_called_once_with(
+        channel="can0",
+        arm_type=f"ArmType({constant.ARM_TYPE})",
+        gripper_type=f"GripperType({constant.GRIPPER_TYPE})",
+        zero_gravity_mode=False,
+    )
 
 
 if __name__ == "__main__":

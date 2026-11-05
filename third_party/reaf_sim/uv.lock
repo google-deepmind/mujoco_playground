@@ -2,25 +2,22 @@ version = 1
 revision = 3
 requires-python = ">=3.12, <3.15"
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform != 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform == 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 conflicts = [[
-    { package = "reaf-sim", extra = "cpu" },
-    { package = "reaf-sim", extra = "cu124" },
+    { package = "reaf-sim", group = "cpu" },
+    { package = "reaf-sim", group = "cu12" },
 ]]
 
 [[package]]
@@ -303,10 +300,42 @@ wheels = [
 
 [[package]]
 name = "cuda-bindings"
+version = "12.9.10"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
+dependencies = [
+    { name = "cuda-pathfinder", marker = "extra == 'group-8-reaf-sim-cu12'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7f/b2/8cef7e30e02e7ec3bf157ec192c0522546ed807c262752e884c693813494/cuda_bindings-12.9.10-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:aa1e07b12ae190a01ba3e0c85253be6ec1bfa13545a88eac5fd45ae4b0c04333", size = 7063851, upload-time = "2026-10-15T14:12:01.26Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/6e/0e07e8b3578547e1083a7ee105c5736033ecb189466f40e45283b46bc7c6/cuda_bindings-12.9.10-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:420e44cfcd939cd69d6cfe8efc5f08b44850994cae399a49b9299a464324ce97", size = 7627380, upload-time = "2026-10-15T14:12:03.328Z" },
+    { url = "https://files.pythonhosted.org/packages/69/d9/f3a7223079160b384ccd32729dde6cf24d5e1667a43a8d5dd947c7c7aaee/cuda_bindings-12.9.10-cp312-cp312-win_amd64.whl", hash = "sha256:a43a26d9b42da215d3ecac5dc35a7e75c219083a7eeab765a718567393b34fca", size = 7601037, upload-time = "2026-10-15T14:12:05.493Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/a3/8bd63adbcb89d2b14e9abadc3446a79bcc6b5b8915d2942614a529204b1a/cuda_bindings-12.9.10-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ddc659577e2aa27f1785eb5c7cf68f03e8d5036221f2da910a4ea0cfa7d677b4", size = 6927409, upload-time = "2026-10-15T14:12:07.491Z" },
+    { url = "https://files.pythonhosted.org/packages/63/97/efc2335c56a132cf8dba0531bc76f124937434421f09d7afb5a89f19837c/cuda_bindings-12.9.10-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:761589eb7fdc585d8bc496bff6185c8828c1b1e151e3769ac05824512e883dbd", size = 7398156, upload-time = "2026-10-15T14:12:09.548Z" },
+    { url = "https://files.pythonhosted.org/packages/63/db/a46aea047e281eb54d6637aed26e4e7ed603ed28b0d47089247013800f47/cuda_bindings-12.9.10-cp313-cp313-win_amd64.whl", hash = "sha256:eea29982127cd0f6b3862793684304654eddd3dd2a3660eda750e915238be97d", size = 7546628, upload-time = "2026-10-15T14:12:11.412Z" },
+    { url = "https://files.pythonhosted.org/packages/21/d4/06d25e37b026a638c0393937aaed5568ed3c176edd2a451d109740f8528f/cuda_bindings-12.9.10-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f6bd06606b3c99f9409dd1ca4f8524f11c0733955938f10792b3213f6b163c9c", size = 7005548, upload-time = "2026-10-15T14:12:13.775Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/96/d392d861477c866a7dce3a0647a8e1582c2d2e166dcb07c83480157b8457/cuda_bindings-12.9.10-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bd68d16edb117b9ee664b2d03e3f91ba94231acf6b039128efa315a748f9d194", size = 7440133, upload-time = "2026-10-15T14:12:15.927Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/91/9598d9106bde70dda2a6cbc61f44c543f404697543349d67dde60240e09a/cuda_bindings-12.9.10-cp314-cp314-win_amd64.whl", hash = "sha256:1ec0ab131dad355d91dcd6e7efc22a96c7e61bb588e3ff361601738a339e0800", size = 7690642, upload-time = "2026-10-15T14:12:25.753Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/96/6d828801e34c352d3b8ec104225fbed0754ad18d86beb2248cdf58f98fdd/cuda_bindings-12.9.10-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:78542b2902fafebb5b10d7f7cdc53f951c3ea5c564d2e2b22aaae8a451f98e18", size = 6938029, upload-time = "2026-10-15T14:12:28.402Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/5c/131922cb2dd813c144e193ca5f2a3599b3f6e2dc2dbc05c82cee6b08762e/cuda_bindings-12.9.10-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:daeffc3f53865c30f6453667bf898b47ac70b4665ac3232859062a096926ad56", size = 7362170, upload-time = "2026-10-15T14:12:30.404Z" },
+    { url = "https://files.pythonhosted.org/packages/98/df/7f025884bdc6a6917041ad113709ddd5ddc35cf503189cf4694376f13698/cuda_bindings-12.9.10-cp314-cp314t-win_amd64.whl", hash = "sha256:bea447529ce4d3f05eeebbbdea0eb5ccacfd4c7e0e811f00d141d8a2a847e458", size = 8469584, upload-time = "2026-10-15T14:12:32.46Z" },
+]
+
+[[package]]
+name = "cuda-bindings"
 version = "13.4.2"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
+    { name = "cuda-pathfinder", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/27/df/281aa982f033426d59c6276b6643637746b6bf0a883186443daa89717291/cuda_bindings-13.4.2-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bb2e91717c83ea550ef1b19ebafd25c9fe805478f479d04b3fc798cc6d29d453", size = 6479822, upload-time = "2026-09-17T22:06:01.3Z" },
@@ -337,51 +366,104 @@ wheels = [
 
 [[package]]
 name = "cuda-toolkit"
+version = "12.9.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/8f/a28e7da158e96ad61f7e1035e53851fafaddf22445300d664e68ec657fdc/cuda_toolkit-12.9.1-py2.py3-none-any.whl", hash = "sha256:0c8636dfacbecfe9867a949a211864f080a805bc54023ce4a361aa4e1fd8738b", size = 2303, upload-time = "2025-08-13T02:03:10.699Z" },
+]
+
+[package.optional-dependencies]
+cublas = [
+    { name = "nvidia-cublas-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+cudart = [
+    { name = "nvidia-cuda-runtime-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+cufft = [
+    { name = "nvidia-cufft-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+cufile = [
+    { name = "nvidia-cufile-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+cupti = [
+    { name = "nvidia-cuda-cupti-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+curand = [
+    { name = "nvidia-curand-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+cusolver = [
+    { name = "nvidia-cusolver-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+cusparse = [
+    { name = "nvidia-cusparse-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+nvjitlink = [
+    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+nvrtc = [
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+nvtx = [
+    { name = "nvidia-nvtx-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+]
+
+[[package]]
+name = "cuda-toolkit"
 version = "13.0.3.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version < '3.13'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/c7/a79086a62c98befcdb8349656c6f114e2db3b8b2422f6e25c97a7f2a9a3c/cuda_toolkit-13.0.3.0-py2.py3-none-any.whl", hash = "sha256:d693caaa261214ddd7dbb60d68e71cbed884e68c2be7509778f3051da0b91c3f", size = 2512, upload-time = "2026-04-14T00:50:08.173Z" },
 ]
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cufft = [
-    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cufile = [
-    { name = "nvidia-cufile", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'aarch64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cufile", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'aarch64' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 curand = [
-    { name = "nvidia-curand", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-curand", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cusolver = [
-    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform == 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 
 [[package]]
@@ -930,33 +1012,31 @@ wheels = [
 
 [[package]]
 name = "mujoco"
-version = "3.17.1.dev1008860742"
+version = "4.0.0.dev1014015077"
 source = { registry = "https://py.mujoco.org/" }
 dependencies = [
-    { name = "absl-py" },
-    { name = "etils", extra = ["epath"] },
     { name = "glfw" },
     { name = "numpy" },
     { name = "pyopengl" },
     { name = "websockets" },
 ]
 wheels = [
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:b0a2fed1ccf4154a0d05da504aafc2773e3144908e912a7b2c77973e3f76e274" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:36347cba5385d81a8a5af6edb0e39634f1f0c04d729ebb62aac9dbf3957f89c3" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:dbd93f34949d8c0673ef9fa8d80500095873accd48e3afdf369ca905af3eb8e8" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp312-cp312-win_amd64.whl", hash = "sha256:3d081c0e181192e078ba6c8ecb535d9dccd941a1afbcbde0390bbef78a27b6c8" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:017f4f2acbd87f8e0fd869d5c1c9de7e68bb55d60c54083d08d061e766718ab1" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7ded79fba82daf99452c4a817ee7917fddc0f42fe4385606d10401c8b4958094" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fd1796d3b06ca68d19447dd565d3a1b66a9e1a6c48f91921c637ae19e1febb48" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp313-cp313-win_amd64.whl", hash = "sha256:3405239a1e1b3a80285458e35d57a0f1e73e6781544deb5f36b396168bfd031f" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:ef9361d24d505a6fc7f2bdb004a832a1e88b84c2d4271a9c415502ac83cf7ca1" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ab9bd2d64b32c67957cc4a3b2481a49b0ddafa665cd500da4fedafa66bc21eb9" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:73cf0bcae81c28674913b23ea3a5f5046d41ec5bbdbaf215230dffb895e68f68" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314-win_amd64.whl", hash = "sha256:a4908b9a200387518d15109b379cad4c26ff8a7e29788e820e944281200f9619" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314t-macosx_11_0_universal2.whl", hash = "sha256:5fed6c7761d1fa1cd8f792eb4b26a10f425b65f7ac8546e75f1e223900485925" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b16a6c56edbbbb818849938a35ba29d844f31897bed9b591324b2dec228acf95" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:80bf81a0c8dbd71c823c952c3a5d09a3aca8bbb0e085f8bce8fad8ff64a33c2e" },
-    { url = "https://py.mujoco.org/mujoco/mujoco-3.17.1.dev1008860742-cp314-cp314t-win_amd64.whl", hash = "sha256:80169beab1560487012975c9278c96cf1adbf8ce836cbc292331efc31e7e998d" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:cf31d65481bb503fbdfcbf92c8fc98394403c50b17e16bf20d8091f176e0edfe" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ba5471dc6e94cd5a3d276ac350c72712cdaf3f83e706517d7cd97b7b6c3dcbb2" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d3dc1468528500b0b770998061623ae6d1f18b4015d9c09cab7755d3a92d475f" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp312-cp312-win_amd64.whl", hash = "sha256:c6f79f8bc154eb7a07b5b11b1dde341598885e951102a0906ab7782eecb739f4" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:6ea0ed486133bc697fc90bb1b16e7797474edfd01935c51388e7a79f92e130fa" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:786fab14e19a1fb961ace938b3244d217d5188e51062b1ec7d3d629be7c83aa6" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c6e50fa5f518f927b06c51fb6bf492c0f06bb7453a169a16b5714e307a235e48" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp313-cp313-win_amd64.whl", hash = "sha256:fddeb0193d4b9a83491658f26ce8c2129f19b42548c1c521c811f29dbcecfd01" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:e1dee7b8126eed7d2bfff3aa9b094e2a67fa370e7fc178bb1d76a6e611ce0bba" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:8509d6f38875535db7ae12279712b409e153ff44ecb8c8352981c58c70d737aa" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4435139f368ec513be1888ab98e7edeaee9d97e06ebc6896769a88df3b067baf" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314-win_amd64.whl", hash = "sha256:6de11f51e4447d76af95667b1d925c409ac05e44d07b3fc3ae3a36f6e78fa332" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314t-macosx_11_0_universal2.whl", hash = "sha256:1b039b40d48fab47977f1cbeaba0d84472153740583fab3e0d4d4774c999631d" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5ca5a7c6d1f1a05659432fd50ce2e63e61f6ca4ded8ce3ac628957d768909f69" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2e628dd7446abb39caca49d0d998374a2c3c39b70618d3588694b03f94f0fe0a" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.0.dev1014015077-cp314-cp314t-win_amd64.whl", hash = "sha256:97b9d8e358cacc8cd3e7b3e13bc43377b7074fc6eac0a90f1b4e1df45f019b41" },
 ]
 
 [package.optional-dependencies]
@@ -1077,7 +1157,7 @@ name = "nvidia-cublas"
 version = "13.1.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/a1/0bd24ee8c8d03adac032fd2909426a00c88f8c57961b1277ded97f91119f/nvidia_cublas-13.1.1.3-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:b7a210458267ac818974c53038fbec2e969d5c99f305ab15c72522fa9f001dd5", size = 542848918, upload-time = "2026-04-08T18:46:22.985Z" },
@@ -1087,12 +1167,12 @@ wheels = [
 
 [[package]]
 name = "nvidia-cublas-cu12"
-version = "12.4.5.8"
+version = "12.9.1.4"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/7f/7fbae15a3982dc9595e49ce0f19332423b260045d0a6afe93cdbe2f1f624/nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0f8aa1706812e00b9f19dfe0cdb3999b092ccb8ca168c0db5b8ea712456fd9b3", size = 363333771, upload-time = "2024-06-18T19:28:09.881Z" },
-    { url = "https://files.pythonhosted.org/packages/ae/71/1c91302526c45ab494c23f61c7a84aa568b8c1f9d196efa5993957faf906/nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_x86_64.whl", hash = "sha256:2fc8da60df463fdefa81e323eef2e36489e1c94335b5358bcb38360adf75ac9b", size = 363438805, upload-time = "2024-04-03T20:57:06.025Z" },
-    { url = "https://files.pythonhosted.org/packages/e2/2a/4f27ca96232e8b5269074a72e03b4e0d43aa68c9b965058b1684d07c6ff8/nvidia_cublas_cu12-12.4.5.8-py3-none-win_amd64.whl", hash = "sha256:5a796786da89203a0657eda402bcdcec6180254a8ac22d72213abc42069522dc", size = 396895858, upload-time = "2024-04-03T21:03:31.996Z" },
+    { url = "https://files.pythonhosted.org/packages/82/6c/90d3f532f608a03a13c1d6c16c266ffa3828e8011b1549d3b61db2ad59f5/nvidia_cublas_cu12-12.9.1.4-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:7a950dae01add3b415a5a5cdc4ec818fb5858263e9cca59004bb99fdbbd3a5d6", size = 575006342, upload-time = "2025-06-05T20:04:16.902Z" },
+    { url = "https://files.pythonhosted.org/packages/77/3c/aa88abe01f3be3d1f8f787d1d33dc83e76fec05945f9a28fbb41cfb99cd5/nvidia_cublas_cu12-12.9.1.4-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:453611eb21a7c1f2c2156ed9f3a45b691deda0440ec550860290dc901af5b4c2", size = 581242350, upload-time = "2025-06-05T20:04:51.979Z" },
+    { url = "https://files.pythonhosted.org/packages/45/a1/a17fade6567c57452cfc8f967a40d1035bb9301db52f27808167fbb2be2f/nvidia_cublas_cu12-12.9.1.4-py3-none-win_amd64.whl", hash = "sha256:1e5fee10662e6e52bd71dec533fbbd4971bb70a5f24f3bc3793e5c2e9dc640bf", size = 553153899, upload-time = "2025-06-05T20:13:35.556Z" },
 ]
 
 [[package]]
@@ -1107,12 +1187,12 @@ wheels = [
 
 [[package]]
 name = "nvidia-cuda-cupti-cu12"
-version = "12.4.127"
+version = "12.9.79"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/b5/9fb3d00386d3361b03874246190dfec7b206fd74e6e287b26a8fcb359d95/nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:79279b35cf6f91da114182a5ce1864997fd52294a87a16179ce275773799458a", size = 12354556, upload-time = "2024-06-18T19:30:40.546Z" },
-    { url = "https://files.pythonhosted.org/packages/67/42/f4f60238e8194a3106d06a058d494b18e006c10bb2b915655bd9f6ea4cb1/nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:9dec60f5ac126f7bb551c055072b69d85392b13311fcc1bcda2202d172df30fb", size = 13813957, upload-time = "2024-04-03T20:55:01.564Z" },
-    { url = "https://files.pythonhosted.org/packages/f3/79/8cf313ec17c58ccebc965568e5bcb265cdab0a1df99c4e674bb7a3b99bfe/nvidia_cuda_cupti_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:5688d203301ab051449a2b1cb6690fbe90d2b372f411521c86018b950f3d7922", size = 9938035, upload-time = "2024-04-03T21:01:01.109Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/78/351b5c8cdbd9a6b4fb0d6ee73fb176dcdc1b6b6ad47c2ffff5ae8ca4a1f7/nvidia_cuda_cupti_cu12-12.9.79-py3-none-manylinux_2_25_aarch64.whl", hash = "sha256:791853b030602c6a11d08b5578edfb957cadea06e9d3b26adbf8d036135a4afe", size = 10077166, upload-time = "2025-06-05T20:01:01.385Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/2e/b84e32197e33f39907b455b83395a017e697c07a449a2b15fd07fc1c9981/nvidia_cuda_cupti_cu12-12.9.79-py3-none-manylinux_2_25_x86_64.whl", hash = "sha256:096bcf334f13e1984ba36685ad4c1d6347db214de03dbb6eebb237b41d9d934f", size = 10814997, upload-time = "2025-06-05T20:01:10.168Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/b4/298983ab1a83de500f77d0add86d16d63b19d1a82c59f8eaf04f90445703/nvidia_cuda_cupti_cu12-12.9.79-py3-none-win_amd64.whl", hash = "sha256:1848a9380067560d5bee10ed240eecc22991713e672c0515f9c3d9396adf93c8", size = 7730496, upload-time = "2025-06-05T20:11:26.444Z" },
 ]
 
 [[package]]
@@ -1127,12 +1207,12 @@ wheels = [
 
 [[package]]
 name = "nvidia-cuda-nvrtc-cu12"
-version = "12.4.127"
+version = "12.9.86"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/77/aa/083b01c427e963ad0b314040565ea396f914349914c298556484f799e61b/nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0eedf14185e04b76aa05b1fea04133e59f465b6f960c0cbf4e37c3cb6b0ea198", size = 24133372, upload-time = "2024-06-18T19:32:00.576Z" },
-    { url = "https://files.pythonhosted.org/packages/2c/14/91ae57cd4db3f9ef7aa99f4019cfa8d54cb4caa7e00975df6467e9725a9f/nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a178759ebb095827bd30ef56598ec182b85547f1508941a3d560eb7ea1fbf338", size = 24640306, upload-time = "2024-04-03T20:56:01.463Z" },
-    { url = "https://files.pythonhosted.org/packages/7c/30/8c844bfb770f045bcd8b2c83455c5afb45983e1a8abf0c4e5297b481b6a5/nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:a961b2f1d5f17b14867c619ceb99ef6fcec12e46612711bcec78eb05068a60ec", size = 19751955, upload-time = "2024-04-03T21:01:51.133Z" },
+    { url = "https://files.pythonhosted.org/packages/b8/85/e4af82cc9202023862090bfca4ea827d533329e925c758f0cde964cb54b7/nvidia_cuda_nvrtc_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl", hash = "sha256:210cf05005a447e29214e9ce50851e83fc5f4358df8b453155d5e1918094dcb4", size = 89568129, upload-time = "2025-06-05T20:02:41.973Z" },
+    { url = "https://files.pythonhosted.org/packages/64/eb/c2295044b8f3b3b08860e2f6a912b702fc92568a167259df5dddb78f325e/nvidia_cuda_nvrtc_cu12-12.9.86-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:096d4de6bda726415dfaf3198d4f5c522b8e70139c97feef5cd2ca6d4cd9cead", size = 44528905, upload-time = "2025-06-05T20:02:29.754Z" },
+    { url = "https://files.pythonhosted.org/packages/52/de/823919be3b9d0ccbf1f784035423c5f18f4267fb0123558d58b813c6ec86/nvidia_cuda_nvrtc_cu12-12.9.86-py3-none-win_amd64.whl", hash = "sha256:72972ebdcf504d69462d3bcd67e7b81edd25d0fb85a2c46d3ea3517666636349", size = 76408187, upload-time = "2025-06-05T20:12:27.819Z" },
 ]
 
 [[package]]
@@ -1147,37 +1227,38 @@ wheels = [
 
 [[package]]
 name = "nvidia-cuda-runtime-cu12"
-version = "12.4.127"
+version = "12.9.79"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a1/aa/b656d755f474e2084971e9a297def515938d56b466ab39624012070cb773/nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:961fe0e2e716a2a1d967aab7caee97512f71767f852f67432d572e36cb3a11f3", size = 894177, upload-time = "2024-06-18T19:32:52.877Z" },
-    { url = "https://files.pythonhosted.org/packages/ea/27/1795d86fe88ef397885f2e580ac37628ed058a92ed2c39dc8eac3adf0619/nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:64403288fa2136ee8e467cdc9c9427e0434110899d07c779f25b5c068934faa5", size = 883737, upload-time = "2024-04-03T20:54:51.355Z" },
-    { url = "https://files.pythonhosted.org/packages/a8/8b/450e93fab75d85a69b50ea2d5fdd4ff44541e0138db16f9cd90123ef4de4/nvidia_cuda_runtime_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:09c2e35f48359752dfa822c09918211844a3d93c100a715d79b59591130c5e1e", size = 878808, upload-time = "2024-04-03T21:00:49.77Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/e0/0279bd94539fda525e0c8538db29b72a5a8495b0c12173113471d28bce78/nvidia_cuda_runtime_cu12-12.9.79-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:83469a846206f2a733db0c42e223589ab62fd2fabac4432d2f8802de4bded0a4", size = 3515012, upload-time = "2025-06-05T20:00:35.519Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/46/a92db19b8309581092a3add7e6fceb4c301a3fd233969856a8cbf042cd3c/nvidia_cuda_runtime_cu12-12.9.79-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:25bba2dfb01d48a9b59ca474a1ac43c6ebf7011f1b0b8cc44f54eb6ac48a96c3", size = 3493179, upload-time = "2025-06-05T20:00:53.735Z" },
+    { url = "https://files.pythonhosted.org/packages/59/df/e7c3a360be4f7b93cee39271b792669baeb3846c58a4df6dfcf187a7ffab/nvidia_cuda_runtime_cu12-12.9.79-py3-none-win_amd64.whl", hash = "sha256:8e018af8fa02363876860388bd10ccb89eb9ab8fb0aa749aaf58430a9f7c4891", size = 3591604, upload-time = "2025-06-05T20:11:17.036Z" },
 ]
 
 [[package]]
 name = "nvidia-cudnn-cu12"
-version = "9.1.0.70"
+version = "9.20.0.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'group-8-reaf-sim-cu12'" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/fd/713452cd72343f682b1c7b9321e23829f00b842ceaedcda96e742ea0b0b3/nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl", hash = "sha256:165764f44ef8c61fcdfdfdbe769d687e06374059fbb388b6c89ecb0e28793a6f", size = 664752741, upload-time = "2024-04-22T15:24:15.253Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/d0/f90ee6956a628f9f04bf467932c0a25e5a7e706a684b896593c06c82f460/nvidia_cudnn_cu12-9.1.0.70-py3-none-win_amd64.whl", hash = "sha256:6278562929433d68365a07a4a1546c237ba2849852c0d4b2262a486e805b977a", size = 679925892, upload-time = "2024-04-22T15:24:53.333Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/77/1c382fdc5de163b2ff14d6174d12dc318c0a42302f5e3a4fbc5114ab0501/nvidia_cudnn_cu12-9.20.0.48-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:d9da9c15344323afae571751393552652c52486eab0b886530997bef664e29de", size = 664659972, upload-time = "2026-03-09T19:27:37.986Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/52/94aecda69df65ba1079a8b7dbe84632af5614dc0ed2c733185f6431874e3/nvidia_cudnn_cu12-9.20.0.48-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:7d7479e1321c7a039b33827f0247791ee1be091759032c1f66a287c4a643396a", size = 657910570, upload-time = "2026-03-09T19:28:58.944Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/ee/45ecd276f6ef2947d713e8c1a5232e55a15d727a44860aff8fc9c7c82d12/nvidia_cudnn_cu12-9.20.0.48-py3-none-win_amd64.whl", hash = "sha256:9cac47d5be5e5d84f53358fa688d41f2ae35e9a920c0e3eeb48bce4ada5460d9", size = 643997304, upload-time = "2026-03-09T19:30:46.034Z" },
 ]
 
 [[package]]
 name = "nvidia-cudnn-cu13"
-version = "9.24.0.43"
+version = "9.20.0.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cublas", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/30/7c257e3d5cb4fecb147b93895c66e29c93f8e76d74b45bb418ff0587c4ec/nvidia_cudnn_cu13-9.24.0.43-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:a6812a554a1ff0413e9c52b84c26c050380649ab9615f9c16bded368ce9f421f", size = 650976863, upload-time = "2026-07-02T16:23:39.248Z" },
-    { url = "https://files.pythonhosted.org/packages/5c/ba/791cffd048fe5b044e620df55267e3e95c0e6e07d50b41e377c03dfc910f/nvidia_cudnn_cu13-9.24.0.43-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:71f181cd810e90f9b6023b01186fe82d13d65f0ec098581ee201d39fad769e4b", size = 553099438, upload-time = "2026-07-02T16:27:42.58Z" },
-    { url = "https://files.pythonhosted.org/packages/31/23/1dd3aa15cc4ab62c8fc88f8049ef137bc44c17892f5577bc80d994941f77/nvidia_cudnn_cu13-9.24.0.43-py3-none-win_amd64.whl", hash = "sha256:67a7273b5cf062f9446fd76cf464351a1c0f66501e6cd78f6675c0d604d8ac87", size = 412314771, upload-time = "2026-07-02T16:31:07.973Z" },
+    { url = "https://files.pythonhosted.org/packages/56/c5/83384d846b2fd17c44bd499b36c75a45ed4f095fbbb2252294e89cea5c5c/nvidia_cudnn_cu13-9.20.0.48-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:e31454ae00094b0c55319d9d15b6fa2fc50a9e1c0f5c8c80fb75258234e731e1", size = 444574296, upload-time = "2026-03-09T19:28:27.751Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/5e/edb9c0ae051602c3ccaffe424256463636d639e27d7f302dde9975ef9e7a/nvidia_cudnn_cu13-9.20.0.48-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:0c45dd8eeb50b603f07995b1b300c62ffe6a1980482b82b3bcf94a4ca9d49304", size = 366173588, upload-time = "2026-03-09T19:29:34.474Z" },
+    { url = "https://files.pythonhosted.org/packages/78/39/21507455b1bca8b5702a9e9fc6ce73735f216f558dac2c9ede58e4d456b8/nvidia_cudnn_cu13-9.20.0.48-py3-none-win_amd64.whl", hash = "sha256:af8139732b99c0118be65ea5aac97f0d46018f8c552889e49d2fb0c6261a4a24", size = 350712614, upload-time = "2026-03-09T19:31:11.398Z" },
 ]
 
 [[package]]
@@ -1185,7 +1266,7 @@ name = "nvidia-cufft"
 version = "12.0.0.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-nvjitlink", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/ae/f417a75c0259e85c1d2f83ca4e960289a5f814ed0cea74d18c353d3e989d/nvidia_cufft-12.0.0.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:2708c852ef8cd89d1d2068bdbece0aa188813a0c934db3779b9b1faa8442e5f5", size = 214053554, upload-time = "2025-09-04T08:31:38.196Z" },
@@ -1195,15 +1276,15 @@ wheels = [
 
 [[package]]
 name = "nvidia-cufft-cu12"
-version = "11.2.1.3"
+version = "11.4.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'group-8-reaf-sim-cu12'" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7a/8a/0e728f749baca3fbeffad762738276e5df60851958be7783af121a7221e7/nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5dad8008fc7f92f5ddfa2101430917ce2ffacd86824914c82e28990ad7f00399", size = 211422548, upload-time = "2024-06-18T19:33:39.396Z" },
-    { url = "https://files.pythonhosted.org/packages/27/94/3266821f65b92b3138631e9c8e7fe1fb513804ac934485a8d05776e1dd43/nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_x86_64.whl", hash = "sha256:f083fc24912aa410be21fa16d157fed2055dab1cc4b6934a0e03cba69eb242b9", size = 211459117, upload-time = "2024-04-03T20:57:40.402Z" },
-    { url = "https://files.pythonhosted.org/packages/f6/ee/3f3f8e9874f0be5bbba8fb4b62b3de050156d159f8b6edc42d6f1074113b/nvidia_cufft_cu12-11.2.1.3-py3-none-win_amd64.whl", hash = "sha256:d802f4954291101186078ccbe22fc285a902136f974d369540fd4a5333d1440b", size = 210576476, upload-time = "2024-04-03T21:04:06.422Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/2b/76445b0af890da61b501fde30650a1a4bd910607261b209cccb5235d3daa/nvidia_cufft_cu12-11.4.1.4-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:1a28c9b12260a1aa7a8fd12f5ebd82d027963d635ba82ff39a1acfa7c4c0fbcf", size = 200822453, upload-time = "2025-06-05T20:05:27.889Z" },
+    { url = "https://files.pythonhosted.org/packages/95/f4/61e6996dd20481ee834f57a8e9dca28b1869366a135e0d42e2aa8493bdd4/nvidia_cufft_cu12-11.4.1.4-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:c67884f2a7d276b4b80eb56a79322a95df592ae5e765cf1243693365ccab4e28", size = 200877592, upload-time = "2025-06-05T20:05:45.862Z" },
+    { url = "https://files.pythonhosted.org/packages/20/ee/29955203338515b940bd4f60ffdbc073428f25ef9bfbce44c9a066aedc5c/nvidia_cufft_cu12-11.4.1.4-py3-none-win_amd64.whl", hash = "sha256:8e5bfaac795e93f80611f807d42844e8e27e340e0cde270dcb6c65386d795b80", size = 200067309, upload-time = "2025-06-05T20:13:59.762Z" },
 ]
 
 [[package]]
@@ -1213,6 +1294,15 @@ source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/70/4f193de89a48b71714e74602ee14d04e4019ad36a5a9f20c425776e72cd6/nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44", size = 1223672, upload-time = "2025-09-04T08:32:22.779Z" },
     { url = "https://files.pythonhosted.org/packages/ab/73/cc4a14c9813a8a0d509417cf5f4bdaba76e924d58beb9864f5a7baceefbf/nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1", size = 1136992, upload-time = "2025-09-04T08:32:14.119Z" },
+]
+
+[[package]]
+name = "nvidia-cufile-cu12"
+version = "1.14.1.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ad/28/b960e06d705a440c030edd84e16888ee14c743390bdb2a6368e92ffe8ef8/nvidia_cufile_cu12-1.14.1.1-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:9552e2231792e94b1ff17bc99e958cc0e6bbbaa4a9d91fa2dbeed97716628fe6", size = 1210714, upload-time = "2025-06-05T20:06:11.898Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/d2/110af3a1f77999d5eebf6ffae5d2305ab839e53c76eec3696640cc25b35d/nvidia_cufile_cu12-1.14.1.1-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:8dea77590761e02cb6dd955a57cb6414c58aa3cb1b7adbf9919869a11509cf65", size = 1135994, upload-time = "2025-06-05T20:06:03.952Z" },
 ]
 
 [[package]]
@@ -1227,12 +1317,12 @@ wheels = [
 
 [[package]]
 name = "nvidia-curand-cu12"
-version = "10.3.5.147"
+version = "10.3.10.19"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/9c/a79180e4d70995fdf030c6946991d0171555c6edf95c265c6b2bf7011112/nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_aarch64.whl", hash = "sha256:1f173f09e3e3c76ab084aba0de819c49e56614feae5c12f69883f4ae9bb5fad9", size = 56314811, upload-time = "2024-06-18T19:34:48.575Z" },
-    { url = "https://files.pythonhosted.org/packages/8a/6d/44ad094874c6f1b9c654f8ed939590bdc408349f137f9b98a3a23ccec411/nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a88f583d4e0bb643c49743469964103aa59f7f708d862c3ddb0fc07f851e3b8b", size = 56305206, upload-time = "2024-04-03T20:58:08.722Z" },
-    { url = "https://files.pythonhosted.org/packages/1c/22/2573503d0d4e45673c263a313f79410e110eb562636b0617856fdb2ff5f6/nvidia_curand_cu12-10.3.5.147-py3-none-win_amd64.whl", hash = "sha256:f307cc191f96efe9e8f05a87096abc20d08845a841889ef78cb06924437f6771", size = 55799918, upload-time = "2024-04-03T21:04:34.45Z" },
+    { url = "https://files.pythonhosted.org/packages/14/1c/2a45afc614d99558d4a773fa740d8bb5471c8398eeed925fc0fcba020173/nvidia_curand_cu12-10.3.10.19-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:de663377feb1697e1d30ed587b07d5721fdd6d2015c738d7528a6002a6134d37", size = 68292066, upload-time = "2025-05-01T19:39:13.595Z" },
+    { url = "https://files.pythonhosted.org/packages/31/44/193a0e171750ca9f8320626e8a1f2381e4077a65e69e2fb9708bd479e34a/nvidia_curand_cu12-10.3.10.19-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:49b274db4780d421bd2ccd362e1415c13887c53c214f0d4b761752b8f9f6aa1e", size = 68295626, upload-time = "2025-05-01T19:39:38.885Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/98/1bd66fd09cbe1a5920cb36ba87029d511db7cca93979e635fd431ad3b6c0/nvidia_curand_cu12-10.3.10.19-py3-none-win_amd64.whl", hash = "sha256:e8129e6ac40dc123bd948e33d3e11b4aa617d87a583fa2f21b3210e90c743cde", size = 68774847, upload-time = "2025-05-01T19:48:52.93Z" },
 ]
 
 [[package]]
@@ -1240,9 +1330,9 @@ name = "nvidia-cusolver"
 version = "12.0.4.66"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusparse", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cublas", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusparse", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/c3/b30c9e935fc01e3da443ec0116ed1b2a009bb867f5324d3f2d7e533e776b/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:02c2457eaa9e39de20f880f4bd8820e6a1cfb9f9a34f820eb12a155aa5bc92d2", size = 223467760, upload-time = "2025-09-04T08:33:04.222Z" },
@@ -1252,17 +1342,17 @@ wheels = [
 
 [[package]]
 name = "nvidia-cusolver-cu12"
-version = "11.6.1.9"
+version = "11.7.5.82"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusparse-cu12", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "nvidia-cusparse-cu12", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'group-8-reaf-sim-cu12'" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/6b/a5c33cf16af09166845345275c34ad2190944bcc6026797a39f8e0a282e0/nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d338f155f174f90724bbde3758b7ac375a70ce8e706d70b018dd3375545fc84e", size = 127634111, upload-time = "2024-06-18T19:35:01.793Z" },
-    { url = "https://files.pythonhosted.org/packages/3a/e1/5b9089a4b2a4790dfdea8b3a006052cfecff58139d5a4e34cb1a51df8d6f/nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_x86_64.whl", hash = "sha256:19e33fa442bcfd085b3086c4ebf7e8debc07cfe01e11513cc6d332fd918ac260", size = 127936057, upload-time = "2024-04-03T20:58:28.735Z" },
-    { url = "https://files.pythonhosted.org/packages/f2/be/d435b7b020e854d5d5a682eb5de4328fd62f6182507406f2818280e206e2/nvidia_cusolver_cu12-11.6.1.9-py3-none-win_amd64.whl", hash = "sha256:e77314c9d7b694fcebc84f58989f3aa4fb4cb442f12ca1a9bde50f5e8f6d1b9c", size = 125224015, upload-time = "2024-04-03T21:04:53.339Z" },
+    { url = "https://files.pythonhosted.org/packages/03/99/686ff9bf3a82a531c62b1a5c614476e8dfa24a9d89067aeedf3592ee4538/nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:62efa83e4ace59a4c734d052bb72158e888aa7b770e1a5f601682f16fe5b4fd2", size = 337869834, upload-time = "2025-06-05T20:06:53.125Z" },
+    { url = "https://files.pythonhosted.org/packages/33/40/79b0c64d44d6c166c0964ec1d803d067f4a145cca23e23925fd351d0e642/nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:15da72d1340d29b5b3cf3fd100e3cd53421dde36002eda6ed93811af63c40d88", size = 338117415, upload-time = "2025-06-05T20:07:16.809Z" },
+    { url = "https://files.pythonhosted.org/packages/32/5d/feb7f86b809f89b14193beffebe24cf2e4bf7af08372ab8cdd34d19a65a0/nvidia_cusolver_cu12-11.7.5.82-py3-none-win_amd64.whl", hash = "sha256:77666337237716783c6269a658dea310195cddbd80a5b2919b1ba8735cec8efd", size = 326215953, upload-time = "2025-06-05T20:14:41.76Z" },
 ]
 
 [[package]]
@@ -1270,7 +1360,7 @@ name = "nvidia-cusparse"
 version = "12.6.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-nvjitlink", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/94/5c26f33738ae35276672f12615a64bd008ed5be6d1ebcb23579285d960a9/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:80bcc4662f23f1054ee334a15c72b8940402975e0eab63178fc7e670aa59472c", size = 162155568, upload-time = "2025-09-04T08:33:42.864Z" },
@@ -1280,25 +1370,25 @@ wheels = [
 
 [[package]]
 name = "nvidia-cusparse-cu12"
-version = "12.3.1.170"
+version = "12.5.10.65"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'group-8-reaf-sim-cu12'" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/a9/c0d2f83a53d40a4a41be14cea6a0bf9e668ffcf8b004bd65633f433050c0/nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_aarch64.whl", hash = "sha256:9d32f62896231ebe0480efd8a7f702e143c98cfaa0e8a76df3386c1ba2b54df3", size = 207381987, upload-time = "2024-06-18T19:35:32.989Z" },
-    { url = "https://files.pythonhosted.org/packages/db/f7/97a9ea26ed4bbbfc2d470994b8b4f338ef663be97b8f677519ac195e113d/nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_x86_64.whl", hash = "sha256:ea4f11a2904e2a8dc4b1833cc1b5181cde564edd0d5cd33e3c168eff2d1863f1", size = 207454763, upload-time = "2024-04-03T20:58:59.995Z" },
-    { url = "https://files.pythonhosted.org/packages/a2/e0/3155ca539760a8118ec94cc279b34293309bcd14011fc724f87f31988843/nvidia_cusparse_cu12-12.3.1.170-py3-none-win_amd64.whl", hash = "sha256:9bc90fb087bc7b4c15641521f31c0371e9a612fc2ba12c338d3ae032e6b6797f", size = 204684315, upload-time = "2024-04-03T21:05:26.031Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/6f/8710fbd17cdd1d0fc3fea7d36d5b65ce1933611c31e1861da330206b253a/nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:221c73e7482dd93eda44e65ce567c031c07e2f93f6fa0ecd3ba876a195023e83", size = 366359408, upload-time = "2025-06-05T20:07:42.501Z" },
+    { url = "https://files.pythonhosted.org/packages/12/46/b0fd4b04f86577921feb97d8e2cf028afe04f614d17fb5013de9282c9216/nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:73060ce019ac064a057267c585bf1fd5a353734151f87472ff02b2c5c9984e78", size = 366465088, upload-time = "2025-06-05T20:08:20.413Z" },
+    { url = "https://files.pythonhosted.org/packages/73/ef/063500c25670fbd1cbb0cd3eb7c8a061585b53adb4dd8bf3492bb49b0df3/nvidia_cusparse_cu12-12.5.10.65-py3-none-win_amd64.whl", hash = "sha256:9e487468a22a1eaf1fbd1d2035936a905feb79c4ce5c2f67626764ee4f90227c", size = 362504719, upload-time = "2025-06-05T20:15:17.947Z" },
 ]
 
 [[package]]
 name = "nvidia-cusparselt-cu12"
-version = "0.6.2"
+version = "0.8.1"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/8e/675498726c605c9441cf46653bd29cb1b8666da1fb1469ffa25f67f20c58/nvidia_cusparselt_cu12-0.6.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:067a7f6d03ea0d4841c85f0c6f1991c5dda98211f6302cb83a4ab234ee95bef8", size = 149422781, upload-time = "2024-07-23T17:35:27.203Z" },
-    { url = "https://files.pythonhosted.org/packages/78/a8/bcbb63b53a4b1234feeafb65544ee55495e1bb37ec31b999b963cbccfd1d/nvidia_cusparselt_cu12-0.6.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:df2c24502fd76ebafe7457dbc4716b2fec071aabaed4fb7691a201cde03704d9", size = 150057751, upload-time = "2024-07-23T02:35:53.074Z" },
-    { url = "https://files.pythonhosted.org/packages/56/8f/2c33082238b6c5e783a877dc8786ab62619e3e6171c083bd3bba6e3fe75e/nvidia_cusparselt_cu12-0.6.2-py3-none-win_amd64.whl", hash = "sha256:0057c91d230703924c0422feabe4ce768841f9b4b44d28586b6f6d2eb86fbe70", size = 148755794, upload-time = "2024-07-23T02:35:00.261Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/f8/a809966c96e824b92df09ee3b7032442f5e975d873d7dadfef818d527f48/nvidia_cusparselt_cu12-0.8.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5c72f727722f74762380e5f8755557c788b26d8fdcc49df1641c1b08e16d256c", size = 235985605, upload-time = "2025-09-05T18:46:39.601Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/14/e46964290aa587cb9fb7df20efdc60528ddd00d291ccffec47617fb06ca3/nvidia_cusparselt_cu12-0.8.1-py3-none-manylinux2014_x86_64.whl", hash = "sha256:cd1b1dc9e1ad31ea3353c1f985e2bd6f9e7ae0e797d7e6ce879d7b2ace5e80e8", size = 239274390, upload-time = "2025-09-05T18:47:44.816Z" },
+    { url = "https://files.pythonhosted.org/packages/64/f5/9eefe50ee49fda0657aaa061a56600a519dbc1c772d0df701f80e676c818/nvidia_cusparselt_cu12-0.8.1-py3-none-win_amd64.whl", hash = "sha256:2607ec058d53967c9caf0b7a3904ced34bbceaf7944cf9fef6d7f4ec6dab5e3a", size = 225678999, upload-time = "2025-09-05T18:48:25.074Z" },
 ]
 
 [[package]]
@@ -1313,19 +1403,20 @@ wheels = [
 
 [[package]]
 name = "nvidia-nccl-cu12"
-version = "2.21.5"
+version = "2.29.7"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/99/12cd266d6233f47d00daf3a72739872bdc10267d0383508b0b9c84a18bb6/nvidia_nccl_cu12-2.21.5-py3-none-manylinux2014_x86_64.whl", hash = "sha256:8579076d30a8c24988834445f8d633c697d42397e92ffc3f63fa26766d25e0a0", size = 188654414, upload-time = "2024-04-03T15:32:57.427Z" },
+    { url = "https://files.pythonhosted.org/packages/20/cc/f48875411d1f176bce58e6343fd5d4131fc1db5420719ff25944bdc006c6/nvidia_nccl_cu12-2.29.7-py3-none-manylinux_2_18_aarch64.whl", hash = "sha256:0cf032ee22b560447daf0456108a75e32bd74a4de6c6b64725637a359fa48cd8", size = 293563644, upload-time = "2026-03-03T05:34:46.166Z" },
+    { url = "https://files.pythonhosted.org/packages/31/1e/9e366f36efc550f07d6737f199e3f6bffafdf28795d007f10a77dd274f5c/nvidia_nccl_cu12-2.29.7-py3-none-manylinux_2_18_x86_64.whl", hash = "sha256:ecd0a012051abc20c1aa87328841efa8cade3ced65803046e38c2f03c0891fea", size = 293633942, upload-time = "2026-03-03T05:37:05.625Z" },
 ]
 
 [[package]]
 name = "nvidia-nccl-cu13"
-version = "2.30.7"
+version = "2.29.7"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d1/21/a73174c6157101bdf1ffc22b517f76ff0082613989dd9bc8f43e8034caac/nvidia_nccl_cu13-2.30.7-py3-none-manylinux_2_18_aarch64.whl", hash = "sha256:ca786ffa5a647c75d4d1f5cc72a6c4f537947e2ba8823d7c8aaf768e7a7b9f77", size = 215983881, upload-time = "2026-06-09T03:23:15.633Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/34/c500f90c7ae641b8e0f98965b36b8a7ac79cc8b296e8d251fe3eb592ee54/nvidia_nccl_cu13-2.30.7-py3-none-manylinux_2_18_x86_64.whl", hash = "sha256:cefa7fdb9710efd0f39c5f1be1d61ff6fc9a996c451265bd7fbdcf9455ed4b50", size = 215965170, upload-time = "2026-06-09T03:23:39.73Z" },
+    { url = "https://files.pythonhosted.org/packages/72/0d/daf50d44177ee0cbc7ff0a0c91eb5ff676c82be42f9a970bc7597f440c3a/nvidia_nccl_cu13-2.29.7-py3-none-manylinux_2_18_aarch64.whl", hash = "sha256:674a12383e3c38a1bcccae7d4f3633b37852230b6047883cb2f4c2d1b36d9bf5", size = 206014712, upload-time = "2026-03-03T05:34:20.843Z" },
+    { url = "https://files.pythonhosted.org/packages/67/f4/58e4e91b6919367c7aafb8e36fce9aad1a3047e536bf7e2fd560927d3a4c/nvidia_nccl_cu13-2.29.7-py3-none-manylinux_2_18_x86_64.whl", hash = "sha256:edd81538446786ec3b73972543e53bb43bcaf0bfc8ef76cb679fcc390ffe136d", size = 205976000, upload-time = "2026-03-03T05:36:24.472Z" },
 ]
 
 [[package]]
@@ -1341,12 +1432,21 @@ wheels = [
 
 [[package]]
 name = "nvidia-nvjitlink-cu12"
-version = "12.4.127"
+version = "12.9.86"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/45/239d52c05074898a80a900f49b1615d81c07fceadd5ad6c4f86a987c0bc4/nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:4abe7fef64914ccfa909bc2ba39739670ecc9e820c83ccc7a6ed414122599b83", size = 20552510, upload-time = "2024-06-18T20:20:13.871Z" },
-    { url = "https://files.pythonhosted.org/packages/ff/ff/847841bacfbefc97a00036e0fce5a0f086b640756dc38caea5e1bb002655/nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:06b3b9b25bf3f8af351d664978ca26a16d2c5127dbd53c0497e28d1fb9611d57", size = 21066810, upload-time = "2024-04-03T20:59:46.957Z" },
-    { url = "https://files.pythonhosted.org/packages/81/19/0babc919031bee42620257b9a911c528f05fb2688520dcd9ca59159ffea8/nvidia_nvjitlink_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:fd9020c501d27d135f983c6d3e244b197a7ccad769e34df53a42e276b0e25fa1", size = 95336325, upload-time = "2024-04-03T21:06:25.073Z" },
+    { url = "https://files.pythonhosted.org/packages/46/0c/c75bbfb967457a0b7670b8ad267bfc4fffdf341c074e0a80db06c24ccfd4/nvidia_nvjitlink_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl", hash = "sha256:e3f1171dbdc83c5932a45f0f4c99180a70de9bd2718c1ab77d14104f6d7147f9", size = 39748338, upload-time = "2025-06-05T20:10:25.613Z" },
+    { url = "https://files.pythonhosted.org/packages/97/bc/2dcba8e70cf3115b400fef54f213bcd6715a3195eba000f8330f11e40c45/nvidia_nvjitlink_cu12-12.9.86-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:994a05ef08ef4b0b299829cde613a424382aff7efb08a7172c1fa616cc3af2ca", size = 39514880, upload-time = "2025-06-05T20:10:04.89Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/7e/2eecb277d8a98184d881fb98a738363fd4f14577a4d2d7f8264266e82623/nvidia_nvjitlink_cu12-12.9.86-py3-none-win_amd64.whl", hash = "sha256:cc6fcec260ca843c10e34c936921a1c426b351753587fdd638e8cff7b16bb9db", size = 35584936, upload-time = "2025-06-05T20:16:08.525Z" },
+]
+
+[[package]]
+name = "nvidia-nvshmem-cu12"
+version = "3.4.5"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1d/6a/03aa43cc9bd3ad91553a88b5f6fb25ed6a3752ae86ce2180221962bc2aa5/nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:0b48363fc6964dede448029434c6abed6c5e37f823cb43c3bcde7ecfc0457e15", size = 138936938, upload-time = "2025-09-06T00:32:05.589Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/09/6ea3ea725f82e1e76684f0708bbedd871fc96da89945adeba65c3835a64c/nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:042f2500f24c021db8a06c5eec2539027d57460e1c1a762055a6554f72c369bd", size = 139103095, upload-time = "2025-09-06T00:32:31.266Z" },
 ]
 
 [[package]]
@@ -1370,12 +1470,12 @@ wheels = [
 
 [[package]]
 name = "nvidia-nvtx-cu12"
-version = "12.4.127"
+version = "12.9.79"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/39/471f581edbb7804b39e8063d92fc8305bdc7a80ae5c07dbe6ea5c50d14a5/nvidia_nvtx_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7959ad635db13edf4fc65c06a6e9f9e55fc2f92596db928d169c0bb031e88ef3", size = 100417, upload-time = "2024-06-18T20:16:22.484Z" },
-    { url = "https://files.pythonhosted.org/packages/87/20/199b8713428322a2f22b722c62b8cc278cc53dffa9705d744484b5035ee9/nvidia_nvtx_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:781e950d9b9f60d8241ccea575b32f5105a5baf4c2351cab5256a24869f12a1a", size = 99144, upload-time = "2024-04-03T20:56:12.406Z" },
-    { url = "https://files.pythonhosted.org/packages/54/1b/f77674fbb73af98843be25803bbd3b9a4f0a96c75b8d33a2854a5c7d2d77/nvidia_nvtx_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:641dccaaa1139f3ffb0d3164b4b84f9d253397e38246a4f2f36728b48566d485", size = 66307, upload-time = "2024-04-03T21:02:01.959Z" },
+    { url = "https://files.pythonhosted.org/packages/86/ed/bb230dce7741f2778ba2ae3e8778fdb8bc58eee9fd95f07bf7b2d18e8081/nvidia_nvtx_cu12-12.9.79-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:fec150986817f2b4e7eed72ed059f2dcb9ba3856b9a96134e448eac946a6952f", size = 85504, upload-time = "2025-06-05T20:03:10.21Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/e4/82155e4aaedb41621087ba219c95e99c5e417f37a7649b4fb6ec32dcb14d/nvidia_nvtx_cu12-12.9.79-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d1f258e752294acdb4f61c3d31fee87bd0f60e459f1e2f624376369b524cd15d", size = 86120, upload-time = "2025-06-05T20:02:51.838Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/cc/efd28e4b3f4019f7ef176f4baa5c1ef7dcd3ac8c9e6d2b15bcbf3f1297d3/nvidia_nvtx_cu12-12.9.79-py3-none-win_amd64.whl", hash = "sha256:1f504e573b3a955e55aae6c747e2ae561b63fdcafcd591e43d18dae9875504f8", size = 77774, upload-time = "2025-06-05T20:12:39.44Z" },
 ]
 
 [[package]]
@@ -1563,7 +1663,7 @@ version = "4.0.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astroid" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "dill" },
     { name = "isort" },
     { name = "mccabe" },
@@ -1617,7 +1717,7 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -1770,23 +1870,19 @@ dependencies = [
     { name = "mujoco-warp" },
     { name = "numpy" },
     { name = "reaf" },
-    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "extra == 'extra-8-reaf-sim-cu124'" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "torch", version = "2.13.0+cu129", source = { registry = "https://download.pytorch.org/whl/cu129" }, marker = "extra == 'group-8-reaf-sim-cu12'" },
     { name = "warp-lang" },
 ]
 
-[package.optional-dependencies]
-cpu = [
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-]
-cu124 = [
-    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" } },
-]
-
 [package.dev-dependencies]
+cpu = [
+    { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
+]
+cu12 = [
+    { name = "torch", version = "2.13.0+cu129", source = { registry = "https://download.pytorch.org/whl/cu129" }, marker = "sys_platform == 'linux'" },
+]
 dev = [
     { name = "isort" },
     { name = "pre-commit" },
@@ -1797,8 +1893,8 @@ dev = [
     { name = "pytest" },
     { name = "pytest-xdist" },
     { name = "scipy" },
-    { name = "sphinx", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinx", version = "9.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "sphinx", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinx", version = "9.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 
 [package.metadata]
@@ -1808,20 +1904,17 @@ requires-dist = [
     { name = "dm-tree" },
     { name = "gdm-robotics", git = "https://github.com/google-deepmind/gdm_robotics?branch=main" },
     { name = "immutabledict" },
-    { name = "mujoco", extras = ["sysid"], specifier = ">=3.4.0", index = "https://py.mujoco.org/" },
+    { name = "mujoco", extras = ["sysid"], specifier = ">=4.0.0.dev1011068263", index = "https://py.mujoco.org/" },
     { name = "mujoco-warp", git = "https://github.com/google-deepmind/mujoco_warp?branch=deepmind" },
     { name = "numpy" },
     { name = "reaf", git = "https://github.com/google-deepmind/reaf?branch=main" },
-    { name = "torch", specifier = ">=2.6.0" },
-    { name = "torch", marker = "sys_platform == 'darwin' and extra == 'cpu'", specifier = ">=2.6.0" },
-    { name = "torch", marker = "sys_platform == 'darwin' and extra == 'cu124'", specifier = ">=2.6.0" },
-    { name = "torch", marker = "sys_platform != 'darwin' and extra == 'cpu'", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "reaf-sim", extra = "cpu" } },
-    { name = "torch", marker = "sys_platform != 'darwin' and extra == 'cu124'", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cu124", conflict = { package = "reaf-sim", extra = "cu124" } },
-    { name = "warp-lang", specifier = "==1.18.0", index = "https://pypi.nvidia.com/" },
+    { name = "torch", specifier = ">=2.7.0,<2.14" },
+    { name = "warp-lang", specifier = ">=1.18.0,<1.18.1", index = "https://pypi.nvidia.com/" },
 ]
-provides-extras = ["cu124", "cpu"]
 
 [package.metadata.requires-dev]
+cpu = [{ name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.7.0,<2.14", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "reaf-sim", group = "cpu" } }]
+cu12 = [{ name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.7.0,<2.14", index = "https://download.pytorch.org/whl/cu129", conflict = { package = "reaf-sim", group = "cu12" } }]
 dev = [
     { name = "isort" },
     { name = "pre-commit" },
@@ -1942,30 +2035,29 @@ name = "sphinx"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version < '3.13' and sys_platform != 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform == 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
+    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "babel", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "colorama", marker = "(python_full_version < '3.13' and sys_platform == 'win32') or (python_full_version >= '3.13' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "docutils", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "imagesize", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "jinja2", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "packaging", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "pygments", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "requests", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "roman-numerals", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "snowballstemmer", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "alabaster", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "babel", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "colorama", marker = "(python_full_version < '3.13' and sys_platform == 'win32') or (python_full_version >= '3.13' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "docutils", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "imagesize", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "jinja2", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "packaging", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "pygments", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "requests", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "roman-numerals", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "snowballstemmer", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/73/567727fc8c8d85bc3adc88a246e12937cfda8d565cf1d80e85bceaa61fe5/sphinx-9.1.1.tar.gz", hash = "sha256:48b627f02908f22c601b3ba9c7b17265b4f315dd05c8bc64cd4da41183f44fbc", size = 8725638, upload-time = "2026-10-20T00:41:13.96Z" }
 wheels = [
@@ -1977,35 +2069,33 @@ name = "sphinx"
 version = "9.2.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra != 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "babel", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "colorama", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'win32' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "docutils", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "imagesize", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "pygments", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "requests", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "roman-numerals", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "snowballstemmer", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.13' or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "alabaster", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "babel", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "colorama", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "docutils", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "imagesize", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "pygments", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "requests", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "roman-numerals", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "snowballstemmer", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/64/d4/413466f0be8b1cb0e3e43893a148b96d7462d0923d82b4166b21afc5f30c/sphinx-9.2.0.tar.gz", hash = "sha256:90470459f3cab15d9dfed146c71cf77694b0445df17b2e0e69059cb9f7fc9ee4", size = 8782438, upload-time = "2026-10-21T00:05:15.019Z" }
 wheels = [
@@ -2077,41 +2167,10 @@ wheels = [
 
 [[package]]
 name = "sympy"
-version = "1.13.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform != 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin'",
-    "python_full_version < '3.13' and sys_platform != 'darwin'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin'",
-    "python_full_version < '3.13' and sys_platform == 'darwin'",
-]
-dependencies = [
-    { name = "mpmath", marker = "extra == 'extra-8-reaf-sim-cu124'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/99/5a5b6f19ff9f083671ddf7b9632028436167cd3d33e11015754e41b249a4/sympy-1.13.1.tar.gz", hash = "sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f", size = 7533040, upload-time = "2024-07-19T09:26:51.238Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/fe/81695a1aa331a842b582453b605175f419fe8540355886031328089d840a/sympy-1.13.1-py3-none-any.whl", hash = "sha256:db36cdc64bf61b9b24578b6f7bab1ecdd2452cf008f34faa33776680c26d66f8", size = 6189177, upload-time = "2024-07-19T09:26:48.863Z" },
-]
-
-[[package]]
-name = "sympy"
 version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version >= '3.14' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version == '3.13.*' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-    "python_full_version < '3.13' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124'",
-]
 dependencies = [
-    { name = "mpmath", marker = "extra == 'extra-8-reaf-sim-cpu' or extra != 'extra-8-reaf-sim-cu124'" },
+    { name = "mpmath" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
@@ -2138,119 +2197,54 @@ wheels = [
 
 [[package]]
 name = "torch"
-version = "2.6.0+cu124"
-source = { registry = "https://download.pytorch.org/whl/cu124" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform != 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin'",
-    "python_full_version < '3.13' and sys_platform != 'darwin'",
-    "python_full_version >= '3.14' and sys_platform == 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin'",
-    "python_full_version < '3.13' and sys_platform == 'darwin'",
-]
-dependencies = [
-    { name = "filelock", marker = "extra == 'extra-8-reaf-sim-cu124'" },
-    { name = "fsspec", marker = "extra == 'extra-8-reaf-sim-cu124'" },
-    { name = "jinja2", marker = "extra == 'extra-8-reaf-sim-cu124'" },
-    { name = "networkx", marker = "extra == 'extra-8-reaf-sim-cu124'" },
-    { name = "nvidia-cublas-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cuda-cupti-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cudnn-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cufft-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-curand-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusolver-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusparse-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusparselt-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nccl-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvtx-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "setuptools", marker = "extra == 'extra-8-reaf-sim-cu124'" },
-    { name = "sympy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-8-reaf-sim-cu124'" },
-    { name = "triton", version = "3.2.0", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-8-reaf-sim-cu124') or (platform_machine != 'x86_64' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (sys_platform != 'linux' and extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "typing-extensions", marker = "extra == 'extra-8-reaf-sim-cu124'" },
-]
-wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp312-cp312-linux_x86_64.whl", hash = "sha256:a393b506844035c0dac2f30ea8478c343b8e95a429f06f3b3cadfc7f53adb597", upload-time = "2025-01-30T00:57:08Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp312-cp312-win_amd64.whl", hash = "sha256:3313061c1fec4c7310cf47944e84513dcd27b6173b72a349bb7ca68d0ee6e9c0", upload-time = "2025-01-30T00:57:40Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp313-cp313-linux_x86_64.whl", hash = "sha256:0f3bc53c988ce9568cd876a2a5316761e84a8704135ec8068f5f81b4417979cb", upload-time = "2025-01-30T00:59:14Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp313-cp313-win_amd64.whl", hash = "sha256:519330eef09534acad8110b6f423d2fe58c1d8e9ada999ed077a637a0021f908", upload-time = "2025-01-30T00:59:45Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp313-cp313t-linux_x86_64.whl", hash = "sha256:35cba404c0d742406cdcba1609085874bc60facdfbc50e910c47a92405fef44c", upload-time = "2025-01-30T01:01:25Z" },
-]
-
-[[package]]
-name = "torch"
-version = "2.14.0"
-source = { registry = "https://download.pytorch.org/whl/cpu" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin'",
-    "python_full_version < '3.13' and sys_platform == 'darwin'",
-]
-dependencies = [
-    { name = "filelock", marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "fsspec", marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "jinja2", marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "networkx", marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "setuptools", marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "typing-extensions", marker = "(sys_platform == 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-]
-wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:ab7e226c18d3cbc134dfa952d18ab1df202055dd33446837c8fd050ad449e6f5", upload-time = "2026-09-02T00:26:12Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:caf6359d64c0074bcb9f8641a169239118c8165a0a0fef79110c72bfd6474bec", upload-time = "2026-09-02T00:26:15Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:d0f78744000a7863cc3f1eafaf511d4b9944f079f08277de6fefe4b01f4d41b9", upload-time = "2026-09-02T00:26:19Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp314-cp314t-macosx_14_0_arm64.whl", hash = "sha256:dd4c297f1af83ad44368ffdaa9ed0318984567ff952bbda3d90cc300afe1e8a0", upload-time = "2026-09-02T00:26:23Z" },
-]
-
-[[package]]
-name = "torch"
-version = "2.14.0"
+version = "2.13.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14'",
-    "python_full_version == '3.13.*'",
-    "python_full_version < '3.13'",
+    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 dependencies = [
-    { name = "cuda-bindings", marker = "(sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "cuda-toolkit", extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "filelock", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "fsspec", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "jinja2", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "networkx", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cudnn-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-cusparselt-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nccl-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "setuptools", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
-    { name = "triton", version = "3.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "typing-extensions", marker = "(extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124') or (extra != 'extra-8-reaf-sim-cpu' and extra != 'extra-8-reaf-sim-cu124')" },
+    { name = "cuda-bindings", version = "13.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "cuda-toolkit", version = "13.0.3.0", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "filelock", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "fsspec", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "jinja2", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "networkx", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cudnn-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusparselt-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nccl-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "setuptools", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "sympy", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "triton", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "typing-extensions", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/76/bb4770f56cf6d8971671dbcbb7493e5a6a15ad2825f4e359b02c27c38297/torch-2.14.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:c1f844f1c750e87df4b68bc3afbc0e2b0c7ef19d7b8f666e48bdcf6a0c4f0056", size = 127303200, upload-time = "2026-09-02T13:43:20.311Z" },
-    { url = "https://files.pythonhosted.org/packages/fe/7b/ec44bacf2c8886b85ba4ca2285e8b09f2dff5d9c99e6a031326954082cb5/torch-2.14.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:ada340e62591d06a2bcc2d68170f20f45f0b0665d372dc510a8ed7eb3b1d609a", size = 454010251, upload-time = "2026-09-02T13:44:24.927Z" },
-    { url = "https://files.pythonhosted.org/packages/15/71/49399acd41f750a906c686bd23c08a2001ccb8dd25f2971003c2ed89c1dd/torch-2.14.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:fecffb58f51fd643d213acd68da21cc3fc19bea05a3bc64b4ee55128f47a4963", size = 554620488, upload-time = "2026-09-02T13:44:49.442Z" },
-    { url = "https://files.pythonhosted.org/packages/be/16/9489b137112040f9911d7527e452854f21cc4e499ce0da79864e6a7451a7/torch-2.14.0-cp312-cp312-win_amd64.whl", hash = "sha256:cad84f41bbdf3dcf333ce394aeeaf25237c4d94fd6b659ba5eb813c829978823", size = 124114011, upload-time = "2026-09-02T13:43:55.034Z" },
-    { url = "https://files.pythonhosted.org/packages/ca/40/0db773452c2a62b37761d3f418acf933d381f9e87077036fb57c2a386c37/torch-2.14.0-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:9d4b1022a5d9b71282ec67ad0d9e7235870096b8a246dc1c32d6ea1fc83dc998", size = 127311393, upload-time = "2026-09-02T13:43:59.607Z" },
-    { url = "https://files.pythonhosted.org/packages/13/36/537fd9da2adad49e7b2bb20741398625bee548493158274e87369a8eed56/torch-2.14.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:731b9ebdea402b8b1996d4c2ae613b16660e559b19e47bdc45d970568bc91c53", size = 454010525, upload-time = "2026-09-02T13:45:03.719Z" },
-    { url = "https://files.pythonhosted.org/packages/21/f1/39bd13b21f57d1982b7f3ddf663f01c7266e2957714880744eba9e8c8d11/torch-2.14.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:84bf384779a10c02fc3c6bdbab71a9cb66b0dd93c652d1ed5d6dfc0cb37e5962", size = 554619993, upload-time = "2026-09-02T13:45:28.209Z" },
-    { url = "https://files.pythonhosted.org/packages/89/a8/683d9c44737554b67ca76dd2db4f42258a0f014246cb511293e51e0154bd/torch-2.14.0-cp313-cp313-win_amd64.whl", hash = "sha256:0e7cf18cb0d8bd666b6120932e29c7aef3502b61a08b44da4839580c539a7cdb", size = 124113865, upload-time = "2026-09-02T13:44:33.705Z" },
-    { url = "https://files.pythonhosted.org/packages/ee/90/1241e7db5ccc2455f8735bd6b1becfad39916206ad18001c4c0014d139e2/torch-2.14.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:860423e970f2ce02c4476e8e2d1350131b1c5c5a5e4912180e78b50b53241efa", size = 127321431, upload-time = "2026-09-02T13:44:38.236Z" },
-    { url = "https://files.pythonhosted.org/packages/68/f0/bbeba65e3fbb4b8f61ea19cf4ebea9f4268cc6fe64e6f7d38bfb6cc152eb/torch-2.14.0-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:b985c7defeb8d28691b7513ebaecc64946c5f68ec770e9f4ddba39688864f46a", size = 454027631, upload-time = "2026-09-02T13:45:43.73Z" },
-    { url = "https://files.pythonhosted.org/packages/50/75/8d2b9a7e724759470c209489b79260cac537f091cc9aac8001c8d2bc845c/torch-2.14.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:b2cd92bce63d40bf6fc2e5d840fc2f0063bd180a242daa761cb6088cc2f46e27", size = 554623549, upload-time = "2026-09-02T13:46:04.252Z" },
-    { url = "https://files.pythonhosted.org/packages/9a/1e/a5475c00b0555e686333e6b4036f2213e7cbea021a772ce6f9ced4dcbd2f/torch-2.14.0-cp314-cp314-win_amd64.whl", hash = "sha256:44b044b9f6f633d982839422a57433d6a1da520037fd88e0c8a47efde589b3b8", size = 124110863, upload-time = "2026-09-02T13:45:12.764Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/49/bbaee76337742a42d2c5b0296ea62252567050e1d821bc2283b2e72ba6fb/torch-2.14.0-cp314-cp314t-macosx_14_0_arm64.whl", hash = "sha256:553aec938d37d77b783bcf801e638cad068870e7643c47eadac21eb180f551ed", size = 127653463, upload-time = "2026-09-02T13:45:17.1Z" },
-    { url = "https://files.pythonhosted.org/packages/92/b5/6cc7a511bab384fbe8f4b8ddeecdd22e724b2162d6f15076f07a0a7ef15b/torch-2.14.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:cd8cd8f714d511ccdca907282d1da3d9be8322d4e1520b9c3bce39a5c1318a4b", size = 454009927, upload-time = "2026-09-02T13:46:19.637Z" },
-    { url = "https://files.pythonhosted.org/packages/b6/da/0f04fe15fd05bf3f613a359b14acb44c35ae06fe69da0aefa8b5cdb4f9f9/torch-2.14.0-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:d2526f71e6638133b97b3cd2881ece3df521460a4727030e8ae2a72a7d3ae31d", size = 554580530, upload-time = "2026-09-02T13:46:34.818Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/c3/72ae1f02747b1f012e1975743e48cd608f83095d7f9ce58de78b79248b35/torch-2.14.0-cp314-cp314t-win_amd64.whl", hash = "sha256:731784e3914843c6bcc7aba3987ff7610ac57dbbc816a5d6b9b62e04c240a641", size = 124400194, upload-time = "2026-09-02T13:45:53.555Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/3a/ed0f4d4d1dcde03bced7aac9a28e800abcdc0cbd06b6775044c9fbd877b7/torch-2.13.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:2fe228aba290d14b9f31b049be550dbd469c3fd3013d7a19705b30454da97027", size = 111213045, upload-time = "2026-07-08T16:05:22.997Z" },
+    { url = "https://files.pythonhosted.org/packages/df/a9/f6a2a4d763ff1df02e9a64c477029db614295bc9367f4131223791ccc243/torch-2.13.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:572df8be8ffb4599c88cbd6a0726f1f854f4da65d2e3c09f0e2c2283333cd6d4", size = 427210998, upload-time = "2026-07-08T16:04:37.708Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/82/fea946351658e6534db52d2cc12bc53087cbf87f9440c5f180f367c1950b/torch-2.13.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:796633c4cdf0fe2cdced72d8f88f22e73dbcfce83132763162f6d4bff13b820b", size = 526605292, upload-time = "2026-07-08T16:04:22.81Z" },
+    { url = "https://files.pythonhosted.org/packages/21/d6/e8f3c6f7e01f626f77259de9860d2a78bc84c40539e28e79b7e98b0bb659/torch-2.13.0-cp312-cp312-win_amd64.whl", hash = "sha256:024c6cc0c1b085f2f91f20a3dc27b0471d021c31ce84b81be3afdc39f791fd9d", size = 122057313, upload-time = "2026-07-08T16:03:53.43Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/fa/c1c10b7aff4a9a3e8956d4f0a5f468fa6db7abc3208805719076772b4833/torch-2.13.0-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:33449899ce5496c1b84b4853179d94fd102028ae1407314d9fb956bb79e70d09", size = 111213743, upload-time = "2026-07-08T16:03:28.579Z" },
+    { url = "https://files.pythonhosted.org/packages/11/18/9ecb37b56293a0be8d80f810bf672a72fe7e02f8b475d5ef1b9bf8a0d748/torch-2.13.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:1e09d6a722504957c694faceca843acde562786df1144ebcc5a74075ec7f6005", size = 427213008, upload-time = "2026-07-08T16:03:44.106Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/5a/7c50ba1b7b713d71d34669c6d13dab0a11531a3eceb0307a5162dbfec0f7/torch-2.13.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:a3a9a21312872af8a26950b2c15680335a386a1f56ed03e780653d78b9607e9e", size = 526602329, upload-time = "2026-07-08T16:03:12.649Z" },
+    { url = "https://files.pythonhosted.org/packages/91/3d/e7adcc6aaf36961cd18f56cf8ad0f3058c3a5c84ccf391762176c94581b8/torch-2.13.0-cp313-cp313-win_amd64.whl", hash = "sha256:49b58f1e2c52440abb6f17c28f0335fe6c6d01ad1a7f55b0183b81e4b34d64e6", size = 122057920, upload-time = "2026-07-08T16:03:01.808Z" },
+    { url = "https://files.pythonhosted.org/packages/36/76/6dcc7f0c07052102dd36f83cbc5800842a909c8c3fbf1a7f8a5844954de9/torch-2.13.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:d849b390e07d8d333ce8ecaf91b273c656c598379a19c9acf1318a883f6b391c", size = 111227066, upload-time = "2026-07-08T16:03:33.6Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/09/2c10e8cd0e00fa5d23c052df6ce467eaa7182399f5e0f824f1e4ff42ccae/torch-2.13.0-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:a3893dc2da0a972a8ca5d698c85a9f967559ac5f8ee1797b77408aa8734d073c", size = 427226309, upload-time = "2026-07-08T16:02:53.127Z" },
+    { url = "https://files.pythonhosted.org/packages/76/c6/22c2102bbef14ca6a6cb4c20e42f088e49c5f812be4e160ae57502e325f9/torch-2.13.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:49f1ea385c754e54919408a9bb3b5a72b0b755bbe2c916c1d6f70afbec4908a2", size = 526614507, upload-time = "2026-07-08T16:02:16.441Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/0c/7d1deb6bce5bc3e6042caf39100ac768eba3b9a098e1dddd16f75bd6489b/torch-2.13.0-cp314-cp314-win_amd64.whl", hash = "sha256:4f8573e3ce9ebcd53fe922f01077a6085ccdfbe5f12fd215883a9d87d7a744fd", size = 122051871, upload-time = "2026-07-08T16:03:23.521Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/ce/aa8b7f9949d32e0f2f624f342bc3b48112c1b8a130288465938bc83bcbf9/torch-2.13.0-cp314-cp314t-macosx_14_0_arm64.whl", hash = "sha256:c28def70706c2f9ecc752574766e8ae4da9b810ab6676b611166761a78a9f1e1", size = 111537025, upload-time = "2026-07-08T16:02:44.28Z" },
+    { url = "https://files.pythonhosted.org/packages/69/d1/491e3a0389430946145888b0203f2b6a759ce2a61481b96a85c2da4f2ced/torch-2.13.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:31061ff56ed8fbf26c749806905aeb749ebeb819810fd5d52508aa5afd90dddc", size = 427219769, upload-time = "2026-07-08T16:02:31.18Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/1d/38006e045bf0a1fc28ef01e757c554e59e59a8770c284bc4f47b14e60441/torch-2.13.0-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:cc26eead4cf51d0b544e31e364dcf000846549c273bd148936fe9d24d29acb92", size = 526571320, upload-time = "2026-07-08T16:01:59.348Z" },
+    { url = "https://files.pythonhosted.org/packages/56/94/655c91992a882bd5071aa0b5d22a07dbb130d801e872be97c0b627a7c693/torch-2.13.0-cp314-cp314t-win_amd64.whl", hash = "sha256:a7de8a313090dc5c7d7ba4bfe5c3be222528f9a4dba1acc83bddb1157360c4b8", size = 122306773, upload-time = "2026-07-08T16:02:39.832Z" },
 ]
 
 [[package]]
 name = "torch"
-version = "2.14.0+cpu"
+version = "2.13.0+cpu"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform != 'darwin'",
@@ -2258,67 +2252,84 @@ resolution-markers = [
     "python_full_version < '3.13' and sys_platform != 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "fsspec", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "jinja2", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "networkx", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "setuptools", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
-    { name = "typing-extensions", marker = "(sys_platform != 'darwin' and extra == 'extra-8-reaf-sim-cpu') or (extra == 'extra-8-reaf-sim-cpu' and extra == 'extra-8-reaf-sim-cu124')" },
+    { name = "filelock", marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "fsspec", marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "jinja2", marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "networkx", marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "setuptools", marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sympy", marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "typing-extensions", marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp312-cp312-linux_s390x.whl", hash = "sha256:07aefe1a437b6f1b41b0cba15e16583e2f43549ec9d062fcea8e7981a78e014a", upload-time = "2026-09-02T18:31:32Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:da8140c3d4a41500d29710e35bf8e66a4295ec31026487c69f54a3f583310f8d", upload-time = "2026-09-02T18:31:37Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:a09987c95ec4cffdb6df798d3d641558110a334cfccce22f2f046d83142bc260", upload-time = "2026-09-02T18:31:42Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp312-cp312-win_amd64.whl", hash = "sha256:738cd9237bf63443a5e5f9652e5115f7b0510b089636a43d4011e9fccede714f", upload-time = "2026-09-02T18:31:48Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp312-cp312-win_arm64.whl", hash = "sha256:420e7dbed969bbd045b34105fa90d1ccf3e5c09c4e9b0d0a5f9df25df9d02d2e", upload-time = "2026-09-02T18:31:52Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp313-cp313-linux_s390x.whl", hash = "sha256:d87cfff3af33c937b88c9bc6c0dfa17f2156e2599f63447c696f2345928b518a", upload-time = "2026-09-02T18:31:55Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:092d5c12938850dfbd90a654b3c8dac34c33e300f88eb19ee6f4ef93992c6347", upload-time = "2026-09-02T18:31:59Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:160e1bc46aeded3111d2801f8ae10dc9a1b946843a7e126b4dbf5e19c5706e95", upload-time = "2026-09-02T18:32:05Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp313-cp313-win_amd64.whl", hash = "sha256:f2ffdacd95d7090a8bdfa8426f5d1557625874b19a96ba23a41f640d4a0c9c28", upload-time = "2026-09-02T18:32:10Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp313-cp313-win_arm64.whl", hash = "sha256:4b1b78f8b9b1393576ef03cab0e6d941a6aa562b7539c45da12d80e86c09f9ed", upload-time = "2026-09-02T18:32:13Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314-linux_s390x.whl", hash = "sha256:266a253980047f3c037191f45d7e7ecfa838d13102141ca57b86fcc892663004", upload-time = "2026-09-02T18:32:17Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:27b34640fea7268862961b734c723873e15b1c2657b1eb84bcfac053e5841527", upload-time = "2026-09-02T18:32:23Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:f152f41dc5dc462afe0de780e451ebb47ea8b4451f8f919f9537aa8e2cbe1d7e", upload-time = "2026-09-02T18:32:29Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314-win_amd64.whl", hash = "sha256:ca9b3c2c652587f7b26c86d30be3648f553bd07fb3cf9b3edb645e7eafe295a3", upload-time = "2026-09-02T18:32:35Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314t-linux_s390x.whl", hash = "sha256:c1d81be03f715eca5b065fc767f73b2a26668a16d614e163a4378a3f38a5e471", upload-time = "2026-09-02T18:32:39Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:a6ff46c0c0c4f5b9b399dff5e4856a98ce18e61ca14ad74b21790174c7cbde08", upload-time = "2026-09-02T18:32:43Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:2baf9cbaef964d821465df0c53a91cc01b2d0ea29ebd199e2f9c7d27a7fc70a4", upload-time = "2026-09-02T18:32:48Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0%2Bcpu-cp314-cp314t-win_amd64.whl", hash = "sha256:8fe5ff05cf3511daecdea986005f312f3b9cdbaf07ccf0bc42c68d01a4ae5d4d", upload-time = "2026-09-02T18:32:53Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp312-cp312-linux_s390x.whl", hash = "sha256:ffadde149901c8afa138daa38d898264003cfcf1a3336ca5cd964b5af227d867", upload-time = "2026-07-08T19:28:41Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:6f307c2c32d764ffc6ff6893b801fad6d4752f3e67966cb8abf1843427c02604", upload-time = "2026-07-08T19:28:51Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:4ca4a9394b0c771238a4f73590fdbbc4debad85ed0fa63d026ae1b085da7d6e2", upload-time = "2026-07-08T19:29:03Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp312-cp312-win_amd64.whl", hash = "sha256:a8b450c1e58e5800e5b4691dac412f8d2d65a1dc3298166f91596603a3531e6f", upload-time = "2026-07-08T19:29:15Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp312-cp312-win_arm64.whl", hash = "sha256:fa0762705b933624d59f6823db9ce7ec2e35b3e1e9c319c9db51fbeecfc3e319", upload-time = "2026-07-08T19:29:21Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp313-cp313-linux_s390x.whl", hash = "sha256:966d020354f465672dc7dd10d3a5c6cd17d7eb48620aa1d265b48a1f78f06898", upload-time = "2026-07-08T19:29:30Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:0b8f7d0423027ae8b90c7977c627f3379f325363a08224dffad9b4b2d684a83d", upload-time = "2026-07-08T19:29:40Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:3fbf9c9d1f3c10c2d59d04aca426dee9ccc6ceb32d255c61e93acc3b4f75fae6", upload-time = "2026-07-08T19:29:54Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp313-cp313-win_amd64.whl", hash = "sha256:a17ff48608634db245e17e8bb00a9558554a49aeb1e4f5fe6cd039af2a10515b", upload-time = "2026-07-08T19:30:05Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp313-cp313-win_arm64.whl", hash = "sha256:ac7aaf322be4777765a53bed7264a214dd81b3a1d276b93150515a3c5f75e4b0", upload-time = "2026-07-08T19:30:12Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314-linux_s390x.whl", hash = "sha256:dec241fef3984c0d1edadd1f58708e218d4eae881ceef7bc10cf9964d41b68b9", upload-time = "2026-07-08T19:30:20Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:ca021f9eb2f8345c83fa03e3a04587308afb8df71bd472670b3ece00df58621c", upload-time = "2026-07-08T19:30:32Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:d20fa53ee744502fa4c69818a720b05ca0d37abd055d4f6e66cae155114bc691", upload-time = "2026-07-08T19:30:45Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314-win_amd64.whl", hash = "sha256:e2e5134decf00e218da62318f3dc5df156231d367871918e91eba95ab0ad43ab", upload-time = "2026-07-08T19:30:58Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314t-linux_s390x.whl", hash = "sha256:991cc14b39e751122c01f017be6448533989868731cb5eecd1006893d26787c2", upload-time = "2026-07-08T19:31:09Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:7b8d26e29bceafbdaa8d63bfe7612f23875b5af2cc07e13f809c3ed890bbe1d8", upload-time = "2026-07-08T19:31:21Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:b222c15a0fc2ce207d1c1a59700b46c8fa6748df1f447ad11e5c870dde0933d9", upload-time = "2026-07-08T19:31:35Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.13.0%2Bcpu-cp314-cp314t-win_amd64.whl", hash = "sha256:a43376bd094124ef626bfdd3d4c2c62eacb0b5ddc99776f4a32d4fd16f1f3420", upload-time = "2026-07-08T19:31:48Z" },
 ]
 
 [[package]]
-name = "triton"
-version = "3.2.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform != 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform != 'darwin'",
-    "python_full_version < '3.13' and sys_platform != 'darwin'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/00/59500052cb1cf8cf5316be93598946bc451f14072c6ff256904428eaf03c/triton-3.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d9b215efc1c26fa7eefb9a157915c92d52e000d2bf83e5f69704047e63f125c", size = 253159365, upload-time = "2025-01-22T19:13:24.648Z" },
-    { url = "https://files.pythonhosted.org/packages/c7/30/37a3384d1e2e9320331baca41e835e90a3767303642c7a80d4510152cbcf/triton-3.2.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e5dfa23ba84541d7c0a531dfce76d8bcd19159d50a4a8b14ad01e91734a5c1b0", size = 253154278, upload-time = "2025-01-22T19:13:54.221Z" },
-]
-
-[[package]]
-name = "triton"
-version = "3.8.0"
-source = { registry = "https://pypi.org/simple" }
+name = "torch"
+version = "2.13.0+cu129"
+source = { registry = "https://download.pytorch.org/whl/cu129" }
 resolution-markers = [
     "python_full_version >= '3.14'",
     "python_full_version == '3.13.*'",
     "python_full_version < '3.13'",
 ]
+dependencies = [
+    { name = "cuda-bindings", version = "12.9.10", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "cuda-toolkit", version = "12.9.1", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "filelock", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "fsspec", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "jinja2", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "networkx", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "nvidia-cudnn-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusparselt-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nccl-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvshmem-cu12", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "setuptools", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "sympy", marker = "extra == 'group-8-reaf-sim-cu12'" },
+    { name = "triton", marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "typing-extensions", marker = "extra == 'group-8-reaf-sim-cu12'" },
+]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/07/0f8cd8e8db0472334253efdaaab3d0819fea27aa99bf0e7f1aeea4ceb5ae/triton-3.8.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a9c404c69ed4a39e8ec632eaf6b9fe058a060bf98979c177f6ef666f06bb8d50", size = 226474486, upload-time = "2026-08-28T16:08:18.29Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/09/b7012e5bfae67640f268aa584caa80fe1674f6b0da949046b679972c33e3/triton-3.8.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e91ffa46d095b252248297292dd22bcbacd53a125a0c2eefbbbf74925a320bc3", size = 247972921, upload-time = "2026-08-28T15:55:53.157Z" },
-    { url = "https://files.pythonhosted.org/packages/87/4d/4c564374bcdadb166fccbf3e45aee0d4a473f88d341761bd2fefe3b8e8c1/triton-3.8.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b7004666652f500ed854a86988e4b3d69d247188b5d2092b5df1e44f4a954099", size = 226476793, upload-time = "2026-08-28T16:08:30.956Z" },
-    { url = "https://files.pythonhosted.org/packages/b0/b6/3394d5548404c1cabd1dadadd28d0b3f9478db1dff8180da53bb3f0a1e19/triton-3.8.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1f0497218e26b7d79773ad9c2a3fa3b539ee69f587a13fac2e552b1d322a8015", size = 247975122, upload-time = "2026-08-28T15:56:04.112Z" },
-    { url = "https://files.pythonhosted.org/packages/b8/59/bf0e9493118bb353ab59a5d6a65db3618d9b314417cc1459f0121e0ec5c9/triton-3.8.0-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1f6b48d0591929a3867973acac3dccd4e058585f91bfb41022de496c9ffab304", size = 226488654, upload-time = "2026-08-28T16:08:47.141Z" },
-    { url = "https://files.pythonhosted.org/packages/93/d9/08c75f3459f19ad00425b564058e40efa4bcd79b816064cf27499303ea42/triton-3.8.0-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:387dae4cb0089a7b6ba1a428ae0782b65c4c58f57d94617cb22ca8593d8ccbca", size = 247972313, upload-time = "2026-08-28T15:56:14.007Z" },
-    { url = "https://files.pythonhosted.org/packages/7c/34/429c5592181cfb7361a0a8e0bff218e7224b726709d75da2472b3e819f70/triton-3.8.0-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1b84e7d512490ba529111260fa6f7cad8b254a6bb5fbdf41d5ef9a5e57f52d0a", size = 226591133, upload-time = "2026-08-28T16:09:02.271Z" },
-    { url = "https://files.pythonhosted.org/packages/fe/d1/aa8a3e935c37efee7945984fdb64d7e0851bf6d920afd97b2d21f9d23360/triton-3.8.0-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:74217bb56ed8692759227758e4c4b3bd2d608a209c1a7a081bf361fb4c2c1bf9", size = 248077577, upload-time = "2026-08-28T15:56:24.94Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:4ee86fc2f4af36642751b95fecc7ba4ad18283f010c5a841208ecd850c22d48a", upload-time = "2026-07-08T20:05:05Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:df28741fcd89e3da7cce2d48cbe5299d6732d510ac20f5d422d0b85edf18c327", upload-time = "2026-07-08T20:06:04Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:cdb22a05563538d44a7e29d1d3cab5d37ffec103f76e949cc44722e462058a40", upload-time = "2026-07-08T20:07:00Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:6e3bcf183e3096db45bf539dc21f820963074986ece7a56550714f12863c76af", upload-time = "2026-07-08T20:08:00Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:f99236a28481941374b4379af7b71cd6954ffcf5a4c16e3267e2a94e26d42f79", upload-time = "2026-07-08T20:09:02Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:90de615e553480302ac884a6d1af54f80b9edaa571ae8bf24821e0329c3e135a", upload-time = "2026-07-08T20:10:07Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:3953bf62bb7c5a063dcccb30e962b0e0eb08b225c82bae771c67840a0fb08fc7", upload-time = "2026-07-08T20:11:08Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu129/torch-2.13.0%2Bcu129-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:73566636b27bd0bf5cac5da75e3bde9fef285386ff3a79d2ac27d955af9214f7", upload-time = "2026-07-08T20:12:05Z" },
+]
+
+[[package]]
+name = "triton"
+version = "3.7.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/fa/f856e24deb462d5f18bd4b5a746957862ab9b6ee5834bda60605ec348366/triton-3.7.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9497f2e696ee368862a181a90b2dcc03ca978cc4f602abd67c7d81022a6988e1", size = 184692359, upload-time = "2026-06-17T20:03:48.288Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/6f/fb96d15db6f36d6eae4cafb998c2e0353bf59d7c4ea1662d7497f269134a/triton-3.7.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7e40869937a68206ec70d7f25bb7ec6433cb083f9135e1f36dbd318dc449a728", size = 197719725, upload-time = "2026-06-17T19:53:20.419Z" },
+    { url = "https://files.pythonhosted.org/packages/00/42/c5089d4d9327fcd1e862c599cc2927f39418f84dd11a84cb2ccff9d4787a/triton-3.7.1-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:cdbfc09d9ec58bc5e68321525653220de7515c199e7a8097a97c85e62b52cd0a", size = 184694629, upload-time = "2026-06-17T20:03:53.444Z" },
+    { url = "https://files.pythonhosted.org/packages/07/42/2c3ac59253ae8892b6f307875263dd23dc875cdf732d3aea40d6d41fb7cb/triton-3.7.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:58c0e131da05134a2a4788ccbcc0c1105cf0f54c8e98f19e34cd465396dc15eb", size = 197729241, upload-time = "2026-06-17T19:53:27.801Z" },
+    { url = "https://files.pythonhosted.org/packages/40/71/e01aa7ad573883ed9456f130226babdec70b005e098c4d6226a6238e761b/triton-3.7.1-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fe4ea396a06171f1f1f58cbd39c70b09294398f7dd7c620939bab54ad6f934fa", size = 184705764, upload-time = "2026-06-17T20:03:59.064Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/09/5683146fda6a2b569deb78ccfd8fbfea8bfe55f726b081c0a6bb18dd6f28/triton-3.7.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2020153b08280415ec0da6607834e79166442147e78e144df06b508c75b186d2", size = 197729537, upload-time = "2026-06-17T19:53:35.516Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/f8/448220c3092019f9fdfab39ec47985968181d67da34b44f6a7f6280a5cbb/triton-3.7.1-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c58e4c61f0c73b5dba3b5d19b4a7093c32f90dc18b2a7f121a7c16ccd31107b7", size = 184814760, upload-time = "2026-06-17T20:04:04.984Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/ac/229b7d4589d2e5937310e72c6d46e89599d16a4a12b479ffa1499fee8eb8/triton-3.7.1-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:10ba85fa2cca4a2fbdeb36bf1cb082f2c252bda55bf9fccd74f65ec5bc647e68", size = 197824404, upload-time = "2026-06-17T19:53:42.772Z" },
 ]
 
 [[package]]

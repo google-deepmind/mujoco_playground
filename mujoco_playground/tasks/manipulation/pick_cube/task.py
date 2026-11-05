@@ -32,6 +32,10 @@ TARGET_MOCAP_POS = f"{TARGET}/mocap_pos"
 def _create_base_scene() -> mujoco.MjSpec:
   spec = objects.plane()
   spec.copy_during_attach = True
+  spec.stat.center = [0.25, 0.0, 0.15]
+  spec.stat.extent = 0.6
+  spec.visual.global_.azimuth = 135.0
+  spec.visual.global_.elevation = -25.0
   return spec
 
 

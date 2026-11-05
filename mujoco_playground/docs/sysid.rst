@@ -22,12 +22,12 @@ all 6 SO-101 joints from teleoperation MCAP logs.
 .. code-block:: bash
 
     # 1. Record an excitation trajectory on hardware (press `a` to start, sweep all joints, press `d` to save)
-    uv run --no-sync --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop \
+    uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop \
       --instruction="sysid_excitation" \
       --num_episodes=1
 
     # 2. Fit joint dynamics parameters from `.local/so101_teleop_logs`
-    uv run --no-sync --extra so101 python -m mujoco_playground.tasks.sysid.so101.run
+    uv run --extra so101 python -m mujoco_playground.tasks.sysid.so101.run
 
     # 3. View the generated HTML report
     open .local/so101_sysid_results/report.html
@@ -54,10 +54,10 @@ and held-out validation episodes, and prints a ``--freeze_params`` flag for any 
 .. code-block:: bash
 
     # 1. Verify excitation trajectories in simulation and record them on hardware
-    uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
+    uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
 
     # 2. Fit joint dynamics parameters from `.local/yam_sysid_logs`
-    uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.run
+    uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.run
 
     # 3. View the generated HTML report and `identified_params.json`
     open .local/yam_sysid_results/report.html

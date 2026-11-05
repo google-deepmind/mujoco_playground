@@ -14,7 +14,7 @@
 """Runs system identification on YAM excitation logs (from `collect`).
 
 Usage:
-  uv run --no-sync --extra yam python -m mujoco_playground.tasks.sysid.yam.run
+  uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.run
 """
 
 from collections.abc import Sequence

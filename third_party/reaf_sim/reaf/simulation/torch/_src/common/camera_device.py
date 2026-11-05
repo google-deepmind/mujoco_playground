@@ -218,11 +218,12 @@ class CameraDevice(device.Device):
 
     self._nworld = nworld = data.nworld
     self._render_context_kwargs.pop('nworld', None)
-    self._render_context = render_ctx = mjw.create_render_context(
-        mj_model,
-        nworld=nworld,
-        **self._render_context_kwargs,
-    )
+    with wp.ScopedDevice(simulator.xpu_device):
+      self._render_context = render_ctx = mjw.create_render_context(
+          mj_model,
+          nworld=nworld,
+          **self._render_context_kwargs,
+      )
     self._wp_device = render_ctx.rgb_data.device
     self._rgb_adr = render_ctx.rgb_adr.numpy()
     self._depth_adr = render_ctx.depth_adr.numpy()

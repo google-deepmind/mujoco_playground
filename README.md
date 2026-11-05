@@ -58,11 +58,12 @@ Clone the repository and sync dependencies with [`uv`](https://docs.astral.sh/uv
 ```bash
 git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
 
-# For GPU (CUDA 12.4 + RSL-RL — recommended for RL training)
-make sync
+# Then install with one of:
+make sync  # For GPU, good for RL training
 
-# Or for CPU-only
-make sync-cpu
+make sync-cu12  # For CUDA 12 on Linux
+
+make sync-cpu  # Or for CPU only, (i.e. on macOS)
 ```
 
 Verify your installation by running the test suite:
@@ -72,7 +73,7 @@ make test
 ```
 
 > [!NOTE]
-> Real-robot hardware SDKs are optional extras so simulation-only stays lightweight. To install hardware drivers for a specific robot, add `--extra so101` or `--extra yam` (e.g., `uv sync --extra cpu --extra so101`).
+> Real-robot hardware SDKs are optional extras so simulation-only stays lightweight. Passing `--extra so101` or `--extra yam` to `uv run` (or `uv sync --extra so101`) installs the hardware drivers on demand.
 
 ## Getting Started
 
@@ -83,13 +84,14 @@ To get started, either try training an RL policy, or try agentic manipulation in
 Train a PPO policy across parallel GPU environments with [RSL-RL](https://github.com/leggedrobotics/rsl_rl):
 
 ```bash
-# Train SO-101 Pick-Cube on GPU (on CPU, add --overrides='{"nworld": 64}')
-uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
+# Train SO-101 Pick-Cube
+uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
   --env=SO101PickCubeVision \
   --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
+  #  --overrides='{"nworld": 64}'  # For CPU
 
 # Play back the trained policy in the interactive viewer
-uv run --no-sync python -m mujoco_playground.rl.rsl_rl.play \
+uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
   --env=SO101PickCubeVision \
   --resume_path=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
@@ -97,7 +99,7 @@ uv run --no-sync python -m mujoco_playground.rl.rsl_rl.play \
 Monitor training curves in TensorBoard:
 
 ```bash
-uv run --no-sync tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
+uv run --extra rl tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
 
 Optionally [set up the SO-101 hardware](mujoco_playground/robots/so101/real) and [deploy to the real arm](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy):
@@ -114,9 +116,12 @@ uv run --extra so101 --extra rl python -m \
 
 Spin up the [agentic tabletop manipulation task](mujoco_playground/tasks/agentic/tabletop_v0) directly from your coding agent with a prompt in `sim` or `real`:
 
-> "Start the tabletop_v0 bridge for the yam in sim and get it to \<your task\>, following [`mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md`](mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md)"
->
-> *(Swap `sim` for `real` to run on hardware, or `so101` for `yam`.)*
+```text
+Start the tabletop_v0 bridge for the yam in sim and get it to <your task>,
+following mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md
+```
+
+Swap `sim` for `real` to run on hardware, or `so101` for `yam` (see [`AGENT_PROMPT.md`](mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md)).
 
 > [!NOTE]
 > On macOS, `--viewer` requires `mjpython` in place of `python`. Before the

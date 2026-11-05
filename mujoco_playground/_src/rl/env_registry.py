@@ -19,6 +19,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 
+from mujoco_playground._src import xpu
 from mujoco_playground._src.rl.rsl_rl import env_rl_config
 from mujoco_playground.tasks.dm_control_suite import cartpole
 from mujoco_playground.tasks.dm_control_suite import cartpole_vision
@@ -58,19 +59,18 @@ def register(
 
   def build(
       nworld: int = 1,
-      device: str = "cuda:0",
+      device: str | int | None = None,
       **kwargs,
   ) -> reaf_env.Environment:
     """Builds an environment from a config object."""
     from reaf.simulation.torch import flat_scene as build_env
 
+    device_str = xpu.resolve_device(device)
     impl = kwargs.pop("impl", None)
     env_cfg = env_cfg_fn(**kwargs)
     env_cfg.sim.nworld = nworld
-    env_cfg.sim.xpu_device = device
-    # The C++ impl only supports a single world, so batched CPU runs use Warp.
-    use_warp = device.startswith("cuda") or nworld > 1
-    env_cfg.sim.impl = impl or ("warp" if use_warp else "cpp")
+    env_cfg.sim.xpu_device = device_str
+    env_cfg.sim.impl = impl or "warp"
     return build_env.build_env(env_cfg)
 
   _REGISTRY[env_id] = RegistryEntry(

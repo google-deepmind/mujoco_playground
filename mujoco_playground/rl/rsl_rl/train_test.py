@@ -15,6 +15,7 @@
 """Test for train.py execution."""
 
 import os
+import tempfile
 import unittest
 
 from absl.testing import absltest
@@ -39,15 +40,13 @@ class TrainTest(parameterized.TestCase):
   )
   def test_train_one_step(self, env_id: str):
     """Test train.py runs successfully for one step."""
-    logdir = self.create_tempdir().full_path
+    tmpdir = self.enterContext(tempfile.TemporaryDirectory())
 
     with flagsaver.flagsaver(
         env=env_id,
-        logdir=logdir,
+        logdir=os.path.join(tmpdir, "logdir"),
         overrides='{"max_iterations": 1, "nworld": 2, "num_steps_per_env": 8}',
-        wp_kernel_cache_dir=os.path.join(
-            absltest.get_default_test_tmpdir(), "wp_kernel_cache"
-        ),
+        wp_kernel_cache_dir=os.path.join(tmpdir, "wp_kernel_cache"),
     ):
       train.main([])
 

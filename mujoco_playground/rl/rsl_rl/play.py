@@ -23,6 +23,7 @@ from absl import flags
 import dm_env
 from gdm_robotics.interfaces import policy as gdmr_policy
 from gdm_robotics.interfaces import types as gdmr_types
+from mujoco_playground._src import xpu
 from mujoco_playground._src.rl import env_registry
 from mujoco_playground._src.rl.rsl_rl import checkpoint
 from mujoco_playground._src.rl.rsl_rl import vecenv_wrapper
@@ -53,7 +54,8 @@ _WP_KERNEL_CACHE_DIR = flags.DEFINE_string(
 _DEVICE = flags.DEFINE_string(
     "device",
     None,
-    "Torch/sim device, e.g. cuda:0 or cpu (default: cuda:0 if available).",
+    "Device or CUDA index to use, e.g. cuda:0, 0, or cpu (default: cuda:0 if"
+    " available).",
 )
 _ZERO_ACTIONS = flags.DEFINE_bool(
     "zero_actions",
@@ -115,13 +117,9 @@ class _RslRlPolicy(gdmr_policy.Policy[torch.Tensor]):
     del timestep_spec
 
 
-def main(argv, device: str | None = None):
+def main(argv, device: str | int | None = None):
   del argv
-  device = (
-      device
-      or _DEVICE.value
-      or ("cuda:0" if torch.cuda.is_available() else "cpu")
-  )
+  device_str = xpu.resolve_device(_DEVICE.value if device is None else device)
   if _WP_KERNEL_CACHE_DIR.value:
     wp.config.kernel_cache_dir = _WP_KERNEL_CACHE_DIR.value
 
@@ -135,7 +133,7 @@ def main(argv, device: str | None = None):
 
   env = entry.env_builder(
       nworld=_NWORLD.value,
-      device=device,
+      device=device_str,
       **env_overrides,
   )
   env = vecenv_wrapper.RslRlVecEnvWrapper(
@@ -145,13 +143,13 @@ def main(argv, device: str | None = None):
   )
 
   runner = rls_rl_runners.OnPolicyRunner(
-      env, dataclasses.asdict(agent_cfg), device=device
+      env, dataclasses.asdict(agent_cfg), device=device_str
   )
 
   def load_checkpoint(path: str) -> None:
     runner.load(
         checkpoint.read_checkpoint(path),  # pyrefly: ignore[bad-argument-type]
-        map_location=device,
+        map_location=device_str,
     )
 
   reaf_env = env.unwrapped
@@ -164,7 +162,7 @@ def main(argv, device: str | None = None):
     if _RESUME_PATH.value:
       load_checkpoint(_RESUME_PATH.value)
     policy = _RslRlPolicy(
-        runner.get_inference_policy(device=device),
+        runner.get_inference_policy(device=device_str),
         reaf_env.action_spec(),
         _NWORLD.value,
     )

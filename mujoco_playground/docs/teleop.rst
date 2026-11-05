@@ -24,10 +24,10 @@ Running Teleoperation
 .. code-block:: bash
 
     # Simulation (on macOS, replace `python` with `mjpython`)
-    uv run --no-sync --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --sim
+    uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --sim
 
     # Hardware
-    uv run --no-sync --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop
+    uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop
 
 Episodes are gated by a three-button foot pedal or terminal keys:
 
@@ -43,5 +43,5 @@ Episodes are logged as MCAP files under ``.local/so101_teleop_logs/YYYY/MM/DD/``
 
 .. code-block:: bash
 
-    uv run --no-sync --extra real python -m mujoco_playground.real.view_log
-    uv run --no-sync --extra real python -m mujoco_playground.real.view_log --file=/path/to/episode.mcap
+    uv run --extra real python -m mujoco_playground.real.view_log
+    uv run --extra real python -m mujoco_playground.real.view_log --file=/path/to/episode.mcap

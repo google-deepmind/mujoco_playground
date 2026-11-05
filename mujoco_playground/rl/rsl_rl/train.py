@@ -36,21 +36,10 @@ try:
 except ImportError:
   multiproc = None
 
+from mujoco_playground._src import xpu
 from mujoco_playground._src.rl import env_registry
 from mujoco_playground._src.rl import rng
 from mujoco_playground._src.rl.rsl_rl import vecenv_wrapper
-
-
-def configure_torch_backends(
-    allow_tf32: bool = True, deterministic: bool = False
-):
-  """Configure PyTorch CUDA and cuDNN."""
-  precision = "high" if allow_tf32 else "highest"
-  torch.set_float32_matmul_precision(precision)
-  torch.backends.cudnn.allow_tf32 = allow_tf32
-  torch.backends.cudnn.benchmark = not deterministic
-  torch.backends.cudnn.deterministic = deterministic
-
 
 _REMOTE_LOG_DIR = flags.DEFINE_string(
     "remote_logdir", None, "Remote path to save checkpoints and logs."
@@ -66,6 +55,12 @@ _WP_KERNEL_CACHE_DIR = flags.DEFINE_string(
     "wp_kernel_cache_dir",
     "/tmp/wp_kernel_cache",
     "Path to the Warp kernel cache directory.",
+)
+_DEVICE = flags.DEFINE_string(
+    "device",
+    None,
+    "Device or CUDA index to use, e.g. cuda:0, 0, or cpu (default: cuda:0 if"
+    " available).",
 )
 _LOG_DIR = flags.DEFINE_string(
     "logdir",
@@ -191,23 +186,17 @@ class OnPolicyRunnerTB(rls_rl_runners.OnPolicyRunner):
       logging.info("Copied checkpoint to remote logdir: %s", remote_dest)
 
 
-def main(argv):
+def main(argv, device: str | int | None = None):
   del argv
 
-  configure_torch_backends()
+  xpu.configure_torch_backends()
 
-  local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-  if torch.cuda.is_available():
-    torch.cuda.set_device(local_rank)
-  rank = int(os.environ.get("RANK", "0"))
+  info = xpu.get_device_info(_DEVICE.value if device is None else device)
+  device_str, rank, local_rank = info.device, info.rank, info.local_rank
+  if device_str.startswith("cuda") and torch.cuda.is_available():
+    torch.cuda.set_device(device_str)
 
-  os.environ["MUJOCO_EGL_DEVICE_ID"] = str(local_rank)
-  if torch.cuda.is_available():
-    device = f"cuda:{local_rank}"
-  else:
-    device = "cpu"
-
-  seed = _SEED.value + local_rank
+  seed = _SEED.value + rank
   rng.seed(seed)
 
   if _WP_KERNEL_CACHE_DIR.value:
@@ -215,7 +204,7 @@ def main(argv):
 
   logging.info(
       "Training with: device=%s, seed=%d, local_rank=%d, rank=%d",
-      device,
+      device_str,
       seed,
       local_rank,
       rank,
@@ -240,7 +229,7 @@ def main(argv):
 
   env = entry.env_builder(
       nworld=agent_cfg.nworld,
-      device=device,
+      device=device_str,
       **env_overrides,
   )
   env = vecenv_wrapper.RslRlVecEnvWrapper(
@@ -262,11 +251,16 @@ def main(argv):
 
   if _TORCH_COMPILE_MODE.value is not None:
     agent_cfg.torch_compile_mode = _TORCH_COMPILE_MODE.value
+  elif (
+      not device_str.startswith("cuda")
+      and "torch_compile_mode" not in overrides
+  ):
+    agent_cfg.torch_compile_mode = None
 
   runner = OnPolicyRunnerTB(
       env,
       dataclasses.asdict(agent_cfg),
-      device=device,
+      device=device_str,
       log_dir=log_dir,
       use_bfloat16=_USE_BFLOAT16.value,
       remote_log_dir=_REMOTE_LOG_DIR.value if rank == 0 else None,
@@ -299,7 +293,9 @@ def main(argv):
         "optimizer": True,
         "iteration": True,
     }
-    runner.load(str(_RESUME_PATH.value), load_cfg=load_cfg, map_location=device)
+    runner.load(
+        str(_RESUME_PATH.value), load_cfg=load_cfg, map_location=device_str
+    )
 
   runner.learn(
       num_learning_iterations=agent_cfg.max_iterations,

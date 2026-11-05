@@ -1,25 +1,28 @@
 # Development Workflow
 
-- Always use `uv run`, not bare `python`.
+- Always use `uv run`, not bare `python`. Pass explicit `--extra` flags (e.g. `--extra rl`, `--extra so101`, `--extra yam`) to `uv run` rather than `--no-sync`; `pyproject.toml` (Python 3.12–3.13) configures PyPI as the default index, `CMAKE_CXX_STANDARD=17` for `reaf`, and cross-platform `override-dependencies` (`evdev` on Linux only, `ruckig>=0.15.3`).
 - Always use `absl` (`from absl import app, flags, logging`) for scripts, tools, and entrypoints. **NEVER use `argparse`**.
-- Dependencies are managed with `uv`. Sync before doing anything else — the test targets pass `--no-sync` and will run against a stale environment otherwise.
-- `reaf` builds from git (PyPI lags the API the sim stack uses) and its CMake does not pin the C++ >= 17 standard abseil requires, so any `uv` invocation that may build it needs `CMAKE_ARGS="-DCMAKE_CXX_STANDARD=17"`.
+- Dependencies are managed with `uv`. Default `make sync` installs `--extra rl --group dev` with CUDA 13 PyTorch (`<2.14`) and CUDA 13 Warp on Linux, and native wheels on macOS.
+- On Linux machines with CUDA 12 drivers (`< 580`, e.g. CUDA 12.4), run `make sync-cu12` and pass `--group cu12` to every `uv run` command (or `make sync-cpu` and `--group cpu` for CPU-only Linux); omitting `--group cu12` on `uv run` overlays PyPI's CUDA 13 `nvidia-*` sub-packages onto `.venv` and breaks cuDNN (`CUDNN_STATUS_NOT_INITIALIZED`).
+- Real-robot SDKs (`--extra so101` for Feetech, `--extra yam` for I2RT SocketCAN on Linux or `gs-usb`/`pyusb` + `libusb` on macOS) are optional extras and do not conflict with `cu12` or `cpu`.
 - Run pyink and isort against **only the specific paths you changed**, not a parent directory:
-  `uv run --no-sync pyink <path>` and `uv run --no-sync isort <path>`.
+  `uv run --group dev pyink <path>` and `uv run --group dev isort <path>`.
 - For headless rendering / tests on Linux, set `MUJOCO_GL=osmesa`. Omit on macOS.
 - Prefer running individual tests rather than the full test suite to improve iteration speed:
-  `MUJOCO_GL=osmesa uv run --no-sync --group dev pytest <path/to/test.py> -v`.
+  `MUJOCO_GL=osmesa uv run --extra rl --group dev pytest <path/to/test.py> -v`.
 
 ## Quick Commands
 
 ```bash
-make sync          # GPU (CUDA 12.4) — the default
-make sync-cpu      # CPU-only
+make sync          # For GPU, good for RL training (CUDA 13 on Linux)
+make sync-cu12     # For CUDA 12 on Linux (NVIDIA driver < 580)
+make sync-cpu      # Or for CPU only, (i.e. on macOS, or CPU-only on Linux)
 make format        # pyink + isort over the repo
 make typecheck     # pyrefly type check
-make test          # pytest over mujoco_playground/ and third_party/reaf_sim/
+make test          # pytest over mujoco_playground/
+make check-imports # verify optional extras are not imported at module scope
 make docs          # build HTML docs (or `make serve-docs` to preview locally)
-uv run --no-sync --group dev pre-commit run -a
+uv run --group dev pre-commit run -a
 ```
 
 ## Commits and PRs

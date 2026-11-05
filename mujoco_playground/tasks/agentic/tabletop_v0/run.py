@@ -104,8 +104,9 @@ class Viewer:
     if sys.platform == "darwin" and mujoco.viewer._MJPYTHON is None:  # pylint: disable=protected-access
       # macOS requires the viewer to own the main thread.
       raise SystemExit(
-          "On macOS the viewer must run under mjpython:\n\n  uv run --no-sync"
-          f" mjpython -m {__package__}.run {' '.join(sys.argv[1:])}\n"
+          "On macOS the viewer must run under mjpython:\n\n  uv run --extra"
+          f" {emb.name} mjpython -m {__package__}.run"
+          f" {' '.join(sys.argv[1:])}\n"
       )
 
     self._is_real = is_real

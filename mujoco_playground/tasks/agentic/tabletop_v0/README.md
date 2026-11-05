@@ -1,32 +1,31 @@
-# Tabletop V0: Sim-to-Real VLM Robot Manipulation Demo
+# Tabletop v0: Sim-to-Real VLM Robot Manipulation
 
-> [!CAUTION]
-> **Use this code at your own risk.** The harness runs VLM-generated Python
-> (`exec`) and lets the VLM drive the robot directly.
+Give your agent this prompt; it starts an agentic robotic harness and drives the sim or real robot:
 
-## Try It on Your Robot
-
-Give your agent this prompt; it starts the bridge and drives the robot:
-
-> "Start the tabletop_v0 bridge for the yam in sim and get it to &lt;your task&gt;,
-> following `mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md`"
+```text
+Start the tabletop_v0 bridge for the yam in sim and get it to <your task>,
+following mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md
+```
 
 Swap `sim` for `real` to run on hardware. The SO-101 can also be used (say
-`so101` instead of `yam`); on hardware it requires port finding and robot
-calibration first.
+`so101` instead of `yam`).
 
-**Alternatively, start the bridge manually** and then point your agent at it
+**Alternatively, start the harness bridge manually** and then point your agent at it
 with the prompt above:
 
 ```bash
 # Simulation
-uv run --default-index https://pypi.org/simple --extra yam python -m mujoco_playground.tasks.agentic.tabletop_v0.run --mode=sim --robot=yam --agent=bridge --viewer
+uv run python -m mujoco_playground.tasks.agentic.tabletop_v0.run --mode=sim --robot=yam --agent=bridge --viewer --task=stack3
 
 # Real hardware
-uv run --default-index https://pypi.org/simple --extra yam python -m mujoco_playground.tasks.agentic.tabletop_v0.run --mode=real --robot=yam --agent=bridge
+uv run --extra yam python -m mujoco_playground.tasks.agentic.tabletop_v0.run --mode=real --robot=yam --agent=bridge
 ```
 
 For the SO-101, use `--extra so101 --robot=so101`.
+
+> [!CAUTION]
+> **Use this code at your own risk.** The harness runs VLM-generated Python
+> (`exec`) and lets the VLM drive the robot directly.
 
 ## About
 
@@ -34,7 +33,7 @@ This robot-agnostic sim/real harness was **written entirely by an agent** and
 is provided as-is. The agent built and iterated on the IK controller, primitive
 executor, camera calibration, and task suite in simulation with `reaf-sim`, then
 the same stack was deployed zero-shot to real hardware (`--mode=sim` →
-`--mode=real`). See the Google Developers blogpost for more details:
+`--mode=real`). This demo was featured in a Google Developers blogpost:
 [Gemini 4 Argon for Robotics](https://developers.googleblog.com/gemini-4-argon-for-robotics).
 
 <table>

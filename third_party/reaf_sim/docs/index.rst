@@ -17,8 +17,15 @@ Clone `reaf-sim` from GitHub and install with `uv <https://docs.astral.sh/uv/>`_
 .. code-block:: bash
 
     git clone https://github.com/google-deepmind/reaf-sim.git && cd reaf-sim
-    make install  # install dependencies (use `make install-cpu` for CPU only)
-    make test     # run all tests, verify everything works
+
+    # Then install with one of:
+    make install  # For GPU, good for RL training
+
+    make install-cu12  # For CUDA 12 on Linux
+
+    make install-cpu  # Or for CPU only, (i.e. on macOS)
+
+    make test  # Run all tests, verify everything works
 
 .. tip::
 

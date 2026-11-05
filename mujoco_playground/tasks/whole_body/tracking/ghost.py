@@ -85,7 +85,7 @@ class GhostUpdater(substep_commands_processor.SubstepCommandsProcessor):
   def __init__(
       self,
       nworld: int = 1,
-      xpu_device: str = "cuda:0",
+      xpu_device: str | None = None,
       shared_state: Any = None,
       ghost_device_name: str = "ghost_robot",
   ):
@@ -93,14 +93,17 @@ class GhostUpdater(substep_commands_processor.SubstepCommandsProcessor):
 
     Args:
       nworld: Number of parallel simulation environments.
-      xpu_device: Hardware device executor pointer (e.g., 'cuda:0').
+      xpu_device: Hardware device executor pointer (default: 'cuda:0' if
+        available, else 'cpu').
       shared_state: motion_command.SharedMotionState updated by
         MotionReferenceProducer each step.
       ghost_device_name: Unique name identifier of the visual ghost entity.
     """
     del nworld
     super().__init__()
-    self._xpu_device = xpu_device
+    self._xpu_device = xpu_device or (
+        "cuda:0" if torch.cuda.is_available() else "cpu"
+    )
     self._shared_state = shared_state
     self._ghost_name = ghost_device_name
     self._ghost_qpos_indices = None

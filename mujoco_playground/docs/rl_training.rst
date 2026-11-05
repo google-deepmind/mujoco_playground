@@ -39,11 +39,12 @@ interactive viewer with ``mujoco_playground.rl.rsl_rl.play`` (while your policy 
 
 .. code-block:: bash
 
-    uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
       --env=SO101PickCube \
       --logdir=/tmp/rslrl_logs/so101_pick_cube
+      # --overrides='{"nworld": 64}'  # For CPU
 
-    uv run --no-sync python -m mujoco_playground.rl.rsl_rl.play \
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
       --env=SO101PickCube \
       --resume_path=/tmp/rslrl_logs/so101_pick_cube
 
@@ -53,12 +54,12 @@ Pass JSON dicts to ``--overrides`` (runner settings) or ``--env_overrides`` (env
 .. code-block:: bash
 
     # Customize runner settings
-    uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
       --env=SO101PickCube \
       --overrides='{"max_iterations": 2000, "nworld": 2048}'
 
     # Multi-GPU training
-    uv run --no-sync torchrun --standalone --nnodes=1 --nproc_per_node=2 \
+    uv run --extra rl torchrun --standalone --nnodes=1 --nproc_per_node=2 \
       -m mujoco_playground.rl.rsl_rl.train --env=G1WholeBodyTracking --logdir=/tmp/g1_tracking
 
 Monitoring with TensorBoard
@@ -69,7 +70,7 @@ browser to monitor training rewards, episode length, policy entropy, and losses:
 
 .. code-block:: bash
 
-    uv run --no-sync tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube
+    uv run --extra rl tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube
 
 Unitree G1 Whole-Body Tracking
 ------------------------------
@@ -88,19 +89,19 @@ viewer, and train a tracking policy:
 .. code-block:: bash
 
     # 1. Convert CSV trajectory to .npz and preview in viewer
-    uv run --no-sync python -m mujoco_playground.tasks.whole_body.tracking.csv_to_npz \
+    uv run python -m mujoco_playground.tasks.whole_body.tracking.csv_to_npz \
       --input_csv=/path/to/input.csv --output_npz=/path/to/output.npz
-    uv run --no-sync python -m mujoco_playground.tasks.whole_body.tracking.replay_npz \
+    uv run python -m mujoco_playground.tasks.whole_body.tracking.replay_npz \
       --trajectory_path=/path/to/output.npz
 
     # 2. Train tracking policy
-    uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
       --env=G1WholeBodyTracking \
       --env_overrides='{"trajectory_path": "/path/to/output.npz"}' \
       --logdir=/tmp/g1_tracking
 
     # 3. Play checkpoint with reference ghost enabled
-    uv run --no-sync python -m mujoco_playground.rl.rsl_rl.play \
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
       --env=G1WholeBodyTracking \
       --env_overrides='{"trajectory_path": "/path/to/output.npz", "play": true, "enable_ghost": true}' \
       --resume_path=/tmp/g1_tracking \

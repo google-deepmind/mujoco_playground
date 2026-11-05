@@ -19,9 +19,9 @@ dependencies = [
     "mujoco_warp",
     "gdm_robotics",
     "absl-py",
-    "torch>=2.6.0",
-    "mujoco[sysid]>=3.4.0",
-    "warp-lang==1.18.0",
+    "torch>=2.7.0,<2.14",
+    "mujoco[sysid]>=4.0.0.dev1011068263",
+    "warp-lang>=1.18.0,<1.18.1",
 ]
 
 [project.optional-dependencies]
@@ -31,8 +31,6 @@ rl = [
     "tensorboardX",
     "tensordict",
 ]
-cu124 = ["torch>=2.6.0"]
-cpu = ["torch>=2.6.0"]
 
 # Real-robot logging and visualization (MCAP and Rerun).
 real = [
@@ -55,10 +53,15 @@ feetech = [
     "mujoco_playground[real]",
     "lerobot[feetech]>=0.6.0,<0.7",
 ]
-# I2RT's SDK for its DM-motor arms on a SocketCAN bus (the YAM family).
+# I2RT's SDK for its DM-motor arms on a SocketCAN / gs_usb bus (the YAM family).
+# Pin python-can and gs-usb so _MacGsUsbBus in robots/yam/real/gs_usb_darwin.py
+# stays aligned with GsUsbBus / GsUsb internals across upgrades.
 i2rt = [
     "mujoco_playground[real]",
     "i2rt",
+    "python-can==4.5.0",
+    "gs-usb==0.3.1; sys_platform == 'darwin'",
+    "pyusb>=1.3.1,<2; sys_platform == 'darwin'",
 ]
 
 # Per-robot aliases
@@ -75,6 +78,12 @@ yam = [
 ]
 
 [dependency-groups]
+cu12 = [
+    "torch>=2.7.0,<2.14; sys_platform == 'linux'",
+]
+cpu = [
+    "torch>=2.7.0,<2.14; sys_platform == 'linux'",
+]
 dev = [
     "pytest",
     "pytest-xdist",
@@ -97,18 +106,21 @@ packages = ["mujoco_playground"]
 
 [tool.uv]
 conflicts = [
-  [{extra = "cu124"}, {extra = "cpu"}],
-  # lerobot is a robot-learning framework; we use only its Feetech bus driver,
-  # but its metadata pins torch>=2.7 for the training code we never touch, and
-  # the cu124 index stops at 2.6.0. Nothing about the hardware needs torch.
-  # These never need to coexist: hardware runs on CPU, GPU is for training.
-  # Per-robot aliases need their own entry; they pull the driver stack directly.
-  [{extra = "cu124"}, {extra = "feetech"}],
-  [{extra = "cu124"}, {extra = "so101"}],
+  [{group = "cu12"}, {group = "cpu"}],
 ]
 # safari-sdk declares evdev (Linux /dev/input bindings) for all non-Windows
 # platforms but never imports it; it cannot build on macOS. Drop it there.
-override-dependencies = ["evdev; sys_platform == 'linux'"]
+# i2rt pins ruckig==0.15.3 (sdist-only, broken under scikit-build-core >= 0.10);
+# override to ruckig>=0.15.3 so pre-built wheels (0.19.4+) are used everywhere.
+override-dependencies = [
+  "evdev; sys_platform == 'linux'",
+  "ruckig>=0.15.3",
+]
+
+# reaf builds from git until its next PyPI release; its CMake does not pin a
+# C++ standard and abseil requires >= 17.
+[tool.uv.config-settings-package]
+reaf = { "cmake.define.CMAKE_CXX_STANDARD" = "17" }
 
 [[tool.uv.index]]
 url = "https://pypi.org/simple"
@@ -120,8 +132,8 @@ url = "https://pypi.nvidia.com/"
 explicit = true
 
 [[tool.uv.index]]
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
 explicit = true
 
 [[tool.uv.index]]
@@ -143,8 +155,8 @@ i2rt = { git = "https://github.com/i2rt-robotics/i2rt", tag = "v1.3.6" }
 mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 torch = [
-  { index = "pytorch-cu124", extra = "cu124", marker = "sys_platform != 'darwin'" },
-  { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform != 'darwin'" },
+  { index = "pytorch-cu129", group = "cu12", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cpu", group = "cpu", marker = "sys_platform == 'linux'" },
 ]
 
 [tool.isort]

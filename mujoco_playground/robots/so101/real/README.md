@@ -3,18 +3,11 @@
 This doc outlines how to bring up a physical SO101 follower arm, and an SO101 leader arm
 for downstream tasks.
 
-## 1. Install the driver stack
+## 1. Driver stack
 
 Hardware SDKs are optional extras in `mujoco_playground`, so a simulation-only checkout
-never pulls them in. Add `--extra so101` to the sync for this robot:
-
-```bash
-CMAKE_ARGS="-DCMAKE_CXX_STANDARD=17" uv sync --extra cpu --extra so101 --group dev
-```
-
-`so101` is an alias for the `feetech` driver stack (`lerobot[feetech]`), shared
-by every arm on a Feetech servo bus. (`CMAKE_ARGS` is needed while `reaf`
-builds)
+never pulls them in. Passing `--extra so101` to `uv run` installs the `feetech` driver
+stack (`lerobot[feetech]`) automatically on first use.
 
 ## 2. Identify your hardware
 

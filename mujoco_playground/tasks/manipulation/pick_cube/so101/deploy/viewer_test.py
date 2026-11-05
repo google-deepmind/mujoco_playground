@@ -63,26 +63,6 @@ def mock_real_device_layer(
 class ViewerTest(parameterized.TestCase):
   """Tests how the deployment viewer configures scenes and bridges hardware."""
 
-  @parameterized.parameters(None, ([0.30, -0.05, 0.18],))
-  def test_configure_viewer_spec_shows_target_and_frames_camera(
-      self, lookat: Sequence[float] | None
-  ) -> None:
-    spec = build_deploy_spec()
-    viewer.configure_viewer_spec(spec, lookat=lookat)
-    model = spec.compile()
-
-    opt = mujoco.MjvOption()
-    cam = mujoco.MjvCamera()
-    mujoco.mjv_defaultFreeCamera(model, cam)
-
-    self.assertEqual(opt.geomgroup[model.geom(_TARGET_BODY).group], 1)
-    np.testing.assert_allclose(
-        cam.lookat, _TARGET_POS if lookat is None else lookat, atol=1e-6
-    )
-    self.assertAlmostEqual(cam.distance, 0.8)
-    self.assertAlmostEqual(cam.azimuth, 135.0)
-    self.assertAlmostEqual(cam.elevation, -25.0)
-
   @parameterized.parameters(None, ([0.1, -0.2, 0.3, -0.4, 0.5, 0.6],))
   def test_real_simulator_poses_arm_and_updates_target(
       self, joint_pos: Sequence[float] | None
@@ -90,6 +70,7 @@ class ViewerTest(parameterized.TestCase):
     device_layer = mock_real_device_layer(joint_pos)
     sim = viewer.RealSimulator(device_layer)
     model = sim.mj_model
+    self.assertEqual(model.geom(_TARGET_BODY).group, 2)
     mocap_id = model.body_mocapid[model.body(_TARGET_BODY).id]
 
     data = sim.data.obj

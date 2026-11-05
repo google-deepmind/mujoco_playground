@@ -24,11 +24,18 @@ Clone the repository, sync development dependencies with `uv <https://docs.astra
 .. code-block:: bash
 
     git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
-    make sync  # GPU (CUDA 12.4) + RSL-RL + dev (or `make sync-cpu` for CPU-only)
+
+    # Then install with one of:
+    make sync  # For GPU, good for RL training
+
+    make sync-cu12  # For CUDA 12 on Linux
+
+    make sync-cpu  # Or for CPU only, (i.e. on macOS)
+
     uv run pre-commit install
 
-To install optional real-robot hardware drivers alongside your environment, pass ``--extra so101`` or ``--extra yam`` to
-``uv sync`` (e.g., ``uv sync --extra cpu --extra so101 --group dev``).
+Optional real-robot hardware drivers are installed on demand when passing ``--extra so101`` or ``--extra yam`` to
+``uv run``.
 
 Before opening a pull request, run ``pre-commit`` (which formats with ``pyink`` and ``isort``, checks copyright headers
 and optional imports via ``make check-imports``, and type-checks with ``pyrefly``) and run the test suite:
@@ -43,7 +50,7 @@ To iterate quickly on a single test file on Linux:
 
 .. code-block:: bash
 
-    MUJOCO_GL=osmesa uv run --no-sync --group dev pytest path/to/test.py -v
+    MUJOCO_GL=osmesa uv run --extra rl --group dev pytest path/to/test.py -v
 
 Conventions
 -----------

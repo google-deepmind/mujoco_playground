@@ -45,9 +45,9 @@ the wrist camera:
 
 .. code-block:: bash
 
-    uv sync --extra cpu --extra so101 --group dev
-    uv run --no-sync --extra so101 python -m mujoco_playground.robots.so101.real.get_ports --identify
-    uv run --no-sync --extra so101 python -m mujoco_playground.robots.so101.real.get_cameras --identify
+    uv sync --extra so101
+    uv run --extra so101 python -m mujoco_playground.robots.so101.real.get_ports --identify
+    uv run --extra so101 python -m mujoco_playground.robots.so101.real.get_cameras --identify
 
 2. Calibrate Follower & Leader Arms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,8 +56,8 @@ Calibrate one arm at a time (writes to ``.local/so101_calibration.json``):
 
 .. code-block:: bash
 
-    uv run --no-sync --extra so101 python -m mujoco_playground.robots.so101.real.get_calibration --roles=follower
-    uv run --no-sync --extra so101 python -m mujoco_playground.robots.so101.real.get_calibration --roles=leader
+    uv run --extra so101 python -m mujoco_playground.robots.so101.real.get_calibration --roles=follower
+    uv run --extra so101 python -m mujoco_playground.robots.so101.real.get_calibration --roles=leader
 
 1. Hold the arm in the **middle pose** (pan centered, upper arm vertical, elbow bent 90° with forearm level, wrist
    straight, gripper vertical with camera on the left) and press ``ENTER``.
@@ -71,15 +71,24 @@ Calibrate one arm at a time (writes to ``.local/so101_calibration.json``):
 I2RT YAM Pro Setup
 ------------------
 
-Install the ``yam`` extra, bring up the ``can0`` interface, and identify the wrist camera:
+Linux:
 
 .. code-block:: bash
 
-    uv sync --extra cu124 --extra yam --group dev
+    uv sync --extra yam
     sudo ip link set can0 up type can bitrate 1000000
-    uv run --no-sync --extra yam python -m mujoco_playground.robots.yam.real.get_cameras --identify
+    uv run --extra yam python -m mujoco_playground.robots.yam.real.get_cameras --identify
+
+macOS (uses ``libusb`` in user space; no ``ip link`` setup needed):
+
+.. code-block:: bash
+
+    brew install libusb
+    uv sync --extra yam
+    uv run --extra yam python -m mujoco_playground.robots.yam.real.get_cameras --identify
 
 .. note::
 
-    On Linux, select the RealSense D405 **ISP RGB stream** (``...-video-index4``, ``640x480`` ``4:3``) rather than the
-    raw stereo sensor (``...-video-index2``).
+    The RealSense D405 exposes multiple color UVC streams on both Linux and macOS. Select the **ISP RGB stream**
+    (bright, ``640x480`` ``4:3``, no corner vignetting—``...-video-index4`` on Linux) rather than the raw stereo sensor
+    (dark, ``424x240`` ``16:9``, heavy corner vignetting—``...-video-index2`` on Linux).

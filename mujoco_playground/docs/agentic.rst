@@ -45,9 +45,9 @@ VLM agent to follow ``mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.m
 .. code-block:: bash
 
     # Start VLM bridge in simulation
-    uv run --no-sync --extra yam python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
+    uv run --extra yam python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
       --mode=sim --robot=yam --agent=bridge --viewer
 
     # Start VLM bridge on hardware
-    uv run --no-sync --extra yam python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
+    uv run --extra yam python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
       --mode=real --robot=yam --agent=bridge

@@ -186,6 +186,89 @@ class ReafViewerPluginTest(parameterized.TestCase):
     self.assertEqual(plugin.n_steps, 0)
     self.assertEqual(int(plugin.reward_plot.figure.linepnt[0]), 0)
 
+  def test_docks_reward_plot_below_scene(self):
+    self.enter_context(
+        mock.patch.object(
+            imgui, 'GetContentRegionAvail', return_value=imgui.Vec2(0, 0)
+        )
+    )
+    self.enter_context(
+        mock.patch.object(viewer_plugin.implot, 'BeginPlot', return_value=False)
+    )
+    mock_is_docked = self.enter_context(
+        mock.patch.object(imgui, 'IsWindowDocked', return_value=False)
+    )
+    self.enter_context(
+        mock.patch.object(imgui, 'GetID', return_value=mock.sentinel.root_id)
+    )
+    self.enter_context(
+        mock.patch.object(imgui, 'DockBuilderGetNode', return_value=True)
+    )
+    mock_get_dock = self.enter_context(
+        mock.patch.object(
+            imgui, 'GetWindowDockID', return_value=mock.sentinel.console_dock
+        )
+    )
+    mock_split = self.enter_context(
+        mock.patch.object(
+            imgui,
+            'DockBuilderSplitNode',
+            return_value=(
+                mock.sentinel.bottom_dock,
+                mock.sentinel.central_dock,
+            ),
+        )
+    )
+    mock_dock_win = self.enter_context(
+        mock.patch.object(imgui, 'DockBuilderDockWindow')
+    )
+    mock_finish = self.enter_context(
+        mock.patch.object(imgui, 'DockBuilderFinish')
+    )
+
+    def make_plugin():
+      p = viewer_plugin.ReafViewerPlugin(reward_legends=['reward'])
+      p.on_studio_app_init(studio_app.InitEvent(app=self.app))
+      p.on_timestep(
+          reaf_messages.TimestepEvent(dm_env.transition(np.float32(1.0), None))
+      )
+      return p
+
+    # Undocked plot with existing Console slot docks both there once.
+    plugin = make_plugin()
+    plugin.build_reaf_gui(messages.BuildGuiEvent())
+    plugin.build_reaf_gui(messages.BuildGuiEvent())
+    mock_split.assert_not_called()
+    self.assertEqual(
+        mock_dock_win.call_args_list,
+        [
+            mock.call('Console', mock.sentinel.console_dock),
+            mock.call('Reward###RewardPlot', mock.sentinel.console_dock),
+        ],
+    )
+    mock_finish.assert_called_once_with(mock.sentinel.root_id)
+
+    # Pruned Console slot (0) splits the central node downward by 25%.
+    mock_dock_win.reset_mock()
+    mock_get_dock.side_effect = [0, mock.sentinel.central_dock]
+    make_plugin().build_reaf_gui(messages.BuildGuiEvent())
+    mock_split.assert_called_once_with(
+        mock.sentinel.central_dock, imgui.Dir.Down, 0.25
+    )
+    self.assertEqual(
+        mock_dock_win.call_args_list,
+        [
+            mock.call('Console', mock.sentinel.bottom_dock),
+            mock.call('Reward###RewardPlot', mock.sentinel.bottom_dock),
+        ],
+    )
+
+    # Already-docked plot preserves the user's existing dock slot.
+    mock_dock_win.reset_mock()
+    mock_is_docked.return_value = True
+    make_plugin().build_reaf_gui(messages.BuildGuiEvent())
+    mock_dock_win.assert_not_called()
+
   def test_timestep_uploads_in_update_and_renders_raw_pixels_in_sidebar(self):
     self._step()
     self.viewer.upload_image.assert_called_once_with(

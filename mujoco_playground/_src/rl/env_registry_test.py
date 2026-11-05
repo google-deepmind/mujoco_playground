@@ -27,7 +27,7 @@ import torch
 class EnvRegistryTest(parameterized.TestCase):
 
   @parameterized.parameters(*env_registry._REGISTRY.keys())
-  def test_load_and_step_env(self, env_id: str):
+  def test_load_and_step_env(self, env_id: str) -> None:
     entry = env_registry.get(env_id)
     env = entry.env_builder(nworld=1, device="cuda:0")
     self.assertIsNotNone(env)
@@ -46,10 +46,11 @@ class EnvRegistryTest(parameterized.TestCase):
 class NoCudaTest(absltest.TestCase):
 
   @mock.patch.object(torch.cuda, "is_available", return_value=False)
-  def test_vision_env_on_cpu(self, unused_is_available):
-    # Without CUDA the vision env must use the CPU camera.
+  def test_vision_env_on_cpu(self, unused_is_available) -> None:
+    # Without CUDA the vision env must use the CPU camera and default to CPU.
     entry = env_registry.get("SO101PickCubeVision")
-    env = entry.env_builder(nworld=1, device="cpu")
+    env = entry.env_builder(nworld=1)
+    self.assertEqual(env.xpu_device, "cpu")
     env.reset()
 
     action_spec = env.action_spec()

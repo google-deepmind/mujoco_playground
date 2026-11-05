@@ -79,7 +79,7 @@ When driving a running `--agent=bridge` session from an interactive agent, **nev
 If the bridge server is not already active on `http://127.0.0.1:8081`, start it once as a background process:
 ```bash
 # Real SO-101 robot (general tabletop manipulation; --task_prompt is optional)
-uv run --default-index https://pypi.org/simple --extra so101 \
+uv run --extra so101 \
   python -m mujoco_playground.tasks.agentic.tabletop_v0.run \
   --mode=real \
   --robot=so101 \

@@ -27,6 +27,7 @@ import traceback
 from typing import Any
 
 from etils import epath
+from mujoco_playground._src import xpu
 from mujoco_playground._src.rl import env_registry
 from mujoco_playground._src.rl import rng
 import torch
@@ -107,13 +108,14 @@ def testspeed(
     num_envs: int | None = None,
     num_steps: int = 200,
     warmup_steps: int = 50,
-    device: str = "cuda:0",
+    device: str | int | None = None,
     env_overrides: dict[str, Any] | None = None,
 ) -> dict[str, float | str | int]:
   """Measures raw physics and env throughput."""
+  device_str = xpu.resolve_device(device)
   entry = env_registry.get(env_id)
   n_envs = num_envs or entry.runner_cfg.nworld
-  env_kwargs = {"nworld": n_envs, "device": device}
+  env_kwargs = {"nworld": n_envs, "device": device_str}
   if env_overrides:
     env_kwargs.update(env_overrides)
 
@@ -123,11 +125,13 @@ def testspeed(
   action_spec: Any = env.action_spec()
   if isinstance(action_spec, dict):
     action = {
-        k: torch.zeros(v.shape, dtype=torch.float32, device=device)
+        k: torch.zeros(v.shape, dtype=torch.float32, device=device_str)
         for k, v in action_spec.items()
     }
   else:
-    action = torch.zeros(action_spec.shape, dtype=torch.float32, device=device)
+    action = torch.zeros(
+        action_spec.shape, dtype=torch.float32, device=device_str
+    )
 
   env_cfg = entry.env_cfg_fn()
   decimation = int(
@@ -183,8 +187,8 @@ def testspeed(
       100.0 * (1.0 - env_sps / physics_sps) if physics_sps > 0 else 0.0
   )
   gpu_name = (
-      torch.cuda.get_device_name(device)
-      if torch.cuda.is_available() and "cuda" in str(device)
+      torch.cuda.get_device_name(device_str)
+      if torch.cuda.is_available() and device_str.startswith("cuda")
       else "CPU"
   )
 
@@ -200,7 +204,7 @@ def testspeed(
       "raw_physics_sps": float(raw_physics_sps),
       "env_sps": float(env_sps),
       "overhead_pct": float(overhead_pct),
-      "device": str(device),
+      "device": device_str,
       "gpu": str(gpu_name),
   }
 
@@ -209,7 +213,7 @@ def evaluate(
     env_id: str,
     ckpt_path: epath.Path | str | None = None,
     num_episodes: int = 10,
-    device: str = "cuda:0",
+    device: str | int | None = None,
     env_overrides: dict[str, Any] | None = None,
     num_envs: int | None = None,
 ) -> dict[str, float]:
@@ -227,8 +231,10 @@ def evaluate(
       resolved_path = epath.Path(latest)
 
   n_eval = num_envs if num_envs is not None else num_episodes
+  xpu.configure_torch_backends()
+  device_str = xpu.resolve_device(device)
   entry = env_registry.get(env_id)
-  env_kwargs = {"nworld": n_eval, "device": device}
+  env_kwargs = {"nworld": n_eval, "device": device_str}
   if env_overrides:
     env_kwargs.update(env_overrides)
 
@@ -237,6 +243,11 @@ def evaluate(
       entry.runner_cfg,
       nworld=n_eval,
       num_steps_per_env=1,
+      torch_compile_mode=(
+          entry.runner_cfg.torch_compile_mode
+          if device_str.startswith("cuda")
+          else None
+      ),
   )
   env = vecenv_wrapper.RslRlVecEnvWrapper(
       raw_env,
@@ -246,15 +257,17 @@ def evaluate(
 
   try:
     runner = rsl_rl_runners.OnPolicyRunner(
-        env, dataclasses.asdict(agent_cfg), log_dir=None, device=device
+        env, dataclasses.asdict(agent_cfg), log_dir=None, device=device_str
     )
-    runner.load(str(resolved_path), map_location=device)
-    policy = runner.get_inference_policy(device=device)
+    runner.load(str(resolved_path), map_location=device_str)
+    policy = runner.get_inference_policy(device=device_str)
 
     obs = env.get_observations()
-    done_envs = torch.zeros(n_eval, dtype=torch.bool, device=device)
-    cumulative_rewards = torch.zeros(n_eval, dtype=torch.float32, device=device)
-    episode_lengths = torch.zeros(n_eval, dtype=torch.int32, device=device)
+    done_envs = torch.zeros(n_eval, dtype=torch.bool, device=device_str)
+    cumulative_rewards = torch.zeros(
+        n_eval, dtype=torch.float32, device=device_str
+    )
+    episode_lengths = torch.zeros(n_eval, dtype=torch.int32, device=device_str)
 
     max_steps = 1000
     for _ in range(max_steps):
@@ -310,7 +323,7 @@ def _train_with_time_budget(
 def train(
     env_id: str,
     timeout_sec: int | None = None,
-    device: str = "cuda:0",
+    device: str | int | None = None,
     seed: int | None = 0,
     logdir: epath.Path | str | None = None,
     env_overrides: dict[str, Any] | None = None,
@@ -334,10 +347,12 @@ def train(
   if seed is not None:
     rng.seed(seed)
 
+  xpu.configure_torch_backends()
+  device_str = xpu.resolve_device(device)
   entry = env_registry.get(env_id)
   runner_cfg = entry.runner_cfg
   n_envs = num_envs or runner_cfg.nworld
-  env_kwargs = {"nworld": n_envs, "device": device}
+  env_kwargs = {"nworld": n_envs, "device": device_str}
   if env_overrides:
     env_kwargs.update(env_overrides)
 
@@ -348,6 +363,11 @@ def train(
       seed=seed if seed is not None else runner_cfg.seed,
       run_name=run_logdir.name,
       logger="tensorboard",
+      torch_compile_mode=(
+          runner_cfg.torch_compile_mode
+          if device_str.startswith("cuda")
+          else None
+      ),
   )
   env = vecenv_wrapper.RslRlVecEnvWrapper(
       raw_env,
@@ -359,7 +379,7 @@ def train(
       env=env,
       train_cfg=dataclasses.asdict(runner_cfg),
       log_dir=str(run_logdir),
-      device=device,
+      device=device_str,
   )
 
   start_time = time.time()
@@ -465,7 +485,7 @@ def _execute_in_process(
 
 def run_all(
     bm: BenchmarkSpec,
-    device: str | int = "0",
+    device: str | int | None = None,
     seed: int | None = 0,
     timeout_sec: int | None = None,
     logdir: epath.Path | str | None = None,
@@ -477,11 +497,7 @@ def run_all(
 ) -> dict[str, Any]:
   """Runs the complete benchmark suite with per-stage process isolation."""
   env_id = str(bm["env_id"])
-  device_str = (
-      f"cuda:{device}"
-      if isinstance(device, int) or str(device).isdigit()
-      else str(device)
-  )
+  device_str = xpu.resolve_device(device)
   timeout = timeout_sec or int(bm.get("timeout_sec", 1800))
   logdir = logdir or tempfile.mkdtemp(prefix="mujoco_playground_benchmarks")
 

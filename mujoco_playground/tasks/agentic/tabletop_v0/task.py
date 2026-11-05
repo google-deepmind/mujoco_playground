@@ -725,7 +725,9 @@ def env_config(
 
   sim_cfg = config.Sim(
       nworld=1,
-      xpu_device="cpu" if impl == "cpp" else "cuda:0",
+      xpu_device=(
+          "cpu" if impl == "cpp" or not torch.cuda.is_available() else "cuda:0"
+      ),
       impl=impl,
       simulation_timestep=0.002,
       control_timestep=0.02,

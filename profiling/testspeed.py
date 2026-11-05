@@ -18,9 +18,9 @@ Measures raw physics simulation SPS (using mujoco_warp methodology), full
 environment stepping SPS, and framework overhead percentage.
 
 Usage:
-  uv run --no-sync python -m profiling.testspeed --env=CartpoleBalance
-  uv run --no-sync python -m profiling.testspeed --env=SO101PickCube
-  --num_envs=4096
+  uv run python -m profiling.testspeed --env=CartpoleBalance
+  uv run python -m profiling.testspeed --env=CartpoleBalance --device=cpu
+  uv run python -m profiling.testspeed --env=SO101PickCube --num_envs=4096
 """
 
 import json
@@ -51,8 +51,9 @@ _WARMUP_STEPS = flags.DEFINE_integer(
 )
 _DEVICE = flags.DEFINE_string(
     "device",
-    "cuda:0",
-    "CUDA GPU device ID to use (e.g. cuda:0)",
+    None,
+    "Device or CUDA index to use, e.g. cuda:0, 0, or cpu (default: cuda:0 if"
+    " available).",
 )
 _ENV_OVERRIDES = flags.DEFINE_string(
     "env_overrides",

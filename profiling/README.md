@@ -20,7 +20,7 @@ The benchmark suite:
 Run benchmarks for all registered environments in the repository:
 
 ```bash
-uv run --no-sync python -m profiling.benchmark
+uv run --extra rl python -m profiling.benchmark
 ```
 
 #### Filtering Environments
@@ -28,23 +28,23 @@ Filter by regex using `-f` or `--filter`:
 
 ```bash
 # Run only Cartpole environments
-uv run --no-sync python -m profiling.benchmark -f Cartpole
+uv run --extra rl python -m profiling.benchmark -f Cartpole
 
 # Run only SO101 cube picking
-uv run --no-sync python -m profiling.benchmark -f SO101PickCube
+uv run --extra rl python -m profiling.benchmark -f SO101PickCube
 
 # Run all Vision-based environments
-uv run --no-sync python -m profiling.benchmark -f Vision
+uv run --extra rl python -m profiling.benchmark -f Vision
 ```
 
 #### Skip Evaluation Pass
 ```bash
-uv run --no-sync python -m profiling.benchmark --skip_eval
+uv run --extra rl python -m profiling.benchmark --skip_eval
 ```
 
 #### JSON Output
 ```bash
-uv run --no-sync python -m profiling.benchmark --json
+uv run --extra rl python -m profiling.benchmark --json
 ```
 
 ---
@@ -55,10 +55,13 @@ Measure raw physics simulation SPS, environment stepping SPS, and framework over
 
 ```bash
 # Measure CartpoleBalance throughput with default batch size (4096)
-uv run --no-sync python -m profiling.testspeed --env=CartpoleBalance
+uv run python -m profiling.testspeed --env=CartpoleBalance
+
+# Run on CPU (e.g. macOS)
+uv run python -m profiling.testspeed --env=CartpoleBalance --device=cpu
 
 # Benchmark SO101PickCube with custom batch size
-uv run --no-sync python -m profiling.testspeed --env=SO101PickCube --num_envs=4096
+uv run python -m profiling.testspeed --env=SO101PickCube --num_envs=4096
 ```
 
 ---

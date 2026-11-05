@@ -30,7 +30,7 @@ jobs:
         run: make install-cpu
 
       - name: Run pre-commit
-        run: uv run --no-sync --group dev pre-commit run -a
+        run: uv run --group dev pre-commit run -a
 
       - name: Notify team chat
         if: failure() && github.event_name == 'push' && github.ref_name == 'main'

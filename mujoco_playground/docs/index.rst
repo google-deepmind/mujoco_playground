@@ -12,19 +12,26 @@ Clone the repository and sync dependencies with `uv <https://docs.astral.sh/uv/>
 .. code-block:: bash
 
     git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
-    make sync   # GPU (CUDA 12.4) + RSL-RL (or `make sync-cpu` for CPU-only)
-    make test   # Run tests
+
+    # Then install with one of:
+    make sync  # For GPU, good for RL training
+
+    make sync-cu12  # For CUDA 12 on Linux
+
+    make sync-cpu  # Or for CPU only, (i.e. on macOS)
+
+    make test  # Run tests
 
 Train a PPO policy on GPU using the environment's pre-configured observations, rewards, and domain randomization, then
 play back the checkpoint in the interactive viewer:
 
 .. code-block:: bash
 
-    uv run --no-sync python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
       --env=SO101PickCube \
       --logdir=/tmp/rslrl_logs/so101_pick_cube
 
-    uv run --no-sync python -m mujoco_playground.rl.rsl_rl.play \
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
       --env=SO101PickCube \
       --resume_path=/tmp/rslrl_logs/so101_pick_cube
 

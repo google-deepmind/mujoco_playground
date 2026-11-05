@@ -269,6 +269,7 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
     # 2D image stream state.
     self._timestep: Any = None
     self._image2d = Image2D()
+    self._reward_dock_checked: bool = False
 
   @messages.handler
   def on_studio_app_init(self, event: studio_app.InitEvent) -> None:
@@ -335,6 +336,28 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
       if self._show_instruction_prompt:
         self._focus_instruction_input = True
 
+  # TODO(b/582326605): Remove once Studio snaps plugin windows on first load.
+  def _dock_reward_plot(self, is_docked: bool) -> None:
+    """Docks the reward plot below the 3D scene on first check if undocked."""
+    if self._reward_dock_checked:
+      return
+    self._reward_dock_checked = True
+    root_id = imgui.GetID('Root')
+    if is_docked or not imgui.DockBuilderGetNode(root_id):
+      return
+    imgui.Begin('Console')
+    dock_id = imgui.GetWindowDockID()
+    imgui.End()
+    if not dock_id:
+      imgui.SetNextWindowDockID(root_id, imgui.Cond.Always)
+      imgui.Begin('Console')
+      central_id = imgui.GetWindowDockID()
+      imgui.End()
+      dock_id, _ = imgui.DockBuilderSplitNode(central_id, imgui.Dir.Down, 0.25)
+    imgui.DockBuilderDockWindow('Console', dock_id)
+    imgui.DockBuilderDockWindow('Reward###RewardPlot', dock_id)
+    imgui.DockBuilderFinish(root_id)
+
   @messages.handler
   def build_reaf_gui(self, _: messages.BuildGuiEvent) -> None:
     """Renders the REAF instruction prompt and reward plot in ImGui."""
@@ -394,15 +417,9 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
     if self.show_reward and self.reward_plot is not None:
       fig = self.reward_plot.figure
 
-      # Anchor to the bottom center so the plot doesn't cover the scene.
-      io = imgui.GetIO()
-      imgui.SetNextWindowPos(
-          imgui.Vec2(io.DisplaySize.x * 0.5, io.DisplaySize.y - 10),
-          imgui.Cond.FirstUseEver,
-          imgui.Vec2(0.5, 1.0),
-      )
-      imgui.SetNextWindowSize(imgui.Vec2(900, 250), imgui.Cond.FirstUseEver)
-      if imgui.Begin('Reward###RewardPlot'):
+      opened, _ = imgui.Begin('Reward###RewardPlot')
+      is_docked = imgui.IsWindowDocked()
+      if opened:
         avail = imgui.GetContentRegionAvail()
         if avail.x > 50 and avail.y > 50:
           plot_size = imgui.Vec2(avail.x, avail.y)
@@ -443,6 +460,7 @@ class ReafViewerPlugin(plugin.ViewerPlugin):
 
             implot.EndPlot()
       imgui.End()
+      self._dock_reward_plot(is_docked)
 
     # -- 2D image streams -----------------------------------------------------
     self._image2d.build_gui()

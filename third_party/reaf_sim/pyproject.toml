@@ -27,19 +27,21 @@ dependencies = [
     "dm-tree",
     "gdm_robotics",
     "immutabledict",
-    "mujoco[sysid]>=3.4.0",
+    "mujoco[sysid]>=4.0.0.dev1011068263",
     "mujoco_warp",
     "numpy",
     "reaf",
-    "torch>=2.6.0",
-    "warp-lang==1.18.0",
+    "torch>=2.7.0,<2.14",
+    "warp-lang>=1.18.0,<1.18.1",
 ]
 
-[project.optional-dependencies]
-cu124 = ["torch>=2.6.0"]
-cpu = ["torch>=2.6.0"]
-
 [dependency-groups]
+cu12 = [
+    "torch>=2.7.0,<2.14; sys_platform == 'linux'",
+]
+cpu = [
+    "torch>=2.7.0,<2.14; sys_platform == 'linux'",
+]
 dev = [
     "pytest",
     "pytest-xdist",
@@ -72,8 +74,13 @@ norecursedirs = [
 
 [tool.uv]
 conflicts = [
-  [{extra = "cu124"}, {extra = "cpu"}],
+  [{group = "cu12"}, {group = "cpu"}],
 ]
+
+# reaf builds from git until its next PyPI release; its CMake does not pin a
+# C++ standard and abseil requires >= 17.
+[tool.uv.config-settings-package]
+reaf = { "cmake.define.CMAKE_CXX_STANDARD" = "17" }
 
 [[tool.uv.index]]
 url = "https://pypi.org/simple"
@@ -85,8 +92,8 @@ url = "https://pypi.nvidia.com/"
 explicit = true
 
 [[tool.uv.index]]
-name = "pytorch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
 explicit = true
 
 [[tool.uv.index]]
@@ -105,8 +112,8 @@ gdm_robotics = { git = "https://github.com/google-deepmind/gdm_robotics", branch
 mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 torch = [
-  { index = "pytorch-cu124", extra = "cu124", marker = "sys_platform != 'darwin'" },
-  { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform != 'darwin'" },
+  { index = "pytorch-cu129", group = "cu12", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cpu", group = "cpu", marker = "sys_platform == 'linux'" },
 ]
 
 [tool.isort]

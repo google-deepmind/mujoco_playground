@@ -19,8 +19,15 @@ Clone `reaf-sim` from GitHub and install with [`uv`](https://docs.astral.sh/uv/)
 
 ```bash
 git clone https://github.com/google-deepmind/reaf-sim.git && cd reaf-sim
-make install  # install dependencies (use `make install-cpu` for CPU only)
-make test     # run all tests, verify everything works
+
+# Then install with one of:
+make install  # For GPU, good for RL training
+
+make install-cu12  # For CUDA 12 on Linux
+
+make install-cpu  # Or for CPU only, (i.e. on macOS)
+
+make test  # Run all tests, verify everything works
 ```
 
 ### Cartpole Example
@@ -74,7 +81,7 @@ For the complete, runnable script that loads the Cartpole model and generates th
 ## Documentation & Contributing
 
 - **Documentation:** See the [reaf-sim documentation](https://reaf-sim.readthedocs.io/en/latest/) for the [user guide](https://reaf-sim.readthedocs.io/en/latest/user_guide/index.html) and [API reference](https://reaf-sim.readthedocs.io/en/latest/api.html).
-- **Contributing:** See the [contributing guide](https://reaf-sim.readthedocs.io/en/latest/contributing.html) (or [CONTRIBUTING.md](CONTRIBUTING.md)) for contribution guidelines.
+- **Contributing:** See the [contributing guide](https://reaf-sim.readthedocs.io/en/latest/contributing.html) for contribution guidelines.
 - **Changelog:** See the [changelog](https://reaf-sim.readthedocs.io/en/latest/changelog.html).
 
 ## Citation
