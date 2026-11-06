@@ -23,20 +23,17 @@ jobs:
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           python-version: "3.12"
-      - name: Get release version
-        id: get_version
-        run: |
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
         id: create_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ github.ref_name }}
-          VERSION: ${{ steps.get_version.outputs.version }}
         run: |
-          gh release create "${TAG_NAME}" \
-            --title "${TAG_NAME}" \
-            --notes "See the [changelog](https://reaf-sim.readthedocs.io/en/${VERSION}/changelog.html)."
+          gh release view "${TAG_NAME}" >/dev/null 2>&1 || \
+            gh release create "${TAG_NAME}" \
+              --title "${TAG_NAME}" \
+              --notes "See the [changelog](https://reaf-sim.readthedocs.io/en/${TAG_NAME}/changelog.html)."
 
       - name: Build and publish
         run: |
