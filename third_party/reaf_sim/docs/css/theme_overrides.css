@@ -1,0 +1,236 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono&display=swap');
+
+/* MuJoCo-style fonts and palette on top of the pydata-sphinx-theme layout. */
+
+html {
+  scroll-behavior: auto;
+  --pst-font-family-base: 'DM Sans', 'Helvetica Neue', 'Arial', sans-serif;
+  --pst-font-family-heading: 'DM Sans', 'Helvetica Neue', 'Arial', sans-serif;
+  --pst-font-family-monospace: 'DM Mono', monospace;
+  --pst-font-size-h1: 2.5rem;
+  --pst-font-size-h2: 2rem;
+  --pst-font-size-h3: 1.5rem;
+  --pst-font-size-h4: 1.25rem;
+  --pst-font-size-h5: 1.125rem;
+  --pst-font-size-h6: 1rem;
+  --pst-font-weight-heading: 700;
+  --pst-sidebar-font-size: 0.95rem;
+}
+
+/*
+ * Palette of the MuJoCo docs: headings, body text, target highlight and table
+ * stripes are MuJoCo's own values; links, the accent used for active
+ * sidebar/outline items, and the inline-code background are the furo defaults
+ * that site inherits.
+ */
+html[data-theme="light"] {
+  --primary-header-color: #0053d6;
+  --secondary-header-color: #123693;
+  --pst-color-target: #e5e8ed;
+  --pst-color-table-row-zebra-low-bg: #f0f3f7;
+  --pst-color-primary: #0a4bff;
+  --pst-color-primary-bg: #e8effc;
+  --pst-color-primary-highlight: #0053d6;
+  --pst-color-secondary: #123693;
+  --pst-color-secondary-bg: #e5e8ed;
+  --pst-color-secondary-highlight: #0053d6;
+  --pst-color-link: #2757dd;
+  --pst-color-link-hover: #0a4bff;
+  --pst-color-surface: #f8f9fb;
+}
+
+html[data-theme="dark"] {
+  --pst-color-text-base: #e6edf3;
+  --primary-header-color: #a8caff;
+  --secondary-header-color: #458dff;
+  --pst-color-target: #3d4045;
+  --pst-color-table-row-zebra-low-bg: #222326;
+  --pst-color-primary: #3d94ff;
+  --pst-color-primary-bg: #1b2a47;
+  --pst-color-primary-highlight: #5ca5ff;
+  --pst-color-secondary: #a8caff;
+  --pst-color-secondary-bg: #3d4045;
+  --pst-color-secondary-highlight: #458dff;
+  --pst-color-link: #5ca5ff;
+  --pst-color-link-hover: #3d94ff;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+.navbar-brand .logo__title {
+  font-weight: 700;
+  color: var(--primary-header-color);
+}
+
+h1 {
+  font-weight: 600;
+  color: var(--primary-header-color);
+}
+
+h2, h3, h4, h5, h6, legend {
+  color: var(--secondary-header-color);
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Sidebar as in the MuJoCo docs: blue page links, grey uppercase captions. */
+nav.bd-links li > a {
+  color: var(--pst-color-primary);
+}
+
+nav.bd-links p.caption {
+  color: var(--pst-color-text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+/* Inline code: tinted background, no border. */
+code.literal {
+  border: none;
+}
+
+/* API entries in the page outline: plain monospace instead of bordered chips. */
+.page-toc code.literal,
+.bd-toc-nav code.literal {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Toctree captions in the page body ("User Guide", ...) read as headings. */
+.toctree-wrapper p.caption {
+  font-weight: 700;
+  color: var(--secondary-header-color);
+  margin-top: 1.5rem;
+}
+
+dl.py.class > dd {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.5ch;
+  align-items: baseline;
+}
+
+dl.py.class > dd > dl.py.attribute {
+  display: contents;
+}
+
+dl.py.class > dd > :not(dl.py.attribute) {
+  grid-column: 1 / -1;
+}
+
+dl.py.class > dd > p {
+  margin-bottom: 1rem;
+}
+
+dl.py.class > dd > dl.py:not(.attribute) {
+  margin-top: 1.5rem;
+}
+
+dl.py.class > dd > dl.py.attribute > dd,
+dl.py.class > dd > dl.py.attribute > dd > dl.field-list > dd {
+  margin: 0;
+  margin-left: 0 !important;
+  padding: 0;
+}
+
+dl.py.class > dd > dl.py.attribute > dd {
+  padding-bottom: 0.4rem;
+}
+
+dl.py.class > dd > dl.py.attribute > dd > p {
+  display: inline;
+  margin: 0;
+}
+
+dl.py.class > dd > dl.py.attribute > dd > dl.field-list {
+  display: flex;
+  align-items: center;
+  margin-top: 0.4rem;
+}
+
+dl.py.class > dd > dl.py.attribute > dd > dl.field-list > dd {
+  font-family: monospace;
+  font-size: 90%;
+}
+
+dl.py.class > dd > dl.py.attribute > dd > dl.field-list > dt {
+  display: none !important;
+}
+
+/* Light / dark mode image switching */
+.only-dark {
+  display: none !important;
+}
+.only-light {
+  display: block !important;
+}
+
+html[data-theme="dark"] .only-light {
+  display: none !important;
+}
+html[data-theme="dark"] .only-dark {
+  display: block !important;
+}
+
+/* Color coding for allowed / disallowed operations */
+.green {
+  color: #1a7f37;
+  font-weight: 600;
+}
+.red {
+  color: #cf222e;
+  font-weight: 600;
+}
+html[data-theme="dark"] .green {
+  color: #3fb950;
+}
+html[data-theme="dark"] .red {
+  color: #f85149;
+}
+
+.badge-green {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background-color: #dafbe1;
+  color: #1a7f37;
+  border: 1px solid #aceebb;
+  margin-right: 0.35rem;
+  vertical-align: baseline;
+}
+.badge-red {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background-color: #ffebe9;
+  color: #cf222e;
+  border: 1px solid #ffc1c0;
+  margin-right: 0.35rem;
+  vertical-align: baseline;
+}
+html[data-theme="dark"] .badge-green {
+  background-color: rgba(46, 160, 67, 0.15);
+  color: #3fb950;
+  border-color: rgba(63, 185, 80, 0.4);
+}
+html[data-theme="dark"] .badge-red {
+  background-color: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+  border-color: rgba(248, 81, 73, 0.4);
+}

@@ -1,0 +1,28 @@
+<mujoco model="plane">
+  <statistic center="0.3 0 0.2" extent="0.6"/>
+
+  <option timestep="0.005" integrator="implicitfast" cone="elliptic" impratio="10">
+    <flag eulerdamp="disable"/>
+  </option>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <map force="0.01"/>
+    <global azimuth="160" elevation="-20"/>
+    <scale contactwidth="0.075" contactheight="0.025" forcewidth="0.05" com="0.05" framewidth="0.01" framelength="0.2"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+  </asset>
+
+  <worldbody>
+    <camera fovy="42" name="side" pos="0.3 -0.8 0.5" xyaxes="1 0 0 0 0.5 0.866"/>
+    <light name="light" pos="0 0 1.5" dir="0 0 -1" directional="true"/>
+    <light name="front_fill" pos="0 -1.5 1.5" dir="0 1 -1" directional="true" diffuse="0.25 0.25 0.25" specular="0 0 0" castshadow="false"/>
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" contype="1"/>
+  </worldbody>
+</mujoco>

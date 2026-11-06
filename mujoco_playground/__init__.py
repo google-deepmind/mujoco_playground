@@ -13,41 +13,9 @@
 # limitations under the License.
 
 """MuJoCo Playground."""
-import importlib
 
-from mujoco_playground._src import dm_control_suite
-from mujoco_playground._src import locomotion
-from mujoco_playground._src import manipulation
-from mujoco_playground._src import registry
-from mujoco_playground._src import wrapper
-
-try:
-  wrapper_torch = importlib.import_module(
-      "mujoco_playground.rss2025._src.wrapper_torch"
-  )
-except (ImportError, AttributeError):
-  wrapper_torch = None
-
-# pylint: disable=g-importing-member
-from mujoco_playground._src.mjx_env import MjxEnv
-from mujoco_playground._src.mjx_env import put_model
-from mujoco_playground._src.mjx_env import render_array
-from mujoco_playground._src.mjx_env import State
-from mujoco_playground._src.mjx_env import step
-
-# pylint: enable=g-importing-member
-
-__all__ = [
-    "dm_control_suite",
-    "locomotion",
-    "manipulation",
-    "MjxEnv",
-    "put_model",
-    "registry",
-    "render_array",
-    "State",
-    "step",
-    "wrapper",
-]
-if wrapper_torch is not None:
-  __all__.append("wrapper_torch")
+from mujoco_playground import asset as asset
+from mujoco_playground import robots as robots
+from mujoco_playground import tasks as tasks
+from mujoco_playground import wrapper as wrapper
+from mujoco_playground._src import paths as paths

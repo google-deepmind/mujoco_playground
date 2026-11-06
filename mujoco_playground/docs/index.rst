@@ -1,0 +1,73 @@
+Overview
+========
+
+MuJoCo Playground is a suite of robot environments, reinforcement learning tasks, and hardware workflows built on
+`reaf-sim <https://github.com/google-deepmind/reaf-sim>`_.
+
+Quickstart
+----------
+
+Clone the repository and sync dependencies with `uv <https://docs.astral.sh/uv/>`_:
+
+.. code-block:: bash
+
+    git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
+
+    # Then install with one of:
+    make sync  # For GPU, good for RL training
+
+    make sync-cu12  # For CUDA 12 on Linux
+
+    make sync-cpu  # Or for CPU only, (i.e. on macOS)
+
+    make test  # Run tests
+
+Train a PPO policy on GPU using the environment's pre-configured observations, rewards, and domain randomization, then
+play back the checkpoint in the interactive viewer:
+
+.. code-block:: bash
+
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
+      --env=SO101PickCube \
+      --logdir=/tmp/rslrl_logs/so101_pick_cube
+
+    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
+      --env=SO101PickCube \
+      --resume_path=/tmp/rslrl_logs/so101_pick_cube
+
+Highlights
+----------
+
+.. list-table::
+    :widths: 50 50
+
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp
+            :alt: Whole body motion tracking
+            :width: 100%
+
+            :doc:`Whole-body motion tracking <rl_training>`
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_sim_teleop/0/so101_sim_teleop.webp
+            :alt: SO-101 Simulation Teleoperation Demo
+            :width: 100%
+
+            :doc:`Sim teleoperation <teleop>`
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_real_teleop/0/so101_real_teleop.webp
+            :alt: SO-101 Real Teleoperation Demo
+            :width: 100%
+
+            :doc:`Real teleoperation <teleop>`
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp
+            :alt: SO-101 System Identification Rollout
+            :width: 100%
+
+            :doc:`System identification <sysid>`
+    * - .. figure:: https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.webp
+            :alt: Sim2Real and interactive viewer
+            :width: 100%
+
+            :doc:`Sim-to-real deployment <sim2real>`
+      - .. figure:: https://www.gstatic.com/reaf-sim/demos/yam_mug_real/0/yam_mug_real.webp
+            :alt: YAM Agentic Tabletop Manipulation
+            :width: 100%
+
+            :doc:`Agentic manipulation <agentic>`
