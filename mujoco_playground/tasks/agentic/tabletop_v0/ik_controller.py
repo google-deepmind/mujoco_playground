@@ -31,7 +31,7 @@ import mujoco
 from mujoco_playground.tasks.agentic.tabletop_v0 import embodiment as embodiment_lib
 import numpy as np
 from reaf.core import commands_processor
-from reaf.core import features_producer
+from reaf.simulation.torch import feature_producer
 import torch
 
 # Safety cap on the Cartesian speed of the smoothed IK target (m/s). The plan
@@ -193,7 +193,7 @@ class PinchIK:
 
 class SmoothCartesianIKProcessor(
     commands_processor.CommandsProcessor,
-    features_producer.FeaturesProducer,
+    feature_producer.FeatureProducer,
 ):
   """Translates a Cartesian pinch-point target into safe joint targets.
 

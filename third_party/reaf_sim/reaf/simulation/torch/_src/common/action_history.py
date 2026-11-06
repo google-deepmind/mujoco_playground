@@ -21,14 +21,14 @@ from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
 import numpy as np
 from reaf.core import commands_processor
-from reaf.core import features_producer
 from reaf.simulation.torch._src.common import tensors
+from reaf.simulation.torch._src.core import feature_producer
 import torch
 
 
 class ActionHistory(
     commands_processor.CommandsProcessor,
-    features_producer.FeaturesProducer,
+    feature_producer.FeatureProducer,
 ):
   """Tracks commands and exposes them as features.
 
