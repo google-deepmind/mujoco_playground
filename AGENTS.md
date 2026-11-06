@@ -48,7 +48,7 @@ uv run --group dev pre-commit run -a
 
 # Excluded Directories
 
-`third_party/` and `mujoco_playground/rss2025/` are excluded from formatting
+`third_party/` and `rss2025/` are excluded from formatting
 (pyink), import sorting (isort), and pre-commit. Do not reformat them.
 
 # Architecture

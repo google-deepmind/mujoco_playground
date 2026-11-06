@@ -37,7 +37,7 @@ N_WORKERS ?= auto
 
 .PHONY: test
 test:
-	$(MUJOCO_GL_ENV) uv run --extra rl --group dev pytest mujoco_playground/ --ignore=mujoco_playground/rss2025/ $(_IGNORE_RL) -n $(N_WORKERS) --dist worksteal -v
+	$(MUJOCO_GL_ENV) uv run --extra rl --group dev pytest mujoco_playground/ $(_IGNORE_RL) -n $(N_WORKERS) --dist worksteal -v
 	$(MUJOCO_GL_ENV) uv run --extra rl --group dev pytest $(_RL_TESTS) -n $(N_WORKERS) --dist worksteal -v
 
 # Optional dependencies must not be imported at module scope.

@@ -50,7 +50,7 @@ Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either 
 </table>
 
 > [!NOTE]
-> Looking for the original RSS 2025 JAX/MJX environments? They remain available under [`mujoco_playground/rss2025`](mujoco_playground/rss2025).
+> Looking for the original RSS 2025 JAX/MJX environments? They remain available under [`rss2025`](rss2025).
 
 ## Installation
 
@@ -151,7 +151,7 @@ If you use MuJoCo Playground in your work, please cite it as follows (see the [G
 }
 ```
 
-For the RSS 2025 benchmark suite that was built on JAX/MJX (see [`mujoco_playground/rss2025`](mujoco_playground/rss2025)), please cite:
+For the RSS 2025 benchmark suite that was built on JAX/MJX (see [`rss2025`](rss2025)), please cite:
 
 ```bibtex
 @misc{mujoco_playground_2025,

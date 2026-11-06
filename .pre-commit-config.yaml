@@ -1,5 +1,5 @@
 default_stages: [pre-commit]
-exclude: '.*__init__\.py$|^third_party/|^mujoco_playground/rss2025/'
+exclude: '.*__init__\.py$|^third_party/|^rss2025/'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
