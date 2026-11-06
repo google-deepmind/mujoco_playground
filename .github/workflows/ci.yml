@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
   pull_request:
-    branches: [main, dev]
+    branches: [main]
 
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
         run: uv run --group dev pre-commit run -a
 
       - name: Notify team chat
-        if: failure() && github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
+        if: failure() && github.event_name == 'push' && github.ref_name == 'main'
         uses: google-deepmind/mujoco/.github/actions/notify-chat@main
         with:
           service-account-key: ${{ secrets.CHAT_SERVICE_ACCOUNT_KEY }}
@@ -72,7 +72,7 @@ jobs:
         run: make test
 
       - name: Notify team chat
-        if: failure() && github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'dev')
+        if: failure() && github.event_name == 'push' && github.ref_name == 'main'
         uses: google-deepmind/mujoco/.github/actions/notify-chat@main
         with:
           service-account-key: ${{ secrets.CHAT_SERVICE_ACCOUNT_KEY }}
