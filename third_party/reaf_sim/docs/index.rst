@@ -27,12 +27,6 @@ Clone `reaf-sim` from GitHub and install with `uv <https://docs.astral.sh/uv/>`_
 
     make test  # Run all tests, verify everything works
 
-.. tip::
-
-    **Looking for pre-built robot environments and training scripts?** We will be revamping `MuJoCo Playground
-    <https://github.com/google-deepmind/mujoco_playground>`_ with ready-made examples for sim/real teleop, sysid,
-    sim2real, and agentic robotics. Stay tuned!
-
 Cartpole Example
 ~~~~~~~~~~~~~~~~
 
