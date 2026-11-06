@@ -19,11 +19,11 @@ classifiers = [
 dependencies = [
     "reaf>=1.1.2",
     "reaf-sim>=1.0.0",
-    "mujoco_warp",
+    "mujoco_warp>=4.0.0",
     "gdm_robotics",
     "absl-py",
     "torch>=2.7.0,<2.14",
-    "mujoco[sysid]>=4.0.0.dev1011068263",
+    "mujoco[sysid]>=4.0.0",
     "warp-lang>=1.18.0,<1.18.1",
 ]
 
@@ -147,14 +147,13 @@ explicit = true
 [[tool.uv.index]]
 name = "mujoco"
 url = "https://py.mujoco.org/"
+explicit = true
 
 [tool.uv.sources]
-mujoco_warp = { git = "https://github.com/google-deepmind/mujoco_warp", branch = "deepmind" }
 reaf-sim = { path = "third_party/reaf_sim", editable = true }
 gdm_robotics = { git = "https://github.com/google-deepmind/gdm_robotics", branch = "main" }
 # Runs on real hardware and is not on PyPI.
 i2rt = { git = "https://github.com/i2rt-robotics/i2rt", tag = "v1.3.6" }
-mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 torch = [
   { index = "pytorch-cu129", group = "cu12", marker = "sys_platform == 'linux'" },

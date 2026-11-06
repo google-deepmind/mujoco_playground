@@ -27,8 +27,8 @@ dependencies = [
     "dm-tree",
     "gdm_robotics",
     "immutabledict",
-    "mujoco[sysid]>=4.0.0.dev1011068263",
-    "mujoco_warp",
+    "mujoco[sysid]>=4.0.0",
+    "mujoco_warp>=4.0.0",
     "numpy",
     "reaf>=1.1.2",
     "torch>=2.7.0,<2.14",
@@ -99,11 +99,10 @@ explicit = true
 [[tool.uv.index]]
 name = "mujoco"
 url = "https://py.mujoco.org/"
+explicit = true
 
 [tool.uv.sources]
-mujoco_warp = { git = "https://github.com/google-deepmind/mujoco_warp", branch = "deepmind" }
 gdm_robotics = { git = "https://github.com/google-deepmind/gdm_robotics", branch = "main" }
-mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 torch = [
   { index = "pytorch-cu129", group = "cu12", marker = "sys_platform == 'linux'" },
