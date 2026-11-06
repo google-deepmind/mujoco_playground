@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reaf-sim"
-version = "0.0.1"
+version = "1.0.0"
 description = "Robotics Environment Authoring Framework - Simulation Modules."
 requires-python = ">=3.12,<3.15"
 readme = "README.md"
@@ -30,7 +30,7 @@ dependencies = [
     "mujoco[sysid]>=4.0.0.dev1011068263",
     "mujoco_warp",
     "numpy",
-    "reaf",
+    "reaf>=1.1.2",
     "torch>=2.7.0,<2.14",
     "warp-lang>=1.18.0,<1.18.1",
 ]
@@ -77,11 +77,6 @@ conflicts = [
   [{group = "cu12"}, {group = "cpu"}],
 ]
 
-# reaf builds from git until its next PyPI release; its CMake does not pin a
-# C++ standard and abseil requires >= 17.
-[tool.uv.config-settings-package]
-reaf = { "cmake.define.CMAKE_CXX_STANDARD" = "17" }
-
 [[tool.uv.index]]
 url = "https://pypi.org/simple"
 default = true
@@ -107,7 +102,6 @@ url = "https://py.mujoco.org/"
 
 [tool.uv.sources]
 mujoco_warp = { git = "https://github.com/google-deepmind/mujoco_warp", branch = "deepmind" }
-reaf = { git = "https://github.com/google-deepmind/reaf", branch = "main" }
 gdm_robotics = { git = "https://github.com/google-deepmind/gdm_robotics", branch = "main" }
 mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }

@@ -1842,8 +1842,8 @@ wheels = [
 
 [[package]]
 name = "reaf"
-version = "1.1.0"
-source = { git = "https://github.com/google-deepmind/reaf?branch=main#f817feb60e420e725e0b9b948b355b06f2d01031" }
+version = "1.1.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "absl-py" },
     { name = "dm-env" },
@@ -1855,10 +1855,22 @@ dependencies = [
     { name = "strenum" },
     { name = "typing-extensions" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/74/9f/94b4729993397def6fc239b787deac4d54eaa626f70f11619d24db4a7e07/reaf-1.1.2.tar.gz", hash = "sha256:a4990bc2d384d75b7f10db6e838af5a662a96b462f443b51fc3dec874e5eba1b", size = 3262186, upload-time = "2026-11-05T09:09:36.335Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/6c/24ddb72d4f4716daa09f746828a95889ac8d3cacab137acb80412d2d655f/reaf-1.1.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:0ffe7bf2d00e7eb978bbe124755202f1c51f4464e3cfaa6ea291085ce5a95a17", size = 373063, upload-time = "2026-11-05T09:09:18.087Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/ac/f096caaf05811cf5e05e682a123741233b3c1abd15dd1beff0fab02d7ce2/reaf-1.1.2-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3cfe4dfc1321b740bc60ae873fcf93c4ceac678d7671520f6b7f79eadf805bd5", size = 576970, upload-time = "2026-11-05T09:09:19.504Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/a5/49eb37eb424af970bfca0d72f97ece24f6d61c312f903d643ac3994c0f47/reaf-1.1.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b94d168094bedea4fe47b2161c2878824a2949cf711f03a02bccca282682789d", size = 602853, upload-time = "2026-11-05T09:09:20.964Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/67/a1b27660df7bd6facfcff5198eb16d1eb431f2664dcaa8517d5ad49399f4/reaf-1.1.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:99fc7b4f647dc1772bf4b7f8fe1864c42cd32830cafe48672def78d9ee8b24b3", size = 373082, upload-time = "2026-11-05T09:09:22.649Z" },
+    { url = "https://files.pythonhosted.org/packages/61/11/2201c5a35126bb5389da51f6f077c98af9f6b24a91bfe8139dcf9c48089a/reaf-1.1.2-cp313-cp313-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:562d6b82edafe1378e778057a16f361112d4902571df341a6e26893737a4aa31", size = 577052, upload-time = "2026-11-05T09:09:24.305Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/4c/3a3c4fbe3f205b2b433845eaf5ef83111d43b70ddb67a37bd4eaba662873/reaf-1.1.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cde6fbe74479b7058ba618950f07e3c03089506889baab8aae3f867aedfc5b10", size = 602931, upload-time = "2026-11-05T09:09:25.709Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/4d/b17db422337de579d5b9fa90492cfa7b4f059baaed338f33eb992c915c12/reaf-1.1.2-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:113c17f4c8b8f6da6d9705eeecf8c44bbf8ec2f7c8c0a69dab8f618ff6de2d43", size = 373001, upload-time = "2026-11-05T09:09:27.291Z" },
+    { url = "https://files.pythonhosted.org/packages/15/6c/f8fb0ec5abeeadf6509df13bf7b26fbeb39b2e1afe2ae3431d0f30a35e23/reaf-1.1.2-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:004ca0351a8d8a3e4dfe5d20aa6a053f66cb988d0ac9ba621ea926a4c2500ada", size = 577669, upload-time = "2026-11-05T09:09:28.675Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/f6/85373392711e0eaa6f31e5883edb6eab0802ee40cda0bebeb389d3d2f787/reaf-1.1.2-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:674b4d1740e869c29f5ae9c30a15c746d11496cc58264c9643ea4cbe0f90a255", size = 603054, upload-time = "2026-11-05T09:09:30.121Z" },
+]
 
 [[package]]
 name = "reaf-sim"
-version = "0.0.1"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "absl-py" },
@@ -1907,7 +1919,7 @@ requires-dist = [
     { name = "mujoco", extras = ["sysid"], specifier = ">=4.0.0.dev1011068263", index = "https://py.mujoco.org/" },
     { name = "mujoco-warp", git = "https://github.com/google-deepmind/mujoco_warp?branch=deepmind" },
     { name = "numpy" },
-    { name = "reaf", git = "https://github.com/google-deepmind/reaf?branch=main" },
+    { name = "reaf", specifier = ">=1.1.2" },
     { name = "torch", specifier = ">=2.7.0,<2.14" },
     { name = "warp-lang", specifier = ">=1.18.0,<1.18.1", index = "https://pypi.nvidia.com/" },
 ]

@@ -1,8 +1,11 @@
 [project]
-name = "mujoco_playground"
-version = "0.2.0"
+name = "playground"
+version = "1.0.0"
 description = "Playground of robotics real and sim tasks."
 requires-python = ">=3.12,<3.14"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -14,8 +17,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "reaf",
-    "reaf-sim",
+    "reaf>=1.1.2",
+    "reaf-sim>=1.0.0",
     "mujoco_warp",
     "gdm_robotics",
     "absl-py",
@@ -40,7 +43,7 @@ real = [
 
 # Hardware identification of serial USB ports and cameras.
 identify = [
-    "mujoco_playground[real]",
+    "playground[real]",
     "pyserial",
     "opencv-python-headless",
 ]
@@ -50,14 +53,14 @@ identify = [
 # Robots that share a bus share an entry. Adding a robot only adds an entry here
 # if it introduces genuinely new hardware.
 feetech = [
-    "mujoco_playground[real]",
+    "playground[real]",
     "lerobot[feetech]>=0.6.0,<0.7",
 ]
 # I2RT's SDK for its DM-motor arms on a SocketCAN / gs_usb bus (the YAM family).
 # Pin python-can and gs-usb so _MacGsUsbBus in robots/yam/real/gs_usb_darwin.py
 # stays aligned with GsUsbBus / GsUsb internals across upgrades.
 i2rt = [
-    "mujoco_playground[real]",
+    "playground[real]",
     "i2rt",
     "python-can==4.5.0",
     "gs-usb==0.3.1; sys_platform == 'darwin'",
@@ -69,13 +72,18 @@ i2rt = [
 # the robot they own rather than by the servos inside it. A robot reusing
 # existing hardware is a one-line alias.
 so101 = [
-    "mujoco_playground[identify]",
-    "mujoco_playground[feetech]",
+    "playground[identify]",
+    "playground[feetech]",
 ]
 yam = [
-    "mujoco_playground[identify]",
-    "mujoco_playground[i2rt]",
+    "playground[identify]",
+    "playground[i2rt]",
 ]
+
+[project.urls]
+Documentation = "https://reaf-sim.readthedocs.io/en/latest/playground/index.html"
+Repository = "https://github.com/google-deepmind/mujoco_playground"
+Issues = "https://github.com/google-deepmind/mujoco_playground/issues"
 
 [dependency-groups]
 cu12 = [
@@ -117,11 +125,6 @@ override-dependencies = [
   "ruckig>=0.15.3",
 ]
 
-# reaf builds from git until its next PyPI release; its CMake does not pin a
-# C++ standard and abseil requires >= 17.
-[tool.uv.config-settings-package]
-reaf = { "cmake.define.CMAKE_CXX_STANDARD" = "17" }
-
 [[tool.uv.index]]
 url = "https://pypi.org/simple"
 default = true
@@ -148,7 +151,6 @@ url = "https://py.mujoco.org/"
 [tool.uv.sources]
 mujoco_warp = { git = "https://github.com/google-deepmind/mujoco_warp", branch = "deepmind" }
 reaf-sim = { path = "third_party/reaf_sim", editable = true }
-reaf = { git = "https://github.com/google-deepmind/reaf", branch = "main" }
 gdm_robotics = { git = "https://github.com/google-deepmind/gdm_robotics", branch = "main" }
 # Runs on real hardware and is not on PyPI.
 i2rt = { git = "https://github.com/i2rt-robotics/i2rt", tag = "v1.3.6" }
