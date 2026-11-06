@@ -147,13 +147,14 @@ explicit = true
 [[tool.uv.index]]
 name = "mujoco"
 url = "https://py.mujoco.org/"
-explicit = true
 
 [tool.uv.sources]
 reaf-sim = { path = "third_party/reaf_sim", editable = true }
+mujoco_warp = { git = "https://github.com/google-deepmind/mujoco_warp", branch = "deepmind" }
 gdm_robotics = { git = "https://github.com/google-deepmind/gdm_robotics", branch = "main" }
 # Runs on real hardware and is not on PyPI.
 i2rt = { git = "https://github.com/i2rt-robotics/i2rt", tag = "v1.3.6" }
+mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 torch = [
   { index = "pytorch-cu129", group = "cu12", marker = "sys_platform == 'linux'" },

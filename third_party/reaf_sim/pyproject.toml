@@ -99,10 +99,11 @@ explicit = true
 [[tool.uv.index]]
 name = "mujoco"
 url = "https://py.mujoco.org/"
-explicit = true
 
 [tool.uv.sources]
+mujoco_warp = { git = "https://github.com/google-deepmind/mujoco_warp", branch = "deepmind" }
 gdm_robotics = { git = "https://github.com/google-deepmind/gdm_robotics", branch = "main" }
+mujoco = { index = "mujoco" }
 warp-lang = { index = "nvidia" }
 torch = [
   { index = "pytorch-cu129", group = "cu12", marker = "sys_platform == 'linux'" },

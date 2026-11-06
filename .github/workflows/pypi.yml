@@ -38,4 +38,4 @@ jobs:
       - name: Build and publish
         run: |
           uv build
-          uv publish
+          uv publish --check-url https://pypi.org/simple/
