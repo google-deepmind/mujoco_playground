@@ -95,7 +95,7 @@ class InsideSiteDeviceTest(parameterized.TestCase):
     self.assertEqual(meas_spec["box_in_container/data"].shape, (1,))
 
     # Check measurements
-    measurements = dev.get_substep_measurements(sim)
+    measurements = dev.get_measurements(sim)
     self.assertEqual(measurements["box_in_container/data"].shape, (nworld, 1))
     expected_val = 1.0 if expected_contained else 0.0
     self.assertEqual(
@@ -127,8 +127,8 @@ class InsideSiteDeviceTest(parameterized.TestCase):
     # Dark mode should return empty specs
     self.assertEqual(dev.substep_measurements_spec(), {})
     # Dark mode should return empty measurements unless force=True
-    self.assertEqual(dev.get_substep_measurements(sim), {})
-    forced_meas = dev.get_substep_measurements(sim, force=True)
+    self.assertEqual(dev.get_measurements(sim), {})
+    forced_meas = dev.get_measurements(sim, force=True)
     self.assertIn("box_in_container/data", forced_meas)
     self.assertEqual(forced_meas["box_in_container/data"].shape, (nworld, 1))
 

@@ -21,11 +21,24 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import mujoco
 from reaf.simulation.torch._src.common import camera_device
+from reaf.simulation.torch._src.core import device_layer
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import types
 import torch
 
 _DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+
+def _make_device_layer(
+    sim: simulator_module.Simulator, cam_entity: camera_device.CameraDevice
+) -> device_layer.DeviceLayer:
+  """Drives `cam_entity` like an environment, one physics substep per step."""
+  return device_layer.DeviceLayer(
+      simulator=sim,
+      control_timestep=sim.mj_model.opt.timestep,
+      devices=[cam_entity],
+  )
+
 
 _PENDULUM = """
 <mujoco>
@@ -85,9 +98,9 @@ class CameraDeviceTest(parameterized.TestCase):
         use_shadows=False,
         enabled_geom_groups=[0, 1, 2],
     )
-    cam_entity.initialize(sim)
-    cam_entity.reset(sim)
-    measurements = cam_entity.get_substep_measurements(sim)
+    dl = _make_device_layer(sim, cam_entity)
+    dl.begin_stepping()
+    measurements = cam_entity.get_measurements(sim)
     if render_rgb:
       self.assertIn("cam_rgb", measurements)
       self.assertEqual(
@@ -144,8 +157,8 @@ class CameraDeviceTest(parameterized.TestCase):
         use_shadows=False,
         enabled_geom_groups=[0, 1, 2],
     )
-    cam_entity.initialize(sim)
-    cam_entity.reset(sim)
+    dl = _make_device_layer(sim, cam_entity)
+    dl.begin_stepping()
 
     # Verify measurement specs are created for depth.
     specs_dict = cam_entity.substep_measurements_spec()
@@ -153,7 +166,7 @@ class CameraDeviceTest(parameterized.TestCase):
     self.assertEqual(specs_dict["cam_depth"].shape, (height, width))
 
     # Verify measurements match expected dtype and scaling.
-    measurements = cam_entity.get_substep_measurements(sim)
+    measurements = cam_entity.get_measurements(sim)
     self.assertIn("cam_depth", measurements)
     depth = measurements["cam_depth"]
     self.assertEqual(depth.shape, (nworld, height, width))
@@ -239,9 +252,9 @@ class CameraDeviceTest(parameterized.TestCase):
         use_shadows=False,
         enabled_geom_groups=[0, 1, 2],
     )
-    cam_entity.initialize(sim)
-    cam_entity.reset(sim)
-    measurements = cam_entity.get_substep_measurements(sim)
+    dl = _make_device_layer(sim, cam_entity)
+    dl.begin_stepping()
+    measurements = cam_entity.get_measurements(sim)
 
     self.assertIn("cam_green_rgb", measurements)
     self.assertIn("cam_red_rgb", measurements)
@@ -294,25 +307,29 @@ class CameraDeviceTest(parameterized.TestCase):
         render_rgb=[True],
         render_depth=[False],
     )
-    cam_entity.initialize(sim)
-    cam_entity.reset(sim)
+    dl = _make_device_layer(sim, cam_entity)
+
+    # Reads do not render: nothing is cached until `begin_stepping()`.
+    with self.assertRaisesRegex(RuntimeError, "nothing was rendered"):
+      cam_entity.get_measurements(sim)
+    dl.begin_stepping()
 
     # Substep 0: renders and returns measurements
-    m0 = cam_entity.get_substep_measurements(sim)
+    m0 = cam_entity.get_measurements(sim)
     self.assertIn("cam_rgb", m0)
 
     # Calling again on substep 0 is idempotent: returns cached measurements
-    m0_repeat = cam_entity.get_substep_measurements(sim)
+    m0_repeat = cam_entity.get_measurements(sim)
     self.assertIs(m0["cam_rgb"], m0_repeat["cam_rgb"])
 
     # Substep 1: does not re-render, returns cached measurements
-    sim.step()
-    m1 = cam_entity.get_substep_measurements(sim)
+    dl.step({})
+    m1 = cam_entity.get_measurements(sim)
     self.assertIs(m0["cam_rgb"], m1["cam_rgb"])
 
     # Substep 2: renders again, returns fresh measurements
-    sim.step()
-    m2 = cam_entity.get_substep_measurements(sim)
+    dl.step({})
+    m2 = cam_entity.get_measurements(sim)
     self.assertIsNot(m0["cam_rgb"], m2["cam_rgb"])
 
   def test_render_rate_hz(self):
@@ -367,11 +384,11 @@ class CameraDeviceTest(parameterized.TestCase):
         render_rgb=[True],
         render_depth=[True],
     )
-    cam_entity.initialize(sim)
-    cam_entity.reset(sim)
+    dl = _make_device_layer(sim, cam_entity)
+    dl.begin_stepping()
 
     # Substep 0: renders both worlds (both non-zero).
-    m0 = cam_entity.get_substep_measurements(sim)
+    m0 = cam_entity.get_measurements(sim)
     self.assertGreater(m0["cam_red_rgb"][0].sum().item(), 0)
     self.assertGreater(m0["cam_red_rgb"][1].sum().item(), 0)
     self.assertGreater(m0["cam_red_depth"][0].sum().item(), 0)
@@ -380,11 +397,14 @@ class CameraDeviceTest(parameterized.TestCase):
     world0_depth_before = m0["cam_red_depth"][0].clone()
 
     # Step once to global_substep=1 (mid-interval) and reset only world 1.
-    sim.step()
+    dl.step({})
     env_mask = torch.tensor([False, True], device=_DEVICE)
-    cam_entity.reset(sim, env_mask=env_mask)
+    dl.reset(env_mask)
+    # A partial reset does not re-render, so a step that ends in an auto-reset
+    # renders only once.
+    dl.begin_stepping(env_mask)
 
-    m1 = cam_entity.get_substep_measurements(sim)
+    m1 = cam_entity.get_measurements(sim)
     # World 1's buffer should be zeroed out; world 0's frame is preserved.
     self.assertEqual(m1["cam_red_rgb"][1].sum().item(), 0)
     self.assertEqual(m1["cam_red_depth"][1].sum().item(), 0)
@@ -392,8 +412,8 @@ class CameraDeviceTest(parameterized.TestCase):
     torch.testing.assert_close(m1["cam_red_depth"][0], world0_depth_before)
 
     # Step to global_substep=2 (render tick): both worlds are re-rendered.
-    sim.step()
-    m2 = cam_entity.get_substep_measurements(sim)
+    dl.step({})
+    m2 = cam_entity.get_measurements(sim)
     self.assertGreater(m2["cam_red_rgb"][1].sum().item(), 0)
     self.assertGreater(m2["cam_red_depth"][1].sum().item(), 0)
 

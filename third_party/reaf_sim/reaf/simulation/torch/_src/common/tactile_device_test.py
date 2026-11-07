@@ -121,7 +121,7 @@ class TactileDeviceTest(parameterized.TestCase):
     self.assertEqual(
         dev.substep_measurements_spec()["tactile/depth"].shape, (12,)
     )
-    depth = dev.get_substep_measurements(sim)["tactile/depth"]
+    depth = dev.get_measurements(sim)["tactile/depth"]
     self.assertEqual(depth.shape, (nworld, 12))
     torch.testing.assert_close(
         depth.float().amax(dim=-1).cpu(),
@@ -139,9 +139,7 @@ class TactileDeviceTest(parameterized.TestCase):
     )
     dev_cutoff.initialize(sim_cutoff)
     sim_cutoff.forward()
-    depth_cutoff = dev_cutoff.get_substep_measurements(sim_cutoff)[
-        "tactile/depth"
-    ]
+    depth_cutoff = dev_cutoff.get_measurements(sim_cutoff)["tactile/depth"]
     torch.testing.assert_close(
         depth_cutoff.float().amax(dim=-1).cpu(),
         torch.full((nworld,), 0.02, dtype=torch.float32),
@@ -172,7 +170,7 @@ class TactileDeviceTest(parameterized.TestCase):
     dev_cpp.initialize(sim_cpp)
     sim_cpp.forward()
     ntaxel = expected_res[0] * expected_res[1]
-    depth_cpp = dev_cpp.get_substep_measurements(sim_cpp)["pad/depth"]
+    depth_cpp = dev_cpp.get_measurements(sim_cpp)["pad/depth"]
     self.assertEqual(depth_cpp.shape, (1, ntaxel))
     self.assertEqual(
         dev_cpp.substep_measurements_spec()["pad/depth"].shape, (ntaxel,)
@@ -189,7 +187,7 @@ class TactileDeviceTest(parameterized.TestCase):
     )
     dev_warp.initialize(sim_warp)
     sim_warp.forward()
-    depth_warp = dev_warp.get_substep_measurements(sim_warp)["pad/depth"].cpu()
+    depth_warp = dev_warp.get_measurements(sim_warp)["pad/depth"].cpu()
 
     torch.testing.assert_close(
         depth_cpp[0].float(), depth_warp[0], atol=1e-4, rtol=1e-4
@@ -224,8 +222,8 @@ class TactileDeviceTest(parameterized.TestCase):
     # Second sensor starts after the first sensor's 3 * ntaxel block (adr=36).
     self.assertEqual(dev_ball._sensor_slice, slice(0, 12))
     self.assertEqual(dev_box._sensor_slice, slice(36, 48))
-    depth_ball = dev_ball.get_substep_measurements(sim)["ball_tactile/depth"]
-    depth_box = dev_box.get_substep_measurements(sim)["box_tactile/depth"]
+    depth_ball = dev_ball.get_measurements(sim)["ball_tactile/depth"]
+    depth_box = dev_box.get_measurements(sim)["box_tactile/depth"]
     torch.testing.assert_close(depth_ball, depth_box)
 
   def test_multiworld_contact_and_dark_mode(self) -> None:
@@ -247,16 +245,14 @@ class TactileDeviceTest(parameterized.TestCase):
     # Lift world 1 out of contact while keeping world 0 in contact.
     sim.data.qpos[1, 2] = 5.0
     sim.forward()
-    depth = dev.get_substep_measurements(sim)["tactile/depth"]
+    depth = dev.get_measurements(sim)["tactile/depth"]
     self.assertAlmostEqual(float(depth[0].max()), 0.0506508, places=5)
     self.assertEqual(float(depth[1].abs().max()), 0.0)
 
     # Dark devices hide measurements unless force=True is requested.
     self.assertEqual(dev_dark.substep_measurements_spec(), {})
-    self.assertEqual(dev_dark.get_substep_measurements(sim), {})
-    forced = dev_dark.get_substep_measurements(sim, force=True)[
-        "dark_tactile/depth"
-    ]
+    self.assertEqual(dev_dark.get_measurements(sim), {})
+    forced = dev_dark.get_measurements(sim, force=True)["dark_tactile/depth"]
     self.assertEqual(
         forced.data_ptr(),
         sim.data.sensordata[:, dev_dark._sensor_slice].data_ptr(),
@@ -291,10 +287,8 @@ class TactileDeviceTest(parameterized.TestCase):
     cut_dev.initialize(sim)
     sim.forward()
 
-    d = raw_dev.get_substep_measurements(sim)["raw/depth"][0].float().cpu()
-    phi_batch = (
-        post_dev.get_substep_measurements(sim)["post/depth"].float().cpu()
-    )
+    d = raw_dev.get_measurements(sim)["raw/depth"][0].float().cpu()
+    phi_batch = post_dev.get_measurements(sim)["post/depth"].float().cpu()
     self.assertEqual(phi_batch.shape, (nworld, 16))
     phi = phi_batch[0]
 
@@ -311,7 +305,7 @@ class TactileDeviceTest(parameterized.TestCase):
     )
 
     # Cutoff clamps the postprocessed output rather than raw inputs.
-    phi_cut = cut_dev.get_substep_measurements(sim)["cut/depth"].float().cpu()
+    phi_cut = cut_dev.get_measurements(sim)["cut/depth"].float().cpu()
     torch.testing.assert_close(
         phi_cut.amax(dim=-1),
         torch.full((nworld,), cutoff_val, dtype=torch.float32),

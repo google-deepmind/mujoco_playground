@@ -82,7 +82,7 @@ class ClockDevice(device_module.Device):
         )
     }
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

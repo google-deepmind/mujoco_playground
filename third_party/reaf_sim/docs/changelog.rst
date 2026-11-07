@@ -54,6 +54,12 @@ Common Devices
 - After a reset, every history slot of :class:`~reaf.simulation.torch.ContactSensorDevice` holds the reset reading
   instead of zeros, and its history also advances while the device is dark.
 
+- The built-in devices implement ``get_measurements`` instead of ``get_substep_measurements``. Subclasses that override
+  ``get_substep_measurements`` must override ``get_measurements`` instead.
+
+- Camera devices render in ``on_substep`` and ``on_begin_stepping``. Their ``get_measurements`` returns the latest frame
+  without rendering, and raises a ``RuntimeError`` if nothing was rendered since the last reset.
+
 - After a reset, delayed :class:`~reaf.simulation.torch.StochasticSubstepMeasurements` keys read the reset reading until
   the delay has passed. Keys without delay apply their bias and latest noise sample to the current reading, and readings
   pass through until the processor has seen a substep or reset.

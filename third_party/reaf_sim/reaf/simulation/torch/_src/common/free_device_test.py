@@ -165,12 +165,12 @@ class FreeDeviceTest(absltest.TestCase):
     self.assertIn("cube/xpos", spec)
     self.assertIn("cube/xquat", spec)
 
-  def test_get_substep_measurements(self):
+  def test_get_measurements(self):
     pos = [0.5, -0.3, 1.2]
     quat_90z = [math.sqrt(2) / 2, 0.0, 0.0, math.sqrt(2) / 2]
     dev, sim, nworld = _setup_free_device(pos=pos, quat=quat_90z)
 
-    measurements = dev.get_substep_measurements(sim)
+    measurements = dev.get_measurements(sim)
     self.assertIn("cube/xpos", measurements)
     self.assertIn("cube/xquat", measurements)
     self.assertEqual(measurements["cube/xpos"].shape, (nworld, 3))
@@ -240,7 +240,7 @@ class MocapDeviceTest(absltest.TestCase):
     self.assertIn("target/mocap_pos", spec)
     self.assertIn("target/mocap_quat", spec)
 
-  def test_get_substep_measurements(self):
+  def test_get_measurements(self):
     dev, sim, nworld = _setup_mocap_device()
     data = sim.data
 
@@ -251,7 +251,7 @@ class MocapDeviceTest(absltest.TestCase):
     )
     dev.set_quat(None, quat)
 
-    measurements = dev.get_substep_measurements(sim)
+    measurements = dev.get_measurements(sim)
     self.assertIn("target/mocap_pos", measurements)
     self.assertIn("target/mocap_quat", measurements)
     self.assertEqual(measurements["target/mocap_pos"].shape, (4, 3))

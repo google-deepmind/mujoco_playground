@@ -85,7 +85,7 @@ class PendulumDevice(device_module.Device):
   ) -> None:
     simulator.data.ctrl[:, 0] = consumed_substep_commands["motor_ctrl"]
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:
@@ -119,7 +119,7 @@ class ClockDevice(device_module.Device):
   def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
     return {self._time_output_name: specs.Array(shape=(), dtype=np.float32)}
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

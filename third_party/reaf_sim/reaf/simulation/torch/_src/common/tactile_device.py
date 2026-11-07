@@ -156,7 +156,7 @@ class TactileDevice(device.Device):
     }
 
   @override
-  def get_substep_measurements(  # pyrefly: ignore[bad-override]
+  def get_measurements(  # pyrefly: ignore[bad-override]
       self,
       simulator: simulator_module.Simulator,
       *,

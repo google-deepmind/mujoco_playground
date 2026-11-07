@@ -111,7 +111,7 @@ class SiteDevice(device.Device):
         f"{self._name}/xmat": specs.Array(shape=(9,), dtype=np.float32),
     }
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

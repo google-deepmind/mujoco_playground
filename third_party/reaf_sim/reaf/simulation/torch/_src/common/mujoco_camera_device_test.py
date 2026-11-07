@@ -108,6 +108,11 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
         devices=entities,
     )
 
+  def _run_on_substep(self, device):
+    """Runs the substep hooks of the devices without stepping physics."""
+    for dev in device.devices:
+      dev.on_substep(device.sim)
+
   @parameterized.product(
       impl=[
           ("cpp", types.Impl.CPP),
@@ -138,7 +143,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     nworld = 1
     device = self._create_device(entity, impl=impl, nworld=nworld)
 
-    device.update_measurements()
+    device.begin_stepping()
     measurements = device.get_measurements()
 
     for key in expected_keys:
@@ -189,28 +194,25 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     device = self._create_device(entity, impl=impl, nworld=nworld)
 
     # Step 0: Should render
-    device.update_measurements()
+    device.begin_stepping()
     m0 = {k: v.clone() for k, v in device.get_measurements().items()}
     self.assertIn(measurement_key, m0)
 
     # Step 1: Advance physics and verify cached measurement is returned.
     device.sim.data.qpos[0] = 1.0  # Move cart
     device.sim.forward()
-    device.sim.step()
-
-    device.update_measurements()
+    device.step({})
     m1 = device.get_measurements()
     self.assertTrue(torch.equal(m0[measurement_key], m1[measurement_key]))
 
     # Step 2: Advance physics again to reach interval 2 -> should render again with new qpos
-    device.sim.step()
+    device.step({})
+    m2 = device.get_measurements()
     side = (
         entity.render_now(device.sim)[measurement_key]
         if impl == types.Impl.CPP
         else None
     )
-    device.update_measurements()
-    m2 = device.get_measurements()
     self.assertFalse(torch.equal(m0[measurement_key], m2[measurement_key]))
     if side is not None:
       self.assertTrue(torch.equal(m2[measurement_key], side))
@@ -219,7 +221,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
       impl=[types.Impl.CPP, types.Impl.WARP],
       qpos_shape=["1d", "2d"],
   )
-  def test_get_substep_measurements_qpos_shapes(self, impl, qpos_shape):
+  def test_get_measurements_qpos_shapes(self, impl, qpos_shape):
     # This test ensures that MujocoCameraDevice can handle both 1D and 2D
     # qpos tensors. For WARP, this catches mutations in the qpos shape
     # handling logic.
@@ -273,7 +275,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     ):
       entity.initialize(sim)
       # Should not raise
-      entity.get_substep_measurements(sim)
+      entity.on_begin_stepping(sim)
 
     if impl == types.Impl.WARP:
       # Verify qpos was copied correctly (checking internal state since it's a
@@ -334,14 +336,13 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     device = self._create_device(entity)
 
     # The first measurement after a reset renders.
-    device.update_measurements()
+    device.begin_stepping()
     first = device.get_measurements()["fixed_rgb"].clone()
 
     # Later measurements return the same frame, even after the cart moved.
     device.sim.data.qpos[0] = 1.0
     device.sim.forward()
-    device.sim.step()
-    device.update_measurements()
+    device.step({})
     self.assertTrue(torch.equal(device.get_measurements()["fixed_rgb"], first))
 
     # After a reset, the next measurement renders the current state. `reset`
@@ -349,7 +350,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     device.reset()
     device.sim.data.qpos[0] = 1.0
     device.sim.forward()
-    device.update_measurements()
+    device.begin_stepping()
     self.assertFalse(torch.equal(device.get_measurements()["fixed_rgb"], first))
 
   def test_render_now_renders_current_state_without_side_effects(self):
@@ -359,7 +360,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     )
     entity = self._create_entity(rgb_depth, render_rate_hz=None)
     # An on-demand-only device on the same camera publishes no measurements and
-    # never renders on reset or during `update_measurements`.
+    # never renders on reset or during reads.
     on_demand = mujoco_camera_device.MujocoCameraDevice(
         camera_name="fixed",
         width=self._width,
@@ -400,7 +401,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
         on_demand._renderer, "render", wraps=on_demand._renderer.render
     ) as on_demand_spy:
       device.reset()
-      device.update_measurements()
+      device.begin_stepping()
       self.assertEqual(on_demand_spy.call_count, 0)
     self.assertNotIn("on_demand_rgb", device.get_measurements())
     first_rgb = device.get_measurements()["fixed_rgb"].clone()
@@ -409,8 +410,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     # Without `render_rate_hz`, later measurements keep the reset frames.
     device.sim.data.qpos[0] = 1.0
     device.sim.forward()
-    device.sim.step()
-    device.update_measurements()
+    device.step({})
     self.assertTrue(
         torch.equal(device.get_measurements()["fixed_rgb"], first_rgb)
     )
@@ -541,6 +541,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
       # Move the cart to a distinct pose each substep.
       device.sim.data.qpos[0] = 0.3 * t
       device.sim.forward()
+      self._run_on_substep(device)
       device.update_measurements()
       m = device.get_measurements()
       imgs_base.append(m["base_rgb"].clone())
@@ -615,6 +616,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     # Substep 0: pose = 0.0. Both render pose 0.0.
     device.sim.data.qpos[0] = 0.0
     device.sim.forward()
+    self._run_on_substep(device)
     device.update_measurements()
     m0 = {k: v.clone() for k, v in device.get_measurements().items()}
     self.assertTrue(torch.equal(m0["delayed_rgb"], m0["base_rgb"]))
@@ -624,6 +626,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     # pose 1.0 into its buffer and returns its cached frame from substep 0.
     device.sim.data.qpos[0] = 1.0
     device.sim.forward()
+    self._run_on_substep(device)
     device.update_measurements()
     m1 = {k: v.clone() for k, v in device.get_measurements().items()}
     self.assertTrue(torch.equal(m1["delayed_rgb"], m0["base_rgb"]))
@@ -634,6 +637,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     # qpos from 100 ms ago (substep 1, pose 1.0, which equals m1["base_rgb"]).
     device.sim.data.qpos[0] = 2.0
     device.sim.forward()
+    self._run_on_substep(device)
     device.update_measurements()
     m2 = {k: v.clone() for k, v in device.get_measurements().items()}
     self.assertTrue(torch.equal(m2["delayed_rgb"], m1["base_rgb"]))
@@ -657,6 +661,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     for t in range(delay_substeps + 2):
       device.sim.data.qpos[0] = 0.3 * t
       device.sim.forward()
+      self._run_on_substep(device)
       device.update_measurements()
       device.clock.tick_substep()
     measurements = device.get_measurements()
@@ -671,7 +676,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     # to the model default, hence the explicit pose below.
     device.sim.data.qpos[0] = 2.0
     device.sim.forward()
-    device.update_measurements()
+    device.begin_stepping()
     measurements = device.get_measurements()
     self.assertTrue(
         torch.equal(measurements["delayed_rgb"], measurements["base_rgb"])
@@ -685,17 +690,18 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     device = self._create_device(entity, impl=types.Impl.CPP, nworld=1)
 
     # Render at substep 0, then step once to substep 1 (non-multiple of 2).
-    device.update_measurements()
-    device.sim.step()
+    device.begin_stepping()
+    device.step({})
     self.assertEqual(device.clock.global_substep, 1)
 
     # Reset with env_mask=[True] while global_substep is 1 (odd).
-    # _last_measurements is cleared on reset, so update_measurements()
-    # must render a fresh frame instead of returning an empty dict.
-    device.reset(env_mask=torch.tensor([True]))
+    # _last_measurements is cleared on reset, so begin_stepping() must render a
+    # fresh frame even though this is not a render tick.
+    env_mask = torch.tensor([True])
+    device.reset(env_mask=env_mask)
     device.sim.data.qpos[0] = 1.5
     device.sim.forward()
-    device.update_measurements()
+    device.begin_stepping(env_mask)
     measurements = device.get_measurements()
     self.assertIn("fixed_rgb", measurements)
     self.assertEqual(
@@ -709,7 +715,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     self.assertIsNone(entity._renderer)
 
     device = self._create_device(entity, impl=types.Impl.CPP, nworld=1)
-    device.update_measurements()
+    device.begin_stepping()
     self.assertIsNotNone(entity._renderer)
     assert entity._renderer is not None
 
@@ -724,7 +730,7 @@ class MujocoCameraDeviceTest(parameterized.TestCase):
     mock_close.assert_called_once()
     device.reset()
     with self.assertRaisesRegex(RuntimeError, "Renderer is not initialized"):
-      device.update_measurements()
+      device.begin_stepping()
 
 
 if __name__ == "__main__":

@@ -63,7 +63,7 @@ class SiteDeviceTest(absltest.TestCase):
     self.assertEqual(meas_spec["ee/xmat"].shape, (9,))
 
     # Check measurements shape
-    measurements = dev.get_substep_measurements(sim)
+    measurements = dev.get_measurements(sim)
     self.assertEqual(measurements["ee/xpos"].shape, (nworld, 3))
     self.assertEqual(measurements["ee/xmat"].shape, (nworld, 9))
 

@@ -79,7 +79,7 @@ class MeasurementDeviceTest(absltest.TestCase):
     self.assertEqual(meas_spec["state/scaled_arm"].shape, (3,))
     self.assertEqual(meas_spec["state/qpos"].shape, (1,))
 
-    measurements = dev.get_substep_measurements(sim)
+    measurements = dev.get_measurements(sim)
     self.assertEqual(measurements["state/xpos"].shape, (1, 2, 3))
     torch.testing.assert_close(
         measurements["state/scaled_arm"],

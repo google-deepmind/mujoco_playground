@@ -82,7 +82,7 @@ class MeasurementDevice(device.Device):
   def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
     return self._specs
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

@@ -143,7 +143,7 @@ class ArticulatedDevice(device.Device):
     return result
 
   @override
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

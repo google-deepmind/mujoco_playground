@@ -85,7 +85,7 @@ class ArticulatedDeviceTest(absltest.TestCase):
     # Robot joints are the first 2 of 3 total qpos/qvel entries.
     data.qpos[:] = torch.tensor([[1.0, 2.0, 3.0]] * _NWORLD)
     data.qvel[:] = torch.tensor([[4.0, 5.0, 6.0]] * _NWORLD)
-    m = dev.get_substep_measurements(sim)
+    m = dev.get_measurements(sim)
     np.testing.assert_allclose(
         m["robot_state/joint_pos"].cpu().numpy()[0], [1.0, 2.0]
     )
@@ -95,7 +95,7 @@ class ArticulatedDeviceTest(absltest.TestCase):
 
   def test_joint_range(self):
     dev, sim, _ = _setup(measurements=["joint_range"])
-    m = dev.get_substep_measurements(sim)
+    m = dev.get_measurements(sim)
     np.testing.assert_allclose(
         m["robot_state/joint_range"].cpu().numpy()[0],
         [[-1.57, 1.57], [-3.14, 3.14]],
@@ -104,7 +104,7 @@ class ArticulatedDeviceTest(absltest.TestCase):
   def test_no_measurements(self):
     dev, sim, _ = _setup()
     self.assertEqual(dev.substep_measurements_spec(), {})
-    self.assertEqual(dev.get_substep_measurements(sim), {})
+    self.assertEqual(dev.get_measurements(sim), {})
 
   def test_set_qpos(self):
     dev, sim, _ = _setup()

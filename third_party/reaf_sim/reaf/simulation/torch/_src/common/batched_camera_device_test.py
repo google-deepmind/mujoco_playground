@@ -23,6 +23,7 @@ import mujoco
 import numpy as np
 from reaf.simulation.torch._src.common import batched_camera_device
 from reaf.simulation.torch._src.common import mujoco_camera_device
+from reaf.simulation.torch._src.core import device_layer
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import types
 import torch
@@ -69,6 +70,14 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     self._cameras_to_close.append(camera)
     return camera
 
+  def _create_device_layer(self, sim, cameras):
+    """Drives `cameras` like an environment, one physics substep per step."""
+    return device_layer.DeviceLayer(
+        simulator=sim,
+        control_timestep=sim.mj_model.opt.timestep,
+        devices=cameras,
+    )
+
   @parameterized.parameters(
       (types.Impl.CPP,),
       (types.Impl.WARP,),
@@ -90,9 +99,10 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     camera = self._create_camera(render_rate_hz=500)
     with self.assertRaisesRegex(RuntimeError, "Device not initialized"):
       camera.render_now(sim)
-    camera.initialize(sim)
+    dl = self._create_device_layer(sim, [camera])
+    dl.begin_stepping()
 
-    measurements = camera.get_substep_measurements(sim)
+    measurements = camera.get_measurements(sim)
 
     self.assertIn("test_rgb", measurements)
     img = measurements["test_rgb"]
@@ -122,65 +132,92 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     camera = self._create_camera(render_rate_hz=250)
     # None: renders only the first measurement after each reset.
     reset_only_camera = self._create_camera(
-        name="reset_only_camera", render_rate_hz=None
+        name="reset_only_camera",
+        camera_configs=[
+            {"camera_name": "test_cam", "output_name": "reset_only"}
+        ],
+        render_rate_hz=None,
     )
     # On-demand only: publishes no measurements and never renders by itself.
     on_demand_camera = self._create_camera(
         name="on_demand_camera", render_rate_hz=None, on_demand_only=True
     )
     self.assertEqual(on_demand_camera.substep_measurements_spec(), {})
-    for cam in (camera, reset_only_camera, on_demand_camera):
-      cam.initialize(sim)
-      cam.reset(sim)
+    dl = self._create_device_layer(
+        sim, [camera, reset_only_camera, on_demand_camera]
+    )
 
-    # Substep 0: renders and returns measurements
-    m0 = camera.get_substep_measurements(sim)
-    self.assertIn("test_rgb", m0)
-    r0 = reset_only_camera.get_substep_measurements(sim)
+    # Reads do not render: nothing is cached until `begin_stepping()`.
+    assert camera._renderer is not None
+    with mock.patch.object(
+        camera._renderer, "render", wraps=camera._renderer.render
+    ) as read_spy:
+      with self.assertRaisesRegex(RuntimeError, "nothing was rendered"):
+        camera.get_measurements(sim)
+      self.assertEqual(read_spy.call_count, 0)
+
+    # Substep 0: `begin_stepping()` renders the first frame of each camera,
+    # except the on-demand one.
     assert on_demand_camera._renderer is not None
     with mock.patch.object(
         on_demand_camera._renderer,
         "render",
         wraps=on_demand_camera._renderer.render,
     ) as on_demand_spy:
-      self.assertEqual(on_demand_camera.get_substep_measurements(sim), {})
+      dl.begin_stepping()
+      self.assertEqual(on_demand_camera.get_measurements(sim), {})
       self.assertEqual(on_demand_spy.call_count, 0)
+    m0 = camera.get_measurements(sim)
+    self.assertIn("test_rgb", m0)
+    r0 = reset_only_camera.get_measurements(sim)
     on_demand_frame = on_demand_camera.render_now(sim)
-    self.assertTrue(torch.equal(on_demand_frame["test_rgb"], r0["test_rgb"]))
+    self.assertTrue(
+        torch.equal(on_demand_frame["test_rgb"], r0["reset_only_rgb"])
+    )
 
     # Calling again on substep 0 is idempotent: returns cached measurements
-    m0_repeat = camera.get_substep_measurements(sim)
+    m0_repeat = camera.get_measurements(sim)
     self.assertIs(m0["test_rgb"], m0_repeat["test_rgb"])
 
     # Substep 1: does not re-render, returns cached measurements
-    sim.step()
-    m1 = camera.get_substep_measurements(sim)
+    dl.step({})
+    m1 = camera.get_measurements(sim)
     self.assertIs(m0["test_rgb"], m1["test_rgb"])
 
     # Substep 2: renders again, returns fresh measurements
-    sim.step()
-    m2 = camera.get_substep_measurements(sim)
+    dl.step({})
+    m2 = camera.get_measurements(sim)
     self.assertIsNot(m0["test_rgb"], m2["test_rgb"])
     # Without a render rate, measurements keep returning the first frame.
-    r2 = reset_only_camera.get_substep_measurements(sim)
-    self.assertIs(r0["test_rgb"], r2["test_rgb"])
+    r2 = reset_only_camera.get_measurements(sim)
+    self.assertIs(r0["reset_only_rgb"], r2["reset_only_rgb"])
 
-    # After the sphere moves and a reset, it renders the current state.
+    # After a reset and moving the sphere, `begin_stepping()` renders the
+    # current state.
+    dl.reset()
     sim.data.qpos[0] = 0.3
     sim.forward()
-    reset_only_camera.reset(sim)
-    r3 = reset_only_camera.get_substep_measurements(sim)
-    self.assertFalse(torch.equal(r0["test_rgb"], r3["test_rgb"]))
+    dl.begin_stepping()
+    r3 = reset_only_camera.get_measurements(sim)
+    self.assertFalse(torch.equal(r0["reset_only_rgb"], r3["reset_only_rgb"]))
+    m3 = camera.get_measurements(sim)
+    self.assertFalse(torch.equal(m3["test_rgb"], m2["test_rgb"]))
 
-    # Calling `render_now` on a scheduled substep does not suppress scheduled
-    # `get_substep_measurements` renders.
-    sim.step()
-    sim.step()
+    # `render_now` leaves the cached frames and the render schedule untouched,
+    # so it cannot suppress the next scheduled render.
+    dl.step({})
+    self.assertEqual(sim.clock.global_substep, 3)
+    last_rendered_substep = camera._last_rendered_substep
+    camera.render_now(sim)
+    self.assertEqual(camera._last_rendered_substep, last_rendered_substep)
+    self.assertIs(camera.get_measurements(sim)["test_rgb"], m3["test_rgb"])
+    dl.step({})
     self.assertEqual(sim.clock.global_substep, 4)
-    side = camera.render_now(sim)
-    m4 = camera.get_substep_measurements(sim)
-    self.assertFalse(torch.equal(m4["test_rgb"], m2["test_rgb"]))
-    self.assertTrue(torch.equal(m4["test_rgb"], side["test_rgb"]))
+    m4 = camera.get_measurements(sim)
+    self.assertIsNot(m4["test_rgb"], m3["test_rgb"])
+    self.assertTrue(
+        torch.equal(m4["test_rgb"], camera.render_now(sim)["test_rgb"])
+    )
 
   def test_render_now_renders_requested_cameras_without_side_effects(self):
     mj_spec = mujoco.MjSpec.from_string(_SIMPLE_XML)
@@ -212,10 +249,9 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     self.assertEqual(spec["a_segmentation"].shape, (48, 64, 2))
     self.assertEqual(spec["a_segmentation"].dtype, np.int32)
 
-    camera.initialize(sim)
-    camera.reset(sim)
+    dl = self._create_device_layer(sim, [camera])
 
-    # Side-channel subset render works immediately after reset without
+    # Side-channel subset render works before the first measurement without
     # populating cached substep measurements.
     pre_step = camera.render_now(
         sim,
@@ -225,7 +261,8 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     self.assertEqual(set(pre_step.keys()), {"a_rgb"})
     self.assertEqual(camera._last_measurements, {})
 
-    first = dict(camera.get_substep_measurements(sim))
+    dl.begin_stepping()
+    first = dict(camera.get_measurements(sim))
     self.assertEqual(first["a_rgb"].shape, (1, 48, 64, 3))
     self.assertEqual(first["a_rgb"].dtype, torch.uint8)
     self.assertEqual(first["a_depth"].shape, (1, 48, 64))
@@ -238,8 +275,8 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     # Move the sphere: measurements keep returning the reset frames.
     sim.data.qpos[0] = 0.3
     sim.forward()
-    sim.step()
-    self.assertIs(camera.get_substep_measurements(sim)["a_rgb"], first["a_rgb"])
+    dl.step({})
+    self.assertIs(camera.get_measurements(sim)["a_rgb"], first["a_rgb"])
 
     # Rendering only RGB on camera `a` runs a single render pass and leaves
     # cached substep measurements untouched.
@@ -255,8 +292,8 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
       self.assertEqual(render_spy.call_count, 1)
     self.assertEqual(set(rgb_only.keys()), {"a_rgb"})
     self.assertFalse(torch.equal(rgb_only["a_rgb"], first["a_rgb"]))
-    self.assertIs(camera.get_substep_measurements(sim)["a_rgb"], first["a_rgb"])
-    self.assertIs(camera.get_substep_measurements(sim)["b_rgb"], first["b_rgb"])
+    self.assertIs(camera.get_measurements(sim)["a_rgb"], first["a_rgb"])
+    self.assertIs(camera.get_measurements(sim)["b_rgb"], first["b_rgb"])
 
     # Rendering only RGB on camera `b` (after skipping `a` in `camera_configs`)
     # uses `b`'s own camera.
@@ -267,7 +304,7 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     )
     self.assertEqual(set(rendered_b.keys()), {"b_rgb"})
     self.assertFalse(torch.equal(rendered_b["b_rgb"], rgb_only["a_rgb"]))
-    self.assertIs(camera.get_substep_measurements(sim)["b_rgb"], first["b_rgb"])
+    self.assertIs(camera.get_measurements(sim)["b_rgb"], first["b_rgb"])
 
     # Rendering only DEPTH and then SEGMENTATION on camera `a` leaves cached
     # substep measurements untouched.
@@ -278,9 +315,7 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     )
     self.assertEqual(set(depth_only.keys()), {"a_depth"})
     self.assertFalse(torch.equal(depth_only["a_depth"], first["a_depth"]))
-    self.assertIs(
-        camera.get_substep_measurements(sim)["a_depth"], first["a_depth"]
-    )
+    self.assertIs(camera.get_measurements(sim)["a_depth"], first["a_depth"])
 
     seg_only = camera.render_now(
         sim,
@@ -306,7 +341,7 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     )
     self.assertTrue(torch.equal(rendered_all["a_rgb"], rgb_only["a_rgb"]))
     self.assertTrue(torch.equal(rendered_all["b_rgb"], rendered_b["b_rgb"]))
-    self.assertIs(camera.get_substep_measurements(sim)["a_rgb"], first["a_rgb"])
+    self.assertIs(camera.get_measurements(sim)["a_rgb"], first["a_rgb"])
 
     with self.assertRaisesRegex(ValueError, "At least one render mode"):
       camera.render_now(sim, render_mode=mujoco_camera_device.RenderMode(0))
@@ -317,7 +352,7 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
     with self.assertRaisesRegex(ValueError, "Unknown camera output names"):
       camera.render_now(sim, output_names=["missing"])
 
-    camera.reset(sim)
+    dl.reset()
     multi_world_data = mock.create_autospec(types.Data, instance=True)
     multi_world_data.nworld = 2
     with mock.patch.object(
@@ -327,7 +362,7 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
         return_value=multi_world_data,
     ):
       with self.assertRaisesRegex(ValueError, "only supports nworld=1"):
-        camera.get_substep_measurements(sim)
+        dl.begin_stepping()
       with self.assertRaisesRegex(ValueError, "only supports nworld=1"):
         camera.render_now(sim)
 

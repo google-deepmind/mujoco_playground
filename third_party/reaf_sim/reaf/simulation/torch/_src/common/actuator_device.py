@@ -221,7 +221,7 @@ class ActuatorDevice(device.Device):
     )
 
   @override
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

@@ -309,7 +309,33 @@ class CameraDevice(device.Device):
     """Spec for measurements generated once per step."""
     return self._measurements_spec
 
-  def get_substep_measurements(
+  def on_substep(self, simulator: simulator_module.Simulator) -> None:
+    """Renders on render ticks."""
+    self._render_with_interval(simulator)
+
+  def on_begin_stepping(
+      self,
+      simulator: simulator_module.Simulator,
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Renders the first frame after a full reset."""
+    del env_mask  # Partial resets zero the frames instead (see `reset()`).
+    self._render_with_interval(simulator)
+
+  def get_measurements(
+      self,
+      simulator: simulator_module.Simulator,
+  ) -> Mapping[str, torch.Tensor]:
+    """Returns the latest rendered frames, without rendering."""
+    del simulator
+    if self._measurements_spec and not self._last_measurements:
+      raise RuntimeError(
+          f'{self.name}: nothing was rendered since the last reset. Call'
+          ' `DeviceLayer.begin_stepping()` after resetting.'
+      )
+    return self._last_measurements
+
+  def _render_with_interval(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

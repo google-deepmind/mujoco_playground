@@ -132,7 +132,7 @@ class RuntimeTest(parameterized.TestCase):
     sim.data.obj.qvel[:] = mj_data.qvel[:]
     sim.data.obj.actuator_force[:] = mj_data.actuator_force[:]
     dev.initialize(sim)
-    m = dev.get_substep_measurements(sim)
+    m = dev.get_measurements(sim)
 
     np.testing.assert_allclose(
         m["robot/joint_pos"].numpy(), mj_data.qpos[None, :], rtol=1e-5
@@ -184,7 +184,7 @@ class RuntimeTest(parameterized.TestCase):
     sim.forward()
     dev.initialize(sim)
 
-    m = dev.get_substep_measurements(sim)
+    m = dev.get_measurements(sim)
 
     np.testing.assert_allclose(
         m["robot/tendon_length"].numpy()[0, 0], mj_data.ten_length[0], rtol=1e-5
@@ -260,8 +260,8 @@ class RuntimeTest(parameterized.TestCase):
     sim.step()
     sim.forward()
 
-    # Verify get_substep_measurements reads mapped ctrl and force slices.
-    m = dev.get_substep_measurements(sim)
+    # Verify get_measurements reads mapped ctrl and force slices.
+    m = dev.get_measurements(sim)
     np.testing.assert_allclose(m["dc/ctrl"].cpu().numpy(), ctrl.cpu().numpy())
     np.testing.assert_allclose(
         sim.data.ctrl[:, 1 : 1 + num_ctrl].cpu().numpy(), ctrl.cpu().numpy()
@@ -310,7 +310,7 @@ class RuntimeTest(parameterized.TestCase):
     self.assertEqual(sim.mj_model.actuator_outadr[1], 3)
     dev.set_substep_commands(sim, {"dc/ctrl": torch.tensor([[12.0]])})
     sim.forward()
-    m = dev.get_substep_measurements(sim)
+    m = dev.get_measurements(sim)
     self.assertNotEqual(float(m["dc/actuator_force"][0, 0]), 0.0)
     np.testing.assert_allclose(
         m["dc/actuator_force"].numpy(),
@@ -333,7 +333,7 @@ class RuntimeTest(parameterized.TestCase):
         measurements=["joint_pos"],
     )
     sim.data.qpos[:, 0] = 0.7
-    m = dev.get_substep_measurements(sim)
+    m = dev.get_measurements(sim)
     np.testing.assert_allclose(m["dc/joint_pos"].numpy(), [[0.7]], rtol=1e-5)
 
   def test_mixed_transmissions(self):
@@ -358,7 +358,7 @@ class RuntimeTest(parameterized.TestCase):
     sim.forward()
 
     specs_dict = dev.substep_measurements_spec()
-    m = dev.get_substep_measurements(sim)
+    m = dev.get_measurements(sim)
     self.assertEqual(specs_dict["dc/joint_pos"].shape, (1,))
     self.assertEqual(specs_dict["dc/joint_vel"].shape, (1,))
     self.assertEqual(specs_dict["dc/joint_range"].shape, (1, 2))

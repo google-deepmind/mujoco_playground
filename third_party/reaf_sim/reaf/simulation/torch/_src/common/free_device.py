@@ -135,7 +135,7 @@ class FreeDevice(device.Device):
         for m in self._measurements
     }
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:
@@ -295,7 +295,7 @@ class MocapDevice(device.Device):
         f"{self._name}/mocap_quat": specs.Array(shape=(4,), dtype=np.float32),
     }
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:

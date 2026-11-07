@@ -457,24 +457,30 @@ class MujocoCameraDevice(device.Device):
     """Spec for the produced substep outputs."""
     return self._measurements_spec
 
-  def get_substep_measurements(
+  def on_substep(self, simulator: simulator_module.Simulator) -> None:
+    """Records the delayed qpos and renders on render ticks."""
+    self._render_with_interval(simulator)
+
+  def on_begin_stepping(
+      self,
+      simulator: simulator_module.Simulator,
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Records the reset qpos and renders the first frame after a reset."""
+    del env_mask  # `reset()` only clears the history if it resets the world.
+    self._render_with_interval(simulator)
+
+  def get_measurements(
       self, simulator: simulator_module.Simulator
   ) -> Mapping[str, torch.Tensor]:
-    """Renders the scene using MuJoCo rendering.
-
-    Args:
-      simulator: The simulator instance.
-
-    Returns:
-      A mapping containing the rendered images.
-
-    Raises:
-      ValueError: If `data.nworld` is greater than 1.
-      RuntimeError: If the renderer has not been initialized.
-      ValueError: If `data.obj` is not of type `mujoco.MjData` on the CPP
-        no-delay path.
-    """
-    return self._render_with_interval(simulator)
+    """Returns the latest rendered frames, without rendering."""
+    del simulator
+    if self._measurements_spec and not self._last_measurements:
+      raise RuntimeError(
+          f'{self.name}: nothing was rendered since the last reset. Call'
+          ' `DeviceLayer.begin_stepping()` after resetting.'
+      )
+    return self._last_measurements
 
   def render_now(
       self,
