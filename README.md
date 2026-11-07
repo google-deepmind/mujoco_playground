@@ -2,7 +2,7 @@
 
 [![Build](https://img.shields.io/github/actions/workflow/status/google-deepmind/mujoco_playground/ci.yml?branch=main)](https://github.com/google-deepmind/mujoco_playground/actions)
 [![PyPI version](https://img.shields.io/pypi/v/playground)](https://pypi.org/project/playground/)
-[![Documentation Status](https://readthedocs.org/projects/reaf-sim/badge/?version=latest)](https://reaf-sim.readthedocs.io/en/latest/playground/index.html)
+[![Documentation Status](https://img.shields.io/readthedocs/reaf-sim/latest)](https://reaf-sim.readthedocs.io/en/latest/playground/index.html)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![Banner for playground](https://www.gstatic.com/reaf-sim/banner/0/banner.png)
 

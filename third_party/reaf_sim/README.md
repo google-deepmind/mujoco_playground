@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/google-deepmind/reaf-sim/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/google-deepmind/reaf-sim/actions/workflows/ci.yml?query=branch%3Amain)
 [![PyPI version](https://img.shields.io/pypi/v/reaf-sim)](https://pypi.org/project/reaf-sim/)
-[![Documentation Status](https://readthedocs.org/projects/reaf-sim/badge/?version=latest)](https://reaf-sim.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://img.shields.io/readthedocs/reaf-sim/latest)](https://reaf-sim.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 `reaf-sim` is a simulation environment framework written in [PyTorch](https://pytorch.org/) and built on [MuJoCo](https://github.com/google-deepmind/mujoco) and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) with the [Robotics Environment Authoring Framework (REAF)](https://github.com/google-deepmind/reaf).
