@@ -34,7 +34,6 @@ class CartpoleRslRlOnPolicyRunnerCfg(rsl_config.RslRlOnPolicyRunnerCfg):
 
   def __post_init__(self):
     self.algorithm.entropy_coef = 0.001
-    self.vecenv_wrapper_cfg.is_finite_horizon = False
 
 
 @dataclasses.dataclass
@@ -101,11 +100,6 @@ class PickCubeRslRlOnPolicyRunnerCfg(rsl_config.RslRlOnPolicyRunnerCfg):
           "critic": ["critic"],
       }
   )
-  vecenv_wrapper_cfg: rsl_config.RslRlVecEnvWrappercfg = dataclasses.field(
-      default_factory=lambda: rsl_config.RslRlVecEnvWrappercfg(
-          is_finite_horizon=False
-      )
-  )
   nworld: int = 8192
   max_iterations: int = 1000
   num_steps_per_env: int = 24
@@ -144,11 +138,6 @@ class PickCubeVisionRslRlOnPolicyRunnerCfg(rsl_config.RslRlOnPolicyRunnerCfg):
           "actor": ["policy", "camera"],
           "critic": ["critic"],
       }
-  )
-  vecenv_wrapper_cfg: rsl_config.RslRlVecEnvWrappercfg = dataclasses.field(
-      default_factory=lambda: rsl_config.RslRlVecEnvWrappercfg(
-          is_finite_horizon=False
-      )
   )
   torch_compile_mode: str | None = "default"
   nworld: int = 4096
@@ -204,11 +193,6 @@ class G1WholeBodyTrackingRslRlOnPolicyRunnerCfg(
           "actor": ["policy"],
           "critic": ["critic"],
       }
-  )
-  vecenv_wrapper_cfg: rsl_config.RslRlVecEnvWrappercfg = dataclasses.field(
-      default_factory=lambda: rsl_config.RslRlVecEnvWrappercfg(
-          is_finite_horizon=False
-      )
   )
   nworld: int = 4096
   max_iterations: int = 30000

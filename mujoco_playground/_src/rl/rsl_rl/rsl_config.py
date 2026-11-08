@@ -24,7 +24,7 @@ from typing import Tuple
 class RslRlVecEnvWrappercfg:
   """Config for the RSL-RL VecEnv wrapper."""
 
-  is_finite_horizon: bool = True
+  is_finite_horizon: bool = False
 
 
 @dataclasses.dataclass
