@@ -574,6 +574,97 @@
           overflow-x: auto;
         }
       }
+
+      /* Robots Cards Grid */
+      .robots-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin: 22px 0 16px;
+      }
+
+      .robot-card {
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 22px 18px;
+        box-shadow: 0 2px 8px rgba(20, 35, 75, 0.04);
+        transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+      }
+
+      .robot-card:hover {
+        border-color: var(--teal);
+        box-shadow: 0 8px 24px rgba(20, 35, 75, 0.08);
+        transform: translateY(-2px);
+      }
+
+      .robot-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .robot-header h3 {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .robot-dof {
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+
+      .robot-badges {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+
+      .robot-desc {
+        margin: 0 0 16px;
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--body);
+        flex: 1;
+      }
+
+      .robot-links {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 14px;
+        font-weight: 500;
+        padding-top: 12px;
+        border-top: 1px solid #f1f5f9;
+        margin-top: auto;
+      }
+
+      .robot-links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--teal-dark);
+      }
+
+      @media (max-width: 768px) {
+        .robots-grid {
+          grid-template-columns: 1fr;
+        }
+        .diff-table th,
+        .diff-table td {
+          padding: 10px 12px;
+          font-size: 14px;
+        }
+      }
+
     </style>
 
     <script>
@@ -690,80 +781,47 @@
       <p>
         <strong>MuJoCo Playground 1.0</strong> is an open-source suite of sim
         and real environments built natively on
-        <a
-          href="https://github.com/google-deepmind/mujoco"
-          target="_blank"
-          rel="noopener noreferrer"
-          >MuJoCo</a
-        >,
-        <a
-          href="https://github.com/google-deepmind/mujoco_warp"
-          target="_blank"
-          rel="noopener noreferrer"
-          >MuJoCo Warp</a
-        >, and
-        <a
-          href="https://github.com/google-deepmind/reaf-sim"
-          target="_blank"
-          rel="noopener noreferrer"
-          >reaf-sim</a
-        >. Plug-and-play examples include large-batch GPU RL training, sim and
-        real teleoperation, system identification, zero-shot sim-to-real
-        deployment, and VLM-guided agentic manipulation.
-      </p>
-      <p>
-        Playground decouples hardware and sensor I/O (<a
-          href="https://reaf-sim.readthedocs.io/en/latest/user_guide/device_layer.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          >DeviceLayer</a
-        >) from plain-PyTorch task logic (<a
-          href="https://reaf-sim.readthedocs.io/en/latest/user_guide/task_layer.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          >TaskLayer</a
-        >), allowing researchers to move seamlessly between large-batch GPU
-        simulation, interactive CPU simulation in
-        <a
-          href="https://live.mujoco.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          >MuJoCo Studio</a
-        >, and physical robot hardware.
+        <a href="https://github.com/google-deepmind/mujoco" target="_blank" rel="noopener noreferrer">MuJoCo</a>,
+        <a href="https://github.com/google-deepmind/mujoco_warp" target="_blank" rel="noopener noreferrer">MuJoCo Warp</a>,
+        <a href="https://live.mujoco.org/" target="_blank" rel="noopener noreferrer">MuJoCo Studio</a>, and
+        <a href="https://github.com/google-deepmind/reaf-sim" target="_blank" rel="noopener noreferrer">reaf-sim</a>.
+        We rebuilt Playground on a stack that decouples hardware and sensor I/O
+        (<a href="https://reaf-sim.readthedocs.io/en/latest/user_guide/device_layer.html" target="_blank" rel="noopener noreferrer">DeviceLayer</a>)
+        from plain-PyTorch task logic
+        (<a href="https://reaf-sim.readthedocs.io/en/latest/user_guide/task_layer.html" target="_blank" rel="noopener noreferrer">TaskLayer</a>).
+        This new architecture makes sim-to-real workflows with MuJoCo more seamless than ever,
+        from large batch RL policy training to agentic VLM harness development.
       </p>
 
       <div class="links">
-        <a
-          href="https://github.com/google-deepmind/mujoco_playground"
-          target="_blank"
-          rel="noopener noreferrer"
-          >code</a
-        >
-        <a
-          href="https://reaf-sim.readthedocs.io/en/latest/playground/index.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          >docs</a
-        >
-        <a
-          href="https://github.com/google-deepmind/reaf-sim"
-          target="_blank"
-          rel="noopener noreferrer"
-          >reaf-sim</a
-        >
-        <a
-          href="https://github.com/google-deepmind/mujoco_playground/discussions"
-          target="_blank"
-          rel="noopener noreferrer"
-          >discussions</a
-        >
-        <a
-          href="https://pypi.org/project/playground/"
-          target="_blank"
-          rel="noopener noreferrer"
-          >pypi</a
-        >
-        <button type="button" id="cite-toggle">cite</button>
+        <a href="https://github.com/google-deepmind/mujoco_playground" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+        <a href="#quickstart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Quickstart
+        </a>
+        <a href="https://reaf-sim.readthedocs.io/en/latest/playground/index.html" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          Docs
+        </a>
+        <a href="https://github.com/google-deepmind/reaf-sim" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          reaf-sim
+        </a>
+        <a href="https://github.com/google-deepmind/mujoco_playground/discussions" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Discussions
+        </a>
+        <a href="https://pypi.org/project/playground/" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          PyPI
+        </a>
+        <button type="button" id="cite-toggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path></svg>
+          Cite
+        </button>
       </div>
 
       <div id="bibtex" class="bibtex">@software{mujoco_playground_2026,
@@ -775,18 +833,19 @@
     </section>
 
     <div class="hero-video-shell">
-      <div id="hero-video-stage" class="hero-video-stage">
+      <div class="hero-video-stage">
         <iframe
-          src="https://www.youtube.com/embed/-Fdhw-SHcsc?autoplay=1&mute=1&playsinline=1&loop=1&playlist=-Fdhw-SHcsc&rel=0"
-          title="MuJoCo Playground 1.0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
+          src="https://www.youtube-nocookie.com/embed/-Fdhw-SHcsc?autoplay=1&mute=1&loop=1&playlist=-Fdhw-SHcsc&controls=1&rel=0&modestbranding=1"
+          title="MuJoCo Playground 1.0 Video"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen
+          loading="eager"
         ></iframe>
       </div>
     </div>
 
-    <section class="quickstart" aria-label="Quickstart">
+    <section class="quickstart" id="quickstart" aria-label="Quickstart">
       <h2>Quickstart</h2>
       <p class="section-lead">
         Train and visualize a Cartpole policy directly with <code>uvx</code>.
@@ -868,6 +927,57 @@
   python -m mujoco_playground.rl.rsl_rl.play \
   --env=CartpoleBalance \
   --resume_path=/tmp/rslrl_logs/cartpole_balance</span></code></pre>
+      </div>
+    </section>
+
+    <section class="comparison-section" id="whats-new">
+      <h2>What's New in 1.0</h2>
+      <p class="section-lead">
+        MuJoCo Playground 1.0 upgrades the RSS 2025 research preview into a full sim-to-real development toolchain.
+      </p>
+
+      <div class="diff-table-shell">
+        <table class="diff-table">
+          <thead>
+            <tr>
+              <th style="width: 20%;">Capability</th>
+              <th style="width: 40%;">Playground 0.2</th>
+              <th style="width: 40%;">Playground 1.0</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Framework</strong></td>
+              <td>JAX</td>
+              <td>PyTorch</td>
+            </tr>
+            <tr>
+              <td><strong>Physics</strong></td>
+              <td>MJX (JAX or Warp backends)</td>
+              <td>MuJoCo or MuJoCo Warp</td>
+            </tr>
+            <tr>
+              <td><strong>Sim-to-Real</strong></td>
+              <td>Simulation-only RL gym environments</td>
+              <td>Sim and real environments with zero switching cost for sim-to-real</td>
+            </tr>
+            <tr>
+              <td><strong>Deployment Code</strong></td>
+              <td>No</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>Workflows</strong></td>
+              <td>RL envs</td>
+              <td>RL, sim/real teleop, sysid, agentic VLM</td>
+            </tr>
+            <tr>
+              <td><strong>Rendering</strong></td>
+              <td>simulate</td>
+              <td>Studio (<a href="https://live.mujoco.org/" target="_blank" rel="noopener noreferrer">live.mujoco.org</a>)</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -1047,90 +1157,75 @@
       ordering and control interfaces across simulation and physical hardware.
     </p>
 
-    <table class="robots-table">
-      <thead>
-        <tr>
-          <th>Robot</th>
-          <th>Modes</th>
-          <th>Description</th>
-          <th>Links</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>SO-101</strong></td>
-          <td>
-            <span class="mode-pill">sim</span
-            ><span class="mode-pill real">real</span>
-          </td>
-          <td>5-DoF + gripper follower and leader arms with wrist camera</td>
-          <td>
-            <a
-              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/robotstudio_so101/scene.xml"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Live model</a
-            >
-            &middot;
-            <a
-              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/robots/so101/real"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Hardware setup</a
-            >
-          </td>
-        </tr>
-        <tr>
-          <td><strong>i2rt YAM Pro</strong></td>
-          <td>
-            <span class="mode-pill">sim</span
-            ><span class="mode-pill real">real</span>
-          </td>
-          <td>6-DoF + gripper manipulation arm with wrist camera</td>
-          <td>
-            <a
-              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/i2rt_yam/scene_linear_4310.xml"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Live model</a
-            >
-            &middot;
-            <a
-              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/robots/yam/real"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Hardware setup</a
-            >
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Trossen WidowX AI</strong></td>
-          <td><span class="mode-pill">sim</span></td>
-          <td>6-DoF + gripper tabletop manipulation arm</td>
-          <td>
-            <a
-              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/trossen_wxai/scene.xml"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Live model</a
-            >
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Unitree G1</strong></td>
-          <td><span class="mode-pill">sim</span></td>
-          <td>29-DoF humanoid robot for whole-body motion tracking</td>
-          <td>
-            <a
-              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/unitree_g1/scene.xml"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Live model</a
-            >
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="robots-grid">
+      <article class="robot-card">
+        <div class="robot-header">
+          <div>
+            <h3>SO-101</h3>
+            <div class="robot-dof">5-DoF + Gripper</div>
+          </div>
+          <div class="robot-badges">
+            <span class="mode-pill">sim</span>
+            <span class="mode-pill real">real</span>
+          </div>
+        </div>
+        <p class="robot-desc">Follower and leader manipulation arms with wrist camera and teleoperation support.</p>
+        <div class="robot-links">
+          <a href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/robotstudio_so101/scene.xml" target="_blank" rel="noopener noreferrer">Live model ↗</a>
+          <a href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/robots/so101/real" target="_blank" rel="noopener noreferrer">Hardware setup ↗</a>
+        </div>
+      </article>
+
+      <article class="robot-card">
+        <div class="robot-header">
+          <div>
+            <h3>i2rt YAM Pro</h3>
+            <div class="robot-dof">6-DoF + Gripper</div>
+          </div>
+          <div class="robot-badges">
+            <span class="mode-pill">sim</span>
+            <span class="mode-pill real">real</span>
+          </div>
+        </div>
+        <p class="robot-desc">High-precision manipulation arm with wrist camera.</p>
+        <div class="robot-links">
+          <a href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/i2rt_yam/scene_linear_4310.xml" target="_blank" rel="noopener noreferrer">Live model ↗</a>
+          <a href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/robots/yam/real" target="_blank" rel="noopener noreferrer">Hardware setup ↗</a>
+        </div>
+      </article>
+
+      <article class="robot-card">
+        <div class="robot-header">
+          <div>
+            <h3>Trossen WidowX AI</h3>
+            <div class="robot-dof">6-DoF + Gripper</div>
+          </div>
+          <div class="robot-badges">
+            <span class="mode-pill">sim</span>
+          </div>
+        </div>
+        <p class="robot-desc">Tabletop manipulation arm for learning benchmarks and policy evaluation.</p>
+        <div class="robot-links">
+          <a href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/trossen_wxai/scene.xml" target="_blank" rel="noopener noreferrer">Live model ↗</a>
+        </div>
+      </article>
+
+      <article class="robot-card">
+        <div class="robot-header">
+          <div>
+            <h3>Unitree G1</h3>
+            <div class="robot-dof">29-DoF Humanoid</div>
+          </div>
+          <div class="robot-badges">
+            <span class="mode-pill">sim</span>
+          </div>
+        </div>
+        <p class="robot-desc">Full-scale humanoid robot for whole-body motion tracking and dynamic locomotion.</p>
+        <div class="robot-links">
+          <a href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/unitree_g1/scene.xml" target="_blank" rel="noopener noreferrer">Live model ↗</a>
+        </div>
+      </article>
+    </div>
 
     <footer>
       <span>Google DeepMind Robotics Simulation Team</span>
