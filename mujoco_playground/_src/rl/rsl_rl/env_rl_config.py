@@ -34,6 +34,7 @@ class CartpoleRslRlOnPolicyRunnerCfg(rsl_config.RslRlOnPolicyRunnerCfg):
 
   def __post_init__(self):
     self.algorithm.entropy_coef = 0.001
+    self.vecenv_wrapper_cfg.is_finite_horizon = False
 
 
 @dataclasses.dataclass
