@@ -574,6 +574,103 @@
           overflow-x: auto;
         }
       }
+    
+      /* Enhanced Links / Hero Action CTAs */
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 24px 0 18px;
+      }
+
+      .links a,
+      .links button {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--ink);
+        text-decoration: none;
+        padding: 7px 15px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(20, 35, 75, 0.04);
+      }
+
+      .links a svg,
+      .links button svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        fill: currentColor;
+      }
+
+      .links a:hover,
+      .links button:hover {
+        border-color: var(--teal);
+        color: var(--teal-dark);
+        background: var(--surface);
+        box-shadow: 0 3px 8px rgba(20, 35, 75, 0.08);
+        text-decoration: none;
+      }
+
+      /* Comparison Diff Table */
+      .comparison-section {
+        margin: 48px 0 20px;
+      }
+
+      .diff-table-shell {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(20, 35, 75, 0.04);
+        margin: 18px 0 24px;
+      }
+
+      .diff-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .diff-table th,
+      .diff-table td {
+        padding: 13px 18px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      .diff-table th {
+        background: var(--surface);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .diff-table tbody tr:hover {
+        background: rgba(248, 250, 252, 0.7);
+      }
+
+      .diff-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .diff-table td:nth-child(2),
+      .diff-table td:nth-child(3) {
+        color: var(--body);
+        font-weight: 400;
+      }
 
       /* Robots Cards Grid */
       .robots-grid {
@@ -771,6 +868,8 @@
       </div>
     </nav>
 
+
+
     <img
       class="hero-banner"
       src="https://www.gstatic.com/reaf-sim/banner/0/banner.png"
@@ -794,34 +893,13 @@
       </p>
 
       <div class="links">
-        <a href="https://github.com/google-deepmind/mujoco_playground" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          GitHub
-        </a>
-        <a href="#quickstart">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-          Quickstart
-        </a>
-        <a href="https://reaf-sim.readthedocs.io/en/latest/playground/index.html" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-          Docs
-        </a>
-        <a href="https://github.com/google-deepmind/reaf-sim" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-          reaf-sim
-        </a>
-        <a href="https://github.com/google-deepmind/mujoco_playground/discussions" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-          Discussions
-        </a>
-        <a href="https://pypi.org/project/playground/" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-          PyPI
-        </a>
-        <button type="button" id="cite-toggle">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path></svg>
-          Cite
-        </button>
+        <a href="https://github.com/google-deepmind/mujoco_playground" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="#quickstart">Quickstart</a>
+        <a href="https://reaf-sim.readthedocs.io/en/latest/playground/index.html" target="_blank" rel="noopener noreferrer">Docs</a>
+        <a href="https://github.com/google-deepmind/reaf-sim" target="_blank" rel="noopener noreferrer">reaf-sim</a>
+        <a href="https://github.com/google-deepmind/mujoco_playground/discussions" target="_blank" rel="noopener noreferrer">Discussions</a>
+        <a href="https://pypi.org/project/playground/" target="_blank" rel="noopener noreferrer">PyPI</a>
+        <button type="button" id="cite-toggle">Cite</button>
       </div>
 
       <div id="bibtex" class="bibtex">@software{mujoco_playground_2026,
