@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MuJoCo Playground</title>
+
+    <meta property="og:url" content="https://playground.mujoco.org/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MuJoCo Playground 1.0" />
+    <meta
+      property="og:description"
+      content="Robot environments, reinforcement learning tasks, and sim-to-real hardware workflows in PyTorch, built on MuJoCo, MuJoCo Warp, and reaf-sim."
+    />
+    <meta
+      property="og:image"
+      content="https://www.gstatic.com/reaf-sim/banner/0/banner.png"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MuJoCo Playground 1.0" />
+    <meta
+      name="twitter:description"
+      content="Robot environments, reinforcement learning tasks, and sim-to-real hardware workflows in PyTorch, built on MuJoCo, MuJoCo Warp, and reaf-sim."
+    />
+    <meta
+      name="twitter:image"
+      content="https://www.gstatic.com/reaf-sim/banner/0/banner.png"
+    />
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23f56e41'/%3E%3Cstop offset='50%25' stop-color='%2314b9c3'/%3E%3Cstop offset='100%25' stop-color='%23a028b4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7.41' fill='url(%23g)'/%3E%3Cpath fill='%23fff' d='m16,27.69l-5.15-12.35-1.86,10.87h-3.34L9.68,5.1h0l6.38,15.18,6.65-15.18h0l3.64,21.11h-3.34l-1.65-10.85-5.36,12.33h0Z'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --ink: #14234b;
+        --body: #24324a;
+        --muted: #5a677d;
+        --surface: #f7f9fc;
+        --border: #e4e9f1;
+        --coral: #f56e41;
+        --teal: #14b9c3;
+        --teal-dark: #0c7e86;
+        --teal-tint: rgba(20, 185, 195, 0.11);
+        --teal-tint-hover: rgba(20, 185, 195, 0.2);
+        --violet: #a028b4;
+        --obsidian: #0a0d14;
+        --brand-gradient: linear-gradient(
+          90deg,
+          #f56e41 0%,
+          #14b9c3 50%,
+          #a028b4 100%
+        );
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        max-width: 1080px;
+        margin: 0 auto 80px;
+        padding: 0 24px;
+        font-family:
+          "DM Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        line-height: 1.65;
+        color: var(--body);
+        background: #ffffff;
+        font-size: 18px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .top-accent {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--brand-gradient);
+        z-index: 100;
+      }
+
+      .site-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 0 14px;
+        margin-bottom: 28px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .site-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 17px;
+        color: var(--ink);
+        text-decoration: none;
+        letter-spacing: -0.01em;
+      }
+
+      .site-brand svg {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+      }
+
+      .site-tabs {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f3f6fa;
+        padding: 4px;
+        border-radius: 9px;
+      }
+
+      .site-tabs a {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #4a5568;
+        text-decoration: none;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+
+      .site-tabs a:hover {
+        color: var(--ink);
+      }
+
+      .site-tabs a.active {
+        background: #ffffff;
+        color: var(--teal-dark);
+        box-shadow: 0 1px 3px rgba(20, 35, 75, 0.08);
+      }
+
+      .hero-banner {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 14px;
+        margin-bottom: 28px;
+        box-shadow: 0 8px 28px rgba(20, 35, 75, 0.1);
+      }
+
+      .intro p {
+        margin: 0 0 16px;
+        font-size: 19px;
+        line-height: 1.7;
+      }
+
+      a {
+        color: var(--teal-dark);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 24px 0 18px;
+      }
+
+      .links a,
+      .links button {
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--teal-dark);
+        text-decoration: none;
+        padding: 7px 15px;
+        border-radius: 7px;
+        border: 1px solid rgba(20, 185, 195, 0.25);
+        background: var(--teal-tint);
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+
+      .links a:hover,
+      .links button:hover {
+        background: var(--teal-tint-hover);
+        border-color: rgba(20, 185, 195, 0.45);
+        text-decoration: none;
+      }
+
+      .bibtex {
+        display: none;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 16px 18px;
+        border-radius: 8px;
+        font-family: "DM Mono", monospace;
+        font-size: 13.5px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        margin: 12px 0 22px;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .bibtex.show {
+        display: block;
+      }
+
+      .bibtex::after {
+        content: "Click to copy";
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: var(--ink);
+        color: #ffffff;
+        padding: 3px 9px;
+        border-radius: 5px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        opacity: 0.85;
+      }
+
+      .bibtex.copied::after {
+        content: "Copied!";
+        background: var(--teal-dark);
+      }
+
+      .hero-video-shell {
+        margin: 8px 0 52px;
+        border-radius: 14px;
+        padding: 2px;
+        background: linear-gradient(
+          135deg,
+          rgba(245, 110, 65, 0.75) 0%,
+          rgba(20, 185, 195, 0.85) 50%,
+          rgba(160, 40, 180, 0.75) 100%
+        );
+        box-shadow: 0 14px 38px rgba(10, 13, 20, 0.18);
+      }
+
+      .hero-video-stage {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        background: var(--obsidian);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .hero-video-stage iframe,
+      .hero-video-stage video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: var(--obsidian);
+        display: block;
+      }
+
+      h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: -0.015em;
+        margin: 52px 0 18px;
+        padding-top: 28px;
+        border-top: 1px solid var(--border);
+      }
+
+      .section-lead {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 17px;
+      }
+
+      .workflow-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin: 22px 0 16px;
+      }
+
+      .workflow-card {
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition:
+          border-color 0.18s,
+          box-shadow 0.18s;
+      }
+
+      .workflow-card:hover {
+        border-color: var(--teal);
+        box-shadow: 0 6px 20px rgba(20, 35, 75, 0.07);
+      }
+
+      .workflow-card.wide {
+        grid-column: 1 / -1;
+      }
+
+      .workflow-media {
+        display: block;
+        background: var(--obsidian);
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+      }
+
+      .workflow-media-pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        background: var(--obsidian);
+      }
+
+      .workflow-media-item {
+        position: relative;
+        display: block;
+        background: var(--obsidian);
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+      }
+
+      .workflow-media img,
+      .workflow-media-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .workflow-badge {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background: rgba(10, 13, 20, 0.78);
+        color: #e6edf3;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        pointer-events: none;
+      }
+
+      .workflow-badge.real {
+        color: #7ef2f8;
+        border-color: rgba(20, 185, 195, 0.5);
+      }
+
+      .workflow-body {
+        padding: 15px 18px 17px;
+      }
+
+      .workflow-body h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .workflow-body h3 a {
+        color: inherit;
+      }
+
+      .workflow-body h3 a:hover {
+        color: var(--teal-dark);
+        text-decoration: none;
+      }
+
+      .workflow-body p {
+        margin: 0;
+        font-size: 15.5px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+
+      .robots-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+        margin: 14px 0 8px;
+      }
+
+      .robots-table th,
+      .robots-table td {
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .robots-table th {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        background: var(--surface);
+      }
+
+      .mode-pill {
+        display: inline-block;
+        font-family: "DM Mono", monospace;
+        font-size: 12.5px;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--ink);
+        margin-right: 4px;
+      }
+
+      .mode-pill.real {
+        background: var(--teal-tint);
+        border-color: rgba(20, 185, 195, 0.35);
+        color: var(--teal-dark);
+      }
+
+      pre {
+        background: var(--obsidian);
+        color: #e6edf3;
+        padding: 18px 20px;
+        border-radius: 10px;
+        overflow-x: auto;
+        font-family: "DM Mono", monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 14px 0 20px;
+      }
+
+      code {
+        font-family: "DM Mono", monospace;
+        font-size: 0.88em;
+        background: var(--surface);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: inherit;
+      }
+
+      .code-comment {
+        color: #8b949e;
+      }
+
+
+      .quickstart {
+        margin: 0 0 8px;
+      }
+
+      .qs-box {
+        background: var(--obsidian);
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .qs-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #111622;
+        border-bottom: 1px solid #1e293b;
+      }
+
+      .qs-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .qs-tab,
+      .qs-copy {
+        font-family: "DM Mono", monospace;
+        font-size: 12.5px;
+        padding: 5px 11px;
+        border-radius: 6px;
+        border: 1px solid #263147;
+        background: transparent;
+        color: #cbd5e1;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+      }
+
+      .qs-tab:hover,
+      .qs-copy:hover {
+        border-color: rgba(20, 185, 195, 0.55);
+        color: #ffffff;
+      }
+
+      .qs-tab.active {
+        background: rgba(20, 185, 195, 0.16);
+        border-color: rgba(20, 185, 195, 0.55);
+        color: #5eead4;
+      }
+
+      .qs-copy.copied {
+        border-color: rgba(20, 185, 195, 0.55);
+        color: #5eead4;
+      }
+
+      .qs-panel {
+        display: none;
+        margin: 0;
+        border-radius: 0;
+        padding: 16px 20px;
+        font-size: 13.5px;
+        line-height: 1.58;
+      }
+
+      .qs-panel.active {
+        display: block;
+      }
+
+      .qs-comment {
+        color: #8b949e;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      footer {
+        margin-top: 64px;
+        padding-top: 22px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 14.5px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 760px) {
+        body {
+          padding: 0 16px;
+          font-size: 17px;
+        }
+        .workflow-grid,
+        .workflow-media-pair {
+          grid-template-columns: 1fr;
+        }
+        .robots-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const citeBtn = document.getElementById("cite-toggle");
+        const bibtex = document.getElementById("bibtex");
+
+        const qsTabs = document.querySelectorAll(".qs-tab");
+        const qsPanels = document.querySelectorAll(".qs-panel");
+        const qsCopy = document.getElementById("qs-copy");
+        qsTabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            const target = tab.dataset.tab;
+            qsTabs.forEach((t) => {
+              const active = t.dataset.tab === target;
+              t.classList.toggle("active", active);
+              t.setAttribute("aria-selected", active ? "true" : "false");
+            });
+            qsPanels.forEach((p) => {
+              p.classList.toggle("active", p.dataset.tab === target);
+            });
+          });
+        });
+        if (qsCopy) {
+          qsCopy.addEventListener("click", () => {
+            const activePanel = document.querySelector(".qs-panel.active");
+            if (!activePanel) return;
+            const text = Array.from(activePanel.querySelectorAll(".qs-cmd"))
+              .map((el) => el.textContent.trim())
+              .join("\n\n");
+            navigator.clipboard
+              .writeText(text)
+              .then(() => {
+                qsCopy.textContent = "Copied";
+                qsCopy.classList.add("copied");
+                setTimeout(() => {
+                  qsCopy.textContent = "Copy";
+                  qsCopy.classList.remove("copied");
+                }, 1500);
+              })
+              .catch(() => {});
+          });
+        }
+
+        if (citeBtn && bibtex) {
+          citeBtn.addEventListener("click", () => {
+            bibtex.classList.toggle("show");
+          });
+          bibtex.addEventListener("click", () => {
+            navigator.clipboard
+              .writeText(bibtex.textContent.trim())
+              .then(() => {
+                bibtex.classList.add("copied");
+                setTimeout(() => bibtex.classList.remove("copied"), 1800);
+              })
+              .catch(() => {});
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div class="top-accent"></div>
+
+    <nav class="site-nav" aria-label="Version navigation">
+      <a class="site-brand" href="./">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 32 32"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient
+              id="nav-reaf-grad"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stop-color="#f56e41" />
+              <stop offset="50%" stop-color="#14b9c3" />
+              <stop offset="100%" stop-color="#a028b4" />
+            </linearGradient>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width="32"
+            height="32"
+            rx="7.41"
+            ry="7.41"
+            fill="url(#nav-reaf-grad)"
+          />
+          <path
+            fill="#ffffff"
+            d="m16,27.69l-5.15-12.35-1.86,10.87h-3.34L9.68,5.1h0l6.38,15.18,6.65-15.18h0l3.64,21.11h-3.34l-1.65-10.85-5.36,12.33h0Z"
+          />
+        </svg>
+        <span>MuJoCo Playground</span>
+      </a>
+      <div class="site-tabs">
+        <a href="./" class="active" aria-current="page">Playground 1.0</a>
+        <a href="rss2025/">RSS 2025</a>
+      </div>
+    </nav>
+
+    <img
+      class="hero-banner"
+      src="https://www.gstatic.com/reaf-sim/banner/0/banner.png"
+      alt="MuJoCo Playground"
+    />
+
+    <section class="intro">
+      <p>
+        <strong>MuJoCo Playground 1.0</strong> is an open-source suite of sim
+        and real environments built natively on
+        <a
+          href="https://github.com/google-deepmind/mujoco"
+          target="_blank"
+          rel="noopener noreferrer"
+          >MuJoCo</a
+        >,
+        <a
+          href="https://github.com/google-deepmind/mujoco_warp"
+          target="_blank"
+          rel="noopener noreferrer"
+          >MuJoCo Warp</a
+        >, and
+        <a
+          href="https://github.com/google-deepmind/reaf-sim"
+          target="_blank"
+          rel="noopener noreferrer"
+          >reaf-sim</a
+        >. Plug-and-play examples include large-batch GPU RL training, sim and
+        real teleoperation, system identification, zero-shot sim-to-real
+        deployment, and VLM-guided agentic manipulation.
+      </p>
+      <p>
+        Playground decouples hardware and sensor I/O (<a
+          href="https://reaf-sim.readthedocs.io/en/latest/user_guide/device_layer.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          >DeviceLayer</a
+        >) from plain-PyTorch task logic (<a
+          href="https://reaf-sim.readthedocs.io/en/latest/user_guide/task_layer.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          >TaskLayer</a
+        >), allowing researchers to move seamlessly between large-batch GPU
+        simulation, interactive CPU simulation in
+        <a
+          href="https://live.mujoco.org/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >MuJoCo Studio</a
+        >, and physical robot hardware.
+      </p>
+
+      <div class="links">
+        <a
+          href="https://github.com/google-deepmind/mujoco_playground"
+          target="_blank"
+          rel="noopener noreferrer"
+          >code</a
+        >
+        <a
+          href="https://reaf-sim.readthedocs.io/en/latest/playground/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          >docs</a
+        >
+        <a
+          href="https://github.com/google-deepmind/reaf-sim"
+          target="_blank"
+          rel="noopener noreferrer"
+          >reaf-sim</a
+        >
+        <a
+          href="https://github.com/google-deepmind/mujoco_playground/discussions"
+          target="_blank"
+          rel="noopener noreferrer"
+          >discussions</a
+        >
+        <a
+          href="https://pypi.org/project/playground/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >pypi</a
+        >
+        <button type="button" id="cite-toggle">cite</button>
+      </div>
+
+      <div id="bibtex" class="bibtex">@software{mujoco_playground_2026,
+  author = {Tabanpour, Baruch and Howell, Taylor and Haves, Sam and Abeyruwan, Saminda and Ma, Tony and Suh, Dan and {MuJoCo Playground Contributors}},
+  title = {{MuJoCo Playground}},
+  url = {https://github.com/google-deepmind/mujoco_playground},
+  year = {2026},
+}</div>
+    </section>
+
+    <div class="hero-video-shell">
+      <div id="hero-video-stage" class="hero-video-stage">
+        <iframe
+          src="https://www.youtube.com/embed/-Fdhw-SHcsc?autoplay=1&mute=1&playsinline=1&loop=1&playlist=-Fdhw-SHcsc&rel=0"
+          title="MuJoCo Playground 1.0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+
+    <section class="quickstart" aria-label="Quickstart">
+      <h2>Quickstart</h2>
+      <p class="section-lead">
+        Train and visualize a Cartpole policy directly with <code>uvx</code>.
+      </p>
+      <div class="qs-box">
+        <div class="qs-bar">
+          <div class="qs-tabs" role="tablist" aria-label="Hardware backend">
+            <button
+              type="button"
+              class="qs-tab active"
+              role="tab"
+              aria-selected="true"
+              data-tab="cpu"
+            >
+              CPU
+            </button>
+            <button
+              type="button"
+              class="qs-tab"
+              role="tab"
+              aria-selected="false"
+              data-tab="gpu-cu12"
+            >
+              GPU (CUDA 12)
+            </button>
+            <button
+              type="button"
+              class="qs-tab"
+              role="tab"
+              aria-selected="false"
+              data-tab="gpu-cu13"
+            >
+              GPU (CUDA 13)
+            </button>
+          </div>
+          <button type="button" class="qs-copy" id="qs-copy">Copy</button>
+        </div>
+
+        <pre class="qs-panel active" role="tabpanel" data-tab="cpu"><code><span class="qs-comment"># Train CartpoleBalance (~1 min on CPU)
+</span><span class="qs-cmd">uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]&gt;=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.train \
+  --env=CartpoleBalance \
+  --logdir=/tmp/rslrl_logs/cartpole_balance \
+  --overrides='{"nworld": 64}'</span>
+
+<span class="qs-comment"># Play trained policy in MuJoCo Studio web viewer
+</span><span class="qs-cmd">uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]&gt;=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.play \
+  --env=CartpoleBalance --resume_path=/tmp/rslrl_logs/cartpole_balance</span></code></pre>
+
+        <pre class="qs-panel" role="tabpanel" data-tab="gpu-cu12"><code><span class="qs-comment"># Train CartpoleBalance (CUDA 12 driver)
+</span><span class="qs-cmd">uvx --python 3.13 \
+  --index https://download.pytorch.org/whl/cu129 \
+  -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 \
+  --with "warp-lang==1.18.0+cu12" \
+  --from "playground[rl]&gt;=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.train \
+  --env=CartpoleBalance \
+  --logdir=/tmp/rslrl_logs/cartpole_balance</span>
+
+<span class="qs-comment"># Play trained policy in MuJoCo Studio web viewer
+</span><span class="qs-cmd">uvx --python 3.13 \
+  --index https://download.pytorch.org/whl/cu129 \
+  -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 \
+  --with "warp-lang==1.18.0+cu12" \
+  --from "playground[rl]&gt;=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.play \
+  --env=CartpoleBalance \
+  --resume_path=/tmp/rslrl_logs/cartpole_balance</span></code></pre>
+
+        <pre class="qs-panel" role="tabpanel" data-tab="gpu-cu13"><code><span class="qs-comment"># Train CartpoleBalance (4,096 parallel envs on GPU)
+</span><span class="qs-cmd">uvx --python 3.13 --from "playground[rl]&gt;=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.train \
+  --env=CartpoleBalance \
+  --logdir=/tmp/rslrl_logs/cartpole_balance</span>
+
+<span class="qs-comment"># Play trained policy in MuJoCo Studio web viewer
+</span><span class="qs-cmd">uvx --python 3.13 --from "playground[rl]&gt;=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.play \
+  --env=CartpoleBalance \
+  --resume_path=/tmp/rslrl_logs/cartpole_balance</span></code></pre>
+      </div>
+    </section>
+
+    <h2>Robotic Workflows</h2>
+    <p class="section-lead">
+      End-to-end examples connecting simulation and real robot hardware under a
+      shared interface.
+    </p>
+
+    <div class="workflow-grid">
+      <article class="workflow-card">
+        <a
+          class="workflow-media"
+          href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/whole_body/tracking"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://www.gstatic.com/reaf-sim/demos/g1_lafan_dance/0/g1_lafan_dance.webp"
+            alt="Whole-body motion tracking"
+            loading="lazy"
+          />
+        </a>
+        <div class="workflow-body">
+          <h3>
+            <a
+              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/whole_body/tracking"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Whole-Body Motion Tracking</a
+            >
+          </h3>
+          <p>
+            Large-batch GPU RL training from state and pixels with RSL-RL across
+            control, manipulation, and humanoid motion tracking.
+          </p>
+        </div>
+      </article>
+
+      <article class="workflow-card">
+        <a
+          class="workflow-media"
+          href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/sysid"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://www.gstatic.com/reaf-sim/demos/so101_sysid/0/so101_sysid.webp"
+            alt="SO-101 system identification"
+            loading="lazy"
+          />
+        </a>
+        <div class="workflow-body">
+          <h3>
+            <a
+              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/sysid"
+              target="_blank"
+              rel="noopener noreferrer"
+              >System Identification</a
+            >
+          </h3>
+          <p>
+            Fitting simulated joint dynamics to logged hardware trajectories via
+            <code>mujoco.sysid</code>.
+          </p>
+        </div>
+      </article>
+
+      <article class="workflow-card wide">
+        <div class="workflow-media-pair">
+          <a
+            class="workflow-media-item"
+            href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/teleop/so101"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://www.gstatic.com/reaf-sim/demos/so101_sim_teleop/0/so101_sim_teleop.webp"
+              alt="SO-101 simulation teleoperation"
+              loading="lazy"
+            />
+            <span class="workflow-badge">sim</span>
+          </a>
+          <a
+            class="workflow-media-item"
+            href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/teleop/so101"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="https://www.gstatic.com/reaf-sim/demos/so101_real_teleop/0/so101_real_teleop.webp"
+              alt="SO-101 real teleoperation"
+              loading="lazy"
+            />
+            <span class="workflow-badge real">real</span>
+          </a>
+        </div>
+        <div class="workflow-body">
+          <h3>
+            <a
+              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/teleop/so101"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Sim &amp; Real Teleoperation</a
+            >
+          </h3>
+          <p>
+            Interactive leader-follower teleoperation in MuJoCo Studio and on
+            physical hardware with foot-pedal episode gating and episodic MCAP
+            trajectory logging.
+          </p>
+        </div>
+      </article>
+
+      <article class="workflow-card">
+        <a
+          class="workflow-media"
+          href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/manipulation/pick_cube/so101/deploy"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://www.gstatic.com/reaf-sim/demos/so101_pick_cube_sim2real/1/so101_pick_cube_sim2real.webp"
+            alt="Zero-shot sim-to-real deployment"
+            loading="lazy"
+          />
+        </a>
+        <div class="workflow-body">
+          <h3>
+            <a
+              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/manipulation/pick_cube/so101/deploy"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Zero-Shot Sim-to-Real Deployment</a
+            >
+          </h3>
+          <p>
+            Running the same task layer and trained policy in simulation
+            (<code>--mode=sim</code>) and on hardware (<code>--mode=real</code>).
+          </p>
+        </div>
+      </article>
+
+      <article class="workflow-card">
+        <a
+          class="workflow-media"
+          href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/agentic/tabletop_v0"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="https://www.gstatic.com/reaf-sim/demos/yam_mug_real/0/yam_mug_real.webp"
+            alt="Agentic tabletop manipulation"
+            loading="lazy"
+          />
+        </a>
+        <div class="workflow-body">
+          <h3>
+            <a
+              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/tasks/agentic/tabletop_v0"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Agentic Manipulation</a
+            >
+          </h3>
+          <p>
+            Vision-language model (VLM) tabletop control across simulation and
+            physical arms with zero switching cost.
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <h2>Robots</h2>
+    <p class="section-lead">
+      Robots in <code>mujoco_playground/robots/</code> share canonical joint
+      ordering and control interfaces across simulation and physical hardware.
+    </p>
+
+    <table class="robots-table">
+      <thead>
+        <tr>
+          <th>Robot</th>
+          <th>Modes</th>
+          <th>Description</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>SO-101</strong></td>
+          <td>
+            <span class="mode-pill">sim</span
+            ><span class="mode-pill real">real</span>
+          </td>
+          <td>5-DoF + gripper follower and leader arms with wrist camera</td>
+          <td>
+            <a
+              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/robotstudio_so101/scene.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Live model</a
+            >
+            &middot;
+            <a
+              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/robots/so101/real"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Hardware setup</a
+            >
+          </td>
+        </tr>
+        <tr>
+          <td><strong>i2rt YAM Pro</strong></td>
+          <td>
+            <span class="mode-pill">sim</span
+            ><span class="mode-pill real">real</span>
+          </td>
+          <td>6-DoF + gripper manipulation arm with wrist camera</td>
+          <td>
+            <a
+              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/i2rt_yam/scene_linear_4310.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Live model</a
+            >
+            &middot;
+            <a
+              href="https://github.com/google-deepmind/mujoco_playground/tree/main/mujoco_playground/robots/yam/real"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Hardware setup</a
+            >
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Trossen WidowX AI</strong></td>
+          <td><span class="mode-pill">sim</span></td>
+          <td>6-DoF + gripper tabletop manipulation arm</td>
+          <td>
+            <a
+              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/trossen_wxai/scene.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Live model</a
+            >
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Unitree G1</strong></td>
+          <td><span class="mode-pill">sim</span></td>
+          <td>29-DoF humanoid robot for whole-body motion tracking</td>
+          <td>
+            <a
+              href="https://live.mujoco.org/?model=github:google-deepmind/mujoco_menagerie/main/unitree_g1/scene.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Live model</a
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <footer>
+      <span>Google DeepMind Robotics Simulation Team</span>
+      <span>
+        <a
+          href="https://github.com/google-deepmind/mujoco_playground/blob/main/LICENSE"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Apache 2.0 License</a
+        >
+        &middot;
+        <a href="rss2025/">RSS 2025 Archive</a>
+      </span>
+    </footer>
+  </body>
+</html>

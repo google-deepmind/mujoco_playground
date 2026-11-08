@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Accept-CH" content="DPR, Width, Viewport-Width" />
+    <title>MuJoCo Playground — RSS 2025</title>
+
+    <meta property="og:url" content="https://playground.mujoco.org/rss2025/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MuJoCo Playground" />
+    <meta property="og:description" content="An open-source framework for GPU-accelerated robot learning and sim-to-real transfer" />
+    <meta property="og:image" content="https://playground.mujoco.org/assets/teaser.jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MuJoCo Playground" />
+    <meta name="twitter:description" content="An open-source framework for GPU-accelerated robot learning and sim-to-real transfer" />
+    <meta name="twitter:image" content="https://playground.mujoco.org/assets/teaser.jpeg" />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛝</text></svg>"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-family:
+          "DM Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #fff;
+        font-size: 20px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-weight: 500;
+      }
+
+      h1 {
+        font-size: 48px;
+        margin-bottom: 30px;
+      }
+
+      h2 {
+        font-size: 36px;
+        margin-top: 60px;
+        padding-top: 30px;
+        border-top: 1px solid #eee;
+      }
+
+      .teaser-background {
+        background: url("../assets/teaser.jpeg") no-repeat center center;
+        background-size: cover;
+        height: 500px; /* Or another height you want */
+        width: 100%;
+      }
+
+      .video-result {
+        margin-bottom: 40px;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        margin: 30px 0 50px 0;
+      }
+
+      .video-result h3 {
+        font-size: 18px;
+        margin: 15px 0;
+        padding: 0 15px;
+      }
+
+      .video-container {
+        position: relative;
+        padding-top: 56.25%;
+        background: #f5f5f5;
+        overflow: hidden;
+      }
+
+      /*
+        Make the video absolutely fill the container
+        (the same way iframes filled .video-container).
+      */
+      .video-container video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        background: #000;
+      }
+
+      
+      .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #0a0d14;
+        display: block;
+      }
+
+      .video-placeholder {
+        position: absolute;
+        inset: 0;
+        background: #0a0d14;
+        color: #e6edf3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 20px;
+        box-sizing: border-box;
+        gap: 6px;
+      }
+
+      .video-placeholder-title {
+        font-size: 15.5px;
+        font-weight: 600;
+        color: #f0f4f8;
+      }
+
+      .video-placeholder-sub {
+        font-size: 13px;
+        color: #8b96a8;
+      }
+
+      .full-width-video {
+        margin-bottom: 40px;
+      }
+
+      .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 25px;
+      }
+
+      .links a {
+        color: #2962ff;
+        text-decoration: none;
+        text-transform: lowercase;
+        padding: 8px 16px;
+        border-radius: 6px;
+        background: rgba(41, 98, 255, 0.1);
+        transition: background 0.2s;
+      }
+
+      .links a:hover {
+        background: rgba(41, 98, 255, 0.2);
+      }
+
+      @media (max-width: 768px) {
+        .video-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+        body {
+          padding: 0 15px;
+        }
+      }
+
+      /* Add these new styles */
+      .citation-container {
+        margin-top: 20px;
+      }
+
+      .bibtex {
+        display: none;  /* Hidden by default */
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 14px;
+        white-space: pre-wrap;
+        margin-top: 10px;
+        cursor: pointer;
+        position: relative;
+      }
+
+      /* Add this class to show the bibtex */
+      .bibtex.show {
+        display: block;
+      }
+
+      .bibtex:hover {
+        background: #eee;
+      }
+
+      .bibtex::after {
+        content: 'Click to copy';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+      }
+
+      .bibtex:hover::after {
+        opacity: 1;
+      }
+
+      .bibtex.copied::after {
+        content: 'Copied!';
+        opacity: 1;
+      }
+
+      .copy-button {
+        background: #2962ff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 10px;
+      }
+
+      .copy-button:hover {
+        background: #1e4bd8;
+      }
+
+      body {
+        margin-top: 0 !important;
+      }
+      .top-accent {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #f56e41 0%, #14b9c3 50%, #a028b4 100%);
+        z-index: 100;
+      }
+      .site-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 0 14px;
+        margin-bottom: 28px;
+        border-bottom: 1px solid #e6eaf0;
+        font-size: 16px;
+      }
+      .site-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 17px;
+        color: #14234b;
+        text-decoration: none;
+        letter-spacing: -0.01em;
+      }
+      .site-brand svg {
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+      }
+      .site-tabs {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f3f6fa;
+        padding: 4px;
+        border-radius: 9px;
+      }
+      .site-tabs a {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #4a5568;
+        text-decoration: none;
+        transition: background 0.15s, color 0.15s;
+      }
+      .site-tabs a:hover {
+        color: #14234b;
+      }
+      .site-tabs a.active {
+        background: #ffffff;
+        color: #0d7f87;
+        box-shadow: 0 1px 3px rgba(20, 35, 75, 0.08);
+      }
+    </style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Click handlers for bibtex
+    const bibtex = document.getElementById('bibtex');
+    if (bibtex) {
+      bibtex.addEventListener('click', copyBibtex);
+    }
+  });
+
+  function toggleBibtex() {
+    const bibtex = document.getElementById('bibtex');
+    if (bibtex) {
+      bibtex.classList.toggle('show');
+    }
+  }
+
+  function copyBibtex() {
+    const bibtex = document.getElementById('bibtex');
+    if (bibtex) {
+      navigator.clipboard.writeText(bibtex.textContent.trim())
+        .then(() => {
+          bibtex.classList.add('copied');
+          setTimeout(() => {
+            bibtex.classList.remove('copied');
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
+    }
+  }
+</script>
+  </head>
+  <body>
+    <div class="top-accent"></div>
+    <nav class="site-nav" aria-label="Version navigation">
+      <a class="site-brand" href="../">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true">
+          <defs>
+            <linearGradient id="nav-reaf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f56e41"/>
+              <stop offset="50%" stop-color="#14b9c3"/>
+              <stop offset="100%" stop-color="#a028b4"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="32" height="32" rx="7.41" ry="7.41" fill="url(#nav-reaf-grad)"/>
+          <path fill="#ffffff" d="m16,27.69l-5.15-12.35-1.86,10.87h-3.34L9.68,5.1h0l6.38,15.18,6.65-15.18h0l3.64,21.11h-3.34l-1.65-10.85-5.36,12.33h0Z"/>
+        </svg>
+        <span>MuJoCo Playground</span>
+      </a>
+      <div class="site-tabs">
+        <a href="../">Playground 1.0</a>
+        <a href="./" class="active" aria-current="page">RSS 2025</a>
+      </div>
+    </nav>
+    <h1>🛝 MuJoCo Playground</h1>
+    <p style="font-size: 18px; color: #b8860b	; font-weight: 500; margin-top: -15px; margin-bottom: 30px;">
+      🏆 Winner of the <strong>Outstanding Demo Paper Award</strong> at RSS 2025</a>
+    </p>
+
+
+    <div style="margin: 30px 0 50px 0">
+      <p style="margin-bottom: 20px; line-height: 1.7">
+        We introduce MuJoCo Playground, a fully open-source framework for robot
+        learning built with MJX, with the express goal of streamlining simulation,
+        training, and sim-to-real transfer onto robots.
+        With a simple installation process (<span
+          style="
+            font-family: monospace;
+            font-size: 0.85em;
+            white-space: nowrap;
+            padding: 0 0.4em;
+            background: #f7f7f7;
+          "
+          >pip install playground</span
+        >), researchers can train policies in minutes on a single GPU.
+        Playground supports diverse robotic platforms, including quadrupeds,
+        humanoids, dexterous hands, and robotic arms, and enables zero-shot
+        sim-to-real transfer from both state and pixel inputs. This is achieved
+        through an integrated stack comprising a physics engine, batch renderer,
+        and training environments. MuJoCo Playground was a community effort involving multiple groups, and we hope it proves valuable to researchers and developers alike.
+      </p>
+
+      <div class="links">
+        <a href="../demo/" target="_blank">🎮 demo page (RSS 2025)</a>
+        <a href="https://arxiv.org/abs/2502.08844" target="_blank">📄 paper</a>
+        <a href="https://github.com/google-deepmind/mujoco_playground/tree/main/rss2025" target="_blank">💻 code</a>
+        <a href="#" onclick="toggleBibtex(); return false;">📝 cite</a>
+        <a href="https://research.mels.ai" target="_blank">🎮 live demo</a>
+        <a href="https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/rss2025/learning/notebooks/dm_control_suite.ipynb" target="_blank">📕 starter</a>
+        <a href="https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/rss2025/learning/notebooks/locomotion.ipynb" target="_blank">📗 locomotion</a>
+        <a href="https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/rss2025/learning/notebooks/manipulation.ipynb" target="_blank">📘 manipulation</a>
+        <a href="https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/rss2025/learning/notebooks/vision.ipynb" target="_blank">📙 vision</a>
+      </div>
+
+      <div class="citation-container">
+        <div id="bibtex" class="bibtex" onclick="copyBibtex()">@misc{zakka2025mujocoplayground,
+      title={MuJoCo Playground},
+      author={Kevin Zakka and Baruch Tabanpour and Qiayuan Liao and Mustafa Haiderbhai and Samuel Holt and Jing Yuan Luo and Arthur Allshire and Erik Frey and Koushil Sreenath and Lueder A. Kahrs and Carmelo Sferrazza and Yuval Tassa and Pieter Abbeel},
+      year={2025},
+      eprint={2502.08844},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2502.08844},
+}</div>
+        <button class="copy-button" onclick="copyBibtex()" style="display: none" id="copyButton">Copy</button>
+      </div>
+
+      <p style="font-size: 16px; font-style: italic; color: #555; background: #f9f9f9; padding: 15px; border-radius: 6px; margin-top: 20px;">
+        Disclaimer: All videos on this page except the teaser are shown in real-time (1x speed).
+      </p>
+    </div>
+
+    <div class="video-container full-width-video">
+      <iframe src="https://www.youtube.com/embed/vIt58JHQeTo?autoplay=1&mute=1&loop=1&playlist=vIt58JHQeTo&rel=0" title="MuJoCo Playground (RSS 2025) - Teaser" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+
+    <!-- ================= Quadruped Locomotion ================= -->
+    <h2>Quadruped Locomotion</h2>
+
+    <div class="video-grid">
+      <div class="video-result">
+        <h3>Joystick</h3>
+        <div class="video-container">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/RmROXl6trKM?rel=0" title="MuJoCo Playground (RSS 2025) - Unitree Go1 Joystick Locomotion" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>Handstand</h3>
+        <div class="video-container">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/nGsn3iH0qDM?rel=0" title="MuJoCo Playground (RSS 2025) - Unitree Go1 Handstand" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>Footstand</h3>
+        <div class="video-container">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/R8ws2ovUZvs?rel=0" title="MuJoCo Playground (RSS 2025) - Unitree Go1 Footstand" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>Fall recovery</h3>
+        <div class="video-container">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/HEfeJtKIF2o?rel=0" title="MuJoCo Playground (RSS 2025) - Unitree Go1 Fall Recovery" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>Sim2Sim Transfer</h3>
+        <div class="video-container">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/qrVQtYPVRYE?rel=0" title="MuJoCo Playground (RSS 2025) - Unitree Go1 Sim2Sim Transfer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= Humanoid Locomotion ================= -->
+    <h2>Humanoid Locomotion</h2>
+    <div class="video-grid">
+      <div class="video-result">
+        <div class="video-container">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/m_PZmyveSMM?rel=0" title="MuJoCo Playground (RSS 2025) - Berkeley Humanoid Flat Terrain" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <div class="video-container">
+          <iframe loading="lazy" src="https://www.youtube.com/embed/ZaRTSXy6Emg?rel=0" title="MuJoCo Playground (RSS 2025) - Berkeley Humanoid Slippery Terrain" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="bh_sim2sim.mp4"><div class="video-placeholder-title">Berkeley Humanoid — Sim2Sim Transfer</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="g1_indoor.mp4"><div class="video-placeholder-title">Unitree G1 — Indoor Locomotion</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="g1_sim2sim.mp4"><div class="video-placeholder-title">Unitree G1 — Sim2Sim Transfer</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="g1_indoor_2.mp4"><div class="video-placeholder-title">Unitree G1 — Push Recovery</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Booster T1 Locomotion and Fall Recovery</h2>
+    <div class="video-grid">
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="booster_t1_montage.mp4"><div class="video-placeholder-title">Booster T1 — Locomotion & Fall Recovery</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= Manipulation ================= -->
+    <h2>Manipulation</h2>
+    <div class="video-grid">
+      <div class="video-result">
+        <h3>In-Hand Reorientation</h3>
+        <div class="video-container">
+          <div class="video-placeholder" data-video="inhand_reorientation.mp4"><div class="video-placeholder-title">LEAP Hand — In-Hand Cube Reorientation</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>Sim2Sim In-Hand Reorientation</h3>
+        <div class="video-container">
+          <div class="video-placeholder" data-video="inhand_sim2sim.mp4"><div class="video-placeholder-title">LEAP Hand — Sim2Sim In-Hand Reorientation</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>In-Hand Z-Axis Rotation</h3>
+        <div class="video-container">
+          <div class="video-placeholder" data-video="inhand_z.mp4"><div class="video-placeholder-title">LEAP Hand — In-Hand Z-Axis Rotation</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>Vision-based Grasping</h3>
+        <div class="video-container">
+          <div class="video-placeholder" data-video="vision_pick.mp4"><div class="video-placeholder-title">Franka — Vision-Based Grasping</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <h3>ALOHA Peg Insertion</h3>
+        <div class="video-container">
+          <div class="video-placeholder" data-video="aloha_peg_insertion.mp4"><div class="video-placeholder-title">ALOHA — Peg Insertion</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= Non-Prehensile Manipulation ================= -->
+    <h2>Non-Prehensile Manipulation</h2>
+    <div class="video-grid">
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="nonprehensile.mp4"><div class="video-placeholder-title">Franka — Non-Prehensile Manipulation 1</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="nonprehensile_2.mp4"><div class="video-placeholder-title">Franka — Non-Prehensile Manipulation 2</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+
+      <div class="video-result">
+        <div class="video-container">
+          <div class="video-placeholder" data-video="nonprehensile_trials.mp4"><div class="video-placeholder-title">Franka — Non-Prehensile Continuous Trials</div><div class="video-placeholder-sub">Video upload pending</div></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
