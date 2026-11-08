@@ -24,11 +24,11 @@ from gdm_robotics.interfaces import types as gdmr_types
 import numpy as np
 from reaf.core import commands_processor as core_commands_processor
 from reaf.core import features_observer as core_features_observer
-from reaf.core import features_producer as core_features_producer
 from reaf.core import logger as logger_module
 from reaf.simulation.torch._src.common import default_discount_provider
 from reaf.simulation.torch._src.common import zero_reward_provider
 from reaf.simulation.torch._src.core import discount_provider as torch_discount_provider
+from reaf.simulation.torch._src.core import feature_producer as feature_producer_module
 from reaf.simulation.torch._src.core import metric_provider as torch_metric_provider
 from reaf.simulation.torch._src.core import reward_provider as torch_reward_provider
 from reaf.simulation.torch._src.core import termination_checker as core_termination_checker
@@ -49,7 +49,7 @@ class TaskLayer:
       self,
       *,
       commands_processors: Sequence[core_commands_processor.CommandsProcessor],
-      features_producers: Sequence[core_features_producer.FeaturesProducer],
+      features_producers: Sequence[feature_producer_module.FeatureProducer],
       termination_checkers: Sequence[
           core_termination_checker.TerminationChecker
       ],
@@ -83,6 +83,15 @@ class TaskLayer:
     )
     self._features_observers = features_observers
     self._loggers = list(loggers)
+
+    for producer in self._features_producers:
+      if not isinstance(producer, feature_producer_module.FeatureProducer):
+        raise TypeError(
+            "Feature producers must derive from"
+            " `reaf.simulation.torch.FeatureProducer`, got"
+            f" {type(producer).__name__}."
+        )
+    self._all_env_mask = torch.ones(nworld, dtype=torch.bool, device=xpu_device)
 
     # We make a set of all resettable objects so that these objects only get
     # their resets called once. This is important for e.g. when having a single
@@ -176,6 +185,8 @@ class TaskLayer:
 
   def perform_reset(self, env_mask: torch.Tensor | None = None) -> None:
     """Reset the internal state of the task layer."""
+    if env_mask is None:
+      env_mask = self._all_env_mask
     for resettable_object in self._resettable_objects:
       resettable_object.reset(env_mask)
 
@@ -235,25 +246,51 @@ class TaskLayer:
   def compute_all_features(
       self, measurements: Mapping[str, torch.Tensor]
   ) -> Mapping[str, torch.Tensor]:
-    """Computes all the task layer features given the current measurements.
+    """Advances the producers by one control step and computes all features.
 
-    Records nothing to observers or loggers: see `record()`.
+    Calls each producer's `on_step()` right before its `produce_features()`.
+    Should be called once per control step. `Environment.step()` does this for
+    you; code that uses the task layer directly must do it itself.
 
     Args:
-      measurements: The device layer measurements.
+      measurements: The device layer measurements after the physics step.
 
     Returns:
       All the task layer features.
     """
-    current_features = dict(measurements)
-    for feature_producer in self._features_producers:
-      required_features = {
-          k: current_features[k]
-          for k in feature_producer.required_features_keys()
-      }
-      produced_features = feature_producer.produce_features(required_features)
-      current_features.update(produced_features)
-    return current_features
+    features = dict(measurements)
+    for producer in self._features_producers:
+      required = {k: features[k] for k in producer.required_features_keys()}
+      producer.on_step(required)
+      features.update(producer.produce_features(required))
+    return features
+
+  def begin_stepping_features(
+      self,
+      measurements: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> Mapping[str, torch.Tensor]:
+    """Records the reset state of the `env_mask` worlds and computes features.
+
+    Calls each producer's `on_begin_stepping()` right before its
+    `produce_features()`. Worlds outside `env_mask` keep their producer state,
+    so their features are the same as before the reset.
+
+    Args:
+      measurements: The device layer measurements of the reset state.
+      env_mask: Boolean mask of the reset worlds. None: all worlds.
+
+    Returns:
+      All the task layer features.
+    """
+    if env_mask is None:
+      env_mask = self._all_env_mask
+    features = dict(measurements)
+    for producer in self._features_producers:
+      required = {k: features[k] for k in producer.required_features_keys()}
+      producer.on_begin_stepping(required, env_mask)
+      features.update(producer.produce_features(required))
+    return features
 
   def record(
       self,

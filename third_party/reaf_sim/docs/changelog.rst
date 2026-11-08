@@ -64,6 +64,22 @@ Common Devices
   the delay has passed. Keys without delay apply their bias and latest noise sample to the current reading, and readings
   pass through until the processor has seen a substep or reset.
 
+Task Layer
+^^^^^^^^^^
+
+- Added lifecycle hooks to :class:`~reaf.simulation.torch.FeatureProducer` and
+  :class:`~reaf.simulation.torch.ObservationSpaceAdapter`:
+
+  * ``on_step`` is triggered once per ``Environment.step()``, after the physics step and before the reads. For producers,
+    ``TaskLayer.compute_all_features`` triggers it.
+  * ``on_begin_stepping`` is triggered after resets, for the reset environments only.
+  * ``produce_features`` and ``observations_from_features`` must not advance state: they are called again for all
+    environments after a partial reset.
+
+- :class:`~reaf.simulation.torch.TaskLayer` now requires feature producers to derive from
+  :class:`~reaf.simulation.torch.FeatureProducer`, and :class:`~reaf.simulation.torch.Environment` requires its
+  observation adapter to derive from :class:`~reaf.simulation.torch.ObservationSpaceAdapter`.
+
 Bugs Fixed
 ^^^^^^^^^^
 

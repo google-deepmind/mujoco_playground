@@ -29,12 +29,14 @@ import numpy as np
 from reaf.core import features_observer
 from reaf.core import features_producer as core_features_producer
 from reaf.core import logger as logger_module
+from reaf.core import observation_space_adapter as core_observation_space_adapter
 from reaf.simulation.torch._src.builders.flat_scene import config as flat_scene_config
 from reaf.simulation.torch._src.common import functional_observation
 from reaf.simulation.torch._src.core import device as device_module
 from reaf.simulation.torch._src.core import device_layer as device_layer_module
 from reaf.simulation.torch._src.core import discount_provider as discount_provider_module
 from reaf.simulation.torch._src.core import environment
+from reaf.simulation.torch._src.core import feature_producer as feature_producer_module
 from reaf.simulation.torch._src.core import metric_provider as metric_provider_module
 from reaf.simulation.torch._src.core import observation_space_adapter
 from reaf.simulation.torch._src.core import reward_provider
@@ -243,6 +245,28 @@ class PendulumObservationAdapter(
     return {"joint_pos", "time"}
 
 
+class HookRecordingObservationAdapter(PendulumObservationAdapter):
+  """Records the adapter lifecycle hook calls."""
+
+  def __init__(self, nworld: int = 1):
+    super().__init__(nworld=nworld)
+    self.on_step_step_counts: list[list[int]] = []
+    self.begin_stepping_masks: list[list[bool]] = []
+    self.begin_stepping_step_counts: list[list[int]] = []
+
+  def on_step(self, features: Mapping[str, torch.Tensor]) -> None:
+    self.on_step_step_counts.append(features["step_count"].tolist())
+
+  def on_begin_stepping(
+      self,
+      features: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    assert env_mask is not None
+    self.begin_stepping_masks.append(env_mask.tolist())
+    self.begin_stepping_step_counts.append(features["step_count"].tolist())
+
+
 class StepSumMetricProvider(metric_provider_module.MetricProvider):
   """Accumulates `scale * time` and step count per episode."""
 
@@ -315,6 +339,84 @@ def _time_feature(features: Mapping[str, torch.Tensor]) -> torch.Tensor:
   return features["time"].unsqueeze(-1)
 
 
+class StepCounterProducer(feature_producer_module.FeatureProducer):
+  """Counts control steps per world in `on_step`; `produce_features` is pure."""
+
+  def __init__(self, nworld: int, xpu_device: str):
+    self._count = torch.zeros(nworld, dtype=torch.int64, device=xpu_device)
+    self.on_step_calls = 0
+    self.begin_stepping_masks: list[torch.Tensor] = []
+
+  @property
+  def name(self) -> str:
+    return "step_counter"
+
+  def required_features_keys(self) -> set[str]:
+    return {"time"}
+
+  def produced_features_spec(self) -> Mapping[str, specs.Array]:
+    return {"step_count": specs.Array(shape=(), dtype=np.int64)}
+
+  def on_step(self, required_features: Mapping[str, torch.Tensor]) -> None:
+    del required_features  # Unused.
+    self.on_step_calls += 1
+    self._count += 1
+
+  def on_begin_stepping(
+      self,
+      required_features: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    del required_features  # Unused.
+    assert env_mask is not None
+    self.begin_stepping_masks.append(env_mask.clone())
+    self._count.masked_fill_(env_mask, 0)
+
+  def produce_features(
+      self, required_features: Mapping[str, torch.Tensor]
+  ) -> Mapping[str, torch.Tensor]:
+    del required_features  # Unused.
+    return {"step_count": self._count.clone()}
+
+
+class DoubleTimeProducer(feature_producer_module.FeatureProducer):
+  """Producer that keeps the default no-op lifecycle hooks."""
+
+  @property
+  def name(self) -> str:
+    return "double_time"
+
+  def required_features_keys(self) -> set[str]:
+    return {"time"}
+
+  def produced_features_spec(self) -> Mapping[str, specs.Array]:
+    return {"double_time": specs.Array(shape=(), dtype=np.float32)}
+
+  def produce_features(
+      self, required_features: Mapping[str, torch.Tensor]
+  ) -> Mapping[str, torch.Tensor]:
+    return {"double_time": 2.0 * required_features["time"]}
+
+
+class CoreDoubleTimeProducer(core_features_producer.FeaturesProducer):
+  """`DoubleTimeProducer` on the core base class, which has no hooks."""
+
+  @property
+  def name(self) -> str:
+    return "double_time"
+
+  def required_features_keys(self) -> set[str]:
+    return {"time"}
+
+  def produced_features_spec(self) -> Mapping[str, specs.Array]:
+    return {"double_time": specs.Array(shape=(), dtype=np.float32)}
+
+  def produce_features(  # pyrefly: ignore[bad-override]
+      self, required_features: Mapping[str, torch.Tensor]
+  ) -> Mapping[str, torch.Tensor]:
+    return {"double_time": 2.0 * required_features["time"]}
+
+
 class RecordingLogger(logger_module.Logger):
   """Records clones of the given features on every `record_features` call."""
 
@@ -372,7 +474,8 @@ def _build_pendulum_env(
     ) = None,
     features_observers: Sequence[features_observer.FeaturesObserver] = (),
     loggers: Sequence[logger_module.Logger] = (),
-    features_producers: Sequence[core_features_producer.FeaturesProducer] = (),
+    features_producers: Sequence[feature_producer_module.FeatureProducer] = (),
+    use_default_observation_adapter: bool = False,
 ) -> environment.Environment:
   """Builds a simple pendulum environment for testing."""
   mj_spec = mujoco.MjSpec.from_string(_PENDULUM_XML)
@@ -417,11 +520,12 @@ def _build_pendulum_env(
       if environment_reset_fn is not None
       else PendulumReset()
   )
-  obs_adapter = (
-      observation_adapter
-      if observation_adapter is not None
-      else PendulumObservationAdapter(nworld=nworld)
-  )
+  if use_default_observation_adapter:
+    obs_adapter = None
+  elif observation_adapter is not None:
+    obs_adapter = observation_adapter
+  else:
+    obs_adapter = PendulumObservationAdapter(nworld=nworld)
   return environment.Environment(
       device_layer=dev_layer,
       task_layer=task_layer,
@@ -1005,6 +1109,133 @@ class WarpEnvironmentTest(parameterized.TestCase):
         torch.stack([r["time"] for r in logger.records]).float(),
         [[0, 0], [1, 1], [2, 2], [0, 2], [1, 3], [2, 4]],
     )
+
+  @parameterized.parameters(
+      environment.AutoResetMode.SYNC,
+      environment.AutoResetMode.NO_SYNC,
+      environment.AutoResetMode.DISABLED,
+  )
+  def test_producer_hooks_and_records_on_partial_reset(self, mode):
+    """Hooks run once per step / per reset world; records match timesteps."""
+    nworld = 2
+    counter = StepCounterProducer(nworld=nworld, xpu_device=self.XPU_DEVICE)
+    adapter = HookRecordingObservationAdapter(nworld=nworld)
+    logger = RecordingLogger(keys=("time", "step_count", "double_time"))
+    env = _build_pendulum_env(
+        nworld=nworld,
+        xpu_device=self.XPU_DEVICE,
+        # World 0 is LAST after step 2 (0.04s) and auto-resets on step 3.
+        timeouts=torch.tensor([0.03, 10.0], device=self.XPU_DEVICE),
+        impl=self.IMPL,
+        auto_reset_mode=mode,
+        observation_adapter=adapter,
+        features_producers=[counter, DoubleTimeProducer()],
+        loggers=[logger],
+    )
+    env.reset()
+    env.step(self._zero_action())
+    ts = env.step(self._zero_action())
+    if mode == environment.AutoResetMode.DISABLED:
+      # Manually reset world 0 between steps 2 and 3.
+      env.reset_with_options(
+          options=env.default_reset_options(), env_mask=ts.last()
+      )
+    for _ in range(2):
+      env.step(self._zero_action())
+
+    self.assertEqual(counter.on_step_calls, 4)
+    begin_stepping_masks = [m.tolist() for m in counter.begin_stepping_masks]
+    if mode == environment.AutoResetMode.NO_SYNC:
+      # NO_SYNC resets every step, with an all-False mask when no world is done.
+      self.assertEqual(
+          begin_stepping_masks,
+          [
+              [True, True],
+              [False, False],
+              [False, False],
+              [True, False],
+              [False, False],
+          ],
+      )
+    else:
+      self.assertEqual(begin_stepping_masks, [[True, True], [True, False]])
+    # The adapter hooks run with the same masks, after the producers: reset
+    # worlds already have their reset step count.
+    self.assertEqual(adapter.begin_stepping_masks, begin_stepping_masks)
+    for mask, counts in zip(
+        adapter.begin_stepping_masks, adapter.begin_stepping_step_counts
+    ):
+      self.assertEqual([c for m, c in zip(mask, counts) if m], [0] * sum(mask))
+    if mode == environment.AutoResetMode.DISABLED:
+      # World 0 was reset between steps 2 and 3.
+      expected_on_step_counts = [[1, 1], [2, 2], [1, 3], [2, 4]]
+    else:
+      # World 0 auto-resets at the end of step 3, after `on_step`.
+      expected_on_step_counts = [[1, 1], [2, 2], [3, 3], [1, 4]]
+    self.assertEqual(adapter.on_step_step_counts, expected_on_step_counts)
+
+    if mode == environment.AutoResetMode.DISABLED:
+      # Reset + 2 steps + manual reset of world 0 + 2 steps.
+      expected_steps = [[0, 0], [1, 1], [2, 2], [0, 2], [1, 3], [2, 4]]
+    else:
+      # Reset + 4 steps. On step 3, world 0 is recorded with its reset (FIRST)
+      # features, world 1 with its step ones.
+      expected_steps = [[0, 0], [1, 1], [2, 2], [0, 3], [1, 4]]
+    self.assertEqual(
+        [r["step_count"].tolist() for r in logger.records], expected_steps
+    )
+    self._assert_time_history(
+        torch.stack([r["time"] for r in logger.records]).float(),
+        expected_steps,
+    )
+    for record in logger.records:
+      torch.testing.assert_close(record["double_time"], 2.0 * record["time"])
+
+  def test_default_observation_adapter(self):
+    """Without an adapter, observations are the task layer features."""
+    env = _build_pendulum_env(
+        nworld=2,
+        xpu_device=self.XPU_DEVICE,
+        # World 0 is LAST after step 2 (0.04s) and auto-resets on step 3.
+        timeouts=torch.tensor([0.03, 10.0], device=self.XPU_DEVICE),
+        impl=self.IMPL,
+        use_default_observation_adapter=True,
+    )
+    env.reset()
+    env.step(self._zero_action())
+    env.step(self._zero_action())
+    ts = env.step(self._zero_action())
+    self.assertEqual(ts.first().tolist(), [True, False])
+    torch.testing.assert_close(
+        ts.observation["time"],
+        torch.tensor([0.0, 0.06], device=self.XPU_DEVICE),
+        atol=1e-5,
+        rtol=0.0,
+        check_dtype=False,
+    )
+
+  def test_environment_rejects_core_observation_space_adapter(self):
+    core_adapter = mock.create_autospec(
+        core_observation_space_adapter.ObservationSpaceAdapter, instance=True
+    )
+    with self.assertRaisesRegex(TypeError, "observation space adapter"):
+      _build_pendulum_env(
+          nworld=1,
+          xpu_device=self.XPU_DEVICE,
+          timeouts=torch.ones(1, device=self.XPU_DEVICE),
+          impl=self.IMPL,
+          observation_adapter=core_adapter,
+      )
+
+  def test_task_layer_rejects_core_features_producer(self):
+    with self.assertRaisesRegex(TypeError, "CoreDoubleTimeProducer"):
+      task_layer_module.TaskLayer(
+          commands_processors=[],
+          features_producers=[CoreDoubleTimeProducer()],  # pyrefly: ignore[bad-argument-type]
+          termination_checkers=[],
+          xpu_device=self.XPU_DEVICE,
+          nworld=1,
+      )
 
 
 class OverridePendulumReset(environment.EnvironmentReset):

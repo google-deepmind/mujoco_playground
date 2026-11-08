@@ -21,7 +21,6 @@ from dm_env import specs
 import mujoco
 from mujoco_playground._src.rl.rsl_rl import vecenv_wrapper
 import numpy as np
-from reaf.core import observation_space_adapter
 from reaf.simulation.torch import clock_device
 from reaf.simulation.torch import CompositeResetter
 from reaf.simulation.torch import default_discount_provider
@@ -31,6 +30,7 @@ from reaf.simulation.torch import environment
 from reaf.simulation.torch import flat_scene
 from reaf.simulation.torch import FunctionalMetricProvider
 from reaf.simulation.torch import NanTerminationResetter
+from reaf.simulation.torch import observation_space_adapter
 from reaf.simulation.torch import reward_provider
 from reaf.simulation.torch import simulator as simulator_module
 from reaf.simulation.torch import task_layer as task_layer_module

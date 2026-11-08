@@ -27,12 +27,11 @@ from gdm_robotics.interfaces import environment as gdmr_env
 from gdm_robotics.interfaces import types as gdmr_types
 import numpy as np
 from reaf.core import action_space_adapter as reaf_action_space_adapter
-from reaf.core import default_observation_space_adapter
 from reaf.core import environment as core_environment
 from reaf.core import logger as reaf_logger
-from reaf.core import observation_space_adapter as core_observation_space_adapter
 from reaf.core import pass_through_action_space_adapter
 from reaf.core import termination_checker
+from reaf.simulation.torch._src.core import observation_space_adapter as observation_space_adapter_module
 from reaf.simulation.torch._src.core import profile
 from reaf.simulation.torch._src.core import protocols
 from reaf.simulation.torch._src.core import reward_provider
@@ -162,15 +161,39 @@ class AutoResetMode(enum.Enum):
   DISABLED = "disabled"  # Disables auto-reset in `Environment.step()`.
 
 
+class _PassThroughObservationSpaceAdapter(
+    observation_space_adapter_module.ObservationSpaceAdapter
+):
+  """Default adapter: exposes all task layer features as observations."""
+
+  def __init__(self, task_features_spec: Mapping[str, specs.Array]):
+    self._task_features_spec = dict(task_features_spec)
+
+  def observations_from_features(
+      self, required_features: Mapping[str, torch.Tensor]
+  ) -> Mapping[str, torch.Tensor]:
+    return dict(required_features)
+
+  def observation_spec(self) -> Mapping[str, specs.Array]:
+    return self._task_features_spec
+
+  def task_features_keys(self) -> set[str]:
+    return set(self._task_features_spec)
+
+
 class Environment(core_environment.Environment):
   """The Robotics Environment Authoring Framework (REAF) Environment class.
 
-  TODO(b/513593452, btaba): Bake in TaskState protocol and get_state()/set_state()
-  public APIs on Environment and TaskLayer to avoid ad-hoc goal state poking.
+  TODO(b/513593452, btaba): Bake in TaskState protocol and
+  get_state()/set_state() public APIs on Environment and TaskLayer to avoid
+  ad-hoc goal state poking.
   """
 
   _task_layer: task_layer_module.TaskLayer
   _device_layer: protocols.TorchDeviceLayer
+  _observation_space_adapter: (
+      observation_space_adapter_module.ObservationSpaceAdapter
+  )
   _environment_reset: EnvironmentReset
   _end_of_episode_handler: EndOfEpisodeHandler
   _should_finalize_episode: torch.Tensor
@@ -186,7 +209,7 @@ class Environment(core_environment.Environment):
           reaf_action_space_adapter.ActionSpaceAdapter | None
       ) = None,
       observation_space_adapter: (
-          core_observation_space_adapter.ObservationSpaceAdapter | None
+          observation_space_adapter_module.ObservationSpaceAdapter | None
       ) = None,
       end_of_episode_handler: EndOfEpisodeHandler | None = None,
       environment_closer: core_environment.EnvironmentCloser | None = None,
@@ -225,13 +248,17 @@ class Environment(core_environment.Environment):
     self._action_space_adapter = action_space_adapter
 
     if observation_space_adapter is None:
-      observation_space_adapter = (
-          default_observation_space_adapter.DefaultObservationSpaceAdapter(
-              task_features_spec=task_layer_features_spec,
-              selected_features=None,
-              renamed_features=None,
-              observation_type_mapper=None,
-          )
+      observation_space_adapter = _PassThroughObservationSpaceAdapter(
+          task_layer_features_spec
+      )
+    if not isinstance(
+        observation_space_adapter,
+        observation_space_adapter_module.ObservationSpaceAdapter,
+    ):
+      raise TypeError(
+          "The observation space adapter must derive from"
+          " `reaf.simulation.torch.ObservationSpaceAdapter`, got"
+          f" {type(observation_space_adapter).__name__}."
       )
     self._observation_space_adapter = observation_space_adapter
 
@@ -364,9 +391,10 @@ class Environment(core_environment.Environment):
   ) -> None:
     """Resets the `env_mask` worlds and splices them into `_last_timestep`.
 
-    Recomputes features and observations for all worlds, but only splices the
-    `env_mask` worlds into `_last_timestep`. Does not record to observers or
-    loggers.
+    Worlds outside `env_mask` keep their state: the hooks only touch
+    `env_mask` worlds and the reads are pure, so recomputing their features
+    and observations returns the values they already observed. Does not record
+    to observers or loggers.
 
     Args:
       options: The reset options.
@@ -385,11 +413,10 @@ class Environment(core_environment.Environment):
     self._device_layer.forward()
 
     self._task_layer.perform_reset(env_mask)
-    obs_space_reset_fn = getattr(self._observation_space_adapter, "reset", None)
-    if obs_space_reset_fn is not None:
-      obs_space_reset_fn(env_mask)
+    self._observation_space_adapter.reset(env_mask)
     measurements = self._device_layer.begin_stepping(env_mask)
-    features = self._task_layer.compute_all_features(measurements)
+    features = self._task_layer.begin_stepping_features(measurements, env_mask)
+    self._observation_space_adapter.on_begin_stepping(features, env_mask)
     observations = self._compute_observations_from_features(features)
 
     self._latest_features = features
@@ -442,8 +469,10 @@ class Environment(core_environment.Environment):
     commands = self._task_layer.compute_final_commands(commands)
     measurements = self._device_layer.step(commands)
 
-    # Compute all the features.
+    # Advance the feature producers and the observation adapter by one control
+    # step.
     features = self._task_layer.compute_all_features(measurements)
+    self._observation_space_adapter.on_step(features)
     self._latest_measurements = measurements
     self._latest_features = features
 

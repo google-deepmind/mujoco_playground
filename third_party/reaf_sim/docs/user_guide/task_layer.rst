@@ -45,6 +45,29 @@ Features
 measurements. These are collected into a consolidated features bus, ensuring geometric calculations (such as
 end-effector frames, relative distances, or filtered velocities) are performed exactly once per step.
 
+Lifecycle
+---------
+
+Feature producers and observation adapters follow one contract: **hooks advance state, reads are pure, and resets only
+touch the reset environments.**
+
+- ``on_step(features)`` runs once per ``Environment.step()``, after the physics step and right before the read. Advance
+  per-step state here (e.g. previous velocities, history buffers, per-step noise).
+- ``on_begin_stepping(features, env_mask)`` runs after a reset, for the ``env_mask`` environments only. Seed post-reset
+  state here (e.g. fill history buffers with the reset value).
+- ``produce_features(features)`` and ``observations_from_features(features)`` are pure reads. After a partial reset,
+  the environment calls them again for all environments, and the recomputed features of every environment are the ones
+  observers and loggers record. Since the reads are pure, these are the same values for the environments that were not
+  reset.
+
+Components that wrap another producer or adapter must forward both hooks to it.
+
+Commands processors need no hooks: the task layer runs them exactly once per ``Environment.step()``, and never again
+after a reset, so they can advance their state in ``process_commands``.
+
+Features observers and loggers record once per timestep returned by ``step()``. After an auto-reset, reset environments
+are recorded with their reset (``FIRST``) features.
+
 Rewards
 -------
 
