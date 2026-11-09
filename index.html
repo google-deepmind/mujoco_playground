@@ -175,37 +175,6 @@
         text-decoration: underline;
       }
 
-      .links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin: 24px 0 18px;
-      }
-
-      .links a,
-      .links button {
-        font-family: inherit;
-        font-size: 16px;
-        font-weight: 500;
-        color: var(--teal-dark);
-        text-decoration: none;
-        padding: 7px 15px;
-        border-radius: 7px;
-        border: 1px solid rgba(20, 185, 195, 0.25);
-        background: var(--teal-tint);
-        cursor: pointer;
-        transition:
-          background 0.15s,
-          border-color 0.15s;
-      }
-
-      .links a:hover,
-      .links button:hover {
-        background: var(--teal-tint-hover);
-        border-color: rgba(20, 185, 195, 0.45);
-        text-decoration: none;
-      }
-
       .bibtex {
         display: none;
         background: var(--surface);
@@ -580,6 +549,7 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        justify-content: center;
         gap: 10px;
         margin: 24px 0 18px;
       }
@@ -592,9 +562,10 @@
         font-family: inherit;
         font-size: 15px;
         font-weight: 500;
+        line-height: 1.4;
         color: var(--ink);
         text-decoration: none;
-        padding: 7px 15px;
+        padding: 8px 15px;
         border-radius: 8px;
         border: 1px solid var(--border);
         background: #ffffff;
@@ -608,7 +579,6 @@
         width: 16px;
         height: 16px;
         flex-shrink: 0;
-        fill: currentColor;
       }
 
       .links a:hover,
@@ -893,13 +863,34 @@
       </p>
 
       <div class="links">
-        <a href="https://github.com/google-deepmind/mujoco_playground" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="#quickstart">Quickstart</a>
-        <a href="https://reaf-sim.readthedocs.io/en/latest/playground/index.html" target="_blank" rel="noopener noreferrer">Docs</a>
-        <a href="https://github.com/google-deepmind/reaf-sim" target="_blank" rel="noopener noreferrer">reaf-sim</a>
-        <a href="https://github.com/google-deepmind/mujoco_playground/discussions" target="_blank" rel="noopener noreferrer">Discussions</a>
-        <a href="https://pypi.org/project/playground/" target="_blank" rel="noopener noreferrer">PyPI</a>
-        <button type="button" id="cite-toggle">Cite</button>
+        <a href="https://github.com/google-deepmind/mujoco_playground" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+        <a href="#quickstart">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Quickstart
+        </a>
+        <a href="https://reaf-sim.readthedocs.io/en/latest/playground/index.html" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          Docs
+        </a>
+        <a href="https://github.com/google-deepmind/reaf-sim" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          reaf-sim
+        </a>
+        <a href="https://github.com/google-deepmind/mujoco_playground/discussions" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Discussions
+        </a>
+        <a href="https://pypi.org/project/playground/" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          PyPI
+        </a>
+        <button type="button" id="cite-toggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path></svg>
+          Cite
+        </button>
       </div>
 
       <div id="bibtex" class="bibtex">@software{mujoco_playground_2026,
@@ -1230,10 +1221,6 @@
     </div>
 
     <h2>Robots</h2>
-    <p class="section-lead">
-      Robots in <code>mujoco_playground/robots/</code> share canonical joint
-      ordering and control interfaces across simulation and physical hardware.
-    </p>
 
     <div class="robots-grid">
       <article class="robot-card">
