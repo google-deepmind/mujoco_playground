@@ -146,13 +146,10 @@ class BodyTrackingDevice(reaf_device.Device):
         f"{self._name}/base_ang_vel": specs.Array(shape=(3,), dtype=f32),
     }
 
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
-      *,
-      force: bool = False,
   ) -> Mapping[str, torch.Tensor]:
-    del force
     data = simulator.data
     body_pos = data.xpos[:, self._body_ids].float()
     body_quat = data.xquat[:, self._body_ids].float()

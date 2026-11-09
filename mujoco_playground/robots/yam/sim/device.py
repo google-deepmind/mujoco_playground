@@ -147,7 +147,7 @@ class YamFollower(device_base.Device):
     self._last_cmd_timestamp_ns = time.time_ns()
 
   @override
-  def get_substep_measurements(
+  def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:
