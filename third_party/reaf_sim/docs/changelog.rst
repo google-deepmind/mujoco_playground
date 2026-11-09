@@ -1,6 +1,32 @@
 Changelog
 =========
 
+Version 1.0.1 (November 8, 2026)
+--------------------------------
+
+Task Layer
+^^^^^^^^^^
+
+- Added ``on_step`` and ``on_begin_stepping`` lifecycle hooks to :class:`~reaf.simulation.torch.FeatureProducer` and
+  :class:`~reaf.simulation.torch.ObservationSpaceAdapter` so ``produce_features`` and ``observations_from_features``
+  remain side-effect free across partial resets.
+
+- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` now advances history and draws per-step noise in
+  ``on_step`` and ``on_begin_stepping`` (with ``Obs.noise`` sized by ``nworld``); ``apply_noise(op="replace")``
+  returns a copy.
+
+Common Devices
+^^^^^^^^^^^^^^
+
+- Built-in devices now implement :meth:`~reaf.simulation.torch.Device.get_measurements`, and camera devices render in
+  ``on_substep`` and ``on_begin_stepping`` while ``get_measurements`` returns the cached frame without rendering.
+
+Bugs Fixed
+^^^^^^^^^^
+
+- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` no longer pushes a duplicate observation into the
+  history of non-resetting environments on partial resets (or under ``AutoResetMode.NO_SYNC``).
+
 Version 1.0.0 (November 6, 2026)
 --------------------------------
 
@@ -54,42 +80,9 @@ Common Devices
 - After a reset, every history slot of :class:`~reaf.simulation.torch.ContactSensorDevice` holds the reset reading
   instead of zeros, and its history also advances while the device is dark.
 
-- The built-in devices implement ``get_measurements`` instead of ``get_substep_measurements``. Subclasses that override
-  ``get_substep_measurements`` must override ``get_measurements`` instead.
-
-- Camera devices render in ``on_substep`` and ``on_begin_stepping``. Their ``get_measurements`` returns the latest frame
-  without rendering, and raises a ``RuntimeError`` if nothing was rendered since the last reset.
-
 - After a reset, delayed :class:`~reaf.simulation.torch.StochasticSubstepMeasurements` keys read the reset reading until
   the delay has passed. Keys without delay apply their bias and latest noise sample to the current reading, and readings
   pass through until the processor has seen a substep or reset.
-
-Task Layer
-^^^^^^^^^^
-
-- Added lifecycle hooks to :class:`~reaf.simulation.torch.FeatureProducer` and
-  :class:`~reaf.simulation.torch.ObservationSpaceAdapter`:
-
-  * ``on_step`` is triggered once per ``Environment.step()``, after the physics step and before the reads. For producers,
-    ``TaskLayer.compute_all_features`` triggers it.
-  * ``on_begin_stepping`` is triggered after resets, for the reset environments only.
-  * ``produce_features`` and ``observations_from_features`` must not advance state: they are called again for all
-    environments after a partial reset.
-
-- :class:`~reaf.simulation.torch.TaskLayer` now requires feature producers to derive from
-  :class:`~reaf.simulation.torch.FeatureProducer`, and :class:`~reaf.simulation.torch.Environment` requires its
-  observation adapter to derive from :class:`~reaf.simulation.torch.ObservationSpaceAdapter`.
-
-- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` advances its history in ``on_step`` and fills it with the
-  reset observation in ``on_begin_stepping``; reading a history term returns the stored observations. History terms
-  read as zeros until the first ``on_begin_stepping``, and ``reset()`` no longer clears the history, so code that drives
-  the adapter outside of :class:`~reaf.simulation.torch.Environment` must call ``on_begin_stepping`` after ``reset()``
-  and ``on_step`` on every step.
-
-- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` draws per-step observation noise once per step in
-  ``on_step``, and for the reset environments in ``on_begin_stepping``; reads reuse the drawn noise. Observation noise
-  requires ``nworld`` to match the batch size, and noisy terms output ``(nworld, *output_shape)``, like terms with a
-  bias. ``apply_noise`` with ``op="replace"`` returns a copy of the noise sample.
 
 Bugs Fixed
 ^^^^^^^^^^
@@ -100,11 +93,6 @@ Bugs Fixed
 - :class:`~reaf.simulation.torch.ContactSensorDevice` and
   :class:`~reaf.simulation.torch.StochasticSubstepMeasurements` no longer advance their history and delay buffers for
   environments that are not reset.
-
-- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` no longer pushes a duplicate observation into the
-  history of environments that are not reset, which happened on every step with any partial reset (and with
-  ``AutoResetMode.NO_SYNC``). Without noise, ``AutoResetMode.NO_SYNC`` and ``AutoResetMode.SYNC`` now produce the same
-  timesteps.
 
 - Features observers and loggers no longer run twice per step when any environment resets.
 

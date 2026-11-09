@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12, <3.15"
 resolution-markers = [
     "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
@@ -335,7 +335,7 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "cuda-pathfinder", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/a6/13d14600381bdbfe55dfc35564e4bf4a208f169ee9f6cbeb356564268aff/cuda_bindings-13.5.0-cp312-cp312-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:40eadfad6ae1554f8c1aa456620a85a49a275fc902f2c6dd93ee8c488b2c5e9f", size = 7354398, upload-time = "2026-11-05T12:06:03.542Z" },
@@ -427,43 +427,43 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cufft = [
-    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cufile = [
-    { name = "nvidia-cufile", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'aarch64' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cufile", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 curand = [
-    { name = "nvidia-curand", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-curand", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cusolver = [
-    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (sys_platform != 'linux' and sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform == 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (platform_machine == 'AMD64' and sys_platform == 'win32' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 
 [[package]]
@@ -1058,7 +1058,7 @@ wheels = [
 
 [[package]]
 name = "mujoco"
-version = "4.0.1.dev1015716258"
+version = "4.0.1.dev1016247317"
 source = { registry = "https://py.mujoco.org/" }
 dependencies = [
     { name = "glfw" },
@@ -1068,7 +1068,7 @@ dependencies = [
     { name = "pyopengl" },
 ]
 wheels = [
-    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.1.dev1015716258-py3-none-any.whl", hash = "sha256:4de146f1ccec9a6a0d9bbf3279c643467cbbd7d32618f4a4075ad3140d5f3f81" },
+    { url = "https://py.mujoco.org/mujoco/mujoco-4.0.1.dev1016247317-py3-none-any.whl", hash = "sha256:3b5d58098ffc6a096395481005e32fc922662bc1c8a7406f67b6927940de8a16" },
 ]
 
 [package.optional-dependencies]
@@ -1087,28 +1087,28 @@ sysid = [
 
 [[package]]
 name = "mujoco-core"
-version = "4.0.1.dev1015716258"
+version = "4.0.1.dev1016247317"
 source = { registry = "https://py.mujoco.org/" }
 dependencies = [
     { name = "numpy" },
 ]
 wheels = [
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:c4a1ff39a5ac53380b90d095bedf5f42adba7c32ac1a02218ea56c1e46d415e4" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5e168c2ae91ed361fd43fd69ebf0af2e435a6e0c6930dc77a0bfea79636acab5" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:27133ac26839681e0b8a2d3e5887c38e0043be894f3fa34352dc358b513b1db9" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp312-cp312-win_amd64.whl", hash = "sha256:ae0e48b2c114164aa9744cfa9e6305ff04ebbae307b6a593eace5bebcc6d524f" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:b492afe7a538b084c9865b9da94d67b0c9092604c53d943db99ae04c41071b81" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:21d24118934a98e781b95dfd01d7177aee417950b0a8cea4975241d94410cba9" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c049b423c84862fbc5f18dc99fb9f69d84802acaeb356b201e874b4c08c23ef0" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp313-cp313-win_amd64.whl", hash = "sha256:6725041e02d97f402b7cb437a0708ad09de6a201758bfce240d696b09aa06775" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:0f1aa4ab4b07b3653a27b17e951b8093d45993871f995f1ef8a5dc474625dd52" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a63933ef9b40e046af45c2610c0e48784d2cce6689eb4aaa3ae7f9519beba5ed" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:14c38bcc87d835f35d720cecea1b42e73dd23b4cdbbba6c66b778fb88465f850" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314-win_amd64.whl", hash = "sha256:7e0af0b21c3f99aedda84b90632bf3d4b9317837afbe992f96411d17e0c9a759" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314t-macosx_11_0_universal2.whl", hash = "sha256:55ecf29ef624195723194ca935b505d5ef9f9ae5cad9f338eb3de0b1304176e6" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:dc1664b81c30a665f8968221505f4e8a4a864a597a51e4157811ad1c5b9f86f9" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e3edc5600adf2546a07e2d443301c169c47542a6ea59ed954cdd2f35883642f4" },
-    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1015716258-cp314-cp314t-win_amd64.whl", hash = "sha256:748c3219fee62693704dd5d289a58287f0daed40842c04ee9f3b2213d620897e" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:2b63ced3e56b09daafa4e72f1001d2cf9b3a7c3647fcc4faa970552d82b7b6e8" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a3ad1ae70de2c871b694df8b0dbb85426c4bebca77b496a7a6b256b2cf788804" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9ac89c8c6f9d2a6308d6f6b1659caa1d7770033903101c0ae58f73d9faa0a5f7" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp312-cp312-win_amd64.whl", hash = "sha256:8c4cb686a3cead69ede26e150d3447da1f035524221cc76e8be801e26577c827" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:0ecb2d314dabf2c1d21d8266d02dc711db5ba244820e7a6efbcd8a069acb8578" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:308fcf69e68a03adea6bbf97d5a19cd0c2e6c0c47781e0591978b4a4517799aa" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2c0fdfece4083f665e59af2d22e351a273eb2fbd05291daeea00fef4d6be484d" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp313-cp313-win_amd64.whl", hash = "sha256:456b405f9666f5c5ae82916c63e987ff6d2a55f9932c8f8638f45865c74c35d1" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:0272b6376b8f31514da52005a5ee7c61f6cb130b3a8e8779ccee4847fc186958" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0ab8e85d7416f2d375fc82887cd6816fd176e07be89761a1948e5c4327c666b8" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:20da38a2d8ec28100ce4782564f6d3e7047f3e3381108e4adb34a325ffea6e85" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314-win_amd64.whl", hash = "sha256:ea5c72ffeaf48d678e95fca03b92c4dcb8b1444c287910266dad6a372c402bb7" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314t-macosx_11_0_universal2.whl", hash = "sha256:b4172a796eb3d59f46eaf71fc5a3908c8e5d32383ec37953543033c7d19d34d8" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:541f74904f8eed0ad67e5b8b0619516e1c69e9acf389133848e626961fc8570f" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:569bfef3f0ce13faf5c7148ed21ce9f2046e02c5619866a8882b3ddd5c735f6b" },
+    { url = "https://py.mujoco.org/mujoco-core/mujoco_core-4.0.1.dev1016247317-cp314-cp314t-win_amd64.whl", hash = "sha256:835a4a057ddddc3781210e0d49e06eb66210defcece8c325f4b20087b6656293" },
 ]
 
 [package.optional-dependencies]
@@ -1119,7 +1119,7 @@ rendering = [
 
 [[package]]
 name = "mujoco-studio"
-version = "4.0.1.dev1015716258"
+version = "4.0.1.dev1016247317"
 source = { registry = "https://py.mujoco.org/" }
 dependencies = [
     { name = "mujoco-core" },
@@ -1127,22 +1127,22 @@ dependencies = [
     { name = "websockets" },
 ]
 wheels = [
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:922110c828ce41c720278c30fcd9d3876bad55fb447c1eb18e32483721e60c24" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5cd73d343aca1f51bba7be5c50f5deccfde594b7ecb1461720ae054d5850175c" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:234ce76d9252cf540f7a41d2aa8b46b184d0de8ac23f45def231726243cd5844" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp312-cp312-win_amd64.whl", hash = "sha256:11de4a82fe10521ba20b1118d8b7ff879aca61b403bcb9a026730df4983e0cae" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:9bef96b56b68fdb27c078f25927ffdfee5683b3a54b6cc1b4d030cc47c996e9f" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9c2e80799769921ae073ad43910fff5df6d6c22bcfa41c2df1a8a340485dc5df" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e0e4fd2ba3b92ac9601530766210f41fb5e5bcf34280e367175b1389d3538a9a" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp313-cp313-win_amd64.whl", hash = "sha256:609b1099623259a4eeb756ef68f506c28f196c4c1a1f6073610ef6df33395de4" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:87300c6695b6d13cbd766c51117be8d07c40a9cc16e3f6cadaf68320f020cf84" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a86c352538d11aca8ba41d89a1b9af012b5c4088c2cf3ddc476f725ed0a7b016" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:477e9fd7ffe28337ea8ff41967bd1a908c2c96cfd132b794f458c352f4d0cf3e" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314-win_amd64.whl", hash = "sha256:972721d4e52f41ae28d27508d18da63c39dd6db1e0f1f58c01ff02e2fcf8638c" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314t-macosx_11_0_universal2.whl", hash = "sha256:50673630f913a2c25f45ee775c9362d4e2fcca0efc7b7ca625d74c56c7626479" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:92b35fbff98491ebfc07ec4ddfa9e2c588d34a0d558ac3fbadb896db51610d0c" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:00d30d86112c3a52852869f6c5d5d5bc49c51a760c6fcbd3fa606fc083615b3f" },
-    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1015716258-cp314-cp314t-win_amd64.whl", hash = "sha256:8e0c6251309bcd502e812d7487e9e1e142b982ab49313fc4d7f0098f0b38b65a" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:f9cca1acc3a506549adf389940fdfde26a123e75653be6c0040eca105d4d3316" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a07c89dac70783909947d7112fed30b450b1f61ad5eb4d6c78f7591dc591270d" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:16414a67bcc836458739b2d142c89983d6631ed811f7ced1dd791cb996c97225" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp312-cp312-win_amd64.whl", hash = "sha256:baf4e812fe45b078d76ca59837603094827a571be0250e2651fb977786554d52" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp313-cp313-macosx_11_0_universal2.whl", hash = "sha256:90ba6c1d75ef72e3c5997573522bb0e4828c272f80c398533e89a9fc9012ac77" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7ab3f0c6b3ef571cf823cd0170a008d186c16e57745e459f44f3a4635805cf53" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:86c0e444565f7477b545011b9a484f87daf08fca242213b4f34372c015cb5b93" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp313-cp313-win_amd64.whl", hash = "sha256:78db4fb31d42572ee9bece5db51aad1bcc31b12c3c353683b45daa09b4d20b42" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314-macosx_11_0_universal2.whl", hash = "sha256:e7b2e4866c703148af3ae7b41717a3c27adb7cb01e568faadb20a4d30db1746c" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ce4deef7e7922bd4fce3544ab789a0c455483fbd0513b17a10923c3f3eb7b5fb" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:acf9292b8376aa22ddffeae581e319983a199fd2a95f2b09885014fe506d9fd0" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314-win_amd64.whl", hash = "sha256:8e70f25cac7957a250a51d7dc20aa13dca1781920a6cd3c00dd623f778974ced" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314t-macosx_11_0_universal2.whl", hash = "sha256:f12914189b960cc7162a598e8884751e301f8ba5e6cfe4ab85e0054a37c1af41" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:29a4f9cbe9eaac9991e16af0e5c83a7a315b8725104481144173b70a7ae75324" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8a0381532569fe48f78521d445a8d1769515134f4e6ce64b313b83947247ac86" },
+    { url = "https://py.mujoco.org/mujoco-studio/mujoco_studio-4.0.1.dev1016247317-cp314-cp314t-win_amd64.whl", hash = "sha256:772a97e1aa92f07e12f7041921a1881f0d7a70d4c971a401fc0c50a032184388" },
 ]
 
 [[package]]
@@ -1249,7 +1249,7 @@ name = "nvidia-cublas"
 version = "13.1.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/a1/0bd24ee8c8d03adac032fd2909426a00c88f8c57961b1277ded97f91119f/nvidia_cublas-13.1.1.3-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:b7a210458267ac818974c53038fbec2e969d5c99f305ab15c72522fa9f001dd5", size = 542848918, upload-time = "2026-04-08T18:46:22.985Z" },
@@ -1345,7 +1345,7 @@ name = "nvidia-cudnn-cu13"
 version = "9.20.0.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cublas", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/56/c5/83384d846b2fd17c44bd499b36c75a45ed4f095fbbb2252294e89cea5c5c/nvidia_cudnn_cu13-9.20.0.48-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:e31454ae00094b0c55319d9d15b6fa2fc50a9e1c0f5c8c80fb75258234e731e1", size = 444574296, upload-time = "2026-03-09T19:28:27.751Z" },
@@ -1358,7 +1358,7 @@ name = "nvidia-cufft"
 version = "12.0.0.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/ae/f417a75c0259e85c1d2f83ca4e960289a5f814ed0cea74d18c353d3e989d/nvidia_cufft-12.0.0.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:2708c852ef8cd89d1d2068bdbece0aa188813a0c934db3779b9b1faa8442e5f5", size = 214053554, upload-time = "2025-09-04T08:31:38.196Z" },
@@ -1422,9 +1422,9 @@ name = "nvidia-cusolver"
 version = "12.0.4.66"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-cusparse", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
-    { name = "nvidia-nvjitlink", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cublas", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-cusparse", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/c3/b30c9e935fc01e3da443ec0116ed1b2a009bb867f5324d3f2d7e533e776b/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:02c2457eaa9e39de20f880f4bd8820e6a1cfb9f9a34f820eb12a155aa5bc92d2", size = 223467760, upload-time = "2025-09-04T08:33:04.222Z" },
@@ -1452,7 +1452,7 @@ name = "nvidia-cusparse"
 version = "12.6.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "nvidia-nvjitlink", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/94/5c26f33738ae35276672f12615a64bd008ed5be6d1ebcb23579285d960a9/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:80bcc4662f23f1054ee334a15c72b8940402975e0eab63178fc7e670aa59472c", size = 162155568, upload-time = "2025-09-04T08:33:42.864Z" },
@@ -1760,7 +1760,7 @@ version = "4.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astroid" },
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "dill" },
     { name = "isort" },
     { name = "mccabe" },
@@ -1814,7 +1814,7 @@ name = "pytest"
 version = "9.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -1967,7 +1967,7 @@ wheels = [
 
 [[package]]
 name = "reaf-sim"
-version = "1.0.0"
+version = "1.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "absl-py" },
@@ -1980,7 +1980,7 @@ dependencies = [
     { name = "numpy" },
     { name = "reaf" },
     { name = "torch", version = "2.13.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "torch", version = "2.13.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "torch", version = "2.13.0+cu129", source = { registry = "https://download.pytorch.org/whl/cu129" }, marker = "extra == 'group-8-reaf-sim-cu12'" },
     { name = "warp-lang" },
@@ -2004,8 +2004,8 @@ dev = [
     { name = "pytest" },
     { name = "pytest-xdist" },
     { name = "scipy" },
-    { name = "sphinx", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinx", version = "9.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sphinx", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
+    { name = "sphinx", version = "9.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
 ]
 
 [package.metadata]
@@ -2143,23 +2143,23 @@ resolution-markers = [
     "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "babel", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "colorama", marker = "(python_full_version < '3.13' and sys_platform == 'win32') or (python_full_version >= '3.13' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "docutils", version = "0.22.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "imagesize", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "jinja2", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "packaging", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "pygments", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "requests", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "roman-numerals", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "snowballstemmer", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version < '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils", version = "0.22.4", source = { registry = "https://pypi.org/simple" } },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/fc/73/567727fc8c8d85bc3adc88a246e12937cfda8d565cf1d80e85bceaa61fe5/sphinx-9.1.1.tar.gz", hash = "sha256:48b627f02908f22c601b3ba9c7b17265b4f315dd05c8bc64cd4da41183f44fbc", size = 8725638, upload-time = "2026-10-20T00:41:13.96Z" }
 wheels = [
@@ -2181,23 +2181,23 @@ resolution-markers = [
     "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 dependencies = [
-    { name = "alabaster", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "babel", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "colorama", marker = "(python_full_version >= '3.13' and sys_platform == 'win32') or (python_full_version < '3.13' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (sys_platform != 'win32' and extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "docutils", version = "0.23", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "imagesize", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "jinja2", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "packaging", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "pygments", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "requests", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "roman-numerals", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "snowballstemmer", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-applehelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-devhelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-jsmath", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-qthelp", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "python_full_version >= '3.13' or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "alabaster" },
+    { name = "babel" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "docutils", version = "0.23", source = { registry = "https://pypi.org/simple" } },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "packaging" },
+    { name = "pygments" },
+    { name = "requests" },
+    { name = "roman-numerals" },
+    { name = "snowballstemmer" },
+    { name = "sphinxcontrib-applehelp" },
+    { name = "sphinxcontrib-devhelp" },
+    { name = "sphinxcontrib-htmlhelp" },
+    { name = "sphinxcontrib-jsmath" },
+    { name = "sphinxcontrib-qthelp" },
+    { name = "sphinxcontrib-serializinghtml" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/64/d4/413466f0be8b1cb0e3e43893a148b96d7462d0923d82b4166b21afc5f30c/sphinx-9.2.0.tar.gz", hash = "sha256:90470459f3cab15d9dfed146c71cf77694b0445df17b2e0e69059cb9f7fc9ee4", size = 8782438, upload-time = "2026-10-21T00:05:15.019Z" }
 wheels = [
@@ -2334,18 +2334,18 @@ resolution-markers = [
 dependencies = [
     { name = "cuda-bindings", version = "13.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "cuda-toolkit", version = "13.0.3.0", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "filelock", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
-    { name = "fsspec", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
-    { name = "jinja2", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
-    { name = "networkx", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "filelock", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "fsspec", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "jinja2", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "networkx", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-cudnn-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-cusparselt-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-nccl-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "setuptools", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
-    { name = "sympy", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "setuptools", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sympy", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "triton", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "typing-extensions", marker = "(extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12')" },
+    { name = "typing-extensions", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c4/3a/ed0f4d4d1dcde03bced7aac9a28e800abcdc0cbd06b6775044c9fbd877b7/torch-2.13.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:2fe228aba290d14b9f31b049be550dbd469c3fd3013d7a19705b30454da97027", size = 111213045, upload-time = "2026-07-08T16:05:22.997Z" },

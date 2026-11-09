@@ -2732,7 +2732,7 @@ wheels = [
 
 [[package]]
 name = "playground"
-version = "1.0.0"
+version = "1.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "absl-py" },
@@ -3556,7 +3556,7 @@ wheels = [
 
 [[package]]
 name = "reaf-sim"
-version = "1.0.0"
+version = "1.0.1"
 source = { editable = "third_party/reaf_sim" }
 dependencies = [
     { name = "absl-py" },

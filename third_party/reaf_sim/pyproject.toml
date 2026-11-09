@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reaf-sim"
-version = "1.0.0"
+version = "1.0.1"
 description = "Robotics Environment Authoring Framework - Simulation Modules."
 requires-python = ">=3.12,<3.15"
 readme = "README.md"
