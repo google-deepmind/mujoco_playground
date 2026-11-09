@@ -62,57 +62,32 @@ uv pip install --default-index https://pypi.org/simple "playground>=1.0"
 ```
 
 > [!NOTE]
-> On Linux with CUDA 12 drivers, install with `uv pip install --default-index https://pypi.org/simple --index https://download.pytorch.org/whl/cu129 -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 "warp-lang==1.18.0+cu12" "playground[rl]>=1.0"`.
-
-For local development from `HEAD`, clone the repository and sync dependencies:
-
-<details open>
-
-<summary><b>CPU (macOS or Linux)</b></summary>
-
-```bash
-git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
-make sync-cpu
-```
-
-</details>
-
-<details>
-
-<summary><b>GPU (CUDA 12)</b></summary>
-
-```bash
-git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
-make sync-cu12
-```
-
-</details>
-
-<details>
-
-<summary><b>GPU (CUDA 13)</b></summary>
-
-```bash
-git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
-make sync
-```
-
-</details>
-
-Verify your installation by running the test suite:
-
-```bash
-make test
-```
-
-> [!NOTE]
-> Hardware SDKs are optional extras so simulation-only stays lightweight. Passing `--extra so101` or `--extra yam` to `uv run` installs the hardware drivers on demand.
+> On Linux with CUDA 12 drivers, install with `--index https://download.pytorch.org/whl/cu129 -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 "warp-lang==1.18.0+cu12" "playground[rl]>=1.0"`.
 
 ## Getting Started
 
-To get started, either try training an RL policy with [`uvx`](https://docs.astral.sh/uv/), or try agentic manipulation in simulation or on hardware.
+To get started, try controlling a sim/real robot with your coding agent, or train an RL policy in sim and deploy it to hardware.
 
-### Train & Visualize an RL Policy
+### Control a robot with your coding agent
+
+Spin up the [agentic tabletop manipulation task](mujoco_playground/tasks/agentic/tabletop_v0) directly from your coding agent with a prompt in `sim` or `real`:
+
+```text
+Start the tabletop_v0 bridge for the yam in sim and get it to <your task>,
+following mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md
+```
+
+Swap `sim` for `real` to run on hardware, or `so101` for `yam` (see [`AGENT_PROMPT.md`](mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md)).
+
+> [!NOTE]
+> On macOS, `--viewer` requires `mjpython` in place of `python`. Before the
+> first run, link `libpython` into the virtualenv so `mjpython` can load it:
+>
+> ```bash
+> ln -sf "$(uv run python -c 'import sys; print(sys.base_prefix)')"/lib/libpython3.13.dylib .venv/lib/
+> ```
+
+### Train, visualize, and deploy an RL policy
 
 Train an `SO101PickCube` PPO policy with [RSL-RL](https://github.com/leggedrobotics/rsl_rl) and inspect it in the MuJoCo Studio web viewer:
 
@@ -207,24 +182,51 @@ uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[so1
   --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
 
-### Try Agentic Manipulation
+## Local Installation
 
-Spin up the [agentic tabletop manipulation task](mujoco_playground/tasks/agentic/tabletop_v0) directly from your coding agent with a prompt in `sim` or `real`:
+For local development from `HEAD`, clone the repository and sync dependencies:
 
-```text
-Start the tabletop_v0 bridge for the yam in sim and get it to <your task>,
-following mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md
+<details open>
+
+<summary><b>CPU (macOS or Linux)</b></summary>
+
+```bash
+git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
+make sync-cpu
 ```
 
-Swap `sim` for `real` to run on hardware, or `so101` for `yam` (see [`AGENT_PROMPT.md`](mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md)).
+</details>
+
+<details>
+
+<summary><b>GPU (CUDA 12)</b></summary>
+
+```bash
+git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
+make sync-cu12
+```
+
+</details>
+
+<details>
+
+<summary><b>GPU (CUDA 13)</b></summary>
+
+```bash
+git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
+make sync
+```
+
+</details>
+
+Verify your installation by running the test suite:
+
+```bash
+make test
+```
 
 > [!NOTE]
-> On macOS, `--viewer` requires `mjpython` in place of `python`. Before the
-> first run, link `libpython` into the virtualenv so `mjpython` can load it:
->
-> ```bash
-> ln -sf "$(uv run python -c 'import sys; print(sys.base_prefix)')"/lib/libpython3.13.dylib .venv/lib/
-> ```
+> Hardware SDKs are optional extras so simulation-only stays lightweight. Passing `--extra so101` or `--extra yam` to `uv run` installs the hardware drivers on demand.
 
 ## Documentation & Contributing
 
