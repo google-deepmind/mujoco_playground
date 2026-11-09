@@ -54,18 +54,50 @@ Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either 
 
 ## Installation
 
-Clone the repository and sync dependencies with [`uv`](https://docs.astral.sh/uv/):
+First [install `uv`](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet. Install [`playground`](https://pypi.org/project/playground/) (Python 3.12–3.13) from PyPI with `uv pip` (or skip installation and run directly with `uvx` in [Getting Started](#getting-started)):
+
+```bash
+uv venv --python 3.13 && source .venv/bin/activate
+uv pip install --default-index https://pypi.org/simple "playground>=1.0"
+```
+
+> [!NOTE]
+> On Linux with CUDA 12 drivers, install with `uv pip install --default-index https://pypi.org/simple --index https://download.pytorch.org/whl/cu129 -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 "warp-lang==1.18.0+cu12" "playground[rl]>=1.0"`.
+
+For local development from `HEAD`, clone the repository and sync dependencies:
+
+<details open>
+
+<summary><b>CPU (macOS or Linux)</b></summary>
 
 ```bash
 git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
-
-# Then install with one of:
-make sync  # For GPU, good for RL training
-
-make sync-cu12  # For CUDA 12 on Linux
-
-make sync-cpu  # Or for CPU only, (i.e. on macOS)
+make sync-cpu
 ```
+
+</details>
+
+<details>
+
+<summary><b>GPU (CUDA 12)</b></summary>
+
+```bash
+git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
+make sync-cu12
+```
+
+</details>
+
+<details>
+
+<summary><b>GPU (CUDA 13)</b></summary>
+
+```bash
+git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
+make sync
+```
+
+</details>
 
 Verify your installation by running the test suite:
 
@@ -74,41 +106,103 @@ make test
 ```
 
 > [!NOTE]
-> Real-robot hardware SDKs are optional extras so simulation-only stays lightweight. Passing `--extra so101` or `--extra yam` to `uv run` (or `uv sync --extra so101`) installs the hardware drivers on demand.
+> Hardware SDKs are optional extras so simulation-only stays lightweight. Passing `--extra so101` or `--extra yam` to `uv run` installs the hardware drivers on demand.
 
 ## Getting Started
 
-To get started, either try training an RL policy, or try agentic manipulation in simulation or on the real hardware.
+To get started, either try training an RL policy with [`uvx`](https://docs.astral.sh/uv/), or try agentic manipulation in simulation or on hardware.
 
 ### Train & Visualize an RL Policy
 
-Train a PPO policy across parallel GPU environments with [RSL-RL](https://github.com/leggedrobotics/rsl_rl):
+Train an `SO101PickCube` PPO policy with [RSL-RL](https://github.com/leggedrobotics/rsl_rl) and inspect it in the MuJoCo Studio web viewer:
+
+<details open>
+
+<summary><b>CPU</b></summary>
 
 ```bash
-# Train SO-101 Pick-Cube
-uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
-  --env=SO101PickCubeVision \
-  --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
-  #  --overrides='{"nworld": 64}'  # For CPU
+# Train SO101PickCube on CPU
+uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.train \
+  --env=SO101PickCube \
+  --logdir=/tmp/rslrl_logs/so101_pick_cube \
+  --overrides='{"nworld": 64}'
 
-# Play back the trained policy in the interactive viewer
-uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
-  --env=SO101PickCubeVision \
-  --resume_path=/tmp/rslrl_logs/so101_pick_cube_vision
+# Play trained policy in MuJoCo Studio web viewer
+uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.play \
+  --env=SO101PickCube \
+  --resume_path=/tmp/rslrl_logs/so101_pick_cube
 ```
+
+</details>
+
+<details>
+
+<summary><b>GPU (CUDA 12)</b></summary>
+
+```bash
+# Train SO101PickCube (CUDA 12 driver)
+uvx --default-index https://pypi.org/simple --python 3.13 \
+  --index https://download.pytorch.org/whl/cu129 \
+  -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 \
+  --with "warp-lang==1.18.0+cu12" \
+  --from "playground[rl]>=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.train \
+  --env=SO101PickCube \
+  --logdir=/tmp/rslrl_logs/so101_pick_cube
+
+# Play trained policy in MuJoCo Studio web viewer
+uvx --default-index https://pypi.org/simple --python 3.13 \
+  --index https://download.pytorch.org/whl/cu129 \
+  -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 \
+  --with "warp-lang==1.18.0+cu12" \
+  --from "playground[rl]>=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.play \
+  --env=SO101PickCube \
+  --resume_path=/tmp/rslrl_logs/so101_pick_cube
+```
+
+</details>
+
+<details>
+
+<summary><b>GPU (CUDA 13)</b></summary>
+
+```bash
+# Train SO101PickCube (8,192 parallel envs on GPU)
+uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.train \
+  --env=SO101PickCube \
+  --logdir=/tmp/rslrl_logs/so101_pick_cube
+
+# Play trained policy in MuJoCo Studio web viewer
+uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.play \
+  --env=SO101PickCube \
+  --resume_path=/tmp/rslrl_logs/so101_pick_cube
+```
+
+</details>
 
 Monitor training curves in TensorBoard:
 
 ```bash
-uv run --extra rl tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
+uvx --default-index https://pypi.org/simple tensorboard --logdir=/tmp/rslrl_logs/so101_pick_cube
 ```
 
-Optionally [set up the SO-101 hardware](mujoco_playground/robots/so101/real) and [deploy to the real arm](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy):
+Optionally [set up the SO-101 hardware](mujoco_playground/robots/so101/real), train the wrist-camera policy (`SO101PickCubeVision`), and [deploy zero-shot to the follower arm](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy):
 
 ```bash
+# Train SO-101 Pick-Cube vision policy (add CUDA 12 flags above on CUDA 12)
+uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
+  python -m mujoco_playground.rl.rsl_rl.train \
+  --env=SO101PickCubeVision \
+  --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
+
 # Deploy the trained policy on the physical SO-101 follower arm
-uv run --extra so101 --extra rl python -m \
-  mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[so101,rl]>=1.0" \
+  python -m mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
   --mode=real \
   --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision
 ```

@@ -7,30 +7,16 @@
 
 `reaf-sim` is a simulation environment framework written in [PyTorch](https://pytorch.org/) and built on [MuJoCo](https://github.com/google-deepmind/mujoco) and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) with the [Robotics Environment Authoring Framework (REAF)](https://github.com/google-deepmind/reaf).
 
-`reaf-sim` enables creation of environments in simulation that can be zero-shot deployed onto hardware and vice versa. Workflows that `reaf-sim` enables include large-batch RL on GPU, sim evaluation, sim and hardware teleoperation, system identification, agentic workflows, and sim2real deployment.
+`reaf-sim` is designed explicitly for sim-to-real robotics workflows. To achieve this, we decouple hardware and sensor I/O from task logic. The hardware layer is called the [`DeviceLayer`](https://reaf-sim.readthedocs.io/en/latest/user_guide/device_layer.html), which wraps sim in an interface that is consistent with physical hardware. The task logic is implemented in the [`TaskLayer`](https://reaf-sim.readthedocs.io/en/latest/user_guide/task_layer.html), which handles MDP processing of actions, observations, terminations, and rewards. Critically, the `TaskLayer` has no access to privileged simulation state, which makes sim workflows portable to real hardware.
+
+> [!NOTE]
+> For a full suite of sim and real robotic examples, check out [MuJoCo Playground](https://github.com/google-deepmind/mujoco_playground), which showcases `reaf-sim` across a variety of tasks!
 
 This project adheres to the [GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/blob/main/src/gdm_robotics/interfaces/environment.py).
 
-## Quickstart
+## Cartpole Example
 
-Clone `reaf-sim` from GitHub and install with [`uv`](https://docs.astral.sh/uv/):
-
-```bash
-git clone https://github.com/google-deepmind/reaf-sim.git && cd reaf-sim
-
-# Then install with one of:
-make install  # For GPU, good for RL training
-
-make install-cu12  # For CUDA 12 on Linux
-
-make install-cpu  # Or for CPU only, (i.e. on macOS)
-
-make test  # Run all tests, verify everything works
-```
-
-### Cartpole Example
-
-For a quick preview, let's create a `reaf-sim` environment controlling a cartpole system alongside a camera rendering RGB observations across 16 parallel environments on GPU (`impl="warp"`). Step the environments with control commands and capture visual rollouts:
+For a quick preview into `reaf-sim`, let's create an environment controlling a cartpole alongside a camera rendering RGB observations across 16 parallel environments on GPU (`impl="warp"`). Step the environments with control commands and capture visual rollouts:
 
 ```python
 import mujoco
