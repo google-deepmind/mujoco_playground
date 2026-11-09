@@ -52,8 +52,9 @@ class FunctionalObservationAdapter(
 
   * ``bias`` — optional ``noise.Noise`` sampled once per episode on init/reset
     (only applied when ``ObsGroup.enable_noise=True``).
-  * ``noise`` — optional ``noise.Noise`` sampled on every step
-    (only applied when ``ObsGroup.enable_noise=True``).
+  * ``noise`` — optional ``noise.Noise`` sampled once per control step in
+    ``on_step()``, and for the reset worlds in ``on_begin_stepping()`` (only
+    applied when ``ObsGroup.enable_noise=True``).
   * ``scale`` — optional multiplicative factor.
   * ``offset`` — optional additive offset.
   * ``clip`` — optional ``{"min": ..., "max": ...}`` clamp bounds.
@@ -65,7 +66,8 @@ class FunctionalObservationAdapter(
   slot of the reset worlds with their reset observation.
   ``observations_from_features()`` returns the stored observations, so history
   terms read as zeros until the first
-  ``on_begin_stepping()``.
+  ``on_begin_stepping()``. Reads apply the stored noise sample and do not
+  advance any state.
   """
 
   def __init__(
@@ -85,7 +87,10 @@ class FunctionalObservationAdapter(
     self._clips = {g: {} for g in observations}
     # Observations `[t - H, ..., t - 1, t]` of history terms.
     self._history_buffers = {g: {} for g in observations}
-    self._modifiers = {g: {} for g in observations}
+    self._noise_samplers = {g: {} for g in observations}
+    self._noise_ops = {g: {} for g in observations}
+    # Per-step noise of the current control step.
+    self._noise_samples = {g: {} for g in observations}
     self._bias_samplers = {g: {} for g in observations}
     self._bias_buffers = {g: {} for g in observations}
     self._bias_ops = {g: {} for g in observations}
@@ -174,8 +179,20 @@ class FunctionalObservationAdapter(
         if term_group.enable_noise:
           noise_config = term.noise
           if noise_config is not None:
-            self._modifiers[group_name][name] = noise_module.build_modifier(
+            if nworld is None:
+              raise ValueError(
+                  "nworld must be provided when using 'noise'"
+                  f" (term '{name}' in group '{group_name}')"
+              )
+            self._noise_samplers[group_name][name] = noise_module.build_sampler(
                 noise_config, self._xpu_device
+            )
+            self._noise_ops[group_name][name] = noise_module.resolve_op(
+                noise_config
+            )
+            # Drawn here too so that reads are valid before the first hook.
+            self._noise_samples[group_name][name] = self._sample_noise(
+                group_name, name, torch_dtype
             )
           bias_config = term.bias
           if bias_config is not None:
@@ -240,7 +257,8 @@ class FunctionalObservationAdapter(
     }
 
   def on_step(self, features: Mapping[str, torch.Tensor]) -> None:
-    """Pushes the observation of the new control step into the history."""
+    """Draws per-step noise and pushes the new observation into the history."""
+    self._redraw_noise(env_mask=None)
     for group_name, group_buffers in self._history_buffers.items():
       for name, buf in group_buffers.items():
         obs = self._get_history_obs(group_name, name, features)
@@ -251,7 +269,8 @@ class FunctionalObservationAdapter(
       features: Mapping[str, torch.Tensor],
       env_mask: torch.Tensor | None = None,
   ) -> None:
-    """Fills the history of the `env_mask` worlds with their observation."""
+    """Draws noise and fills every history slot of the `env_mask` worlds."""
+    self._redraw_noise(env_mask)
     for group_name, group_buffers in self._history_buffers.items():
       for name, buf in group_buffers.items():
         obs = self._get_history_obs(group_name, name, features)
@@ -262,8 +281,8 @@ class FunctionalObservationAdapter(
   ) -> dict[str, torch.Tensor]:
     """Computes observations from features (`func -> bias -> noise -> scale -> offset -> clip -> history`).
 
-    History terms return the observations stored by the hooks and do not
-    advance.
+    History terms return the observations stored by the hooks, and noise is
+    the sample drawn by the hooks.
 
     Args:
       features: The task layer features.
@@ -317,8 +336,18 @@ class FunctionalObservationAdapter(
           self._bias_ops[group_name][name],
       )
 
-    if name in self._modifiers[group_name]:
-      value = self._modifiers[group_name][name](value)
+    if name in self._noise_samples[group_name]:
+      noise = self._noise_samples[group_name][name]
+      if value.shape[0] != noise.shape[0]:
+        raise ValueError(
+            f"Observation term '{name}' in group '{group_name}' has noise"
+            f" sampled for nworld={noise.shape[0]} worlds, but its features"
+            f" have batch size {value.shape[0]}. Pass the matching `nworld`"
+            " to FunctionalObservationAdapter."
+        )
+      value = noise_module.apply_noise(
+          value, noise, self._noise_ops[group_name][name]
+      )
 
     if name in self._scales[group_name]:
       value = value * self._scales[group_name][name].to(dtype=value.dtype)
@@ -347,3 +376,23 @@ class FunctionalObservationAdapter(
     term = self._observations[group_name].terms[name]
     obs = self._get_obs(group_name, name, term, features)
     return obs.reshape(buf.shape[0], *buf.shape[2:]).to(buf.dtype)
+
+  def _sample_noise(
+      self, group_name: str, name: str, dtype: torch.dtype
+  ) -> torch.Tensor:
+    """Draws a per-step noise sample of a term for every world."""
+    term = self._observations[group_name].terms[name]
+    return noise_module.sample_noise(
+        self._noise_samplers[group_name][name],
+        self._noise_ops[group_name][name],
+        (self._nworld, *term.output_shape),  # pyrefly: ignore[not-iterable]
+        dtype,
+        self._xpu_device,
+    )
+
+  def _redraw_noise(self, env_mask: torch.Tensor | None) -> None:
+    """Draws new per-step noise for the `env_mask` worlds."""
+    for group_name, group_samples in self._noise_samples.items():
+      for name, samples in group_samples.items():
+        new_samples = self._sample_noise(group_name, name, samples.dtype)
+        tensors.masked_fill(samples, env_mask, new_samples)

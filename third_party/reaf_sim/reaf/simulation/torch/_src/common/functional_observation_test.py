@@ -98,6 +98,7 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
             )
         },
         xpu_device="cpu",
+        nworld=4,
     )
     # 2. Noise disabled in group, term has noise -> should NOT have noise
     provider_clean_override = (
@@ -520,6 +521,65 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     obs = provider.observations_from_features({"a": buffer})
     torch.testing.assert_close(obs["obs"], torch.tensor([[2.0, 2.0, 3.0, 3.0]]))
 
+  def _noisy_provider(
+      self, nworld: int, op: noise.OperationType = "add"
+  ) -> functional_observation.FunctionalObservationAdapter:
+    return functional_observation.FunctionalObservationAdapter(
+        observations={
+            "obs": ObsGroup(
+                terms={
+                    "t": (
+                        Obs("a").configure(
+                            noise=noise.Noise(
+                                dist=noise.Uniform(low=-0.1, high=0.1), op=op
+                            ),
+                            output_shape=(2,),
+                        )
+                    ),
+                },
+                enable_noise=True,
+            )
+        },
+        xpu_device="cpu",
+        nworld=nworld,
+    )
+
+  def test_noise_batch_mismatch_raises(self):
+    provider = self._noisy_provider(nworld=1)
+    with self.assertRaisesRegex(ValueError, "Pass the matching `nworld`"):
+      provider.observations_from_features({"a": torch.zeros(3, 2)})
+
+  def test_noise_redrawn_in_hooks_only(self):
+    """Reads reuse the noise; resets redraw it for the masked worlds only."""
+    torch.manual_seed(0)
+    provider = self._noisy_provider(nworld=2)
+    features = {"a": torch.zeros(2, 2)}
+    obs0 = provider.observations_from_features(features)["obs"].clone()
+    torch.testing.assert_close(
+        provider.observations_from_features(features)["obs"], obs0
+    )
+
+    provider.on_begin_stepping(features, torch.tensor([True, False]))
+    obs1 = provider.observations_from_features(features)["obs"].clone()
+    self.assertFalse(torch.allclose(obs1[0], obs0[0]))
+    torch.testing.assert_close(obs1[1], obs0[1])
+
+    provider.on_step(features)
+    obs2 = provider.observations_from_features(features)["obs"]
+    self.assertFalse(torch.allclose(obs2[0], obs1[0]))
+    self.assertFalse(torch.allclose(obs2[1], obs1[1]))
+
+  def test_replace_noise_does_not_alias_state(self):
+    """Writing into an observation does not change the stored noise."""
+    provider = self._noisy_provider(nworld=2, op="replace")
+    features = {"a": torch.zeros(2, 2)}
+    obs0 = provider.observations_from_features(features)["obs"]
+    expected = obs0.clone()
+    obs0.fill_(5.0)  # E.g. `Environment` splicing reset observations in place.
+    torch.testing.assert_close(
+        provider.observations_from_features(features)["obs"], expected
+    )
+
   def test_observations_from_features_is_pure(self):
     """Reading twice with the same features returns the same observations.
 
@@ -614,6 +674,8 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     provider.reset(torch.tensor([True, False, True, False]))
     features = {"a": torch.ones(nworld, 3)}
     obs0 = provider.observations_from_features(features)
+    # The episodic bias does not change across steps.
+    provider.on_step(features)
     obs1 = provider.observations_from_features(features)
 
     # Critic (enable_noise=False) skips bias, only applies scale=2.0.
@@ -715,6 +777,12 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
         "r6": math.rot_matrix_to_6d(math.quat_to_matrix(q_in)),
     }
     obs0 = provider.observations_from_features(features)
+    # Per-step noise is only redrawn by `on_step()`; reads are pure.
+    torch.testing.assert_close(
+        provider.observations_from_features(features)["quat_bias_plus_noise"],
+        obs0["quat_bias_plus_noise"],
+    )
+    provider.on_step(features)
     obs1 = provider.observations_from_features(features)
 
     torch.testing.assert_close(obs0["quat"], obs1["quat"])

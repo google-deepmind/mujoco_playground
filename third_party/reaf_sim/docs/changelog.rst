@@ -86,6 +86,11 @@ Task Layer
   the adapter outside of :class:`~reaf.simulation.torch.Environment` must call ``on_begin_stepping`` after ``reset()``
   and ``on_step`` on every step.
 
+- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` draws per-step observation noise once per step in
+  ``on_step``, and for the reset environments in ``on_begin_stepping``; reads reuse the drawn noise. Observation noise
+  requires ``nworld`` to match the batch size, and noisy terms output ``(nworld, *output_shape)``, like terms with a
+  bias. ``apply_noise`` with ``op="replace"`` returns a copy of the noise sample.
+
 Bugs Fixed
 ^^^^^^^^^^
 

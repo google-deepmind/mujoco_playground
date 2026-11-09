@@ -499,7 +499,9 @@ def apply_noise(
 ) -> torch.Tensor:
   """Applies a noise sample from `sample_noise()` to `value`."""
   if op == "replace":
-    return noise.to(dtype=value.dtype, device=value.device)
+    # Copied: callers may store `noise` and update it in place, so the result
+    # must not alias it.
+    return noise.to(dtype=value.dtype, device=value.device, copy=True)
   if op == "rotate":
     noise = noise.to(dtype=value.dtype, device=value.device)
     if value.shape[-1] == 4:
