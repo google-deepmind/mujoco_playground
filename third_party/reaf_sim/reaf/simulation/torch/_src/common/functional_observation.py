@@ -59,6 +59,13 @@ class FunctionalObservationAdapter(
   * ``clip`` — optional ``{"min": ..., "max": ...}`` clamp bounds.
   * ``history_length`` — optional int number of past steps to stack (oldest to
     newest: ``[t - H, ..., t - 1, t]``).
+
+  History terms store their observations: ``on_step()`` pushes the
+  observation of the new control step, and ``on_begin_stepping()`` fills every
+  slot of the reset worlds with their reset observation.
+  ``observations_from_features()`` returns the stored observations, so history
+  terms read as zeros until the first
+  ``on_begin_stepping()``.
   """
 
   def __init__(
@@ -76,17 +83,14 @@ class FunctionalObservationAdapter(
     self._scales = {g: {} for g in observations}
     self._offsets = {g: {} for g in observations}
     self._clips = {g: {} for g in observations}
+    # Observations `[t - H, ..., t - 1, t]` of history terms.
     self._history_buffers = {g: {} for g in observations}
-    self._history_lengths = {g: {} for g in observations}
     self._modifiers = {g: {} for g in observations}
     self._bias_samplers = {g: {} for g in observations}
     self._bias_buffers = {g: {} for g in observations}
     self._bias_ops = {g: {} for g in observations}
 
     self._specs = {}
-    self._steps_since_reset = None
-
-    has_history = False
 
     for group_name, term_group in observations.items():
       group_specs = {}
@@ -140,9 +144,8 @@ class FunctionalObservationAdapter(
                 "nworld must be provided when using history_length > 0"
                 f" (term '{name}' in group '{group_name}')"
             )
-          self._history_lengths[group_name][name] = history_length
           self._history_buffers[group_name][name] = torch.zeros(
-              (nworld, history_length, *base_shape),
+              (nworld, 1 + history_length, *base_shape),
               dtype=torch_dtype,
               device=self._xpu_device,
           )
@@ -157,7 +160,6 @@ class FunctionalObservationAdapter(
           else:
             base_size = int(np.prod(base_shape))
             adjusted_shape = ((1 + history_length) * base_size,)
-          has_history = True
         else:
           adjusted_shape = base_shape or ()
 
@@ -212,23 +214,11 @@ class FunctionalObservationAdapter(
       else:
         raise ValueError(f"ObsGroup '{group_name}' has no terms.")
 
-    # Per-env step counter since reset.
-    if has_history:
-      self._steps_since_reset = torch.zeros(
-          nworld, dtype=torch.long, device=self._xpu_device
-      )
-
   def reset(self, env_mask: torch.Tensor | None = None) -> None:
-    """Reset history and episodic bias buffers for the given environment mask.
+    """Resamples the per-episode biases of the `env_mask` worlds.
 
-    Zeros the history buffer, resamples per-episode biases for masked worlds,
-    and resets the steps-since-reset counter. On the next
-    ``observations_from_features`` call, envs with the first step after reset
-    get their entire history filled with the current observation.
+    ``on_begin_stepping()`` then refills the history of these worlds.
     """
-    for group_buffers in self._history_buffers.values():
-      for buf in group_buffers.values():
-        tensors.masked_fill(buf, env_mask, 0.0)
     for group_name, group_biases in self._bias_buffers.items():
       for name, buf in group_biases.items():
         new_bias = noise_module.sample_bias(
@@ -239,8 +229,6 @@ class FunctionalObservationAdapter(
             self._xpu_device,
         )
         tensors.masked_fill(buf, env_mask, new_bias)
-    if self._steps_since_reset is not None:
-      tensors.masked_fill(self._steps_since_reset, env_mask, 0)
 
   def task_features_keys(self) -> set[str]:
     return set()
@@ -251,63 +239,53 @@ class FunctionalObservationAdapter(
         for k, v in self._specs.items()
     }
 
+  def on_step(self, features: Mapping[str, torch.Tensor]) -> None:
+    """Pushes the observation of the new control step into the history."""
+    for group_name, group_buffers in self._history_buffers.items():
+      for name, buf in group_buffers.items():
+        obs = self._get_history_obs(group_name, name, features)
+        buf.copy_(torch.cat([buf[:, 1:], obs.unsqueeze(1)], dim=1))
+
+  def on_begin_stepping(
+      self,
+      features: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Fills the history of the `env_mask` worlds with their observation."""
+    for group_name, group_buffers in self._history_buffers.items():
+      for name, buf in group_buffers.items():
+        obs = self._get_history_obs(group_name, name, features)
+        tensors.masked_fill(buf, env_mask, obs.unsqueeze(1))
+
   def observations_from_features(
       self, features: Mapping[str, torch.Tensor]
   ) -> dict[str, torch.Tensor]:
-    """Computes observations from features (`func -> bias -> noise -> scale -> offset -> clip -> history`)."""
+    """Computes observations from features (`func -> bias -> noise -> scale -> offset -> clip -> history`).
+
+    History terms return the observations stored by the hooks and do not
+    advance.
+
+    Args:
+      features: The task layer features.
+
+    Returns:
+      The observations, keyed by group name.
+    """
     obs_dict = {}
     for group_name, term_group in self._observations.items():
       group_obs = []
       for name, term in term_group.terms.items():
-        value = term.func(features, **term.params)
-
-        if name in self._bias_buffers[group_name]:
-          value = noise_module.apply_bias(
-              value,
-              self._bias_buffers[group_name][name],
-              self._bias_ops[group_name][name],
-          )
-
-        if name in self._modifiers[group_name]:
-          value = self._modifiers[group_name][name](value)
-
-        if name in self._scales[group_name]:
-          value = value * self._scales[group_name][name].to(dtype=value.dtype)
-
-        if name in self._offsets[group_name]:
-          value = value + self._offsets[group_name][name].to(dtype=value.dtype)
-
-        if name in self._clips[group_name]:
-          clip_min, clip_max = self._clips[group_name][name]
-          if clip_min is not None:
-            clip_min = clip_min.to(dtype=value.dtype)
-          if clip_max is not None:
-            clip_max = clip_max.to(dtype=value.dtype)
-          value = value.clip(min=clip_min, max=clip_max)
-
         if name in self._history_buffers[group_name]:
+          # Copied: the hooks update the buffer in place.
           buf = self._history_buffers[group_name][name]
-
-          # Fill all history slots with current obs after reset.
-          assert self._steps_since_reset is not None
-          is_first_step = self._steps_since_reset == 0
-          mask_shape = (-1,) + (1,) * value.ndim
-          mask = is_first_step.view(mask_shape)  # pyrefly: ignore[missing-attribute]
-          buf = torch.where(mask, value.unsqueeze(1), buf)
-
-          if value.ndim == 4:
-            # (B, history_length, C, H, W) + (B, C, H, W) -> (B, (1+H)*C, H, W)
-            value_with_history = torch.cat([buf.flatten(1, 2), value], dim=1)
+          if buf.ndim == 5:
+            # (B, 1 + history_length, C, H, W) -> (B, (1 + H) * C, H, W)
+            value = buf.flatten(1, 2).clone()
           else:
             # Output: [t-H, ..., t-1, t] flattened.
-            value_with_history = torch.cat(
-                [buf, value.unsqueeze(1)], dim=1
-            ).flatten(start_dim=1)
-          # Update buffer: shift left, append current at the end.
-          self._history_buffers[group_name][name] = torch.cat(
-              [buf[:, 1:], value.unsqueeze(1)], dim=1
-          )
-          value = value_with_history
+            value = buf.flatten(start_dim=1).clone()
+        else:
+          value = self._get_obs(group_name, name, term, features)
 
         # If multiple terms in group, flatten before concatenating.
         if len(term_group.terms) > 1:
@@ -320,8 +298,52 @@ class FunctionalObservationAdapter(
       else:
         obs_dict[group_name] = torch.cat(group_obs, dim=-1)
 
-    # Increment steps-since-reset counter after all terms processed.
-    if self._steps_since_reset is not None:
-      self._steps_since_reset += 1
-
     return obs_dict
+
+  def _get_obs(
+      self,
+      group_name: str,
+      name: str,
+      term: config.Obs,
+      features: Mapping[str, torch.Tensor],
+  ) -> torch.Tensor:
+    """Returns `func -> bias -> noise -> scale -> offset -> clip` of a term."""
+    value = term.func(features, **term.params)
+
+    if name in self._bias_buffers[group_name]:
+      value = noise_module.apply_bias(
+          value,
+          self._bias_buffers[group_name][name],
+          self._bias_ops[group_name][name],
+      )
+
+    if name in self._modifiers[group_name]:
+      value = self._modifiers[group_name][name](value)
+
+    if name in self._scales[group_name]:
+      value = value * self._scales[group_name][name].to(dtype=value.dtype)
+
+    if name in self._offsets[group_name]:
+      value = value + self._offsets[group_name][name].to(dtype=value.dtype)
+
+    if name in self._clips[group_name]:
+      clip_min, clip_max = self._clips[group_name][name]
+      if clip_min is not None:
+        clip_min = clip_min.to(dtype=value.dtype)
+      if clip_max is not None:
+        clip_max = clip_max.to(dtype=value.dtype)
+      value = value.clip(min=clip_min, max=clip_max)
+
+    return value
+
+  def _get_history_obs(
+      self,
+      group_name: str,
+      name: str,
+      features: Mapping[str, torch.Tensor],
+  ) -> torch.Tensor:
+    """Returns the observation of a history term, shaped like one slot."""
+    buf = self._history_buffers[group_name][name]
+    term = self._observations[group_name].terms[name]
+    obs = self._get_obs(group_name, name, term, features)
+    return obs.reshape(buf.shape[0], *buf.shape[2:]).to(buf.dtype)

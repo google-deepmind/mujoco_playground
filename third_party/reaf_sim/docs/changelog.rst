@@ -80,6 +80,12 @@ Task Layer
   :class:`~reaf.simulation.torch.FeatureProducer`, and :class:`~reaf.simulation.torch.Environment` requires its
   observation adapter to derive from :class:`~reaf.simulation.torch.ObservationSpaceAdapter`.
 
+- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` advances its history in ``on_step`` and fills it with the
+  reset observation in ``on_begin_stepping``; reading a history term returns the stored observations. History terms
+  read as zeros until the first ``on_begin_stepping``, and ``reset()`` no longer clears the history, so code that drives
+  the adapter outside of :class:`~reaf.simulation.torch.Environment` must call ``on_begin_stepping`` after ``reset()``
+  and ``on_step`` on every step.
+
 Bugs Fixed
 ^^^^^^^^^^
 
@@ -89,6 +95,11 @@ Bugs Fixed
 - :class:`~reaf.simulation.torch.ContactSensorDevice` and
   :class:`~reaf.simulation.torch.StochasticSubstepMeasurements` no longer advance their history and delay buffers for
   environments that are not reset.
+
+- :class:`~reaf.simulation.torch.FunctionalObservationAdapter` no longer pushes a duplicate observation into the
+  history of environments that are not reset, which happened on every step with any partial reset (and with
+  ``AutoResetMode.NO_SYNC``). Without noise, ``AutoResetMode.NO_SYNC`` and ``AutoResetMode.SYNC`` now produce the same
+  timesteps.
 
 - Features observers and loggers no longer run twice per step when any environment resets.
 

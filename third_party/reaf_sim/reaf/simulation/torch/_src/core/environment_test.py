@@ -16,7 +16,6 @@
 from collections.abc import Mapping
 from collections.abc import Sequence
 from typing import Any
-import unittest
 from unittest import mock
 
 from absl.testing import absltest
@@ -862,13 +861,9 @@ class WarpEnvironmentTest(parameterized.TestCase):
         ep_one_step["steps"], torch.tensor(1.0, device=self.XPU_DEVICE)
     )
 
-  # TaskLayer lifecycle repros (b/581877129): `reset_with_options(env_mask)`
-  # recomputes features and observations for every world, so state advanced in
-  # `observations_from_features` advances twice for worlds that are not in
-  # `env_mask`.
-  #
-  # Tests marked `@unittest.expectedFailure` reproduce the bug. The fix must
-  # remove the marker: an unexpected success fails the test run.
+  # TaskLayer lifecycle tests (b/581877129): `reset_with_options(env_mask)`
+  # recomputes features and observations for every world, so state must only
+  # advance in the lifecycle hooks, and only for `env_mask` worlds on reset.
 
   def _zero_action(self) -> dict[str, torch.Tensor]:
     return {
@@ -950,8 +945,6 @@ class WarpEnvironmentTest(parameterized.TestCase):
         ts.observation["time_history"], [[0, 0, 1], [2, 3, 4]]
     )
 
-  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
-  @unittest.expectedFailure
   def test_no_sync_matches_sync(self):
     """`NO_SYNC` and `SYNC` produce the same timesteps."""
     nworld = 2
@@ -1031,18 +1024,12 @@ class WarpEnvironmentTest(parameterized.TestCase):
   def test_observation_history_without_resets(self, mode):
     self._check_history_without_resets(mode)
 
-  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
-  @unittest.expectedFailure
   def test_observation_history_without_resets_no_sync(self):
     self._check_history_without_resets(environment.AutoResetMode.NO_SYNC)
 
-  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
-  @unittest.expectedFailure
   def test_observation_history_partial_reset_sync(self):
     self._check_history_partial_reset(environment.AutoResetMode.SYNC)
 
-  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
-  @unittest.expectedFailure
   def test_observation_history_partial_reset_no_sync(self):
     self._check_history_partial_reset(environment.AutoResetMode.NO_SYNC)
 

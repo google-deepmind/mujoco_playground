@@ -14,8 +14,6 @@
 
 """Tests for FunctionalObservationAdapter, verifying observations and specs."""
 
-import unittest
-
 from absl.testing import absltest
 from reaf.simulation.torch._src.builders.flat_scene.config import Obs
 from reaf.simulation.torch._src.builders.flat_scene.config import ObsGroup
@@ -198,14 +196,16 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     spec = provider.observation_spec()
     self.assertEqual(spec["obs"].shape, (nworld, 9))
 
-    # Step 0: history filled with current value.
+    # Step 0 (reset): history filled with current value.
     # requires_grad=True verifies history updates do not mutate in-place.
     a0 = torch.ones(nworld, 3, requires_grad=True)
+    provider.on_begin_stepping({"a": a0})
     obs0 = provider.observations_from_features({"a": a0})
     torch.testing.assert_close(obs0["obs"], torch.ones(nworld, 9))
 
     # Step 1: [t-2, t-1, t] = [1,1,1, 1,1,1, 2,2,2]
     a1 = torch.full((nworld, 3), 2.0, requires_grad=True)
+    provider.on_step({"a": a1})
     obs1 = provider.observations_from_features({"a": a1})
     torch.testing.assert_close(obs1["obs"][:, :3], torch.ones(nworld, 3))
     torch.testing.assert_close(obs1["obs"][:, 3:6], torch.ones(nworld, 3))
@@ -213,6 +213,7 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
 
     # Step 2: [t-2, t-1, t] = [1,1,1, 2,2,2, 3,3,3]
     a2 = torch.full((nworld, 3), 3.0, requires_grad=True)
+    provider.on_step({"a": a2})
     obs2 = provider.observations_from_features({"a": a2})
     torch.testing.assert_close(obs2["obs"][:, :3], torch.ones(nworld, 3))
     torch.testing.assert_close(
@@ -249,14 +250,16 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     spec = provider.observation_spec()
     self.assertEqual(spec["camera"].shape, (nworld, 9, 32, 32))
 
-    # Step 0: history filled with current value (all 9 channels are 1.0).
+    # Step 0 (reset): history filled with current value (all 9 channels 1.0).
     features = {"rgb": torch.ones(nworld, 3, 32, 32)}
+    provider.on_begin_stepping(features)
     obs = provider.observations_from_features(features)
     self.assertEqual(obs["camera"].shape, (nworld, 9, 32, 32))
     torch.testing.assert_close(obs["camera"], torch.ones(nworld, 9, 32, 32))
 
     # Step 1: past=1.0 (channels 0:6), current=2.0 (channels 6:9).
     features = {"rgb": torch.full((nworld, 3, 32, 32), 2.0)}
+    provider.on_step(features)
     obs = provider.observations_from_features(features)
     self.assertEqual(obs["camera"].shape, (nworld, 9, 32, 32))
     torch.testing.assert_close(
@@ -268,6 +271,7 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
 
     # Step 2: oldest=1.0 (0:3), prev=2.0 (3:6), current=3.0 (6:9).
     features = {"rgb": torch.full((nworld, 3, 32, 32), 3.0)}
+    provider.on_step(features)
     obs = provider.observations_from_features(features)
     torch.testing.assert_close(
         obs["camera"][:, :3], torch.ones(nworld, 3, 32, 32)
@@ -386,7 +390,7 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
     torch.testing.assert_close(obs["obs"], torch.tensor([[1.0, -5.0, 0.5]]))
 
   def test_history_reset(self):
-    """Test that reset() fills history with current obs for reset envs."""
+    """Partial reset refills the history of the reset envs only."""
     nworld = 4
     provider = functional_observation.FunctionalObservationAdapter(
         observations={
@@ -407,23 +411,20 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
 
     # Fill history with a step.
     features = {"a": torch.ones(nworld, 2)}
-    provider.observations_from_features(features)
+    provider.on_begin_stepping(features)
+    provider.on_step(features)
 
     # Reset envs 0 and 2 only.
-    provider.reset(torch.tensor([True, False, True, False]))
-
-    # Next step: reset envs get history filled with current obs (5.0);
-    # non-reset envs keep their previous history (1.0).
+    env_mask = torch.tensor([True, False, True, False])
+    provider.reset(env_mask)
     features = {"a": torch.full((nworld, 2), 5.0)}
+    provider.on_begin_stepping(features, env_mask)
+
+    # Reset envs get every slot filled with their reset observation (5.0);
+    # non-reset envs keep their observations (1.0).
     obs = provider.observations_from_features(features)
-    # History portion (first 2 values of dim=-1); current portion (last 2).
-    history = obs["obs"][:, :2]
-    current = obs["obs"][:, 2:]
-    torch.testing.assert_close(history[0], torch.full((2,), 5.0))  # filled
-    torch.testing.assert_close(history[1], torch.ones(2))  # kept
-    torch.testing.assert_close(history[2], torch.full((2,), 5.0))  # filled
-    torch.testing.assert_close(history[3], torch.ones(2))  # kept
-    torch.testing.assert_close(current, torch.full((nworld, 2), 5.0))
+    expected = torch.tensor([5.0, 1.0, 5.0, 1.0])[:, None].expand(nworld, 4)
+    torch.testing.assert_close(obs["obs"], expected)
 
   def test_history_reset_no_zeros(self):
     """First obs after reset contains no zeros — history filled with current."""
@@ -444,12 +445,81 @@ class FunctionalObservationAdapterTest(absltest.TestCase):
         nworld=1,
     )
     provider.reset(None)
-    obs = provider.observations_from_features({"a": torch.full((1, 2), 3.0)})
+    features = {"a": torch.full((1, 2), 3.0)}
+    provider.on_begin_stepping(features)
+    obs = provider.observations_from_features(features)
     # All 6 values (2 history slots + current) should be 3.0, not zero.
     torch.testing.assert_close(obs["obs"], torch.full((1, 6), 3.0))
 
-  # TODO: b/581877129 - Remove `expectedFailure` once fixed.
-  @unittest.expectedFailure
+  def test_noisy_history_and_masked_reset(self):
+    """History holds the noisy observations; resets refill masked worlds."""
+    torch.manual_seed(0)
+    nworld = 2
+    provider = functional_observation.FunctionalObservationAdapter(
+        observations={
+            "obs": ObsGroup(
+                terms={
+                    "t": (
+                        Obs("a").configure(
+                            noise=noise.Noise(
+                                dist=noise.Uniform(low=-0.1, high=0.1), op="add"
+                            ),
+                            history_length=1,
+                            output_shape=(2,),
+                            dtype="float32",
+                        )
+                    ),
+                },
+                enable_noise=True,
+            )
+        },
+        xpu_device="cpu",
+        nworld=nworld,
+    )
+    features = {"a": torch.zeros(nworld, 2)}
+    provider.on_begin_stepping(features)
+    obs0 = provider.observations_from_features(features)["obs"].clone()
+    provider.on_step(features)
+    obs1 = provider.observations_from_features(features)["obs"].clone()
+    # The previous observation, with its noise, is the newest history slot.
+    torch.testing.assert_close(obs1[:, :2], obs0[:, 2:])
+    self.assertFalse(torch.allclose(obs1[:, 2:], obs0[:, 2:]))
+
+    # A partial reset refills the history of world 0 only.
+    provider.on_begin_stepping(features, torch.tensor([True, False]))
+    obs2 = provider.observations_from_features(features)["obs"]
+    torch.testing.assert_close(obs2[1], obs1[1])
+    torch.testing.assert_close(obs2[0, :2], obs2[0, 2:])
+    self.assertFalse(torch.allclose(obs2[0, 2:], obs1[0, 2:]))
+
+  def test_history_copies_observations(self):
+    """History keeps its observations when features are overwritten in place."""
+    provider = functional_observation.FunctionalObservationAdapter(
+        observations={
+            "obs": ObsGroup(
+                terms={
+                    "t": (
+                        Obs(
+                            "a"
+                        ).configure(history_length=1, output_shape=(2,),)
+                    )
+                },
+                enable_noise=False,
+            )
+        },
+        xpu_device="cpu",
+        nworld=1,
+    )
+    # Like device layer measurements, the same buffer is reused every step.
+    buffer = torch.full((1, 2), 1.0)
+    provider.on_begin_stepping({"a": buffer})
+    buffer.fill_(2.0)
+    provider.on_step({"a": buffer})
+    buffer.fill_(3.0)
+    provider.on_step({"a": buffer})
+    obs = provider.observations_from_features({"a": buffer})
+    torch.testing.assert_close(obs["obs"], torch.tensor([[2.0, 2.0, 3.0, 3.0]]))
+
   def test_observations_from_features_is_pure(self):
     """Reading twice with the same features returns the same observations.
 

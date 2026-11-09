@@ -117,7 +117,8 @@ Observation adapters
 :class:`~reaf.simulation.torch.flat_scene.ObsGroup` dictionaries (e.g., ``"policy"``, ``"critic"``,
 ``"proprioception"``). Each :class:`~reaf.simulation.torch.flat_scene.Obs` term supports declarative data
 transformations evaluated in order: ``func -> bias -> noise -> scale -> offset -> clip -> history``. When
-``history_length > 0``, past and current frames are stacked oldest-to-newest (``[t - H, ..., t - 1, t]``).
+``history_length > 0``, past and current frames are stacked oldest-to-newest (``[t - H, ..., t - 1, t]``). The
+history advances in ``on_step``; after a reset, every history slot holds the reset observation.
 
 Task layer assembly
 -------------------
