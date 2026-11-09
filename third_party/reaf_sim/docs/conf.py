@@ -173,8 +173,21 @@ def _fetch_playground_docs(app):
   global _fetched_playground_docs
   del app
   local_docs = os.path.join(_ROOT_DIR, "..", "..", "mujoco_playground", "docs")
-  if not os.path.isdir(_PLAYGROUND_DOCS_DIR) and os.path.isdir(local_docs):
-    shutil.copytree(local_docs, _PLAYGROUND_DOCS_DIR, dirs_exist_ok=True)
+  if os.path.isdir(local_docs):
+    shutil.rmtree(_PLAYGROUND_DOCS_DIR, ignore_errors=True)
+    shutil.copytree(
+        local_docs,
+        _PLAYGROUND_DOCS_DIR,
+        ignore=shutil.ignore_patterns(
+            "_build",
+            "internal",
+            "playground",
+            "__pycache__",
+            "BUILD",
+            "docs_test.py",
+        ),
+        dirs_exist_ok=True,
+    )
     _fetched_playground_docs = True
 
 
@@ -189,8 +202,8 @@ def _cleanup_playground_docs(app, exception):
 
 def _strip_missing_playground_toctree(app, docname, source):
   """Omits the MuJoCo Playground toctree in standalone reaf-sim builds."""
-  if docname == "index" and not os.path.isdir(
-      os.path.join(app.srcdir, "playground")
+  if docname == "index" and not os.path.isfile(
+      os.path.join(app.srcdir, "playground", "index.rst")
   ):
     source[0] = _PLAYGROUND_TOCTREE_RE.sub("\n", source[0])
 
