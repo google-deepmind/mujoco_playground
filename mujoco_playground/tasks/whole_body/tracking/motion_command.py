@@ -370,7 +370,9 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
       anchor_quat_robot: torch.Tensor,
       body_pos_relative: torch.Tensor,
       body_pos_robot: torch.Tensor,
+      env_mask: torch.Tensor | None = None,
   ) -> None:
+    """Latches tracking failures, of the `env_mask` worlds if given."""
     gravity = torch.zeros_like(anchor_pos_ref)
     gravity[:, 2] = -1.0
     proj_ref = pg_math.quat_rotate_inverse(anchor_quat_ref, gravity)
@@ -390,6 +392,8 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
           - body_pos_robot[:, self._ee_indexes, 2]
       )
       fail |= torch.any(ee_err > self._ee_pos_z_threshold, dim=-1)
+    if env_mask is not None:
+      fail &= env_mask
 
     newly = fail & ~self._fail_latch
     bins = torch.clamp(
@@ -440,6 +444,43 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
         f"{bt}/body_ang_vel_w",
     }
 
+  def _update_state(
+      self,
+      features: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Latches tracking failures and publishes the reference pose.
+
+    Args:
+      features: The features from `produce_features()`.
+      env_mask: The worlds whose failures to latch. None: all worlds.
+    """
+    self._latch_failures(
+        features["motion/anchor_pos_ref"],
+        features["motion/anchor_quat_ref"],
+        features["motion/anchor_pos_robot"],
+        features["motion/anchor_quat_robot"],
+        features["motion/body_pos_relative"],
+        features["motion/body_pos_robot"],
+        env_mask=env_mask,
+    )
+    if self._shared_state is not None:
+      # The reference pose only depends on `time_steps`, so publishing it for
+      # all worlds on reset leaves the other worlds unchanged.
+      self._shared_state.root_pos = features["motion/body_pos_ref"][:, 0]
+      self._shared_state.root_quat = features["motion/body_quat_ref"][:, 0]
+      self._shared_state.joint_pos = features["motion/joint_pos_ref"]
+
+  def on_step(self, required_features: Mapping[str, torch.Tensor]) -> None:
+    self._update_state(self.produce_features(required_features))
+
+  def on_begin_stepping(
+      self,
+      required_features: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    self._update_state(self.produce_features(required_features), env_mask)
+
   def produce_features(
       self, required_features: Mapping[str, torch.Tensor]
   ) -> Mapping[str, torch.Tensor]:
@@ -471,20 +512,6 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
         ref_body_quat_w,
     )
 
-    self._latch_failures(
-        ref_anchor_pos_w,
-        ref_anchor_quat_w,
-        anchor_pos,
-        anchor_quat,
-        body_pos_relative_w,
-        body_pos,
-    )
-
-    if self._shared_state is not None:
-      self._shared_state.root_pos = ref_body_pos_w[:, 0]
-      self._shared_state.root_quat = ref_body_quat_w[:, 0]
-      self._shared_state.joint_pos = ref_joint_pos
-
     anchor_lin_ref = ref_body_lin_vel_w[:, self._anchor_index]
     anchor_ang_ref = ref_body_ang_vel_w[:, self._anchor_index]
     anchor_lin = body_lin_vel[:, self._anchor_index]
@@ -511,9 +538,9 @@ class MotionReferenceProducer(feature_producer.FeatureProducer):
         "motion/body_ang_vel_ref": ref_body_ang_vel_w,
         "motion/body_lin_vel_robot": body_lin_vel,
         "motion/body_ang_vel_robot": body_ang_vel,
-        "motion/sampling_entropy": self.sampling_entropy,
-        "motion/sampling_top1_prob": self.sampling_top1_prob,
-        "motion/sampling_top1_bin": self.sampling_top1_bin,
+        "motion/sampling_entropy": self.sampling_entropy.clone(),
+        "motion/sampling_top1_prob": self.sampling_top1_prob.clone(),
+        "motion/sampling_top1_bin": self.sampling_top1_bin.clone(),
     }
 
   def reset(self, env_mask: torch.Tensor | None = None) -> None:

@@ -394,42 +394,64 @@ class SmoothCartesianIKProcessor(
   def required_features_keys(self) -> set[str]:
     return set(self._emb.joint_position_keys)
 
-  def produce_features(  # pyrefly: ignore[bad-override]
+  def _measured(
       self, required_features: Mapping[str, torch.Tensor]
-  ) -> dict[str, torch.Tensor]:
-    """Synchronizes state after reset and exposes controller features."""
+  ) -> np.ndarray | None:
+    """Returns the measured joint positions (nworld, n_arm + 1), if present."""
     joint_keys = self._emb.joint_position_keys
-    meas_qpos = None
     if all(k in required_features for k in joint_keys):
       cols = [
           required_features[k].detach().cpu().numpy().reshape(self._nworld)
           for k in joint_keys
       ]
-      meas_qpos = np.stack(cols, axis=-1)
-    elif self._qpos_key in required_features:
-      meas_qpos = required_features[self._qpos_key].detach().cpu().numpy()
+      return np.stack(cols, axis=-1)
+    if self._qpos_key in required_features:
+      return required_features[self._qpos_key].detach().cpu().numpy()
+    return None
 
+  def on_step(self, required_features: Mapping[str, torch.Tensor]) -> None:
+    """Records the measured joint positions for the tracking feedback."""
+    meas_qpos = self._measured(required_features)
     if meas_qpos is not None:
-      for i in range(self._nworld):
-        self._measured_qpos[i] = meas_qpos[i]
-        if self._needs_sync[i]:
-          self._current_qpos[i] = meas_qpos[i]
-          self._filtered_q_err[i] = 0.0
-          pos, rot = self._ik.fk(meas_qpos[i, : self._n_arm])
-          self._pose[i] = self._pose_of(pos, rot)
-          self._sync_raw_action(i)
-          self._needs_sync[i] = False
+      self._measured_qpos[:] = meas_qpos
+
+  def on_begin_stepping(
+      self,
+      required_features: Mapping[str, torch.Tensor],
+      env_mask: torch.Tensor | None = None,
+  ) -> None:
+    """Synchronizes the worlds marked by `reset()` with their measured state."""
+    del env_mask  # `reset()` marked the same worlds in `_needs_sync`.
+    meas_qpos = self._measured(required_features)
+    if meas_qpos is None:
+      return
+    for i in np.flatnonzero(self._needs_sync).tolist():
+      self._measured_qpos[i] = meas_qpos[i]
+      self._current_qpos[i] = meas_qpos[i]
+      self._filtered_q_err[i] = 0.0
+      pos, rot = self._ik.fk(meas_qpos[i, : self._n_arm])
+      self._pose[i] = self._pose_of(pos, rot)
+      self._sync_raw_action(i)
+      self._needs_sync[i] = False
+
+  def produce_features(  # pyrefly: ignore[bad-override]
+      self, required_features: Mapping[str, torch.Tensor]
+  ) -> dict[str, torch.Tensor]:
+    """Exposes controller features; reading them has no side effects."""
+    meas_qpos = self._measured(required_features)
+    if meas_qpos is None:
+      meas_qpos = self._measured_qpos
 
     ee_xpos = np.zeros((self._nworld, 3), dtype=np.float32)
     ee_xmat = np.zeros((self._nworld, 9), dtype=np.float32)
     for i in range(self._nworld):
-      pos, rot = self._ik.fk(self._measured_qpos[i, : self._n_arm])
+      pos, rot = self._ik.fk(meas_qpos[i, : self._n_arm])
       ee_xpos[i] = pos
       ee_xmat[i] = rot.reshape(9)
 
     return {
         embodiment_lib.QPOS_KEY: torch.as_tensor(
-            self._measured_qpos,
+            meas_qpos,
             dtype=torch.float32,
             device=self._xpu_device,
         ),
