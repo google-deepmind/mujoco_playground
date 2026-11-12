@@ -142,11 +142,10 @@ def reward_motion_relative_body_ori(
     f: Mapping[str, torch.Tensor], std: float
 ) -> torch.Tensor:
   """Exponential kernel on mean yaw-anchored relative body orientation error."""
-  error = (
+  error = torch.square(
       pg_math.quat_error_magnitude2(
           f["motion/body_quat_relative"], f["motion/body_quat_robot"]
       )
-      ** 2
   )
   return torch.exp(-error.mean(-1) / std**2)
 
