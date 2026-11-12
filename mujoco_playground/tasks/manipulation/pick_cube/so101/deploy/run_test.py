@@ -14,6 +14,7 @@
 
 """Tests the SO-101 pick-cube deploy script."""
 
+import copy
 import importlib.util
 import os
 import shutil
@@ -164,6 +165,23 @@ class MissingExecuTorchTest(absltest.TestCase):
 )
 class ExecuTorchActorTest(parameterized.TestCase):
 
+  def _stub_tensorrt_runtime(self, source: str | None = "") -> None:
+    """Puts a stand-in torch_tensorrt_executorch_runtime first, None hides it."""
+    self.enterContext(mock.patch.dict(sys.modules))
+    sys.modules.pop("torch_tensorrt_executorch_runtime", None)
+    if source is None:
+      self.enterContext(
+          mock.patch.dict(
+              sys.modules, {"torch_tensorrt_executorch_runtime": None}
+          )
+      )
+      return
+    directory = epath.Path(self.enterContext(tempfile.TemporaryDirectory()))
+    (directory / "torch_tensorrt_executorch_runtime.py").write_text(source)
+    self.enterContext(
+        mock.patch.object(sys, "path", [str(directory), *sys.path])
+    )
+
   def setUp(self):
     super().setUp()
     self.obs = {
@@ -286,7 +304,30 @@ class ExecuTorchActorTest(parameterized.TestCase):
     with self.assertRaisesRegex(ValueError, "no forward method"):
       deploy_run.load_executorch_actor(_env(self.obs), path)
 
-  def test_reports_a_program_that_fails_to_load(self):
+  @parameterized.named_parameters(
+      (
+          "tensorrt_runtime_missing",
+          None,
+          r"policy\.ptd.*instead of `--with executorch==1\.6\.0`",
+      ),
+      (
+          "tensorrt_runtime_fails_to_import",
+          "raise ImportError('no TensorRT delegate')",
+          r"policy\.ptd.*backend failed to load: no TensorRT delegate",
+      ),
+      (
+          "tensorrt_runtime_fails_to_load_a_library",
+          "raise ImportError('libnvinfer.so: cannot open', name=__name__)",
+          r"policy\.ptd.*backend failed to load: libnvinfer",
+      ),
+      (
+          "tensorrt_runtime_misses_a_dependency",
+          "import _missing_dependency",
+          r"policy\.ptd.*backend failed to load: No module named",
+      ),
+      ("tensorrt_runtime_imports", "", r"policy\.ptd.*same kind of GPU"),
+  )
+  def test_reports_a_program_that_fails_to_load(self, runtime_source, error):
     obs = self.obs
     path = self._export(
         _Actor(),
@@ -295,9 +336,54 @@ class ExecuTorchActorTest(parameterized.TestCase):
         weights_in_ptd=True,
     )
     (path.parent / "policy.ptd").unlink()
+    self._stub_tensorrt_runtime(runtime_source)
 
-    with self.assertRaisesRegex(ValueError, "policy.ptd"):
+    with self.assertRaisesRegex(ValueError, error):
       deploy_run.load_executorch_actor(_env(obs), path)
+
+  @parameterized.named_parameters(
+      ("weights_missing", ["obs", "wrist", "camera"], True, "Could not load"),
+      ("no_input_names", None, False, "no input_names"),
+  )
+  def test_main_loads_the_program_before_the_env(
+      self, input_names, weights_in_ptd, error
+  ):
+    obs = self.obs
+    path = self._export(
+        _Actor(),
+        (self.vector, obs["wrist"], obs["camera"]),
+        input_names,
+        weights_in_ptd=weights_in_ptd,
+    )
+    if weights_in_ptd:
+      (path.parent / "policy.ptd").unlink()
+    flags.FLAGS.mark_as_parsed()
+    with (
+        flagsaver.flagsaver(checkpoint=str(path)),
+        mock.patch.object(deploy_run, "create_env") as create_env,
+    ):
+      with self.assertRaisesRegex(ValueError, error):
+        deploy_run.main([])
+    create_env.assert_not_called()
+
+  def test_uses_the_program_loaded_before_the_env(self):
+    obs = self.obs
+    actor = _Actor()
+    path = self._export(
+        actor,
+        (self.vector, obs["wrist"], obs["camera"]),
+        ["obs", "wrist", "camera"],
+    )
+    program = deploy_run.load_executorch_program(path)
+    path.unlink()
+
+    with mock.patch.dict(sys.modules, {"rsl_rl": None, "tensordict": None}):
+      policy = deploy_run.create_policy(_env(obs), path, program=program)
+    (action, _), _ = policy.step(mock.Mock(observation=obs))
+
+    torch.testing.assert_close(
+        action["action"], actor(self.vector, obs["wrist"], obs["camera"])
+    )
 
   def test_rejects_a_program_with_other_input_types(self):
     obs = self.obs
@@ -335,12 +421,68 @@ class ExecuTorchActorTest(parameterized.TestCase):
         torch.nn.Linear(2, 2), (torch.zeros(1, 2),), weights_in_ptd=True
     )
     shutil.copy(other.parent / "policy.ptd", path.parent / "policy.ptd")
+    self._stub_tensorrt_runtime()
 
     with self.assertRaisesRegex(
         ValueError, r"policy\.pte with policy\.ptd"
     ) as raised:
       deploy_run.load_executorch_actor(_env(obs), path)
+    self.assertIn("same kind of GPU", str(raised.exception))
     self.assertNotIn("weights file", str(raised.exception))
+
+  def test_imports_the_tensorrt_runtime_before_loading(self):
+    from executorch.runtime import Runtime  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
+
+    obs = self.obs
+    path = self._export(
+        _Actor(),
+        (self.vector, obs["wrist"], obs["camera"]),
+        ["obs", "wrist", "camera"],
+    )
+    self._stub_tensorrt_runtime()
+    get_runtime = Runtime.get
+
+    def get():
+      self.assertIn("torch_tensorrt_executorch_runtime", sys.modules)
+      return get_runtime()
+
+    with mock.patch.object(Runtime, "get", side_effect=get) as patched:
+      deploy_run.load_executorch_actor(_env(obs), path)
+
+    patched.assert_called()
+
+  @absltest.skipUnless(
+      importlib.util.find_spec("torch_tensorrt_executorch_runtime")
+      and torch.cuda.is_available(),
+      "Requires torch_tensorrt[executorch] and a CUDA GPU.",
+  )
+  def test_runs_a_tensorrt_program(self):
+    import torch_tensorrt  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
+
+    obs = self.obs
+    actor = _Actor().eval()
+    inputs = [x.cuda() for x in (self.vector, obs["wrist"], obs["camera"])]
+    compiled = torch_tensorrt.dynamo.compile(
+        torch.export.export(copy.deepcopy(actor).cuda(), tuple(inputs)),
+        inputs=inputs,
+        min_block_size=1,
+        disable_tf32=True,
+    )
+    directory = epath.Path(self.enterContext(tempfile.TemporaryDirectory()))
+    torch_tensorrt.save(
+        compiled,
+        str(directory / "policy.pte"),
+        output_format="executorch",
+        constant_methods={"input_names": ["obs", "wrist", "camera"]},
+    )
+    self.assertIn(b"TensorRTBackend", (directory / "policy.pte").read_bytes())
+
+    policy = deploy_run.create_policy(_env(obs), directory / "policy.pte")
+    (action, _), _ = policy.step(mock.Mock(observation=obs))
+
+    torch.testing.assert_close(
+        action["action"], actor(self.vector, obs["wrist"], obs["camera"])
+    )
 
   def test_rejects_a_program_with_an_image_the_env_lacks(self):
     obs = self.obs

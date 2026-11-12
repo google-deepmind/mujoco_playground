@@ -87,6 +87,24 @@ uv run --extra so101 --with executorch==1.6.0 python -m \
     --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision/policy.pte
 ```
 
+With `backend="tensorrt"`, the program runs in [TensorRT](https://developer.nvidia.com/tensorrt) on an NVIDIA GPU. That backend comes to RSL-RL's `extras` branch with [leggedrobotics/rsl_rl#275](https://github.com/leggedrobotics/rsl_rl/pull/275). TensorRT needs the GPU, and the torch that `--with` installs is a CUDA 13 build, so this path does not work on a `cu12` machine either. TensorRT engines load only on the same kind of GPU with the same TensorRT and Torch-TensorRT versions, so export on the machine that runs the policy. For both steps, use `--with "torch_tensorrt[executorch]==2.15.0"` instead of `--with executorch==1.6.0`. It installs ExecuTorch together with the TensorRT backend, which `run.py` loads on its own:
+
+```bash
+uv run --extra rl --with "torch_tensorrt[executorch]==2.15.0" --with "rsl-rl-lib @ git+https://github.com/leggedrobotics/rsl_rl.git@extras" python -c '
+from mujoco_playground.tasks.manipulation.pick_cube.so101.deploy import env, run
+runner = run.load_runner(env.create_sim_env(), "/tmp/rslrl_logs/so101_pick_cube_vision")
+from rsl_rl.utils import export_policy_to_executorch
+export_policy_to_executorch(runner.alg.get_policy(), "/tmp/rslrl_logs/so101_pick_cube_vision", backend="tensorrt")'
+```
+
+```bash
+uv run --extra so101 --with "torch_tensorrt[executorch]==2.15.0" python -m \
+    mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+    --mode=sim \
+    --impl=cpp \
+    --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision/policy.pte
+```
+
 ---
 
 ## 3. Deploy on Real Hardware (`--mode=real`)

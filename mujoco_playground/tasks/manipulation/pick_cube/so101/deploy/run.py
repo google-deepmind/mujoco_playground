@@ -28,6 +28,10 @@
     uv run --extra so101 --with executorch==1.6.0 python -m \
         mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
         --mode=sim --impl=cpp --checkpoint=/path/to/policy.pte
+
+  With a policy exported to ExecuTorch with RSL-RL's TensorRT backend, use
+  `--with "torch_tensorrt[executorch]==2.15.0"` instead of
+  `--with executorch==1.6.0`.
 """
 
 from collections.abc import Callable
@@ -196,7 +200,8 @@ def create_env(
 
 _MISSING_EXECUTORCH = (
     "executorch is required to run a .pte policy. Add `--with"
-    " executorch==1.6.0` to `uv run`."
+    " executorch==1.6.0` to `uv run`, or `--with"
+    ' "torch_tensorrt[executorch]==2.15.0"` for a TensorRT program.'
 )
 
 
@@ -268,15 +273,36 @@ def load_actor(
   )
 
 
-def load_executorch_actor(
-    env: torch_environment.Environment,
-    program_path: epath.Path | str,
-) -> Callable[[Mapping[str, torch.Tensor]], torch.Tensor]:
-  """Loads an actor exported to ExecuTorch as an observations -> action map."""
+def load_executorch_program(program_path: epath.Path | str) -> Any:
+  """Loads a program exported to ExecuTorch and its `forward` method."""
   try:
     from executorch.runtime import Runtime  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
   except ImportError as exc:
     raise ImportError(_MISSING_EXECUTORCH) from exc
+  # Importing it adds the TensorRT backend to the runtime, which programs
+  # exported with RSL-RL's backend="tensorrt" need. Other programs load without
+  # it, so a failed import only shows up if this program fails to load.
+  try:
+    import torch_tensorrt_executorch_runtime  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top,unused-import
+
+    tensorrt_hint = (
+        "If it is a TensorRT export, it loads only on the same kind of GPU"
+        " with the same TensorRT and Torch-TensorRT versions that exported it."
+    )
+  except ImportError as exc:
+    if (
+        isinstance(exc, ModuleNotFoundError)
+        and exc.name == "torch_tensorrt_executorch_runtime"
+    ):
+      tensorrt_hint = (
+          "If it is a TensorRT export, use `--with"
+          ' "torch_tensorrt[executorch]==2.15.0"` instead of `--with'
+          " executorch==1.6.0`."
+      )
+    else:
+      tensorrt_hint = (
+          f"If it is a TensorRT export, its backend failed to load: {exc}"
+      )
 
   program_path = epath.Path(program_path).expanduser()
   # RSL-RL's CUDA export keeps the weights in a .ptd file next to the program.
@@ -305,7 +331,7 @@ def load_executorch_actor(
             " export_policy_to_executorch()."
         )
     try:
-      forward = program.load_method("forward")
+      program.load_method("forward")
     except RuntimeError as exc:
       hint = (
           ""
@@ -317,7 +343,20 @@ def load_executorch_actor(
       )
       raise ValueError(
           f"Could not load {program_path}{weights}: {exc}.{hint}"
+          f" {tensorrt_hint}"
       ) from exc
+  return program
+
+
+def load_executorch_actor(
+    env: torch_environment.Environment,
+    program_path: epath.Path | str,
+    program: Any = None,
+) -> Callable[[Mapping[str, torch.Tensor]], torch.Tensor]:
+  """Loads an actor exported to ExecuTorch as an observations -> action map."""
+  if program is None:
+    program = load_executorch_program(program_path)
+  forward = program.load_method("forward")
   # RSL-RL's export takes the actor's 1D observation groups concatenated in the
   # order of OBSERVATION_GROUPS, which load_runner gives it, then one input per
   # image group. Its `input_names` method names the inputs, the 1D one first.
@@ -364,6 +403,7 @@ def create_policy(
     env: torch_environment.Environment,
     checkpoint: epath.Path | None,
     action_scale: float = 1.0,
+    program: Any = None,
 ) -> TorchPolicy:
   """The trained actor, or a zero-action stand-in when no checkpoint is given."""
   action_spec = env.action_spec()
@@ -373,8 +413,10 @@ def create_policy(
     (spec,) = action_spec.values()
     zeros = torch.zeros(spec.shape, device=env.xpu_device)
     network = lambda obs: zeros
-  elif checkpoint.suffix == ".pte" and checkpoint.is_file():
-    network = load_executorch_actor(env, checkpoint)
+  elif program is not None or (
+      checkpoint.suffix == ".pte" and checkpoint.is_file()
+  ):
+    network = load_executorch_actor(env, checkpoint, program)
   else:
     network = load_actor(env, checkpoint)
   return TorchPolicy(network, action_spec, action_scale=action_scale)
@@ -430,6 +472,15 @@ def main(argv: Any) -> None:
 
   # Resolve the checkpoint before any hardware is touched.
   checkpoint = resolve_checkpoint(_CHECKPOINT.value)
+  # A program that cannot load, such as a TensorRT one without its runtime,
+  # fails here, before the real arm is connected.
+  program = (
+      load_executorch_program(checkpoint)
+      if checkpoint is not None
+      and checkpoint.suffix == ".pte"
+      and checkpoint.is_file()
+      else None
+  )
 
   env = create_env(control_freq_hz=_CONTROL_FREQ_HZ.value)
   # From here on, every exit closes the env, which parks and releases the real
@@ -437,7 +488,9 @@ def main(argv: Any) -> None:
   # them fails.
   with contextlib.ExitStack() as stack:
     stack.callback(env.close)
-    policy = create_policy(env, checkpoint, action_scale=_ACTION_SCALE.value)
+    policy = create_policy(
+        env, checkpoint, action_scale=_ACTION_SCALE.value, program=program
+    )
     loggers = []
     if _resolve_log_dir() is not None:
       loggers.append(
