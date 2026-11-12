@@ -40,6 +40,13 @@ test:
 	$(MUJOCO_GL_ENV) uv run --no-sync pytest mujoco_playground/ $(_IGNORE_RL) -n $(N_WORKERS) --dist worksteal -v
 	$(MUJOCO_GL_ENV) uv run --no-sync pytest $(_RL_TESTS) -n $(N_WORKERS) --dist worksteal -v
 
+# executorch pins one exact torch version, so it is added for its tests only.
+# On Linux that torch brings Triton, which crashes next to OSMesa, so this run
+# turns MuJoCo rendering off and skips the rendering test that `make test` runs.
+.PHONY: test-executorch
+test-executorch:
+	MUJOCO_GL=disable REQUIRE_EXECUTORCH=1 uv run --no-sync --with executorch==1.6.0 python -m pytest mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/run_test.py -k "not LoadRunnerTest" -v
+
 # Optional dependencies must not be imported at module scope.
 NO_EXTRAS_ENV := .venv-no-extras
 .PHONY: check-imports
