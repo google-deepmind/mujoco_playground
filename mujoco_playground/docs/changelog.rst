@@ -34,6 +34,8 @@ Unreleased
   and builds lerobot's ``SerialMotorsBus``, because ``FeetechMotorsBus`` is deprecated in 0.7.
 - The SO-101 deploy script now also parks the arm and releases torque after an error once the arm is set up, such
   as a checkpoint that fails to load or a logger that fails to close.
+- The SO-101 pick-cube deploy script runs a policy exported to ExecuTorch with RSL-RL's
+  ``export_policy_to_executorch()``: pass the ``.pte`` file to ``--checkpoint``.
 
 Version 1.0.1 (November 8, 2026)
 --------------------------------
