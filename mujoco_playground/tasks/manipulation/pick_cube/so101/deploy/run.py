@@ -22,6 +22,12 @@
     uv run --extra so101 --extra rl python -m \
         mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
         --mode=sim --impl=cpp --checkpoint=/path/to/model_*.pt
+
+  With a policy exported to ExecuTorch, which needs `executorch` instead of
+  RSL-RL:
+    uv run --extra so101 --with executorch==1.6.0 python -m \
+        mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+        --mode=sim --impl=cpp --checkpoint=/path/to/policy.pte
 """
 
 from collections.abc import Callable
@@ -29,7 +35,10 @@ from collections.abc import Mapping
 import contextlib
 import copy
 import dataclasses
+import importlib.util
 import os
+import shutil
+import tempfile
 import time
 from typing import Any
 
@@ -59,8 +68,9 @@ _IMPL = flags.DEFINE_enum(
 _CHECKPOINT = flags.DEFINE_string(
     "checkpoint",
     None,
-    "A model_*.pt checkpoint, or a run directory to take the latest from."
-    " Without one the policy commands zero actions, holding the hover pose.",
+    "A model_*.pt checkpoint, a run directory to take the latest from, or a"
+    " policy.pte exported with RSL-RL's export_policy_to_executorch(). Without"
+    " one the policy commands zero actions, holding the hover pose.",
 )
 _EPISODE_LENGTH_SECS = flags.DEFINE_float(
     "episode_length_secs", 20.0, "Episode length, in seconds."
@@ -184,6 +194,12 @@ def create_env(
   )
 
 
+_MISSING_EXECUTORCH = (
+    "executorch is required to run a .pte policy. Add `--with"
+    " executorch==1.6.0` to `uv run`."
+)
+
+
 def resolve_checkpoint(checkpoint: str | None) -> epath.Path | None:
   """Expands `--checkpoint` and checks it exists, touching no hardware."""
   if checkpoint is None:
@@ -191,19 +207,25 @@ def resolve_checkpoint(checkpoint: str | None) -> epath.Path | None:
   path = epath.Path(checkpoint).expanduser()
   if not path.exists():
     raise FileNotFoundError(f"Checkpoint not found: {path}")
+  # executorch is in no extra, so report it missing before the arm moves.
+  if (
+      path.suffix == ".pte"
+      and path.is_file()
+      and importlib.util.find_spec("executorch") is None
+  ):
+    raise ImportError(_MISSING_EXECUTORCH)
   return path
 
 
-def load_actor(
+def load_runner(
     env: torch_environment.Environment,
     checkpoint: epath.Path | str,
     env_id: str = "SO101PickCubeVision",
-) -> Callable[[Mapping[str, torch.Tensor]], torch.Tensor]:
-  """Loads the trained actor from a checkpoint as an observations -> action map."""
+) -> Any:
+  """Builds the RSL-RL runner with the trained actor loaded from a checkpoint."""
   from mujoco_playground._src.rl.rsl_rl import checkpoint as checkpoint_lib  # pylint: disable=g-import-not-at-top
   from mujoco_playground._src.rl.rsl_rl import vecenv_wrapper  # pylint: disable=g-import-not-at-top
   from rsl_rl import runners  # pylint: disable=g-import-not-at-top
-  import tensordict  # pylint: disable=g-import-not-at-top
 
   device = env.xpu_device
   entry = rl.env_registry.get(env_id)
@@ -211,7 +233,10 @@ def load_actor(
   runner_cfg.nworld = 1
   # Deployment observes no privileged state, so the critic — which is not
   # loaded, and not run — is pointed at the policy's own observations, but unused.
-  runner_cfg.obs_groups = {"actor": ["policy", "camera"], "critic": ["policy"]}
+  runner_cfg.obs_groups = {
+      "actor": list(pick_cube_env.OBSERVATION_GROUPS),
+      "critic": ["policy"],
+  }
 
   runner = runners.OnPolicyRunner(
       vecenv_wrapper.RslRlVecEnvWrapper(env, cfg=runner_cfg.vecenv_wrapper_cfg),
@@ -225,11 +250,114 @@ def load_actor(
       raise FileNotFoundError(f"No checkpoint found in: {checkpoint_path}")
     checkpoint_path = resolved
   runner.load(checkpoint_path, load_cfg={"actor": True}, map_location=device)
-  actor = runner.get_inference_policy(device=device)
+  return runner
 
+
+def load_actor(
+    env: torch_environment.Environment,
+    checkpoint: epath.Path | str,
+    env_id: str = "SO101PickCubeVision",
+) -> Callable[[Mapping[str, torch.Tensor]], torch.Tensor]:
+  """Loads the trained actor from a checkpoint as an observations -> action map."""
+  import tensordict  # pylint: disable=g-import-not-at-top
+
+  runner = load_runner(env, checkpoint, env_id)
+  actor = runner.get_inference_policy(device=env.xpu_device)
   return lambda obs: actor(
       tensordict.TensorDict(dict(obs), batch_size=[1])  # pyrefly: ignore[bad-argument-type, bad-specialization]
   )
+
+
+def load_executorch_actor(
+    env: torch_environment.Environment,
+    program_path: epath.Path | str,
+) -> Callable[[Mapping[str, torch.Tensor]], torch.Tensor]:
+  """Loads an actor exported to ExecuTorch as an observations -> action map."""
+  try:
+    from executorch.runtime import Runtime  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
+  except ImportError as exc:
+    raise ImportError(_MISSING_EXECUTORCH) from exc
+
+  program_path = epath.Path(program_path).expanduser()
+  # RSL-RL's CUDA export keeps the weights in a .ptd file next to the program.
+  data_path = program_path.with_suffix(".ptd")
+  has_weights = data_path.exists()
+  weights = f" with {data_path.name}" if has_weights else ""
+  # The runtime gets the program in memory and a private copy of the weights,
+  # which load_program maps, so a new export replacing the files cannot crash a
+  # run. The mapping keeps the copy readable after the directory is deleted. On
+  # NFS the delete can leave a placeholder file behind, so cleanup errors are
+  # ignored.
+  with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as copy_dir:
+    try:
+      program = Runtime.get().load_program(
+          program_path.read_bytes(),
+          data_path=shutil.copy(data_path, copy_dir) if has_weights else None,
+      )
+    except RuntimeError as exc:
+      raise ValueError(
+          f"Could not load {program_path}{weights}: {exc}"
+      ) from exc
+    for method in ("forward", "input_names"):
+      if method not in program.method_names:
+        raise ValueError(
+            f"{program_path} has no {method} method. Export it with RSL-RL's"
+            " export_policy_to_executorch()."
+        )
+    try:
+      forward = program.load_method("forward")
+    except RuntimeError as exc:
+      hint = (
+          ""
+          if has_weights
+          else (
+              f" If it is a CUDA export, its weights file, {data_path.name},"
+              " has to be next to it."
+          )
+      )
+      raise ValueError(
+          f"Could not load {program_path}{weights}: {exc}.{hint}"
+      ) from exc
+  # RSL-RL's export takes the actor's 1D observation groups concatenated in the
+  # order of OBSERVATION_GROUPS, which load_runner gives it, then one input per
+  # image group. Its `input_names` method names the inputs, the 1D one first.
+  _, *image_groups = program.load_method("input_names").execute([])
+  vector_groups = [
+      group
+      for group in pick_cube_env.OBSERVATION_GROUPS
+      if group not in image_groups
+  ]
+  device = env.xpu_device
+
+  def network(obs: Mapping[str, torch.Tensor]) -> torch.Tensor:
+    inputs = [torch.cat([obs[group] for group in vector_groups], dim=-1)]
+    inputs += [obs[group] for group in image_groups]
+    (action,) = forward.execute([x.cpu().contiguous() for x in inputs])
+    return action.to(device)
+
+  # Run once on zero observations and check the action shape, so a program
+  # whose shapes do not fit this env fails here instead of after the arm moves.
+  observation_spec = env.timestep_spec().observation
+  assert isinstance(observation_spec, Mapping)
+  action_spec = env.action_spec()
+  assert isinstance(action_spec, Mapping)
+  (spec,) = action_spec.values()
+  try:
+    action = network({
+        group: torch.from_numpy(observation_spec[group].generate_value()).to(device)  # pyrefly: ignore[missing-attribute]
+        for group in pick_cube_env.OBSERVATION_GROUPS
+    })
+  except (KeyError, RuntimeError, ValueError) as exc:
+    raise ValueError(
+        f"{program_path} failed on zero observations of this env: {exc}. Was"
+        " it exported for this env?"
+    ) from exc
+  if action.shape != spec.shape:
+    raise ValueError(
+        f"{program_path} returns actions of shape {tuple(action.shape)}, but"
+        f" this env takes {tuple(spec.shape)}."
+    )
+  return network
 
 
 def create_policy(
@@ -245,6 +373,8 @@ def create_policy(
     (spec,) = action_spec.values()
     zeros = torch.zeros(spec.shape, device=env.xpu_device)
     network = lambda obs: zeros
+  elif checkpoint.suffix == ".pte" and checkpoint.is_file():
+    network = load_executorch_actor(env, checkpoint)
   else:
     network = load_actor(env, checkpoint)
   return TorchPolicy(network, action_spec, action_scale=action_scale)

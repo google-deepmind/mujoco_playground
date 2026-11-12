@@ -21,6 +21,7 @@ make sync-cpu      # Or for CPU only, (i.e. on macOS 14 or newer with Apple Sili
 make format        # pyink + isort over the repo
 make typecheck     # pyrefly type check
 make test          # pytest over mujoco_playground/
+make test-executorch # the deploy tests that need executorch, which `make test` skips
 make check-imports # verify optional extras are not imported at module scope
 make docs          # build HTML docs (or `make serve-docs` to preview locally)
 uv run --group dev pre-commit run -a
