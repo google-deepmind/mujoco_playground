@@ -30,7 +30,7 @@ Clone the repository, sync development dependencies with `uv <https://docs.astra
 
     make install-cu12  # For CUDA 12 on Linux
 
-    make install-cpu  # Or for CPU only, (i.e. on macOS)
+    make install-cpu  # Or for CPU only, (i.e. on macOS 14 or newer with Apple Silicon)
 
     uv run pre-commit install
 

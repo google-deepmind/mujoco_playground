@@ -23,7 +23,7 @@ Clone `reaf-sim` from GitHub and install with `uv <https://docs.astral.sh/uv/>`_
 
     make install-cu12  # For CUDA 12 on Linux
 
-    make install-cpu  # Or for CPU only, (i.e. on macOS)
+    make install-cpu  # Or for CPU only, (i.e. on macOS 14 or newer with Apple Silicon)
 
     make test  # Run all tests, verify everything works
 

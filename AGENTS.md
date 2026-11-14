@@ -1,10 +1,11 @@
 # Development Workflow
 
-- Always use `uv run`, not bare `python`. Pass explicit `--extra` flags (e.g. `--extra rl`, `--extra so101`, `--extra yam`) to `uv run` rather than `--no-sync`; `pyproject.toml` (Python 3.12–3.13) configures PyPI as the default index, `CMAKE_CXX_STANDARD=17` for `reaf`, and cross-platform `override-dependencies` (`evdev` on Linux only, `ruckig>=0.15.3`).
+- Always use `uv run`, not bare `python`. Pass explicit `--extra` flags (e.g. `--extra rl`, `--extra so101`, `--extra yam`) to `uv run` rather than `--no-sync`; `pyproject.toml` (Python 3.12–3.13) configures PyPI as the default index, `CMAKE_CXX_STANDARD=17` for `reaf`, and cross-platform `override-dependencies` (`evdev` on Linux only, `ruckig>=0.15.3`, `click>=8.4.2,<9`).
 - Always use `absl` (`from absl import app, flags, logging`) for scripts, tools, and entrypoints. **NEVER use `argparse`**.
-- Dependencies are managed with `uv`. Default `make sync` installs `--extra rl --group dev` with CUDA 13 PyTorch (`<2.14`) and CUDA 13 Warp on Linux, and native wheels on macOS.
-- On Linux machines with CUDA 12 drivers (`< 580`, e.g. CUDA 12.4), run `make sync-cu12` and pass `--group cu12` to every `uv run` command (or `make sync-cpu` and `--group cpu` for CPU-only Linux); omitting `--group cu12` on `uv run` overlays PyPI's CUDA 13 `nvidia-*` sub-packages onto `.venv` and breaks cuDNN (`CUDNN_STATUS_NOT_INITIALIZED`).
+- Dependencies are managed with `uv`. Default `make sync` installs `--extra rl --group dev` with CUDA 13 PyTorch (`<2.16`) and CUDA 13 Warp on Linux, and native wheels on macOS.
+- On Linux machines with CUDA 12 drivers (`< 580`, e.g. CUDA 12.4), run `make sync-cu12` and pass `--group cu12` to every `uv run` command (or `make sync-cpu` and `--group cpu` for CPU-only Linux); omitting `--group cu12` on `uv run` overlays PyPI's CUDA 13 `nvidia-*` sub-packages onto `.venv` and breaks cuDNN (`CUDNN_STATUS_NOT_INITIALIZED`). The `cu12` group stays on torch 2.13, the newest build on PyTorch's CUDA 12.9 index, so code must keep working on torch 2.13.
 - Real-robot SDKs (`--extra so101` for Feetech, `--extra yam` for I2RT SocketCAN on Linux or `gs-usb`/`pyusb` + `libusb` on macOS) are optional extras and do not conflict with `cu12` or `cpu`.
+- With the `real` extra (which the robot extras include), `safari-sdk` installs TensorFlow 2.21. On Linux, loading TensorFlow 2.21 before Triton 3.7 or newer (torch 2.15, and torch 2.13 in the `cu12` group) crashes the process, because both bring their own LLVM. So decode MCAP logs with `mcap_protobuf`, as `_src/real/common/log_reader.py` does, not with TensorFlow. Code that loads TensorFlow anyway must load Triton first, with `import triton` inside `try`/`except ImportError`, because only Linux CUDA torch ships Triton. Playground's RSL-RL code needs nothing extra: it imports tensordict, which loads Triton (through `torch._dynamo`) before anything loads TensorFlow. TensorFlow 2.22 fixes the clash.
 - Run pyink and isort against **only the specific paths you changed**, not a parent directory:
   `uv run --group dev pyink <path>` and `uv run --group dev isort <path>`.
 - For headless rendering / tests on Linux, set `MUJOCO_GL=osmesa`. Omit on macOS.
@@ -16,10 +17,11 @@
 ```bash
 make sync          # For GPU, good for RL training (CUDA 13 on Linux)
 make sync-cu12     # For CUDA 12 on Linux (NVIDIA driver < 580)
-make sync-cpu      # Or for CPU only, (i.e. on macOS, or CPU-only on Linux)
+make sync-cpu      # Or for CPU only, (i.e. on macOS 14 or newer with Apple Silicon, or CPU-only on Linux)
 make format        # pyink + isort over the repo
 make typecheck     # pyrefly type check
 make test          # pytest over mujoco_playground/
+make test-executorch # the deploy tests that need executorch, which `make test` skips
 make check-imports # verify optional extras are not imported at module scope
 make docs          # build HTML docs (or `make serve-docs` to preview locally)
 uv run --group dev pre-commit run -a

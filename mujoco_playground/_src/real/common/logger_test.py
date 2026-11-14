@@ -15,16 +15,21 @@
 """Tests for episodic MCAP logging."""
 
 import pathlib
+import subprocess
+import sys
 import tempfile
 
 from absl.testing import absltest
 import dm_env
 from dm_env import specs
+from etils import epath
 from gdm_robotics.interfaces import environment as gdmr_env
 from gdm_robotics.interfaces import policy as gdmr_policy
 from gdm_robotics.interfaces import types as gdmr_types
 from gdm_robotics.runtime import runloop as runloop_lib
+from mujoco_playground._src.real.common import log_reader
 from mujoco_playground._src.real.common import logger
+from mujoco_playground._src.real.common import view_log
 import numpy as np
 import torch
 
@@ -128,6 +133,76 @@ class LoggerTest(absltest.TestCase):
       episode.stop()
 
       self.assertLen(mcaps_in(tmp_dir), 1)
+
+  def test_reads_back_an_episode(self):
+    spec = timestep_spec(**{
+        _TIMESTAMP: specs.Array(shape=(), dtype=np.int64),
+        "qpos": specs.Array(shape=(6,), dtype=np.float32),
+    })
+    action_spec = {
+        "act": specs.BoundedArray(
+            shape=(6,), dtype=np.float32, minimum=-1.0, maximum=1.0
+        )
+    }
+    qpos = np.arange(6, dtype=np.float32)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+      episode = logger.create_logger(
+          timestep_spec=spec,
+          action_spec=action_spec,
+          policy_extra_spec={},
+          image_observation_keys=[],
+          timestamp_key=_TIMESTAMP,
+          task_id="test_task",
+          agent_id="test_agent",
+          output_directory=tmp_dir,
+          control_timestep_seconds=0.02,
+      )
+      episode.reset(dm_env.restart({_TIMESTAMP: 100, "qpos": qpos}))
+      episode.record_action_and_next_timestep(
+          {"act": np.ones(6, dtype=np.float32)},
+          dm_env.termination(
+              reward=1.0, observation={_TIMESTAMP: 200, "qpos": qpos}
+          ),
+          {},
+      )
+      episode.write()
+      episode.stop()
+      (path,) = mcaps_in(tmp_dir)
+      messages = list(log_reader.iter_features(epath.Path(path)))
+      app_id, shapes = view_log.session_info(epath.Path(path))
+      # In a fresh process, because other tests may have loaded TensorFlow.
+      reads_without_tensorflow = subprocess.run(
+          [
+              sys.executable,
+              "-c",
+              (
+                  "import sys\n"
+                  "from etils import epath\n"
+                  "from mujoco_playground._src.real.common import log_reader\n"
+                  "from mujoco_playground._src.real.common import view_log\n"
+                  f"path = epath.Path({str(path)!r})\n"
+                  "list(log_reader.iter_features(path))\n"
+                  "view_log.session_info(path)\n"
+                  "sys.exit('tensorflow' in sys.modules)\n"
+              ),
+          ],
+          check=False,
+      )
+      self.assertEqual(reads_without_tensorflow.returncode, 0)
+
+    timesteps = [f for t, f in messages if t == log_reader.TIMESTEP_TOPIC]
+    actions = [f for t, f in messages if t == log_reader.ACTION_TOPIC]
+    self.assertLen(timesteps, 2)
+    self.assertLen(actions, 2)
+    np.testing.assert_array_equal(
+        timesteps[1]["observation/qpos"].float_list.value, qpos
+    )
+    np.testing.assert_array_equal(
+        actions[0]["action/act"].float_list.value, 1.0
+    )
+    self.assertEqual(app_id, "test_task")
+    self.assertEqual(shapes["qpos"], (6,))
 
   def test_writes_an_episode_of_batched_torch(self):
     spec = timestep_spec(

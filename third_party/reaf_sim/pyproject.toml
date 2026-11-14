@@ -31,7 +31,7 @@ dependencies = [
     "mujoco_warp>=4.0.0",
     "numpy",
     "reaf>=1.1.2",
-    "torch>=2.7.0,<2.14",
+    "torch>=2.7.0,<2.16",
     "warp-lang>=1.18.0,<1.18.1",
 ]
 
@@ -40,7 +40,7 @@ cu12 = [
     "torch>=2.7.0,<2.14; sys_platform == 'linux'",
 ]
 cpu = [
-    "torch>=2.7.0,<2.14; sys_platform == 'linux'",
+    "torch>=2.7.0,<2.16; sys_platform == 'linux'",
 ]
 dev = [
     "pytest",

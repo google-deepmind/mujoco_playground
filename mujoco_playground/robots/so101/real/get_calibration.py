@@ -173,9 +173,8 @@ _ROLES = flags.DEFINE_list(
 
 
 def _make_bus(port: str):
-  """Builds a FeetechMotorsBus with the SO101 motor table."""
+  """Builds the motor bus with the SO101 motor table."""
   from lerobot import motors as motors_mod  # pyrefly: ignore[missing-import]
-  from lerobot.motors import feetech  # pyrefly: ignore[missing-import]
 
   norm = {
       name: (
@@ -185,7 +184,7 @@ def _make_bus(port: str):
       )
       for name in constant.JOINTS
   }
-  return feetech.FeetechMotorsBus(
+  return motors_mod.SerialMotorsBus(
       port=port,
       motors={
           name: motors_mod.Motor(
@@ -213,8 +212,17 @@ def _make_passive(bus, role: str) -> None:
 def _capture_middle(bus) -> Mapping[str, int]:
   """Sets the homing offset in EEPROM so the middle pose is centered at 2047."""
   input("Hold the pose and press ENTER to capture...")
-  bus.set_half_turn_homings()
-  middle = bus.sync_read("Present_Position", normalize=False)
+  # lerobot 0.7 fails a bus transfer on one stray byte, and
+  # set_half_turn_homings retries none of its own. It resets the offsets before
+  # it writes them, so the whole call can be repeated.
+  for retries_left in reversed(range(6)):
+    try:
+      bus.set_half_turn_homings()
+      break
+    except ConnectionError:
+      if not retries_left:
+        raise
+  middle = bus.sync_read("Present_Position", normalize=False, num_retry=5)
   print("  captured: " + str(dict(middle)))
   return middle
 
@@ -225,11 +233,17 @@ def _record_ranges(
   """Interactively records each motor's range of motion until ENTER."""
   from lerobot.utils import utils as lerobot_utils  # pyrefly: ignore[missing-import]
 
-  positions = bus.sync_read("Present_Position", motor_names, normalize=False)
+  # lerobot 0.7 fails a read on one stray byte from the bus. Its own range
+  # recording retries reads five times, so do the same.
+  positions = bus.sync_read(
+      "Present_Position", motor_names, normalize=False, num_retry=5
+  )
   mins = {name: int(positions[name]) for name in motor_names}
   maxes = {name: int(positions[name]) for name in motor_names}
   while True:
-    positions = bus.sync_read("Present_Position", motor_names, normalize=False)
+    positions = bus.sync_read(
+        "Present_Position", motor_names, normalize=False, num_retry=5
+    )
     print("\n-------------------------------------------")
     print(f"{'NAME':<15} | {'MIN':>6} | {'POS':>6} | {'MAX':>6}")
     for name in motor_names:
@@ -259,7 +273,12 @@ def _calibrate_arm(role: str, port: str, serial_number: str) -> None:
   try:
     _make_passive(bus, role)
     for name in constant.JOINTS:
-      bus.write("Operating_Mode", name, feetech.OperatingMode.POSITION.value)
+      bus.write(
+          "Operating_Mode",
+          name,
+          feetech.OperatingMode.POSITION.value,
+          num_retry=5,
+      )
 
     print(f"Support the {role} by hand — it may fall under gravity.")
     print(
