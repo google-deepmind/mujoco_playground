@@ -19,7 +19,6 @@ import math
 import torch
 
 
-@torch.jit.script
 def quat_mul(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   """Multiply two quaternions. Supports batching."""
   w1, x1, y1, z1 = q1[..., 0], q1[..., 1], q1[..., 2], q1[..., 3]
@@ -35,7 +34,6 @@ def quat_mul(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   )
 
 
-@torch.jit.script
 def quat_rotate(q: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
   """Rotate vector v by unit quaternion q.
 
@@ -55,7 +53,6 @@ def quat_rotate(q: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
   return 2.0 * uv * u + (s * s - uu) * v + 2.0 * s * cross
 
 
-@torch.jit.script
 def quat_rotate_inverse(q: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
   """Rotate vector v by the inverse of unit quaternion q.
 
@@ -79,7 +76,6 @@ def quat_rotate_inverse(q: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
   return 2.0 * uv * neg_u + (s * s - uu) * v + 2.0 * s * cross
 
 
-@torch.jit.script
 def quat_conjugate(q: torch.Tensor) -> torch.Tensor:
   """Return the conjugate of a unit quaternion (negate vector part).
 
@@ -94,7 +90,6 @@ def quat_conjugate(q: torch.Tensor) -> torch.Tensor:
   return torch.cat((q[..., :1], -q[..., 1:]), dim=-1)
 
 
-@torch.jit.script
 def quat_inv(q: torch.Tensor, eps: float = 1e-9) -> torch.Tensor:
   """Compute the inverse of a quaternion.
 
@@ -111,7 +106,6 @@ def quat_inv(q: torch.Tensor, eps: float = 1e-9) -> torch.Tensor:
   return quat_conjugate(q) / q.pow(2).sum(dim=-1, keepdim=True).clamp(min=eps)
 
 
-@torch.jit.script
 def axis_angle_from_quat(
     quat: torch.Tensor, eps: float = 1.0e-6
 ) -> torch.Tensor:
@@ -144,7 +138,6 @@ def axis_angle_from_quat(
   return quat[..., 1:4] / sin_half_angles_over_angles.unsqueeze(-1)
 
 
-@torch.jit.script
 def quat_box_minus(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   """Compute the box-minus operator (q1 minus q2) as an axis-angle vector.
 
@@ -162,7 +155,6 @@ def quat_box_minus(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   return axis_angle_from_quat(quat_diff)
 
 
-@torch.jit.script
 def quat_error_magnitude(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   """Compute the angular distance (in radians) between two quaternions.
 
@@ -178,7 +170,6 @@ def quat_error_magnitude(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   return 2.0 * torch.acos(dot_abs)
 
 
-@torch.jit.script
 def quat_error_magnitude2(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   """Compute the angular distance (in radians) between two quaternions.
 
@@ -201,7 +192,6 @@ def quat_error_magnitude2(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   )
 
 
-@torch.jit.script
 def yaw_quat(quat: torch.Tensor) -> torch.Tensor:
   """Extract the yaw-only component of a quaternion.
 
@@ -225,7 +215,6 @@ def yaw_quat(quat: torch.Tensor) -> torch.Tensor:
   return torch.nn.functional.normalize(quat_yaw, p=2.0, dim=-1)
 
 
-@torch.jit.script
 def subtract_frame_transforms(
     t01: torch.Tensor,
     q01: torch.Tensor,
@@ -253,7 +242,6 @@ def subtract_frame_transforms(
   return t12, q12
 
 
-@torch.jit.script
 def axis_angle_to_quat(axis: torch.Tensor, angle: torch.Tensor) -> torch.Tensor:
   """Convert axis-angle representation to quaternion.
 
@@ -271,7 +259,6 @@ def axis_angle_to_quat(axis: torch.Tensor, angle: torch.Tensor) -> torch.Tensor:
   )
 
 
-@torch.jit.script
 def _elementary_quats(
     roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -284,7 +271,6 @@ def _elementary_quats(
   return qx, qy, qz
 
 
-@torch.jit.script
 def quat_from_euler_xyz(
     roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor
 ) -> torch.Tensor:
@@ -302,7 +288,6 @@ def quat_from_euler_xyz(
   return quat_mul(quat_mul(qz, qy), qx)
 
 
-@torch.jit.script
 def quat_from_euler_extrinsic_zyx(
     roll: torch.Tensor, pitch: torch.Tensor, yaw: torch.Tensor
 ) -> torch.Tensor:
@@ -320,7 +305,6 @@ def quat_from_euler_extrinsic_zyx(
   return quat_mul(quat_mul(qx, qy), qz)
 
 
-@torch.jit.script
 def sample_uniform(
     n: int,
     low: float,
@@ -331,7 +315,6 @@ def sample_uniform(
   return torch.rand(n, device=device) * (high - low) + low
 
 
-@torch.jit.script
 def sample_uniform_3d(
     n: int,
     low: torch.Tensor,
@@ -379,7 +362,6 @@ def sample_uniform_range(
   return torch.rand(*size, device=device) * (upper - lower) + lower
 
 
-@torch.jit.script
 def sigmoids(x: torch.Tensor, value_at_1: float, sigmoid: str) -> torch.Tensor:
   """Returns 1-sigmoid(x) that hits value_at_1 at x=1."""
   if sigmoid == 'gaussian':
@@ -397,7 +379,6 @@ def sigmoids(x: torch.Tensor, value_at_1: float, sigmoid: str) -> torch.Tensor:
     raise ValueError(f'Unknown sigmoid type {sigmoid}')
 
 
-@torch.jit.script
 def tolerance(
     x: torch.Tensor,
     bounds: tuple[float, float] = (0.0, 0.0),
@@ -422,7 +403,6 @@ def tolerance(
   return value
 
 
-@torch.jit.script
 def quat_to_matrix(q: torch.Tensor) -> torch.Tensor:
   """Convert unit quaternions (w, x, y, z) to 3x3 rotation matrices."""
   w, x, y, z = q[..., 0], q[..., 1], q[..., 2], q[..., 3]
@@ -441,7 +421,6 @@ def quat_to_matrix(q: torch.Tensor) -> torch.Tensor:
   return torch.stack([row0, row1, row2], dim=-2)
 
 
-@torch.jit.script
 def rotation_6d_to_matrix(d6: torch.Tensor) -> torch.Tensor:
   """Convert a 6D representation to a 3x3 rotation matrix using Gram-Schmidt."""
   shape = list(d6.shape)[:-1]
@@ -456,13 +435,11 @@ def rotation_6d_to_matrix(d6: torch.Tensor) -> torch.Tensor:
   return torch.stack([b1, b2, b3], dim=-2)
 
 
-@torch.jit.script
 def rot_matrix_to_6d(R: torch.Tensor) -> torch.Tensor:
   """Extract first two rows of a 3x3 rotation matrix and flattens."""
   return R[..., :2, :].flatten(start_dim=-2)
 
 
-@torch.jit.script
 def matrix_to_quat(matrix: torch.Tensor) -> torch.Tensor:
   """Convert rotation matrices to quaternions (wxyz).
 
