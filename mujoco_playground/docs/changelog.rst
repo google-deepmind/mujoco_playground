@@ -32,6 +32,8 @@ Unreleased
 - lerobot 0.7 fails a bus transfer on one stray byte, so SO-101 joint reads now retry twice, like lerobot's own SO-101
   robot. Calibration retries its position reads, its ``Operating_Mode`` writes and the half-turn homing five times,
   and builds lerobot's ``SerialMotorsBus``, because ``FeetechMotorsBus`` is deprecated in 0.7.
+- The SO-101 deploy script now also parks the arm and releases torque after an error once the arm is set up, such
+  as a checkpoint that fails to load or a logger that fails to close.
 
 Version 1.0.1 (November 8, 2026)
 --------------------------------
