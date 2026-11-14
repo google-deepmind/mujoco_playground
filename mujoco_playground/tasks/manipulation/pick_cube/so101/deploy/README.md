@@ -72,7 +72,7 @@ uv run --extra so101 --extra rl python -m \
 
 ### Hardware Behavior & Useful Flags
 
-* **Homing & Shutdown**: At the start of every episode, the real arm smoothly cosine-interpolates to the training hover pose (`--homing_duration_secs=2.0`). When the session ends (`Ctrl-C` or `--num_episodes`), the arm safely parks at its rest pose before torque is released.
+* **Homing & Shutdown**: At the start of every episode, the real arm smoothly cosine-interpolates to the training hover pose (`--homing_duration_secs=2.0`). When the session ends (`Ctrl-C`, `--num_episodes`, or an error after setup, such as a checkpoint that fails to load), the arm safely parks at its rest pose before torque is released.
 * **Calibration Offsets & Domain Randomization**: Manual middle-pose calibration on the physical SO101 arm can easily be off by 1–2+ cm in end-effector height. `SO101PickCubeVision` trains with per-episode calibration bias randomization to tolerate moderate calibration error, but larger offsets will eventually degrade grasp success or cause the robot to slam the table— **recalibrate the follower arm if it consistently reaches too low or hovers too high above the table**.
 * We tested on 3 different robot setups under various lighting conditions, but there may still be visual domain gap with darker shadows. If you see this, **make sure the lighting conditions prevent darker shadows**, or help submit a more robust domain randomization recipe for the pixels inputs!
 * `--control_freq_hz` modifies the control frequency for smoother motions

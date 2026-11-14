@@ -26,6 +26,7 @@
 
 from collections.abc import Callable
 from collections.abc import Mapping
+import contextlib
 import copy
 import dataclasses
 import os
@@ -301,27 +302,34 @@ def main(argv: Any) -> None:
   checkpoint = resolve_checkpoint(_CHECKPOINT.value)
 
   env = create_env(control_freq_hz=_CONTROL_FREQ_HZ.value)
-  policy = create_policy(env, checkpoint, action_scale=_ACTION_SCALE.value)
-  log_dir = _resolve_log_dir()
-  loggers = [create_logger(env, policy)] if log_dir is not None else []
+  # From here on, every exit closes the env, which parks and releases the real
+  # arm. The stack closes the loggers first, and still closes the env if one of
+  # them fails.
+  with contextlib.ExitStack() as stack:
+    stack.callback(env.close)
+    policy = create_policy(env, checkpoint, action_scale=_ACTION_SCALE.value)
+    loggers = []
+    if _resolve_log_dir() is not None:
+      loggers.append(
+          stack.enter_context(contextlib.closing(create_logger(env, policy)))
+      )
 
-  if _VIEWER.value:
-    deploy_viewer.launch(env, policy, loggers=loggers, gfx=_GFX.value)
-  else:
-    operations: list[runloop_lib.RunloopRuntimeOperations] = []
-    if _MODE.value == "sim":
-      operations.append(RateLimiterOperation(env.device_layer.control_timestep))
-    runloop = runloop_lib.Runloop(
-        environment=env,
-        policy=policy,
-        loggers=loggers,
-        handle_sigint=True,
-        runloop_runtime_operations=operations,
-    )
-    runloop.run(num_episodes=_NUM_EPISODES.value)
-
-  for closeable in (*loggers, env):
-    closeable.close()
+    if _VIEWER.value:
+      deploy_viewer.launch(env, policy, loggers=loggers, gfx=_GFX.value)
+    else:
+      operations: list[runloop_lib.RunloopRuntimeOperations] = []
+      if _MODE.value == "sim":
+        operations.append(
+            RateLimiterOperation(env.device_layer.control_timestep)
+        )
+      runloop = runloop_lib.Runloop(
+          environment=env,
+          policy=policy,
+          loggers=loggers,
+          handle_sigint=True,
+          runloop_runtime_operations=operations,
+      )
+      runloop.run(num_episodes=_NUM_EPISODES.value)
 
 
 if __name__ == "__main__":
