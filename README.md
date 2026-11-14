@@ -195,6 +195,8 @@ git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_
 make sync-cpu
 ```
 
+On macOS, PyTorch needs an Apple Silicon Mac with macOS 14 or newer.
+
 </details>
 
 <details>
@@ -227,6 +229,15 @@ make test
 
 > [!NOTE]
 > Hardware SDKs are optional extras so simulation-only stays lightweight. Passing `--extra so101` or `--extra yam` to `uv run` installs the hardware drivers on demand.
+>
+> The `real` extra, which the hardware extras include, installs TensorFlow 2.21 through safari-sdk. On Linux, a process that loads TensorFlow before Triton crashes with an LLVM error, and torch's TensorBoard `SummaryWriter` loads TensorFlow when it is installed. While the installed TensorFlow is older than 2.22, load Triton first in your own scripts:
+>
+> ```python
+> try:
+>   import triton  # Only Linux CUDA torch ships Triton.
+> except ImportError:
+>   pass
+> ```
 
 ## Documentation & Contributing
 
