@@ -89,7 +89,7 @@ class _RslRlPolicy(gdmr_policy.Policy[torch.Tensor]):
       nworld: int,
   ):
     self._policy = policy
-    self._action_key = next(iter(action_spec))  # pyrefly: ignore[bad-assignment]
+    self._action_slices = vecenv_wrapper.parse_action_spec(action_spec)
     self._nworld = nworld
 
   def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -106,7 +106,10 @@ class _RslRlPolicy(gdmr_policy.Policy[torch.Tensor]):
             obs, batch_size=[self._nworld]  # pyrefly: ignore[bad-argument-type]
         )
     )
-    return ({self._action_key: action}, {}), prev_state
+    return (
+        vecenv_wrapper.split_actions(action, self._action_slices),
+        {},
+    ), prev_state
 
   def initial_state(self):
     if hasattr(self._policy, "reset"):

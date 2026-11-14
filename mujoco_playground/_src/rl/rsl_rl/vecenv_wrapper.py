@@ -15,6 +15,7 @@
 """RSL-RL VecEnv wrapper for reaf-sim environments."""
 
 from collections.abc import Mapping
+import math
 from typing import Any
 
 import dm_env
@@ -45,8 +46,54 @@ def _derive_max_episode_length(env: reaf_env.Environment) -> int:
         checker, timeout_termination_checker.TimeoutTerminationChecker
     ):
       control_dt = env.device_layer.control_timestep
-      return int(checker.timeout / control_dt)
+      return round(checker.timeout / control_dt)
   raise ValueError("No TimeoutTerminationChecker found in the environment.")
+
+
+def parse_action_spec(
+    action_spec: Any,
+) -> tuple[tuple[str, tuple[int, ...], int], ...]:
+  """Extracts ordered `(key, per_env_shape, flat_width)` slices from `action_spec`."""
+  if not isinstance(action_spec, Mapping) or not action_spec:
+    raise ValueError(
+        f"Expected non-empty Mapping action_spec, got {action_spec!r}."
+    )
+  slices: list[tuple[str, tuple[int, ...], int]] = []
+  for key, spec in action_spec.items():
+    per_env_shape = tuple(int(d) for d in spec.shape[1:])
+    width = math.prod(per_env_shape)
+    slices.append((key, per_env_shape, width))
+  return tuple(slices)
+
+
+def split_actions(
+    actions: torch.Tensor,
+    action_slices: tuple[tuple[str, tuple[int, ...], int], ...],
+) -> dict[str, torch.Tensor]:
+  """Splits a flat `(nworld, num_actions)` tensor into an action dictionary."""
+  expected_dim = sum(width for _, _, width in action_slices)
+  if actions.ndim != 2 or actions.shape[-1] != expected_dim:
+    raise ValueError(
+        f"Expected 2D actions tensor with last dim {expected_dim}, got shape"
+        f" {tuple(actions.shape)}."
+    )
+  if len(action_slices) == 1:
+    key, per_env_shape, width = action_slices[0]
+    chunk = (
+        actions
+        if per_env_shape == (width,)
+        else actions.reshape(actions.shape[0], *per_env_shape)
+    )
+    return {key: chunk}
+  action_dict: dict[str, torch.Tensor] = {}
+  offset = 0
+  for key, per_env_shape, width in action_slices:
+    chunk = actions[:, offset : offset + width]
+    if per_env_shape != (width,):
+      chunk = chunk.reshape(actions.shape[0], *per_env_shape)
+    action_dict[key] = chunk
+    offset += width
+  return action_dict
 
 
 class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
@@ -84,9 +131,8 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
 
     # TODO: how do we make action_spec NOT return a dict?
     # RSL-RL does not want a dict for the action...
-    self.num_actions = sum(
-        a.shape[-1] for a in self.unwrapped.action_spec().values()  # pyrefly: ignore[missing-attribute]
-    )
+    self._action_slices = parse_action_spec(self.unwrapped.action_spec())
+    self.num_actions = sum(width for _, _, width in self._action_slices)
     self._modify_action_space()
 
     # Reset at the start since rsl_rl does not call reset.
@@ -184,10 +230,7 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     # TODO: we need to make sure actions are not dictionaries,
     # or we need a generic way to convert back to dicts for REAF, so that
     # the action_spec is compatible with RSL-RL.
-    action_spec = self.action_spec()
-    assert isinstance(action_spec, Mapping)
-    action_key = list(action_spec.keys())[0]
-    action_dict = {action_key: actions}
+    action_dict = split_actions(actions, self._action_slices)
 
     self._timestep = self.env.step(action_dict)
     rew_dict = _dict_reward_from_timestep(self._timestep)

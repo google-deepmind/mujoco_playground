@@ -35,6 +35,7 @@ from reaf.simulation.torch import reward_provider
 from reaf.simulation.torch import simulator as simulator_module
 from reaf.simulation.torch import task_layer as task_layer_module
 from reaf.simulation.torch import termination_checker
+from reaf.simulation.torch import timeout_termination_checker
 from reaf.simulation.torch import types
 import torch
 
@@ -471,6 +472,174 @@ class VecEnvWrapperTest(absltest.TestCase):
         extras["log"]["Metrics/time_last"],
         torch.tensor(0.03, device=self.DEVICE),
     )
+
+  def test_multi_key_action_spec_splits_across_devices(self):
+    """Verify flat actions split across all keys in a multi-device action_spec."""
+    dual_xml = """
+    <mujoco model="dual">
+      <option timestep="0.01"/>
+      <worldbody>
+        <body name="b0">
+          <joint name="j0" type="hinge"/>
+          <geom type="sphere" size="0.05"/>
+        </body>
+        <body name="b1">
+          <joint name="j1" type="hinge"/>
+          <geom type="sphere" size="0.05"/>
+        </body>
+        <body name="b2">
+          <joint name="j2" type="hinge"/>
+          <geom type="sphere" size="0.05"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <motor name="m0" joint="j0"/>
+        <motor name="m1" joint="j1"/>
+        <motor name="m2" joint="j2"/>
+      </actuator>
+    </mujoco>
+    """
+
+    class SliceActuatorDevice(device_module.Device):
+
+      def __init__(self, dev_name: str, cmd_key: str, start: int, width: int):
+        self._name = dev_name
+        self._cmd_key = cmd_key
+        self._start = start
+        self._width = width
+
+      @property
+      def name(self) -> str:
+        return self._name
+
+      def substep_commands_spec(self) -> dict[str, specs.Array]:
+        return {
+            self._cmd_key: specs.Array(shape=(self._width,), dtype=np.float32)
+        }
+
+      def substep_measurements_spec(self) -> dict[str, specs.Array]:
+        return {}
+
+      def set_substep_commands(self, simulator, consumed_substep_commands):
+        simulator.data.ctrl[:, self._start : self._start + self._width] = (
+            consumed_substep_commands[self._cmd_key]
+        )
+
+      def get_measurements(self, simulator):
+        del simulator
+        return {}
+
+      def reset(self, simulator, env_mask=None):
+        del simulator, env_mask
+
+      def initialize(self, simulator):
+        del simulator
+
+    nworld = 2
+    sim = simulator_module.Simulator(
+        mj_spec=mujoco.MjSpec.from_string(dual_xml),
+        impl=types.Impl.WARP,
+        nworld=nworld,
+        xpu_device=self.DEVICE,
+    )
+    dev_b = SliceActuatorDevice("hand", "hand/ctrl", start=1, width=2)
+    clock = clock_device.ClockDevice(name="clock", time_output_name="time")
+    dl = device_layer_module.DeviceLayer(
+        simulator=sim,
+        control_timestep=0.02,
+        devices=[
+            PendulumDevice(nworld=nworld, xpu_device=self.DEVICE),
+            dev_b,
+            clock,
+        ],
+    )
+    checker = timeout_termination_checker.TimeoutTerminationChecker(
+        timeout=0.7,
+        time_feature_name="time",
+        xpu_device=self.DEVICE,
+    )
+    tl = task_layer_module.TaskLayer(
+        commands_processors=[],
+        features_producers=[],
+        reward_provider=ConstantRewardProvider(
+            nworld=nworld, xpu_device=self.DEVICE
+        ),
+        termination_checkers=[checker],
+        discount_provider=default_discount_provider.DefaultDiscountProvider(
+            nworld=nworld, xpu_device=self.DEVICE
+        ),
+        features_observers=[],
+        loggers=[],
+        xpu_device=self.DEVICE,
+        nworld=nworld,
+    )
+    env = environment.Environment(
+        device_layer=dl,
+        task_layer=tl,
+        observation_space_adapter=PendulumObservationAdapter(nworld=nworld),
+        environment_reset=PendulumReset(dl),
+    )
+
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
+    self.assertEqual(wrapper.num_actions, 3)
+    self.assertEqual(wrapper.max_episode_length, 35)
+
+    actions = torch.tensor(
+        [[1.5, -2.0, 3.0], [-0.5, 4.0, -1.0]],
+        dtype=torch.float32,
+        device=self.DEVICE,
+    )
+    wrapper.step(actions)
+    torch.testing.assert_close(sim.data.ctrl.to(dtype=torch.float32), actions)
+
+    with self.assertRaises(ValueError):
+      wrapper.step(torch.zeros(nworld, 2, device=self.DEVICE))
+
+  def test_derive_max_episode_length_rounds_float32_timeout(self):
+    """Verify float32 timeout 0.7s / 0.01s rounds to 70 instead of flooring to 69."""
+    nworld = 1
+    sim = simulator_module.Simulator(
+        mj_spec=mujoco.MjSpec.from_string(_PENDULUM_XML),
+        impl=self.IMPL,
+        nworld=nworld,
+        xpu_device=self.DEVICE,
+    )
+    dl = device_layer_module.DeviceLayer(
+        simulator=sim,
+        control_timestep=0.01,
+        devices=[
+            PendulumDevice(nworld=nworld, xpu_device=self.DEVICE),
+            clock_device.ClockDevice(name="clock", time_output_name="time"),
+        ],
+    )
+    checker = timeout_termination_checker.TimeoutTerminationChecker(
+        timeout=0.7,
+        time_feature_name="time",
+        xpu_device=self.DEVICE,
+    )
+    tl = task_layer_module.TaskLayer(
+        commands_processors=[],
+        features_producers=[],
+        reward_provider=ConstantRewardProvider(
+            nworld=nworld, xpu_device=self.DEVICE
+        ),
+        termination_checkers=[checker],
+        discount_provider=default_discount_provider.DefaultDiscountProvider(
+            nworld=nworld, xpu_device=self.DEVICE
+        ),
+        features_observers=[],
+        loggers=[],
+        xpu_device=self.DEVICE,
+        nworld=nworld,
+    )
+    env = environment.Environment(
+        device_layer=dl,
+        task_layer=tl,
+        observation_space_adapter=PendulumObservationAdapter(nworld=nworld),
+        environment_reset=PendulumReset(dl),
+    )
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
+    self.assertEqual(wrapper.max_episode_length, 70)
 
 
 if __name__ == "__main__":
