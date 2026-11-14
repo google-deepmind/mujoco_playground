@@ -1,6 +1,6 @@
 # Development Workflow
 
-- Always use `uv run`, not bare `python`. Pass explicit `--extra` flags (e.g. `--extra rl`, `--extra so101`, `--extra yam`) to `uv run` rather than `--no-sync`; `pyproject.toml` (Python 3.12–3.13) configures PyPI as the default index, `CMAKE_CXX_STANDARD=17` for `reaf`, and cross-platform `override-dependencies` (`evdev` on Linux only, `ruckig>=0.15.3`).
+- Always use `uv run`, not bare `python`. Pass explicit `--extra` flags (e.g. `--extra rl`, `--extra so101`, `--extra yam`) to `uv run` rather than `--no-sync`; `pyproject.toml` (Python 3.12–3.13) configures PyPI as the default index, `CMAKE_CXX_STANDARD=17` for `reaf`, and cross-platform `override-dependencies` (`evdev` on Linux only, `ruckig>=0.15.3`, `click>=8.4.2,<9`).
 - Always use `absl` (`from absl import app, flags, logging`) for scripts, tools, and entrypoints. **NEVER use `argparse`**.
 - Dependencies are managed with `uv`. Default `make sync` installs `--extra rl --group dev` with CUDA 13 PyTorch (`<2.14`) and CUDA 13 Warp on Linux, and native wheels on macOS.
 - On Linux machines with CUDA 12 drivers (`< 580`, e.g. CUDA 12.4), run `make sync-cu12` and pass `--group cu12` to every `uv run` command (or `make sync-cpu` and `--group cpu` for CPU-only Linux); omitting `--group cu12` on `uv run` overlays PyPI's CUDA 13 `nvidia-*` sub-packages onto `.venv` and breaks cuDNN (`CUDNN_STATUS_NOT_INITIALIZED`).

@@ -56,7 +56,7 @@ identify = [
 # if it introduces genuinely new hardware.
 feetech = [
     "playground[real]",
-    "lerobot[feetech]>=0.6.0,<0.7",
+    "lerobot[feetech]>=0.7.0,<0.8",
 ]
 # I2RT's SDK for its DM-motor arms on a SocketCAN / gs_usb bus (the YAM family).
 # Pin python-can and gs-usb so _MacGsUsbBus in robots/yam/real/gs_usb_darwin.py
@@ -124,9 +124,14 @@ conflicts = [
 # platforms but never imports it; it cannot build on macOS. Drop it there.
 # i2rt pins ruckig==0.15.3 (sdist-only, broken under scikit-build-core >= 0.10);
 # override to ruckig>=0.15.3 so pre-built wheels (0.19.4+) are used everywhere.
+# i2rt also pins click<8.2.0, but its installed package never imports click (only
+# its devices/ scripts do, and they are not installed). lerobot 0.7 needs
+# huggingface-hub, which needs click>=8.4.2,<9. The override applies to every
+# package that needs click; drop it once an i2rt release removes its click pin.
 override-dependencies = [
   "evdev; sys_platform == 'linux'",
   "ruckig>=0.15.3",
+  "click>=8.4.2,<9",
 ]
 
 [[tool.uv.index]]
