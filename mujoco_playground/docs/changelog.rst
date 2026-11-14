@@ -8,6 +8,9 @@ MuJoCo Playground follows `MuJoCo's semantic versioning
 Upcoming Version (not yet released)
 -----------------------------------
 
+- The SO-101 deploy script now also parks the arm and releases torque after an error once the arm is set up, such
+  as a checkpoint that fails to load or a logger that fails to close.
+
 Version 1.1.0 (November 23, 2026)
 ---------------------------------
 
