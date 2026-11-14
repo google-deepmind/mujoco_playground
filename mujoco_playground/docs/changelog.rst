@@ -5,6 +5,17 @@ MuJoCo Playground follows `MuJoCo's semantic versioning
 <https://github.com/google-deepmind/mujoco/blob/main/VERSIONING.md>`_
 (`SUPERMAJOR.MAJOR.MINOR_OR_PATCH`).
 
+Unreleased
+----------
+
+- The MCAP log reader and ``view_log`` decode messages with ``mcap_protobuf`` instead of TensorFlow, so reading an
+  episode no longer loads TensorFlow. On Linux, TensorFlow 2.21 crashes a process that loads Triton 3.7 or newer
+  after it. The ``real`` extra now declares ``mcap`` and ``mcap-protobuf-support``, which came only through
+  safari-sdk before.
+- Breaking: ``iter_features`` yields the same ``(topic, features)`` pairs, but the feature values are now protobuf
+  messages built from the schema stored in the file, not TensorFlow ``Feature`` objects. They cannot be pickled or
+  passed to TensorFlow; convert them to NumPy first.
+
 Version 1.0.1 (November 8, 2026)
 --------------------------------
 
