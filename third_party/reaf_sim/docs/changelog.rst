@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- ``torch`` can now be 2.15 (``torch<2.16``).
+
 Version 1.0.1 (November 8, 2026)
 --------------------------------
 

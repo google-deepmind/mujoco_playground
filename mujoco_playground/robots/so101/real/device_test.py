@@ -14,6 +14,10 @@
 
 """Tests for the SO101 REAF device and its raw-tick frame."""
 
+import sys
+import types
+from unittest import mock
+
 from absl.testing import absltest
 from mujoco_playground.robots.so101.real import constant
 from mujoco_playground.robots.so101.real import device
@@ -44,8 +48,8 @@ class _FakeBus:
     self.positions = {name: _ZERO for name in constant.JOINTS}
     self.written: dict[str, int] | None = None
 
-  def sync_read(self, register, normalize=True):
-    assert register == "Present_Position" and not normalize
+  def sync_read(self, register, normalize=True, num_retry=0):
+    assert register == "Present_Position" and not normalize and num_retry == 2
     return dict(self.positions)
 
   def sync_write(self, register, values, normalize=True):
@@ -175,6 +179,30 @@ class SO101FollowerDeviceTest(absltest.TestCase):
     self.device.close()
 
     self.assertTrue(self.arm.disconnected)
+
+
+class ConnectLeaderTest(absltest.TestCase):
+
+  def test_retries_turning_the_torque_off(self):
+    robot = mock.Mock()
+    so_leader = types.SimpleNamespace(
+        SO101Leader=mock.Mock(return_value=robot),
+        SO101LeaderConfig=mock.Mock(),
+    )
+    teleoperators = types.SimpleNamespace(so_leader=so_leader)
+    modules = {
+        "lerobot": types.SimpleNamespace(teleoperators=teleoperators),
+        "lerobot.teleoperators": teleoperators,
+        "lerobot.teleoperators.so_leader": so_leader,
+    }
+    with (
+        mock.patch.dict(sys.modules, modules),
+        mock.patch.object(device.get_ports, "resolve", return_value="port"),
+        mock.patch.object(device, "_load_calibration", return_value={}),
+    ):
+      device.connect_leader()
+
+    robot.bus.disable_torque.assert_called_once_with(num_retry=5)
 
 
 if __name__ == "__main__":
