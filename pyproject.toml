@@ -38,6 +38,8 @@ rl = [
 # Real-robot logging and visualization (MCAP and Rerun).
 real = [
     "safari-sdk>=2.144.0",  # Episodic MCAP logging for teleop data collection.
+    "mcap",  # Reading logged episodes (MCAP).
+    "mcap-protobuf-support>=0.5.0",  # Decoding them without TensorFlow.
     "rerun-sdk",  # Visualizing logged teleop episodes (MCAP) locally.
 ]
 
@@ -99,6 +101,8 @@ dev = [
     "pyink",
     "pyrefly",
     "isort",
+    "mcap",  # Lets CI run the log reader tests.
+    "mcap-protobuf-support>=0.5.0",
     "pre-commit",
     "pylint",
     "pynput",

@@ -5,6 +5,7 @@
 - Dependencies are managed with `uv`. Default `make sync` installs `--extra rl --group dev` with CUDA 13 PyTorch (`<2.14`) and CUDA 13 Warp on Linux, and native wheels on macOS.
 - On Linux machines with CUDA 12 drivers (`< 580`, e.g. CUDA 12.4), run `make sync-cu12` and pass `--group cu12` to every `uv run` command (or `make sync-cpu` and `--group cpu` for CPU-only Linux); omitting `--group cu12` on `uv run` overlays PyPI's CUDA 13 `nvidia-*` sub-packages onto `.venv` and breaks cuDNN (`CUDNN_STATUS_NOT_INITIALIZED`).
 - Real-robot SDKs (`--extra so101` for Feetech, `--extra yam` for I2RT SocketCAN on Linux or `gs-usb`/`pyusb` + `libusb` on macOS) are optional extras and do not conflict with `cu12` or `cpu`.
+- With the `real` extra (which the robot extras include), `safari-sdk` installs TensorFlow 2.21. On Linux, loading TensorFlow 2.21 before Triton 3.7 or newer (torch 2.13 and newer) crashes the process, because both bring their own LLVM. So decode MCAP logs with `mcap_protobuf`, as `_src/real/common/log_reader.py` does, not with TensorFlow. TensorFlow 2.22 fixes the clash.
 - Run pyink and isort against **only the specific paths you changed**, not a parent directory:
   `uv run --group dev pyink <path>` and `uv run --group dev isort <path>`.
 - For headless rendering / tests on Linux, set `MUJOCO_GL=osmesa`. Omit on macOS.
