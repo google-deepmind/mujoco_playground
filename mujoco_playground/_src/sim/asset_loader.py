@@ -14,15 +14,25 @@
 
 """Utilities for loading assets, including sparse checkout from GitHub."""
 
+from collections.abc import Iterator
 import concurrent.futures
-import fcntl
+import contextlib
+import errno
 import logging
+import os
 import shutil
 import subprocess
+import sys
+import time
 from urllib import parse
 
 from etils import epath
 from mujoco_playground._src import paths
+
+if sys.platform == "win32":
+  import msvcrt
+else:
+  import fcntl
 
 _log = logging.getLogger(__name__)
 
@@ -57,6 +67,34 @@ class AssetFuture:
     self.wait()
 
 
+@contextlib.contextmanager
+def _file_lock(lock_path: epath.Path) -> Iterator[None]:
+  """Acquires an exclusive cross-process file lock on `lock_path`."""
+  with open(lock_path, "a+b") as lock_file:
+    if sys.platform == "win32":
+      fd = lock_file.fileno()
+      while True:
+        os.lseek(fd, 0, os.SEEK_SET)
+        try:
+          msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+          break
+        except OSError as e:
+          if e.errno not in (errno.EACCES, errno.EDEADLK):
+            raise
+          time.sleep(0.02)
+      try:
+        yield
+      finally:
+        os.lseek(fd, 0, os.SEEK_SET)
+        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+    else:
+      fcntl.flock(lock_file, fcntl.LOCK_EX)
+      try:
+        yield
+      finally:
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+
 def _sparse_checkout(
     repo_url: str,
     commit: str,
@@ -66,8 +104,7 @@ def _sparse_checkout(
   """Clone repo with sparse checkout for specific paths, or add paths to existing clone."""
   target_dir.parent.mkdir(parents=True, exist_ok=True)
   lock_path = target_dir.parent / f"{target_dir.name}.lock"
-  with open(lock_path, "w") as lock_file:
-    fcntl.flock(lock_file, fcntl.LOCK_EX)
+  with _file_lock(lock_path):
     missing_paths = [p for p in paths if not (target_dir / p).exists()]
     if not missing_paths:
       return
