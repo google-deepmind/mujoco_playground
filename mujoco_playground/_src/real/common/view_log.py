@@ -75,11 +75,10 @@ def session_info(path: epath.Path) -> tuple[str, Mapping[str, Sequence[int]]]:
   # Viewer-only dependencies.
   try:
     from safari_sdk.logging.python import constants  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
-    from safari_sdk.logging.python import mcap_parser_utils  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
 
-    session = mcap_parser_utils.read_session_proto_data(
-        str(path), constants.SESSION_TOPIC_NAME
-    )[0]
+    _, session = next(
+        log_reader.iter_messages(path, [constants.SESSION_TOPIC_NAME])
+    )
     specs = session.policy_environment_metadata.feature_specs
     shapes = {}
     for prefix, group in (

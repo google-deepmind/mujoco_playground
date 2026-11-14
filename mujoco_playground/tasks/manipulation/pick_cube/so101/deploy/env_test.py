@@ -48,8 +48,10 @@ class FakeBus:
   def __init__(self):
     self.goals: dict[str, int] = {}
 
-  def sync_read(self, register: str, normalize: bool) -> dict[str, int]:
-    del register, normalize
+  def sync_read(
+      self, register: str, normalize: bool, num_retry: int = 0
+  ) -> dict[str, int]:
+    del register, normalize, num_retry
     return {joint: constant.TICKS_CENTER for joint in constant.JOINTS}
 
   def sync_write(

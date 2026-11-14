@@ -71,6 +71,9 @@ jobs:
       - name: Run tests
         run: make test
 
+      - name: Run ExecuTorch tests
+        run: make test-executorch
+
       - name: Notify team chat
         if: failure() && github.event_name == 'push' && github.ref_name == 'main'
         uses: google-deepmind/mujoco/.github/actions/notify-chat@main

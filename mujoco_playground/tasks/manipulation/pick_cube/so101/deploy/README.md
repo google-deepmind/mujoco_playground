@@ -57,6 +57,54 @@ uv run --extra so101 --extra rl python -m \
     --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
 
+### Run the Policy with ExecuTorch
+
+[ExecuTorch](https://docs.pytorch.org/executorch/stable/index.html) runs a policy exported to a `.pte` file, without RSL-RL. Export the actor with `export_policy_to_executorch()`, which is on RSL-RL's `extras` branch. That branch is installed from GitHub, not from PyPI:
+
+```bash
+uv run --extra rl --with executorch==1.6.0 --with "rsl-rl-lib @ git+https://github.com/leggedrobotics/rsl_rl.git@extras" python -c '
+from mujoco_playground.tasks.manipulation.pick_cube.so101.deploy import env, run
+runner = run.load_runner(env.create_sim_env(), "/tmp/rslrl_logs/so101_pick_cube_vision")
+from rsl_rl.utils import export_policy_to_executorch
+export_policy_to_executorch(runner.alg.get_policy(), "/tmp/rslrl_logs/so101_pick_cube_vision")'
+```
+
+Import `rsl_rl.utils` after `load_runner()`. With the robot extras installed, `rsl_rl.utils` loads TensorFlow through TensorBoard, and TensorFlow aborts the process with an LLVM error if Triton loads after it. `load_runner()` imports tensordict, which loads Triton first.
+
+Notes on both commands:
+
+- With `backend="cuda"`, the export also writes a `.ptd` weights file. Keep it next to the `.pte`, with the same file name and a `.ptd` ending. A CUDA program only runs on a machine like the one that exported it, so export it there, or use the default XNNPACK backend.
+- executorch 1.6.0 needs torch 2.15. `--with` adds both for that run only, without changing `.venv`.
+- On a machine synced with `make sync-cu12` or `make sync-cpu`, add `--group cu12` or `--group cpu`, as to every `uv run`, so `.venv` keeps its own torch. The torch that `--with` brings there is a CUDA 13 build: on CPU-only Linux it downloads its NVIDIA libraries, and on a `cu12` machine (NVIDIA driver older than 580) it cannot use the GPU, so only the XNNPACK export runs.
+
+Then pass the `.pte` file to `--checkpoint`:
+
+```bash
+uv run --extra so101 --with executorch==1.6.0 python -m \
+    mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+    --mode=sim \
+    --impl=cpp \
+    --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision/policy.pte
+```
+
+With `backend="tensorrt"`, the program runs in [TensorRT](https://developer.nvidia.com/tensorrt) on an NVIDIA GPU. That backend comes to RSL-RL's `extras` branch with [leggedrobotics/rsl_rl#275](https://github.com/leggedrobotics/rsl_rl/pull/275). TensorRT needs the GPU, and the torch that `--with` installs is a CUDA 13 build, so this path does not work on a `cu12` machine either. TensorRT engines load only on the same kind of GPU with the same TensorRT and Torch-TensorRT versions, so export on the machine that runs the policy. For both steps, use `--with "torch_tensorrt[executorch]==2.15.0"` instead of `--with executorch==1.6.0`. It installs ExecuTorch together with the TensorRT backend, which `run.py` loads on its own:
+
+```bash
+uv run --extra rl --with "torch_tensorrt[executorch]==2.15.0" --with "rsl-rl-lib @ git+https://github.com/leggedrobotics/rsl_rl.git@extras" python -c '
+from mujoco_playground.tasks.manipulation.pick_cube.so101.deploy import env, run
+runner = run.load_runner(env.create_sim_env(), "/tmp/rslrl_logs/so101_pick_cube_vision")
+from rsl_rl.utils import export_policy_to_executorch
+export_policy_to_executorch(runner.alg.get_policy(), "/tmp/rslrl_logs/so101_pick_cube_vision", backend="tensorrt")'
+```
+
+```bash
+uv run --extra so101 --with "torch_tensorrt[executorch]==2.15.0" python -m \
+    mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+    --mode=sim \
+    --impl=cpp \
+    --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision/policy.pte
+```
+
 ---
 
 ## 3. Deploy on Real Hardware (`--mode=real`)
@@ -72,7 +120,7 @@ uv run --extra so101 --extra rl python -m \
 
 ### Hardware Behavior & Useful Flags
 
-* **Homing & Shutdown**: At the start of every episode, the real arm smoothly cosine-interpolates to the training hover pose (`--homing_duration_secs=2.0`). When the session ends (`Ctrl-C` or `--num_episodes`), the arm safely parks at its rest pose before torque is released.
+* **Homing & Shutdown**: At the start of every episode, the real arm smoothly cosine-interpolates to the training hover pose (`--homing_duration_secs=2.0`). When the session ends (`Ctrl-C`, `--num_episodes`, or an error after setup, such as a checkpoint that fails to load), the arm safely parks at its rest pose before torque is released.
 * **Calibration Offsets & Domain Randomization**: Manual middle-pose calibration on the physical SO101 arm can easily be off by 1–2+ cm in end-effector height. `SO101PickCubeVision` trains with per-episode calibration bias randomization to tolerate moderate calibration error, but larger offsets will eventually degrade grasp success or cause the robot to slam the table— **recalibrate the follower arm if it consistently reaches too low or hovers too high above the table**.
 * We tested on 3 different robot setups under various lighting conditions, but there may still be visual domain gap with darker shadows. If you see this, **make sure the lighting conditions prevent darker shadows**, or help submit a more robust domain randomization recipe for the pixels inputs!
 * `--control_freq_hz` modifies the control frequency for smoother motions
