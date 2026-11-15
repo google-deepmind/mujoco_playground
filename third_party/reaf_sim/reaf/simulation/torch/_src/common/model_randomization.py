@@ -162,71 +162,6 @@ def randomize_actuator_gains(
 
 
 # Post-processors.
-def _recompute_geom_bounds(
-    model: torch_wrapper.TorchWrapper,
-    spec: mujoco.MjSpec,
-    bound,
-    env_mask: torch.Tensor | None,
-    old_value: torch.Tensor | None = None,
-    new_value: torch.Tensor | None = None,
-) -> None:
-  """Recompute geom_rbound and geom_aabb from the new geom_size."""
-  del model, spec, old_value  # Unused.
-  if new_value is None:
-    raise ValueError(
-        "new_value must be provided for geom_size post-processing."
-    )
-  size = new_value  # (nworld, n_geoms, 3)
-  is_single_geom = size.ndim == 2
-  if is_single_geom:
-    # TODO(reaf): Can we avoid squeeze logic by slicing differently in TorchWrapper.
-    size = size.unsqueeze(1)
-
-  s0, s1, s2 = size[..., 0], size[..., 1], size[..., 2]
-  geom_type = bound.type
-  is_sphere = geom_type == mujoco.mjtGeom.mjGEOM_SPHERE.value
-  is_capsule = geom_type == mujoco.mjtGeom.mjGEOM_CAPSULE.value
-  is_ellipsoid = geom_type == mujoco.mjtGeom.mjGEOM_ELLIPSOID.value
-  is_cylinder = geom_type == mujoco.mjtGeom.mjGEOM_CYLINDER.value
-  is_box = geom_type == mujoco.mjtGeom.mjGEOM_BOX.value
-
-  is_supported = is_sphere | is_capsule | is_ellipsoid | is_cylinder | is_box
-  if not is_supported.all():
-    raise ValueError("geom_size bounds recomputation only supports primitives")
-
-  rbound = torch.zeros_like(s0)
-  rbound = torch.where(is_sphere, s0, rbound)
-  rbound = torch.where(is_capsule, s0 + s1, rbound)
-  rbound = torch.where(is_ellipsoid, torch.max(size, dim=-1).values, rbound)
-  rbound = torch.where(
-      is_cylinder, torch.linalg.vector_norm(size[..., :2], dim=-1), rbound
-  )
-  rbound = torch.where(is_box, torch.linalg.vector_norm(size, dim=-1), rbound)
-
-  # Compute aabb. Initialize with size (box, ellipsoid).
-  aabb_half = size.clone()
-  # Y-axis is s0 for radial primitives (Sphere, Capsule, Cylinder), otherwise s1
-  aabb_half[..., 1] = torch.where(is_sphere | is_capsule | is_cylinder, s0, s1)
-  # Z-axis depends on shape type
-  z_val = s2.clone()
-  z_val = torch.where(is_sphere, s0, z_val)
-  z_val = torch.where(is_capsule, s0 + s1, z_val)
-  z_val = torch.where(is_cylinder, s1, z_val)
-  aabb_half[..., 2] = z_val
-
-  aabb_full = torch.zeros(
-      size.shape[0], bound.id.numel(), 2, 3, device=size.device
-  )
-  aabb_full[..., 1, :] = aabb_half
-
-  if is_single_geom:
-    rbound = rbound.squeeze(1)
-    aabb_full = aabb_full.squeeze(1)
-
-  bound.set("rbound", rbound, env_mask=env_mask)
-  bound.set("aabb", aabb_full, env_mask=env_mask)
-
-
 def _recompute_body_inertia(
     model: torch_wrapper.TorchWrapper,
     spec: mujoco.MjSpec,
@@ -309,5 +244,4 @@ def randomize_quat(
 
 _FIELD_POST_PROCESSORS: dict[str, list[Callable[..., None]]] = {
     "body_mass": [_recompute_body_inertia],
-    "geom_size": [_recompute_geom_bounds],
 }

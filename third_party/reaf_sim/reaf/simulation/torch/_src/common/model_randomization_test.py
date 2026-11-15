@@ -198,7 +198,7 @@ class RandomizeFieldTest(absltest.TestCase):
     self.assertLen(torch.unique(new), self.nworld)
 
   def test_randomize_geom_size_recomputes_bounds(self):
-    """Test that randomizing geom_size analytically recomputes rbound and aabb."""
+    """Test that randomizing geom_size updates rbound and aabb via set_const."""
     original_size = self.model.geom_size[:].clone()
 
     model_randomization.randomize_field(
@@ -212,6 +212,9 @@ class RandomizeFieldTest(absltest.TestCase):
     self.assertEqual(
         self.model.pending_set_const, torch_wrapper.SetConstLevel.FIXED
     )
+    self.assertCountEqual(self.model._defaults.keys(), ["geom_size"])
+
+    mjw.set_const(self.model.obj, self.mjw_data, groups=mjw.SetConstGroup.FIXED)
 
     new_size = self.model.geom_size[:]
     new_rbound = self.model.geom_rbound[:]
