@@ -1170,6 +1170,119 @@ class BindTest(parameterized.TestCase):
     )
     self.assertEqual(d.ctrl[5], 99.0)
 
+  def test_bound_accessors_zero_host_sync_and_cuda_graph(self):
+    if not torch.cuda.is_available():
+      self.skipTest("CUDA not available")
+    s = mujoco.MjSpec.from_string(self.XML)
+    m = s.compile()
+    d = mujoco.MjData(m)
+    mw = wrap_model(types.Impl.WARP, m, nworld=2)
+    dw = wrap_data(types.Impl.WARP, m, d, nworld=2)
+    _ = mw.geom_size
+    _ = mw.actuator_gear
+
+    single_jnt_data = dw.bind(mw, s.joint("joint3"))
+    multi_jnt_data = dw.bind(mw, s.joints)
+    single_act_data = dw.bind(mw, s.actuators[0])
+    single_sensor_data = dw.bind(mw, s.sensors[0])
+    mocap_data = dw.bind(mw, s.body("body4"))
+    single_geom_model = mw.bind(s.geom("geom1"))
+    multi_geom_model = mw.bind(s.geoms)
+    single_act_model = mw.bind(s.actuators[0])
+
+    init_qpos_w1 = dw.qpos[1].clone()
+    init_geom_size_w1 = mw.geom_size[1].clone()
+    mask = torch.tensor([True, False], dtype=torch.bool, device="cuda:0")
+    qpos_val = torch.tensor([3.5, 4.5], dtype=dw.qpos.dtype, device="cuda:0")
+    multi_qpos_val = torch.full(
+        (2, m.nq), 2.5, dtype=dw.qpos.dtype, device="cuda:0"
+    )
+    ctrl_val = torch.tensor([1.25, 2.25], dtype=dw.ctrl.dtype, device="cuda:0")
+    size_val = torch.ones((2, 3), dtype=mw.geom_size.dtype, device="cuda:0")
+    multi_size_val = torch.full(
+        (2, m.ngeom, 3), 0.5, dtype=mw.geom_size.dtype, device="cuda:0"
+    )
+    out_qpos = torch.zeros(2, dtype=dw.qpos.dtype, device="cuda:0")
+    out_multi_qpos = torch.zeros(
+        (2, m.nq), dtype=dw.qpos.dtype, device="cuda:0"
+    )
+    out_single_size = torch.zeros(
+        (2, 3), dtype=mw.geom_size.dtype, device="cuda:0"
+    )
+    out_multi_size = torch.zeros(
+        (2, m.ngeom, 3), dtype=mw.geom_size.dtype, device="cuda:0"
+    )
+
+    torch.cuda.synchronize()
+    torch.cuda.set_sync_debug_mode("error")
+    try:
+      multi_jnt_data.set("qpos", multi_qpos_val, env_mask=mask)
+      single_jnt_data.set("qpos", qpos_val, env_mask=mask)
+      _ = single_jnt_data.qpos
+      _ = multi_jnt_data.qpos
+      single_act_data.set("ctrl", ctrl_val)
+      _ = single_act_data.ctrl
+      _ = single_sensor_data.sensordata
+      _ = mocap_data.mocap_pos
+      multi_geom_model.set("size", multi_size_val, env_mask=mask)
+      single_geom_model.set("size", size_val, env_mask=mask)
+      _ = single_geom_model.size
+      _ = multi_geom_model.size
+      _ = single_act_model.gear
+    finally:
+      torch.cuda.set_sync_debug_mode("default")
+
+    capture_stream = torch.cuda.Stream(device="cuda:0")
+    warp_stream = wp.stream_from_torch(capture_stream)
+    graph = torch.cuda.CUDAGraph()
+    with (
+        torch.cuda.stream(capture_stream),
+        wp.ScopedDevice("cuda:0"),
+        wp.ScopedStream(warp_stream),
+    ):
+      with torch.cuda.graph(graph, stream=capture_stream):
+        multi_jnt_data.set("qpos", multi_qpos_val, env_mask=mask)
+        single_jnt_data.set("qpos", qpos_val, env_mask=mask)
+        out_qpos.copy_(single_jnt_data.qpos)
+        out_multi_qpos.copy_(multi_jnt_data.qpos)
+        multi_geom_model.set("size", multi_size_val, env_mask=mask)
+        single_geom_model.set("size", size_val, env_mask=mask)
+        out_single_size.copy_(single_geom_model.size)
+        out_multi_size.copy_(multi_geom_model.size)
+    capture_stream.synchronize()
+
+    multi_qpos_val.fill_(6.0)
+    qpos_val.fill_(7.0)
+    multi_size_val.fill_(8.0)
+    size_val.fill_(9.0)
+    torch.cuda.synchronize()
+    torch.cuda.set_sync_debug_mode("error")
+    try:
+      graph.replay()
+    finally:
+      torch.cuda.set_sync_debug_mode("default")
+    torch.cuda.synchronize()
+    self.assertAlmostEqual(float(out_qpos[0].item()), 7.0, places=5)
+    self.assertAlmostEqual(float(out_qpos[1].item()), 0.0, places=5)
+    expected_multi_qpos_w0 = torch.tensor(
+        [6.0, 6.0, 6.0, 6.0, 6.0, 7.0],
+        dtype=dw.qpos.dtype,
+        device="cuda:0",
+    )
+    torch.testing.assert_close(out_multi_qpos[0], expected_multi_qpos_w0)
+    torch.testing.assert_close(out_multi_qpos[1], init_qpos_w1)
+    torch.testing.assert_close(
+        out_single_size[0],
+        torch.full((3,), 9.0, dtype=mw.geom_size.dtype, device="cuda:0"),
+    )
+    torch.testing.assert_close(out_single_size[1], init_geom_size_w1[0])
+    expected_multi_size_w0 = torch.full(
+        (m.ngeom, 3), 8.0, dtype=mw.geom_size.dtype, device="cuda:0"
+    )
+    expected_multi_size_w0[0] = 9.0
+    torch.testing.assert_close(out_multi_size[0], expected_multi_size_w0)
+    torch.testing.assert_close(out_multi_size[1], init_geom_size_w1)
+
 
 def _dtype_matches(mj_dtype: torch.dtype, mjw_dtype: torch.dtype) -> bool:
   """Checks dtypes match, allowing 64-bit CPU vs 32-bit GPU."""

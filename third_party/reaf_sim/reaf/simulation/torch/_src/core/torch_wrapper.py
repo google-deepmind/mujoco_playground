@@ -779,9 +779,12 @@ class BoundDataAccessor:
     self.data = data_wrapper
     self.model = model_wrapper
     self.prefix = ""
+    self.specs: tuple[mujoco.MjStruct, ...] = (
+        (specs,) if isinstance(specs, mujoco.MjStruct) else tuple(specs)
+    )
 
     ids = []
-    for spec in specs:
+    for spec in self.specs:
       # TODO: check model signature against spec signature
       if spec.id < 0:
         raise ValueError(f"Invalid spec ID: {spec.id}.")
@@ -817,12 +820,16 @@ class BoundDataAccessor:
 
     self.device = data_wrapper.qpos.device
     self.id = torch.tensor(ids, dtype=torch.int, device=self.device)
+    self._id_index_key: int | torch.Tensor = (
+        ids if isinstance(ids, int) else self.id.to(dtype=torch.long)
+    )
     self._index_cache = {}
     if self.prefix == "sensor_":
       self.sensordata_id = _span_indices(
           model_wrapper.sensor_adr[self.id],
           model_wrapper.sensor_dim[self.id],
       )
+      self._sensordata_index_key = _resolve_index_key(self.sensordata_id)
     elif self.prefix == "jnt_":
       typ = model_wrapper.jnt_type[self.id]
       qpos_num = sum((typ == jt) * jt.qpos_width() for jt in JointType)
@@ -835,12 +842,19 @@ class BoundDataAccessor:
           model_wrapper.jnt_dofadr[self.id],
           torch.as_tensor(dof_num, device=self.device),
       )
+      self._qpos_index_key = _resolve_index_key(self.qpos_id)
+      self._dof_index_key = _resolve_index_key(self.dof_id)
     elif self.prefix == "actuator_":
       self.ctrl_id = _span_indices(
           model_wrapper.actuator_ctrladr[self.id],
           model_wrapper.actuator_ctrlnum[self.id],
       )
       self.out_id = _actuator_out_indices(model_wrapper, self.id)
+      self._ctrl_index_key = _resolve_index_key(self.ctrl_id)
+      self._out_index_key = _resolve_index_key(self.out_id)
+    elif not self.prefix:
+      self.mocap_id = model_wrapper.body_mocapid[self._id_index_key]
+      self._mocap_index_key = _resolve_index_key(self.mocap_id)
 
   def __getname(self, name: str):  # pylint: disable=unused-private-member
     """Get the name of the attribute and check if the type is correct."""
@@ -865,29 +879,27 @@ class BoundDataAccessor:
       )
     return self.prefix + name
 
-  def _get_indices(self, name: str) -> torch.Tensor:
-    """Get the indices for the bound object(s) across all worlds."""
-    if name == "sensordata":
-      return self.sensordata_id
-    if name == "qpos":
-      return self.qpos_id
-    if name == "qvel" or name == "qacc" or name.startswith("qfrc_"):
-      return self.dof_id
-    if name == "ctrl":
-      return self.ctrl_id
-    if self.prefix == "actuator_" and name in ("length", "velocity", "force"):
-      # Map actuator IDs to output spans (length, velocity, force).
-      return self.out_id
-    if name in ("mocap_pos", "mocap_quat"):
-      return self.model.body_mocapid[self.id]
-
-    return self.id
-
-  def _get_indices_cached(self, name: str) -> torch.Tensor:
+  def _get_indices_cached(self, name: str) -> int | torch.Tensor:
     if name in self._index_cache:
       return self._index_cache[name]
     idx = self._index_cache[name] = self._get_indices(name)
     return idx
+
+  def _get_indices(self, name: str) -> int | torch.Tensor:
+    """Returns a host-sync-free indexing key (`int` or 1-D `torch.long`)."""
+    if name == "sensordata":
+      return self._sensordata_index_key
+    if name == "qpos":
+      return self._qpos_index_key
+    if name == "qvel" or name == "qacc" or name.startswith("qfrc_"):
+      return self._dof_index_key
+    if name == "ctrl":
+      return self._ctrl_index_key
+    if self.prefix == "actuator_" and name in ("length", "velocity", "force"):
+      return self._out_index_key
+    if name in ("mocap_pos", "mocap_quat"):
+      return self._mocap_index_key
+    return self._id_index_key
 
   def __getattr__(self, name: str) -> torch.Tensor:
     """Gets data for the bound object(s) across all worlds."""
@@ -923,9 +935,12 @@ class BoundModelAccessor:
   ):
     self.model = model_wrapper
     self.prefix = ""
+    self.specs: tuple[mujoco.MjStruct, ...] = (
+        (specs,) if isinstance(specs, mujoco.MjStruct) else tuple(specs)
+    )
 
     ids = []
-    for spec in specs:
+    for spec in self.specs:
       # TODO: check model signature against spec signature
       if spec.id < 0:
         raise ValueError(f"Invalid spec ID: {spec.id}.")
@@ -981,18 +996,24 @@ class BoundModelAccessor:
 
     self.device = model_wrapper.geom_pos.device
     self.id = torch.tensor(ids, dtype=torch.int, device=self.device)
+    self._id_index_key: int | torch.Tensor = (
+        ids if isinstance(ids, int) else self.id.to(dtype=torch.long)
+    )
 
     # Pre-compute and cache the mapped DOF indices for joint bound accessors.
     if self.prefix == "jnt_":
       ids_1d = self.id.unsqueeze(0) if self.id.ndim == 0 else self.id
       mask_dof = ids_1d.unsqueeze(1) == model_wrapper.dof_jntid.unsqueeze(0)
       self.dof_id = mask_dof.nonzero(as_tuple=True)[1].to(self.id.dtype)
+      self._dof_index_key = _resolve_index_key(self.dof_id)
     elif self.prefix == "actuator_":
       self.ctrl_id = _span_indices(
           model_wrapper.actuator_ctrladr[self.id],
           model_wrapper.actuator_ctrlnum[self.id],
       )
       self.out_id = _actuator_out_indices(model_wrapper, self.id)
+      self._ctrl_index_key = _resolve_index_key(self.ctrl_id)
+      self._out_index_key = _resolve_index_key(self.out_id)
 
   def __getname(self, name: str) -> str:  # pylint: disable=unused-private-member
     candidate = self.prefix + name
@@ -1005,14 +1026,14 @@ class BoundModelAccessor:
       return name
     raise AttributeError(f"'{name}' is not a recognized model field.")
 
-  def _get_indices(self, name: str) -> torch.Tensor:
-    """Returns cached indices for the bound accessor."""
+  def _get_indices(self, name: str) -> int | torch.Tensor:
+    """Returns a host-sync-free indexing key (`int` or 1-D `torch.long`)."""
     if name.startswith("dof_") and self.prefix == "jnt_":
-      return self.dof_id
+      return self._dof_index_key
     if self.prefix == "actuator_":
       # Map per-control model fields (nu) via ctrladr and ctrlnum.
       if name in ("actuator_ctrllimited", "actuator_ctrlrange"):
-        return self.ctrl_id
+        return self._ctrl_index_key
       # Map per-output model fields (nout) via outadr and outnum.
       if name in (
           "actuator_gear",
@@ -1020,8 +1041,8 @@ class BoundModelAccessor:
           "actuator_length0",
           "actuator_lengthrange",
       ):
-        return self.out_id
-    return self.id
+        return self._out_index_key
+    return self._id_index_key
 
   def __getattr__(self, name: str) -> torch.Tensor:
     """Gets model field for the bound object(s) across all worlds."""
@@ -1053,6 +1074,13 @@ class BoundModelAccessor:
       curr = target_tensor[:, indices]
       mask = env_mask.view(-1, *([1] * (curr.ndim - 1)))
       target_tensor[:, indices] = torch.where(mask, value, curr)
+
+
+def _resolve_index_key(idx: torch.Tensor) -> int | torch.Tensor:
+  """Converts a cached index tensor into a sync-free indexing key."""
+  if idx.ndim == 0:
+    return int(idx.item())
+  return idx.to(dtype=torch.long)
 
 
 def _span_indices(adr: torch.Tensor, num: torch.Tensor) -> torch.Tensor:
