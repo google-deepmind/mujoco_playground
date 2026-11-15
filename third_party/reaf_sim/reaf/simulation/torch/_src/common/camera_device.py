@@ -15,8 +15,10 @@
 """Camera entity using the MuJoCo Warp renderer."""
 
 from collections.abc import Mapping
+import contextlib
 import logging
 import math
+from typing import Literal
 from typing import Union
 
 from dm_env import specs
@@ -51,6 +53,7 @@ class CameraDevice(device.Device):
       output_name_prefix: str | None = None,
       rgb_output_name_suffix: str = '_rgb',
       depth_output_name_suffix: str = '_depth',
+      backend: Literal['warp', 'optix'] = 'warp',
       **render_context_kwargs,
   ):
     """Initializes the CameraDevice.
@@ -72,6 +75,7 @@ class CameraDevice(device.Device):
         name will be used with the render mode as suffix.
       rgb_output_name_suffix: Suffix for the rgb image output name.
       depth_output_name_suffix: Suffix for the depth image output name.
+      backend: Ray-casting backend ('warp' or 'optix').
       **render_context_kwargs: Keyword arguments to pass to the MuJoCo Warp
         render context.
     """
@@ -80,11 +84,17 @@ class CameraDevice(device.Device):
 
     # Filter out params added by build system that RenderContext doesn't accept.
     render_context_kwargs.pop('xpu_device', None)
+    # TODO(b/586116402): Remove the `if` guard once mujoco_warp with OptiX
+    # support (PR #1784) is imported and `create_render_context` accepts
+    # `backend`.
+    if backend != 'warp':
+      render_context_kwargs['backend'] = backend
 
     self._render_rate_hz = render_rate_hz
     self._depth_scale = depth_scale
     self._depth_dtype = depth_dtype
     self._name = name or 'CameraDevice' + str(id(self))
+    self._backend = backend
     self._render_context_kwargs = render_context_kwargs or {}
     self._output_name_prefix = output_name_prefix or ''
     self._rgb_output_name_suffix = rgb_output_name_suffix
@@ -258,9 +268,17 @@ class CameraDevice(device.Device):
       data: types.Data | None = None,
   ) -> None:
     """Render all cameras (called once per scene.update)."""
-    if self._render_graph is None:
-      with wp.ScopedDevice(self._wp_device):
-        with wp.ScopedCapture() as capture:
+    with wp.ScopedDevice(self._wp_device):
+      if self._render_graph is not None:
+        wp.capture_launch(self._render_graph)
+      else:
+        # Note: the optix backend currently does not support graph capture.
+        ctx = (
+            wp.ScopedCapture(device=self._wp_device)
+            if self._backend != 'optix'
+            else contextlib.nullcontext()
+        )
+        with ctx as capture:
           mjw.refit_bvh(model.obj, data.obj, self._render_context)  # pyrefly: ignore[missing-attribute]
           mjw.render(model.obj, data.obj, self._render_context)  # pyrefly: ignore[missing-attribute]
           if any(self._render_rgb_list) and self._rgb_unpacked is not None:
@@ -271,10 +289,9 @@ class CameraDevice(device.Device):
                 outputs=[self._rgb_unpacked],
                 device=self._wp_device,
             )
-      self._render_graph = capture.graph
-
-    with wp.ScopedDevice(self._wp_device):
-      wp.capture_launch(self._render_graph)
+        if capture is not None:
+          self._render_graph = capture.graph
+          wp.capture_launch(self._render_graph)
 
   @property
   def name(self) -> str:

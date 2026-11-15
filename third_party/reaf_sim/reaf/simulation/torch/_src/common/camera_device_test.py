@@ -30,13 +30,13 @@ _DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
 def _make_device_layer(
-    sim: simulator_module.Simulator, cam_entity: camera_device.CameraDevice
+    sim: simulator_module.Simulator, cam_device: camera_device.CameraDevice
 ) -> device_layer.DeviceLayer:
-  """Drives `cam_entity` like an environment, one physics substep per step."""
+  """Drives `cam_device` like an environment, one physics substep per step."""
   return device_layer.DeviceLayer(
       simulator=sim,
       control_timestep=sim.mj_model.opt.timestep,
-      devices=[cam_entity],
+      devices=[cam_device],
   )
 
 
@@ -77,7 +77,7 @@ class CameraDeviceTest(parameterized.TestCase):
       ("rgb_only", True, False),
       ("depth_only", False, True),
   )
-  def test_camera_entity_renders(self, render_rgb, render_depth):
+  def test_camera_device_renders(self, render_rgb, render_depth):
     mj_spec = mujoco.MjSpec.from_string(_PENDULUM)
     nworld = 1
     sim = simulator_module.Simulator(
@@ -88,7 +88,7 @@ class CameraDeviceTest(parameterized.TestCase):
     )
     width, height = 320, 240
     width2, height2 = 160, 120
-    cam_entity = camera_device.CameraDevice(
+    cam_device = camera_device.CameraDevice(
         name="cam",
         cam_resolution=[(width, height), (width2, height2)],
         render_rate_hz=500,
@@ -98,9 +98,9 @@ class CameraDeviceTest(parameterized.TestCase):
         use_shadows=False,
         enabled_geom_groups=[0, 1, 2],
     )
-    dl = _make_device_layer(sim, cam_entity)
+    dl = _make_device_layer(sim, cam_device)
     dl.begin_stepping()
-    measurements = cam_entity.get_measurements(sim)
+    measurements = cam_device.get_measurements(sim)
     if render_rgb:
       self.assertIn("cam_rgb", measurements)
       self.assertEqual(
@@ -132,7 +132,7 @@ class CameraDeviceTest(parameterized.TestCase):
       ("unnormalized_float32", None, torch.float32, False),
       ("normalized_float32", 5.0, torch.float32, True),
   )
-  def test_camera_entity_depth_scale_and_dtype(
+  def test_camera_device_depth_scale_and_dtype(
       self, depth_scale, depth_dtype, is_normalized
   ):
     mj_spec = mujoco.MjSpec.from_string(_PENDULUM)
@@ -144,7 +144,7 @@ class CameraDeviceTest(parameterized.TestCase):
         impl=types.Impl.WARP,
     )
     width, height = 320, 240
-    cam_entity = camera_device.CameraDevice(
+    cam_device = camera_device.CameraDevice(
         name="cam",
         cam_name="cam",
         cam_resolution=[(width, height)],
@@ -157,16 +157,16 @@ class CameraDeviceTest(parameterized.TestCase):
         use_shadows=False,
         enabled_geom_groups=[0, 1, 2],
     )
-    dl = _make_device_layer(sim, cam_entity)
+    dl = _make_device_layer(sim, cam_device)
     dl.begin_stepping()
 
     # Verify measurement specs are created for depth.
-    specs_dict = cam_entity.substep_measurements_spec()
+    specs_dict = cam_device.substep_measurements_spec()
     self.assertIn("cam_depth", specs_dict)
     self.assertEqual(specs_dict["cam_depth"].shape, (height, width))
 
     # Verify measurements match expected dtype and scaling.
-    measurements = cam_entity.get_measurements(sim)
+    measurements = cam_device.get_measurements(sim)
     self.assertIn("cam_depth", measurements)
     depth = measurements["cam_depth"]
     self.assertEqual(depth.shape, (nworld, height, width))
@@ -188,8 +188,8 @@ class CameraDeviceTest(parameterized.TestCase):
     data = sim.data
 
     width, height = 32, 32
-    cam_entity = camera_device.CameraDevice(
-        name="cam_entity",
+    cam_device = camera_device.CameraDevice(
+        name="cam_device",
         cam_name="cam",
         cam_resolution=[(width, height)],
         render_rate_hz=500,
@@ -199,36 +199,36 @@ class CameraDeviceTest(parameterized.TestCase):
         use_shadows=False,
         enabled_geom_groups=[0, 1, 2],
     )
-    cam_entity.initialize(sim)
+    cam_device.initialize(sim)
 
     # Verify initial render graph was captured.
     self.assertIsNotNone(
-        cam_entity._render_graph,
+        cam_device._render_graph,
         "Render graph should be captured during initialization.",
     )
-    original_render_graph = cam_entity._render_graph
+    original_render_graph = cam_device._render_graph
 
     # Trigger on-demand tiling of a TorchWrapper Model field and check graph is
     # invalidated.
     _ = model.geom_pos
     self.assertIsNone(
-        cam_entity._render_graph,
+        cam_device._render_graph,
         "Render graph should be cleared after TorchWrapper reallocates memory.",
     )
 
     # Re-trigger graph capture.
-    cam_entity.render(model, data)
+    cam_device.render(model, data)
     self.assertIsNotNone(
-        cam_entity._render_graph,
+        cam_device._render_graph,
         "Render graph should be recaptured during the next render call.",
     )
     self.assertNotEqual(
-        cam_entity._render_graph,
+        cam_device._render_graph,
         original_render_graph,
         "New render graph should be captured after memory reallocation.",
     )
 
-  def test_camera_entity_reverse_order_renders_correct_views(self):
+  def test_camera_device_reverse_order_renders_correct_views(self):
     mj_spec = mujoco.MjSpec.from_string(_TWO_CAMERAS)
     nworld = 1
     sim = simulator_module.Simulator(
@@ -241,8 +241,8 @@ class CameraDeviceTest(parameterized.TestCase):
     # cam_green is requested first, cam_red second (reverse of mj_spec order)
     width_g, height_g = 160, 120
     width_r, height_r = 320, 240
-    cam_entity = camera_device.CameraDevice(
-        name="cam_entity",
+    cam_device = camera_device.CameraDevice(
+        name="cam_device",
         cam_name=["cam_green", "cam_red"],
         cam_resolution=[(width_g, height_g), (width_r, height_r)],
         render_rate_hz=500,
@@ -252,9 +252,9 @@ class CameraDeviceTest(parameterized.TestCase):
         use_shadows=False,
         enabled_geom_groups=[0, 1, 2],
     )
-    dl = _make_device_layer(sim, cam_entity)
+    dl = _make_device_layer(sim, cam_device)
     dl.begin_stepping()
-    measurements = cam_entity.get_measurements(sim)
+    measurements = cam_device.get_measurements(sim)
 
     self.assertIn("cam_green_rgb", measurements)
     self.assertIn("cam_red_rgb", measurements)
@@ -299,37 +299,37 @@ class CameraDeviceTest(parameterized.TestCase):
     width, height = 32, 32
     # Pendulum default timestep is 0.002s (500 Hz).
     # 250 Hz render rate -> interval of 2 substeps.
-    cam_entity = camera_device.CameraDevice(
-        name="cam_entity",
+    cam_device = camera_device.CameraDevice(
+        name="cam_device",
         cam_name="cam",
         cam_resolution=[(width, height)],
         render_rate_hz=250,
         render_rgb=[True],
         render_depth=[False],
     )
-    dl = _make_device_layer(sim, cam_entity)
+    dl = _make_device_layer(sim, cam_device)
 
     # Reads do not render: nothing is cached until `begin_stepping()`.
     with self.assertRaisesRegex(RuntimeError, "nothing was rendered"):
-      cam_entity.get_measurements(sim)
+      cam_device.get_measurements(sim)
     dl.begin_stepping()
 
     # Substep 0: renders and returns measurements
-    m0 = cam_entity.get_measurements(sim)
+    m0 = cam_device.get_measurements(sim)
     self.assertIn("cam_rgb", m0)
 
     # Calling again on substep 0 is idempotent: returns cached measurements
-    m0_repeat = cam_entity.get_measurements(sim)
+    m0_repeat = cam_device.get_measurements(sim)
     self.assertIs(m0["cam_rgb"], m0_repeat["cam_rgb"])
 
     # Substep 1: does not re-render, returns cached measurements
     dl.step({})
-    m1 = cam_entity.get_measurements(sim)
+    m1 = cam_device.get_measurements(sim)
     self.assertIs(m0["cam_rgb"], m1["cam_rgb"])
 
     # Substep 2: renders again, returns fresh measurements
     dl.step({})
-    m2 = cam_entity.get_measurements(sim)
+    m2 = cam_device.get_measurements(sim)
     self.assertIsNot(m0["cam_rgb"], m2["cam_rgb"])
 
   def test_render_rate_hz(self):
@@ -342,14 +342,14 @@ class CameraDeviceTest(parameterized.TestCase):
     )
     # Pendulum default timestep is 0.002s (500 Hz).
     # 50 Hz render rate -> interval of 10 substeps.
-    cam_entity = camera_device.CameraDevice(
+    cam_device = camera_device.CameraDevice(
         name="cam_hz",
         cam_name="cam",
         cam_resolution=[(32, 32)],
         render_rate_hz=50,
     )
-    cam_entity.initialize(sim)
-    self.assertEqual(cam_entity._update_interval_in_substeps, 10)
+    cam_device.initialize(sim)
+    self.assertEqual(cam_device._update_interval_in_substeps, 10)
 
   def test_render_rate_hz_validation(self):
     with self.assertRaises(ValueError):
@@ -376,19 +376,19 @@ class CameraDeviceTest(parameterized.TestCase):
     )
     width, height = 32, 32
     # 250 Hz render rate -> interval of 2 substeps (sim_dt = 0.002s).
-    cam_entity = camera_device.CameraDevice(
-        name="cam_entity",
+    cam_device = camera_device.CameraDevice(
+        name="cam_device",
         cam_name="cam_red",
         cam_resolution=[(width, height)],
         render_rate_hz=250,
         render_rgb=[True],
         render_depth=[True],
     )
-    dl = _make_device_layer(sim, cam_entity)
+    dl = _make_device_layer(sim, cam_device)
     dl.begin_stepping()
 
     # Substep 0: renders both worlds (both non-zero).
-    m0 = cam_entity.get_measurements(sim)
+    m0 = cam_device.get_measurements(sim)
     self.assertGreater(m0["cam_red_rgb"][0].sum().item(), 0)
     self.assertGreater(m0["cam_red_rgb"][1].sum().item(), 0)
     self.assertGreater(m0["cam_red_depth"][0].sum().item(), 0)
@@ -404,7 +404,7 @@ class CameraDeviceTest(parameterized.TestCase):
     # renders only once.
     dl.begin_stepping(env_mask)
 
-    m1 = cam_entity.get_measurements(sim)
+    m1 = cam_device.get_measurements(sim)
     # World 1's buffer should be zeroed out; world 0's frame is preserved.
     self.assertEqual(m1["cam_red_rgb"][1].sum().item(), 0)
     self.assertEqual(m1["cam_red_depth"][1].sum().item(), 0)
@@ -413,9 +413,33 @@ class CameraDeviceTest(parameterized.TestCase):
 
     # Step to global_substep=2 (render tick): both worlds are re-rendered.
     dl.step({})
-    m2 = cam_entity.get_measurements(sim)
+    m2 = cam_device.get_measurements(sim)
     self.assertGreater(m2["cam_red_rgb"][1].sum().item(), 0)
     self.assertGreater(m2["cam_red_depth"][1].sum().item(), 0)
+
+  @unittest.skip(
+      "TODO(b/586116402): Enable once mujoco_warp PR #1784 is imported."
+  )
+  def test_optix_backend_uncaptured_render(self):
+    sim = simulator_module.Simulator(
+        mj_spec=mujoco.MjSpec.from_string(_PENDULUM),
+        nworld=1,
+        xpu_device=_DEVICE,
+        impl=types.Impl.WARP,
+    )
+    cam_device = camera_device.CameraDevice(
+        name="cam_optix",
+        cam_name="cam",
+        cam_resolution=[(32, 32)],
+        render_rate_hz=500,
+        backend="optix",
+    )
+    dl = _make_device_layer(sim, cam_device)
+    dl.begin_stepping()
+    self.assertEqual(
+        cam_device.get_measurements(sim)["cam_rgb"].shape, (1, 32, 32, 3)
+    )
+    self.assertIsNone(cam_device._render_graph)
 
 
 class CamNamesToMaskTest(parameterized.TestCase):

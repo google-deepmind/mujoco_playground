@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Upcoming Version (not yet released)
+-----------------------------------
+
+- Added ``backend="optix"`` option to :class:`~reaf.simulation.torch.CameraDevice` for NVIDIA RTX GPU accelerated
+  ray-traced rendering via ``warp-optix``.
+
 Version 1.0.1 (November 8, 2026)
 --------------------------------
 

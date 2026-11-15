@@ -105,7 +105,7 @@ Built-in devices
 - **Cameras & visual rendering**:
 
   - :class:`~reaf.simulation.torch.CameraDevice`: Batched GPU camera rendering RGB images and metric depth maps via
-    MuJoCo Warp.
+    MuJoCo Warp (``backend="warp"`` default BVH or ``backend="optix"`` NVIDIA RTX GPU hardware accelerated ray tracing).
   - :class:`~reaf.simulation.torch.MujocoCameraDevice`: Headless CPU camera rendering RGB, depth, and segmentation masks
     via ``mujoco.Renderer``.
   - :class:`~reaf.simulation.torch.BatchedMujocoCameraDevice`: Multi-camera CPU device rendering RGB, depth, and
