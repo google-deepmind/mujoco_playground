@@ -172,8 +172,70 @@ class TaskLayer:
       ) = None,
       device_layer_measurements_spec: Mapping[str, specs.Array] | None = None,
   ) -> None:
-    """Checks that the specs have consistent keys."""
-    pass
+    """Checks that the specs have consistent keys.
+
+    Features producers run in order. Each producer can only require device
+    layer measurements and features of earlier producers, and must not produce
+    a key that already exists. Commands processors run in order from the policy
+    to the device layer. Each command that a processor produces must be
+    consumed by a later processor or by the device layer.
+
+    Args:
+      device_layer_commands_spec: The commands spec of the device layer. `None`
+        is treated as an empty spec.
+      device_layer_measurements_spec: The measurements spec of the device layer.
+        `None` is treated as an empty spec.
+
+    Raises:
+      ValueError: If a features producer or a commands processor does not match
+        the device layer specs or its position in the processing chain.
+    """
+    self._validate_features_spec(device_layer_measurements_spec or {})
+    self._validate_commands_spec(device_layer_commands_spec or {})
+
+  def _validate_features_spec(
+      self, device_layer_measurements_spec: Mapping[str, specs.Array]
+  ) -> None:
+    """Checks the features producers against the available feature keys."""
+    available_keys = set(device_layer_measurements_spec)
+    for producer in self._features_producers:
+      missing_keys = set(producer.required_features_keys()) - available_keys
+      if missing_keys:
+        raise ValueError(
+            "Failed to validate features spec: features producer"
+            f" {producer.name!r} requires keys {sorted(missing_keys)} that are"
+            " not device layer measurements or features of earlier features"
+            " producers."
+        )
+      produced_keys = set(producer.produced_features_spec())
+      duplicate_keys = produced_keys & available_keys
+      if duplicate_keys:
+        raise ValueError(
+            "Failed to validate features spec: features producer"
+            f" {producer.name!r} produces keys {sorted(duplicate_keys)} that"
+            " are already device layer measurements or features of earlier"
+            " features producers."
+        )
+      available_keys |= produced_keys
+
+  def _validate_commands_spec(
+      self, device_layer_commands_spec: Mapping[str, gdmr_types.AnyArraySpec]
+  ) -> None:
+    """Checks the commands processors against the consumable command keys."""
+    # Propagate the consumable keys from the device layer up to the policy.
+    consumable_keys = set(device_layer_commands_spec)
+    for processor in reversed(self._commands_processors):
+      produced_keys = set(processor.produced_commands_keys())
+      unconsumed_keys = produced_keys - consumable_keys
+      if unconsumed_keys:
+        raise ValueError(
+            "Failed to validate commands spec: commands processor"
+            f" {processor.name!r} produces keys {sorted(unconsumed_keys)} that"
+            " are not consumed by later commands processors or the device"
+            " layer."
+        )
+      consumable_keys -= produced_keys
+      consumable_keys |= set(processor.consumed_commands_spec())
 
   def reward_spec(self):
     """Returns the reward spec exposed by the task layer."""
