@@ -29,6 +29,7 @@ class TimeoutTerminationChecker(termination_checker.TerminationChecker):
       time_feature_name: str,
       xpu_device: str = 'cuda:0',
   ):
+    self._timeout_secs = float(timeout)
     self._timeout = torch.tensor(
         timeout, dtype=torch.float32, device=xpu_device
     )
@@ -40,7 +41,7 @@ class TimeoutTerminationChecker(termination_checker.TerminationChecker):
   @property
   def timeout(self) -> float:
     """Returns the episode timeout in seconds."""
-    return self._timeout.item()
+    return self._timeout_secs
 
   def check_termination(
       self, required_features: Mapping[str, torch.Tensor]

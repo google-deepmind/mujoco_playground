@@ -43,6 +43,7 @@ from gdm_robotics.interfaces import types as gdmr_types
 from reaf.core import commands_processor
 from reaf.simulation.torch._src.common import delay_buffer
 from reaf.simulation.torch._src.common import noise as noise_lib
+from reaf.simulation.torch._src.common import tensors
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import substep_commands_processor
 from reaf.simulation.torch._src.core import substep_measurements_processor
@@ -366,7 +367,11 @@ class StochasticSubstepMeasurements(
       if buf is not None:
         buf.append(self._apply_bias_and_noise(key, value, sample))
       elif sample is not None:
-        self._noise_samples[key] = sample
+        existing = self._noise_samples.get(key)
+        if existing is None:
+          self._noise_samples[key] = sample
+        else:
+          existing.copy_(sample)
 
   def on_begin_stepping(
       self,
@@ -402,12 +407,15 @@ class StochasticSubstepMeasurements(
       if sample is None:
         continue
       old = self._noise_samples.get(key)
-      if env_mask is not None and old is not None:
+      if old is None:
+        self._noise_samples[key] = sample
+      elif env_mask is None:
+        old.copy_(sample)
+      else:
         mask = env_mask.to(device=sample.device).view(
             -1, *([1] * (sample.ndim - 1))
         )
-        torch.where(mask, sample, old, out=sample)
-      self._noise_samples[key] = sample
+        torch.where(mask, sample, old, out=old)
 
   def process_measurements(
       self,
@@ -692,19 +700,33 @@ class DeltaActions(commands_processor.CommandsProcessor):
     if self._action_clip is not None:
       delta = delta.clamp(min=self._action_clip[0], max=self._action_clip[1])
     scaled_delta = delta * self._scale
+    if self._current_pos.shape != scaled_delta.shape:
+      self._initial_pos = _expand_to(self._initial_pos, scaled_delta.shape)
+      self._current_pos = _expand_to(self._current_pos, scaled_delta.shape)
+      self._prev_delta = _expand_to(self._prev_delta, scaled_delta.shape)
     if self._smoothing > 0.0:
       scaled_delta = (
           1.0 - self._smoothing
       ) * scaled_delta + self._smoothing * self._prev_delta
-      self._prev_delta = scaled_delta.detach()
+      self._prev_delta.copy_(scaled_delta.detach())
     new_pos = self._current_pos + scaled_delta
     if self._clip_min is not None or self._clip_max is not None:
       new_pos = new_pos.clamp(min=self._clip_min, max=self._clip_max)
-    self._current_pos = new_pos
+    self._current_pos.copy_(new_pos.detach())
     return {self._output_key: new_pos}
 
   def reset(self, env_mask: torch.Tensor | None = None) -> None:
     """Reset integrated positions to initial offsets for given envs."""
-    mask = slice(None) if env_mask is None else env_mask
-    self._current_pos[mask] = self._initial_pos[mask]
-    self._prev_delta[mask] = 0.0
+    tensors.masked_fill(self._current_pos, env_mask, self._initial_pos)
+    if env_mask is None:
+      self._prev_delta.zero_()
+    else:
+      self._prev_delta[env_mask] = 0.0
+
+
+def _expand_to(buf: torch.Tensor, shape: tuple[int, ...]) -> torch.Tensor:
+  if buf.ndim < len(shape):
+    buf = buf.view(
+        buf.shape[0], *([1] * (len(shape) - buf.ndim)), *buf.shape[1:]
+    )
+  return buf.expand(shape).clone()

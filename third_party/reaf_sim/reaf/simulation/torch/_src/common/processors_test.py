@@ -349,6 +349,68 @@ class StochasticSubstepMeasurementsTest(absltest.TestCase):
       proc.process_measurements(_M, meas)
       torch.testing.assert_close(meas["pos"], torch.full((2, 1), 3.0))
 
+  def test_cuda_zero_sync_and_graph_replay(self):
+    if not torch.cuda.is_available():
+      self.skipTest("CUDA is not available")
+    proc = processors.StochasticSubstepMeasurements(
+        keys="pos",
+        bias=noise.uniform(-0.5, 0.5, op="add"),
+        noise=noise.uniform(1.0, 2.0, op="add"),
+        nworld=2,
+        xpu_device="cuda:0",
+    )
+    zeros = {"pos": torch.zeros((2, 3), device="cuda:0")}
+    mask = torch.tensor([True, False], device="cuda:0")
+    mask_tf = torch.tensor([True, False], device="cuda:0")
+    mask_ft = torch.tensor([False, True], device="cuda:0")
+    out = torch.zeros((2, 3), device="cuda:0")
+
+    def run_step():
+      proc.on_substep(_M, zeros)
+      proc.reset(mask)
+      proc.on_begin_stepping(_M, zeros, mask)
+      meas = {"pos": zeros["pos"].clone()}
+      proc.process_measurements(_M, meas)
+      out.copy_(meas["pos"])
+
+    run_step()
+    bias_ptr = proc._bias_buffers["pos"].data_ptr()
+    noise_ptr = proc._noise_samples["pos"].data_ptr()
+
+    stream = torch.cuda.Stream(device="cuda:0")
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph, stream=stream):
+      run_step()
+    stream.synchronize()
+    self.assertEqual(proc._bias_buffers["pos"].data_ptr(), bias_ptr)
+    self.assertEqual(proc._noise_samples["pos"].data_ptr(), noise_ptr)
+
+    torch.cuda.synchronize()
+    torch.cuda.set_sync_debug_mode("error")
+    try:
+      torch.cuda.manual_seed(0)
+      proc.reset()
+      mask.copy_(mask_tf)
+      graph.replay()
+      graph_step1 = out.clone()
+      mask.copy_(mask_ft)
+      graph.replay()
+      graph_step2 = out.clone()
+
+      torch.cuda.manual_seed(0)
+      proc.reset()
+      mask.copy_(mask_tf)
+      run_step()
+      eager_step1 = out.clone()
+      mask.copy_(mask_ft)
+      run_step()
+      eager_step2 = out.clone()
+    finally:
+      torch.cuda.set_sync_debug_mode("default")
+
+    torch.testing.assert_close(graph_step1, eager_step1)
+    torch.testing.assert_close(graph_step2, eager_step2)
+
   def test_passthrough(self):
     """Empty modifier config = pure passthrough."""
     proc = processors.StochasticSubstepMeasurements(
@@ -549,11 +611,11 @@ class TransformActionsTest(absltest.TestCase):
 
 class DeltaActionsTest(absltest.TestCase):
 
-  def _make(self, name="DeltaActions", **action_cfg):
+  def _make(self, name="DeltaActions", nworld=2, **action_cfg):
     return processors.DeltaActions(
         name=name,
         output_key="robot/ctrl",
-        nworld=2,
+        nworld=nworld,
         xpu_device="cpu",
         **action_cfg,
     )
@@ -620,6 +682,87 @@ class DeltaActionsTest(absltest.TestCase):
     torch.testing.assert_close(
         res2["robot/ctrl"], torch.tensor([[1.25], [1.25]])
     )
+
+  def test_scalar_params_and_autograd(self):
+    proc = self._make(scale=0.5, offset=1.0, smoothing=0.5)
+    a1 = torch.tensor([[2.0, 4.0, 6.0], [2.0, 4.0, 6.0]], requires_grad=True)
+    out1 = proc.process_commands({"actions": a1})["robot/ctrl"]
+    a2 = torch.tensor([[2.0, 4.0, 6.0], [2.0, 4.0, 6.0]], requires_grad=True)
+    out2 = proc.process_commands({"actions": a2})["robot/ctrl"]
+    (out1.sum() + out2.sum()).backward()
+    torch.testing.assert_close(a1.grad, torch.full_like(a1, 0.25))
+    torch.testing.assert_close(a2.grad, torch.full_like(a2, 0.25))
+    torch.testing.assert_close(out1[0], torch.tensor([1.5, 2.0, 2.5]))
+    torch.testing.assert_close(out2[0], torch.tensor([2.25, 3.5, 4.75]))
+
+  def test_3d_actions_with_1d_params(self):
+    step_actions = torch.tensor([[[1.0, 2.0, 3.0], [10.0, 20.0, 30.0]]])
+    step_expected = torch.tensor([[[1.1, 2.4, 3.9], [2.0, 6.0, 12.0]]])
+    for nworld in (1, 2):
+      proc = self._make(
+          nworld=nworld,
+          scale=[0.1, 0.2, 0.3],
+          offset=[1.0, 2.0, 3.0],
+      )
+      actions = step_actions.expand(nworld, 2, 3)
+      out = proc.process_commands({"actions": actions})["robot/ctrl"]
+      torch.testing.assert_close(out, step_expected.expand(nworld, 2, 3))
+
+  def test_cuda_zero_sync_and_graph_replay(self):
+    if not torch.cuda.is_available():
+      self.skipTest("CUDA is not available")
+    proc = processors.DeltaActions(
+        output_key="robot/ctrl",
+        scale=0.5,
+        offset=1.0,
+        smoothing=0.5,
+        nworld=2,
+        xpu_device="cuda:0",
+    )
+    action = torch.ones((2, 2), device="cuda:0")
+    mask = torch.zeros(2, dtype=torch.bool, device="cuda:0")
+    mask_tf = torch.tensor([True, False], device="cuda:0")
+    out = torch.zeros((2, 2), device="cuda:0")
+
+    def run_step():
+      proc.reset(mask)
+      out.copy_(proc.process_commands({"actions": action})["robot/ctrl"])
+
+    run_step()
+    pos_ptr = proc._current_pos.data_ptr()
+    delta_ptr = proc._prev_delta.data_ptr()
+
+    stream = torch.cuda.Stream(device="cuda:0")
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph, stream=stream):
+      run_step()
+    stream.synchronize()
+    self.assertEqual(proc._current_pos.data_ptr(), pos_ptr)
+    self.assertEqual(proc._prev_delta.data_ptr(), delta_ptr)
+
+    torch.cuda.synchronize()
+    torch.cuda.set_sync_debug_mode("error")
+    try:
+      proc.reset()
+      mask.zero_()
+      graph.replay()
+      graph_step1 = out.clone()
+      mask.copy_(mask_tf)
+      graph.replay()
+      graph_step2 = out.clone()
+
+      proc.reset()
+      mask.zero_()
+      run_step()
+      eager_step1 = out.clone()
+      mask.copy_(mask_tf)
+      run_step()
+      eager_step2 = out.clone()
+    finally:
+      torch.cuda.set_sync_debug_mode("default")
+
+    torch.testing.assert_close(graph_step1, eager_step1)
+    torch.testing.assert_close(graph_step2, eager_step2)
 
 
 if __name__ == "__main__":
