@@ -60,7 +60,7 @@ class DelayBuffer:
 
     self._capacity = max_lag + 1
     self._buffer: torch.Tensor | None = None  # (capacity, nworld, *shape)
-    self._write_idx = 0
+    self._write_idx = torch.zeros((), dtype=torch.long, device=self._xpu_device)
 
     # Per-environment lag, sampled on reset.
     self._lags = torch.randint(
@@ -102,7 +102,7 @@ class DelayBuffer:
         device=self._xpu_device,
     )
     if env_mask is None:
-      self._write_idx = 0  # reset write index when resetting all environments.
+      self._write_idx.zero_()
       if self._buffer is not None:
         self._buffer.zero_()
       self._steps_since_reset.zero_()
@@ -133,9 +133,13 @@ class DelayBuffer:
     mask = is_first_step.view(mask_shape)  # pyrefly: ignore[missing-attribute]
     torch.where(mask, x.unsqueeze(0), buffer, out=buffer)
 
-    buffer[self._write_idx] = x
-    self._write_idx = (self._write_idx + 1) % self._capacity
-    self._steps_since_reset += 1
+    # In-place tensor equivalent of:
+    #   buffer[self._write_idx] = x
+    #   self._write_idx = (self._write_idx + 1) % self._capacity
+    #   self._steps_since_reset += 1
+    buffer.index_copy_(0, self._write_idx.view(1), x.unsqueeze(0))
+    self._write_idx.add_(1).remainder_(self._capacity)
+    self._steps_since_reset.add_(1)
 
   def read(self) -> torch.Tensor:
     """Returns the delayed frame for each environment.

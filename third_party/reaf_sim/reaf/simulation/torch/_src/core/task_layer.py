@@ -261,7 +261,7 @@ class TaskLayer:
     )
     for termination_checker in self._termination_checkers:
       term = termination_checker.check_termination(features)
-      self._termination_buffer = (
+      self._termination_buffer.copy_(
           core_termination_checker.TerminationResult.combine(
               self._termination_buffer,  # pyrefly: ignore[bad-argument-type]
               term,  # pyrefly: ignore[bad-argument-type]

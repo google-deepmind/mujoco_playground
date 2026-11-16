@@ -24,6 +24,8 @@ import numpy as np
 from reaf.core import commands_processor as core_commands_processor
 from reaf.simulation.torch._src.core import feature_producer as feature_producer_module
 from reaf.simulation.torch._src.core import task_layer as task_layer_module
+from reaf.simulation.torch._src.core import termination_checker as core_termination_checker
+import torch
 
 
 def _spec(keys: Iterable[str]) -> dict[str, gdmr_types.UnboundedArraySpec]:
@@ -167,6 +169,32 @@ class TaskLayerValidateSpecTest(parameterized.TestCase):
           device_layer_commands_spec=_DEV_CMDS,
           device_layer_measurements_spec=_DEV_MEAS,
       )
+
+  def test_check_for_termination_updates_in_place(self):
+    checker = mock.create_autospec(
+        core_termination_checker.TerminationChecker, instance=True
+    )
+    checker.name = "c0"
+    expected = torch.tensor(
+        [
+            core_termination_checker.TerminationResult.TERMINATE,
+            core_termination_checker.TerminationResult.DO_NOT_TERMINATE,
+        ],
+        dtype=torch.int32,
+    )
+    checker.check_termination.return_value = expected
+    layer = task_layer_module.TaskLayer(
+        commands_processors=(),
+        features_producers=(),
+        termination_checkers=(checker,),
+        xpu_device="cpu",
+        nworld=2,
+    )
+    buf_ptr = layer._termination_buffer.data_ptr()
+    out = layer.check_for_termination({})
+    self.assertEqual(out.data_ptr(), buf_ptr)
+    self.assertEqual(layer._termination_buffer.data_ptr(), buf_ptr)
+    torch.testing.assert_close(out, expected)
 
 
 if __name__ == "__main__":

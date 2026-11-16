@@ -256,6 +256,73 @@ class ActionHistoryTest(absltest.TestCase):
     self.assertEqual(set(features.keys()), {"a"})
     torch.testing.assert_close(features["a"], torch.ones(1, 2))
 
+  def test_cuda_zero_sync_and_graph_replay(self):
+    if not torch.cuda.is_available():
+      self.skipTest("CUDA is not available")
+    h = action_history.ActionHistory(
+        key="a",
+        feature_shape=(2,),
+        nworld=2,
+        xpu_device="cuda:0",
+        history_length=2,
+    )
+    action = torch.ones((2, 2), device="cuda:0")
+    mask = torch.zeros(2, dtype=torch.bool, device="cuda:0")
+    mask_tf = torch.tensor([True, False], device="cuda:0")
+    cur_out = torch.zeros((2, 2), device="cuda:0")
+    hist_out = torch.zeros((2, 2, 2), device="cuda:0")
+
+    def run_step():
+      h.reset(mask)
+      h.process_commands({"a": action})
+      feats = h.produce_features({})
+      cur_out.copy_(feats["a"])
+      hist_out.copy_(feats["a_history"])
+
+    run_step()
+    assert h._buffer is not None
+    cur_ptr = h._current_action.data_ptr()
+    buf_ptr = h._buffer.data_ptr()
+
+    stream = torch.cuda.Stream(device="cuda:0")
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph, stream=stream):
+      run_step()
+    stream.synchronize()
+    assert h._buffer is not None
+    self.assertEqual(h._current_action.data_ptr(), cur_ptr)
+    self.assertEqual(h._buffer.data_ptr(), buf_ptr)
+
+    h.reset()
+    mask.zero_()
+    action.fill_(1.0)
+    torch.cuda.synchronize()
+    torch.cuda.set_sync_debug_mode("error")
+    try:
+      graph.replay()
+      graph_cur1, graph_hist1 = cur_out.clone(), hist_out.clone()
+      mask.copy_(mask_tf)
+      action.fill_(2.0)
+      graph.replay()
+      graph_cur2, graph_hist2 = cur_out.clone(), hist_out.clone()
+    finally:
+      torch.cuda.set_sync_debug_mode("default")
+
+    h.reset()
+    mask.zero_()
+    action.fill_(1.0)
+    run_step()
+    eager_cur1, eager_hist1 = cur_out.clone(), hist_out.clone()
+    mask.copy_(mask_tf)
+    action.fill_(2.0)
+    run_step()
+    eager_cur2, eager_hist2 = cur_out.clone(), hist_out.clone()
+
+    torch.testing.assert_close(graph_cur1, eager_cur1)
+    torch.testing.assert_close(graph_hist1, eager_hist1)
+    torch.testing.assert_close(graph_cur2, eager_cur2)
+    torch.testing.assert_close(graph_hist2, eager_hist2)
+
 
 if __name__ == "__main__":
   absltest.main()

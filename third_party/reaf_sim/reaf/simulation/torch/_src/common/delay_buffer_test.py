@@ -140,14 +140,17 @@ class DelayBufferTest(absltest.TestCase):
     assert buf._lags is not None
     assert buf._steps_since_reset is not None
     buf_ptr = buf._buffer.data_ptr()
+    write_idx_ptr = buf._write_idx.data_ptr()
     lags_ptr = buf._lags.data_ptr()
     steps_ptr = buf._steps_since_reset.data_ptr()
 
     buf.append(torch.full((4, 2), 2.0))
     self.assertEqual(buf._buffer.data_ptr(), buf_ptr)
+    self.assertEqual(buf._write_idx.data_ptr(), write_idx_ptr)
 
     buf.reset(torch.tensor([True, False, True, False]))
     self.assertEqual(buf._buffer.data_ptr(), buf_ptr)
+    self.assertEqual(buf._write_idx.data_ptr(), write_idx_ptr)
     self.assertEqual(buf._lags.data_ptr(), lags_ptr)
     self.assertEqual(buf._steps_since_reset.data_ptr(), steps_ptr)
 
@@ -185,6 +188,77 @@ class DelayBufferTest(absltest.TestCase):
     buf.append(torch.tensor([[3.0], [3.0]]))
     # The next append does not overwrite the filled history of env 0.
     torch.testing.assert_close(buf.read(), torch.tensor([[7.0], [2.0]]))
+
+  def test_cuda_zero_sync_and_graph_replay(self):
+    if not torch.cuda.is_available():
+      self.skipTest("CUDA is not available")
+    buf = delay_buffer.DelayBuffer(
+        min_lag=1, max_lag=2, nworld=2, device="cuda:0"
+    )
+    frame = torch.ones((2, 1), device="cuda:0")
+    mask = torch.zeros(2, dtype=torch.bool, device="cuda:0")
+    mask_tf = torch.tensor([True, False], device="cuda:0")
+    out = torch.zeros((2, 1), device="cuda:0")
+
+    def run_step():
+      buf.reset(mask)
+      buf.append(frame)
+      out.copy_(buf.read())
+
+    run_step()
+    assert buf._buffer is not None
+    buf_ptr = buf._buffer.data_ptr()
+    write_idx_ptr = buf._write_idx.data_ptr()
+    lags_ptr = buf._lags.data_ptr()
+    steps_ptr = buf._steps_since_reset.data_ptr()
+
+    stream = torch.cuda.Stream(device="cuda:0")
+    graph = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(graph, stream=stream):
+      run_step()
+    stream.synchronize()
+    assert buf._buffer is not None
+    self.assertEqual(buf._buffer.data_ptr(), buf_ptr)
+    self.assertEqual(buf._write_idx.data_ptr(), write_idx_ptr)
+    self.assertEqual(buf._lags.data_ptr(), lags_ptr)
+    self.assertEqual(buf._steps_since_reset.data_ptr(), steps_ptr)
+
+    torch.cuda.synchronize()
+    torch.cuda.manual_seed(0)
+    buf.reset()
+    mask.zero_()
+    frame.fill_(1.0)
+    torch.cuda.set_sync_debug_mode("error")
+    try:
+      graph.replay()
+      graph_step1 = out.clone()
+      frame.fill_(2.0)
+      graph.replay()
+      graph_step2 = out.clone()
+      mask.copy_(mask_tf)
+      frame.fill_(3.0)
+      graph.replay()
+      graph_step3 = out.clone()
+    finally:
+      torch.cuda.set_sync_debug_mode("default")
+
+    torch.cuda.manual_seed(0)
+    buf.reset()
+    mask.zero_()
+    frame.fill_(1.0)
+    run_step()
+    eager_step1 = out.clone()
+    frame.fill_(2.0)
+    run_step()
+    eager_step2 = out.clone()
+    mask.copy_(mask_tf)
+    frame.fill_(3.0)
+    run_step()
+    eager_step3 = out.clone()
+
+    torch.testing.assert_close(graph_step1, eager_step1)
+    torch.testing.assert_close(graph_step2, eager_step2)
+    torch.testing.assert_close(graph_step3, eager_step3)
 
 
 if __name__ == "__main__":
