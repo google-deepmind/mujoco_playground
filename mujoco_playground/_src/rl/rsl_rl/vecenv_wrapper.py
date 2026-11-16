@@ -69,7 +69,7 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     self.clip_actions = clip_actions
     self.num_envs = self.env.nworld
     self.device = torch.device(self.env.xpu_device)
-    self._cfg = cfg
+    self._cfg = cfg or rsl_config.RslRlVecEnvWrappercfg()
 
     # max_episode_length is required by RSL-RL.
     # Derive max_episode_length from TimeoutTerminationChecker if present.
@@ -238,7 +238,7 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     # get the observation dict after the conditional auto-reset
     obs_dict = self._get_flat_obs(self._timestep)
 
-    if self.cfg is not None and not self.cfg.is_finite_horizon:
+    if not self.cfg.is_finite_horizon:
       extras["time_outs"] = truncated
 
     return (

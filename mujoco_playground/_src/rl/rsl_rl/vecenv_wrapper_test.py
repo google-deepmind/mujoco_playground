@@ -265,10 +265,11 @@ class VecEnvWrapperTest(absltest.TestCase):
     # Step 3 times to trigger termination (0.06s > 0.04s).
     action = torch.zeros(nworld, 1, dtype=torch.float32, device=self.DEVICE)
     for _ in range(3):
-      obs, _, dones, _ = wrapper.step(action)
+      obs, _, dones, extras = wrapper.step(action)
 
     # Env should be done.
     self.assertEqual(dones.item(), 1)
+    self.assertTrue(extras["time_outs"].item())
     self.assertEqual(obs["time"].item(), 0.0)
 
   def test_episode_length_buf_tracking(self):
