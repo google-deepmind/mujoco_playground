@@ -539,6 +539,36 @@ class TorchWrapperCPUTest(absltest.TestCase):
     with self.assertRaises(AttributeError):
       _ = mw.invalid_field
 
+  def test_get_batch_mj_fields(self):
+    model_fields = torch_wrapper.get_batch_mj_fields(
+        torch_wrapper.MjObjType.MJ_MODEL
+    )
+    data_fields = torch_wrapper.get_batch_mj_fields(
+        torch_wrapper.MjObjType.MJ_DATA
+    )
+    opt_fields = torch_wrapper.get_batch_mj_fields(
+        torch_wrapper.MjObjType.MJ_OPTION
+    )
+    self.assertIn("geom_pos", model_fields)
+    self.assertIn("cam_pos0", model_fields)
+    self.assertNotIn("body_parentid", model_fields)
+    self.assertIn("qpos", data_fields)
+    self.assertIn("gravity", opt_fields)
+    self.assertEqual(
+        model_fields,
+        torch_wrapper.get_batch_mj_fields(torch_wrapper.MjObjType.MJW_MODEL),
+    )
+    self.assertEqual(
+        data_fields,
+        torch_wrapper.get_batch_mj_fields(torch_wrapper.MjObjType.MJW_DATA),
+    )
+    self.assertEqual(
+        opt_fields,
+        torch_wrapper.get_batch_mj_fields(torch_wrapper.MjObjType.MJW_OPTION),
+    )
+    with self.assertRaises(ValueError):
+      torch_wrapper.get_batch_mj_fields(torch_wrapper.MjObjType.OTHER)
+
 
 def wrap_model(
     backend: types.Impl, m: mujoco.MjModel, nworld: int = 1

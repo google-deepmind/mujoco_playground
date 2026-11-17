@@ -26,6 +26,7 @@ import mujoco
 import mujoco_warp as mjw
 import numpy as np
 from reaf.simulation.torch import simulator as simulator_module
+from reaf.simulation.torch import torch_wrapper
 from reaf.simulation.torch import types
 from reaf.simulation.viewer import sim_plugin
 import torch
@@ -150,19 +151,8 @@ class TorchSimBackend(Generic[gdmr_types.PolicyDataType]):
           world_id=world_id,
       )
 
-    # sync domain randomized model fields.
-    model.geom_size[:] = sim.model.geom_size[world_id].cpu().numpy()
-    model.geom_rgba[:] = sim.model.geom_rgba[world_id].cpu().numpy()
-    model.light_pos[:] = sim.model.light_pos[world_id].cpu().numpy()
-    model.light_dir[:] = sim.model.light_dir[world_id].cpu().numpy()
-    model.light_diffuse[:] = sim.model.light_diffuse[world_id].cpu().numpy()
-    model.light_ambient[:] = sim.model.light_ambient[world_id].cpu().numpy()
-    model.cam_pos[:] = sim.model.cam_pos[world_id].cpu().numpy()
-    model.cam_quat[:] = sim.model.cam_quat[world_id].cpu().numpy()
-    model.cam_fovy[:] = sim.model.cam_fovy[world_id].cpu().numpy()
-    model.cam_intrinsic[:] = sim.model.cam_intrinsic[world_id].cpu().numpy()
-    model.site_pos[:] = sim.model.site_pos[world_id].cpu().numpy()
-    model.site_quat[:] = sim.model.site_quat[world_id].cpu().numpy()
+    # Sync domain-randomized and set_const-derived model fields.
+    _sync_batched_model_fields(model, sim, world_id)
 
     # Run mj_forward to stabilize xfrc_applied computation of applyPerturbForce.
     mujoco.mj_forward(model, data)
@@ -185,3 +175,51 @@ class TorchSimBackend(Generic[gdmr_types.PolicyDataType]):
   def set_instruction(self, instruction: str) -> None:
     """Forwards a text instruction to the environment if supported."""
     sim_plugin.set_env_instruction(self._environment, instruction)
+
+
+def _sync_batched_model_fields(
+    model: mujoco.MjModel,
+    sim: simulator_module.Simulator,
+    world_id: int,
+) -> None:
+  """Copies batched model fields for `world_id` from `sim` into `model`."""
+  warp_model = sim.warp_model if sim.impl == types.Impl.WARP else None
+  targets = (
+      (torch_wrapper.MjObjType.MJ_MODEL, model, sim.model, warp_model),
+      (
+          torch_wrapper.MjObjType.MJ_OPTION,
+          model.opt,
+          sim.model.opt,
+          warp_model.opt if warp_model is not None else None,
+      ),
+  )
+  for obj_type, dst_obj, src_obj, warp_obj in targets:
+    for name in torch_wrapper.get_batch_mj_fields(obj_type):
+      dst = getattr(dst_obj, name)
+      if isinstance(dst, np.ndarray) and dst.size == 0:
+        continue
+      if warp_obj is not None:
+        # mjw.put_model leaves untouched batched fields at leading dim 1 until
+        # TorchWrapper lazily tiles them to nworld; skip untiled fields when
+        # nworld > 1 so viewer sync does not tile them or invalidate CUDA graphs.
+        leading_dim = getattr(warp_obj, name).shape[0]
+        if sim.nworld > 1 and leading_dim == 1:
+          continue
+        if leading_dim != sim.nworld:
+          raise ValueError(
+              f'Expected {name} leading dim in (1, {sim.nworld}), got'
+              f' {leading_dim}.'
+          )
+      val = getattr(src_obj, name)[world_id].detach().cpu().numpy()
+      if isinstance(dst, np.ndarray):
+        dst[:] = val.reshape(dst.shape)
+      else:
+        setattr(dst_obj, name, val.item())
+
+  # Clear sameframe/simple flags so mj_forward unconditionally applies local
+  # offsets even if the field isn't randomized.
+  sameframe_none = int(mujoco.mjtSameFrame.mjSAMEFRAME_NONE)
+  model.body_sameframe[:] = sameframe_none
+  model.body_simple[:] = 0
+  model.geom_sameframe[:] = sameframe_none
+  model.site_sameframe[:] = sameframe_none

@@ -1200,6 +1200,25 @@ def _union_mj_fields() -> dict[str, dict[str, MjField]]:
   return fields
 
 
+@functools.cache
+def get_batch_mj_fields(obj_type: MjObjType) -> frozenset[str]:
+  """Returns the names of batched fields for the given MjObjType."""
+  obj_type_to_key = {
+      MjObjType.MJ_MODEL: "Model",
+      MjObjType.MJW_MODEL: "Model",
+      MjObjType.MJ_DATA: "Data",
+      MjObjType.MJW_DATA: "Data",
+      MjObjType.MJ_OPTION: "Option",
+      MjObjType.MJW_OPTION: "Option",
+  }
+  key = obj_type_to_key.get(obj_type)
+  if key is None:
+    raise ValueError(f"Unsupported MjObjType: {obj_type!r}")
+  return frozenset(
+      name for name, f in _union_mj_fields()[key].items() if f.is_batch
+  )
+
+
 def _shape_annotations_compatible(
     mj_field: mj_structs.StructFieldDecl,
     mjw_shape: list[str | int],
