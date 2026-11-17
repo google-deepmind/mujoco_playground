@@ -728,13 +728,14 @@ class TorchWrapper(Generic[T], NoSetAttr):
     Args:
       spec: MjSpec used for name resolution.
       obj_type: mujoco.mjtObj (mjOBJ_GEOM, mjOBJ_BODY, etc).
-      pattern: Name pattern (exact, glob, or regex). Tuple for multiple.
+      pattern: Full-name regex pattern (or tuple of patterns).
 
     Returns:
       BoundModelAccessor for the matched entities.
 
     Raises:
-      ValueError: If no names match or obj_type unsupported.
+      ValueError: If `obj_type` is unsupported, `pattern` is empty, or any
+        pattern matches no names.
       TypeError: If called on non-Model object.
     """
     if not isinstance(self._obj, (mjw.Model, mujoco.MjModel)):

@@ -103,10 +103,25 @@ class ResolveNamesTest(absltest.TestCase):
     self.assertIn("motor2", result)
 
   def test_no_match_raises(self):
-    with self.assertRaises(ValueError):
-      mujoco_types.resolve_names(
-          self.spec, mujoco.mjtObj.mjOBJ_BODY, "nonexistent"
-      )
+    for pattern in (
+        "nonexistent",
+        "mot",
+        "tor.*",
+        ("motor", "nonexistent"),
+        (),
+    ):
+      with self.assertRaises(ValueError):
+        mujoco_types.resolve_names(
+            self.spec, mujoco.mjtObj.mjOBJ_ACTUATOR, pattern
+        )
+
+  def test_tuple_deduplicates_in_order(self):
+    self.assertEqual(
+        mujoco_types.resolve_names(
+            self.spec, mujoco.mjtObj.mjOBJ_ACTUATOR, ("motor2", "motor.*")
+        ),
+        ["motor2", "motor"],
+    )
 
 
 _NAMES = (
@@ -129,8 +144,14 @@ class ResolveValuesTest(absltest.TestCase):
     self.assertEqual(values, [-0.1, 0.5, 9.0, 0.5, 9.0])
 
   def test_requires_full_match(self):
-    values = mujoco_types.resolve_values({"knee": 1.0}, _NAMES)
-    self.assertEqual(values, [0.0] * len(_NAMES))
+    with self.assertRaisesRegex(ValueError, "knee"):
+      mujoco_types.resolve_values({"knee": 1.0}, _NAMES)
+
+  def test_unmatched_key_in_mixed_dict_raises(self):
+    with self.assertRaisesRegex(ValueError, "nonexistent"):
+      mujoco_types.resolve_values(
+          {"left_hip_joint": 1.0, "nonexistent": 2.0}, _NAMES
+      )
 
   def test_multiple_matches_raises(self):
     with self.assertRaisesRegex(ValueError, "left_knee_joint"):

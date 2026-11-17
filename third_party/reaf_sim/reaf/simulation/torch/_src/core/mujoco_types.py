@@ -60,19 +60,21 @@ def resolve_names(
     objtype: mujoco.mjtObj,
     pattern: str | tuple[str, ...],
 ) -> list[str]:
-  """Resolve names from spec via pattern matching.
+  """Resolves names from spec via full-name regex matching.
 
   Args:
     spec: MjSpec to search.
-    objtype: mujoco.mjtObj (mjOBJ_GEOM, mjOBJ_BODY, mjOBJ_XBODY,
-      mjOBJ_ACTUATOR).
-    pattern: Name(s) to match (exact, glob, or regex). Tuple for multiple.
+    objtype: mujoco.mjtObj (mjOBJ_GEOM, mjOBJ_BODY, mjOBJ_XBODY, mjOBJ_JOINT,
+      mjOBJ_ACTUATOR, mjOBJ_SENSOR, mjOBJ_CAMERA, mjOBJ_LIGHT, mjOBJ_SITE, or
+      mjOBJ_TENDON).
+    pattern: Full-name regex pattern (or tuple of patterns).
 
   Returns:
-    List of matched names.
+    Deduplicated list of matched names in first-match order.
 
   Raises:
-    ValueError: If no names match the pattern.
+    ValueError: If `objtype` is unsupported, `pattern` is empty, or any
+      pattern matches no names.
   """
   patterns = [pattern] if isinstance(pattern, str) else list(pattern)
 
@@ -99,19 +101,15 @@ def resolve_names(
 
   matched = []
   for p in patterns:
-    is_regex = any(c in p for c in r".*+?[]{}()\|^$")
-    if is_regex:
-      regex = re.compile(p)
-      matched.extend(n for n in all_names if regex.search(n))
-      continue
-
-    if p in all_names:
-      matched.append(p)
+    hits = [n for n in all_names if re.fullmatch(p, n)]
+    if not hits:
+      raise ValueError(f"Pattern {p!r} matched no names for {objtype}")
+    matched.extend(hits)
 
   if not matched:
     raise ValueError(f"Pattern {pattern} matched no names for {objtype}")
 
-  return matched
+  return list(dict.fromkeys(matched))
 
 
 def resolve_values(
@@ -133,8 +131,12 @@ def resolve_values(
     One value per entry in `names`.
 
   Raises:
-    ValueError: If a name matches more than one pattern.
+    ValueError: If a name matches more than one pattern, or if any pattern
+      matches no names.
   """
+  for pat in patterns:
+    if not any(re.fullmatch(pat, name) is not None for name in names):
+      raise ValueError(f"Pattern {pat!r} matched no names in {names!r}")
   values = []
   for name in names:
     matches = [
