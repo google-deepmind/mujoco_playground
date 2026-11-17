@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Truncates when the episode time exceeds the specified timeout."""
+"""Truncates when the episode time reaches the specified timeout."""
 
 from collections.abc import Mapping
 
@@ -21,7 +21,7 @@ import torch
 
 
 class TimeoutTerminationChecker(termination_checker.TerminationChecker):
-  """Truncates when the episode time exceeds the specified timeout."""
+  """Truncates when the episode time reaches the specified timeout."""
 
   def __init__(
       self,
@@ -47,7 +47,7 @@ class TimeoutTerminationChecker(termination_checker.TerminationChecker):
       self, required_features: Mapping[str, torch.Tensor]
   ) -> torch.Tensor:
     return torch.where(
-        required_features[self._time_feature_name] > self._timeout,
+        required_features[self._time_feature_name] >= self._timeout,
         termination_checker.TerminationResult.TRUNCATE,
         termination_checker.TerminationResult.DO_NOT_TERMINATE,
     )

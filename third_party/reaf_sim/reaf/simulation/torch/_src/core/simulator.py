@@ -164,6 +164,12 @@ class Simulator(protocols.Simulator):
       raise ValueError("Clock must not be None.")
     self._clock = clock
 
+  def set_episode_step(self, steps: torch.Tensor) -> None:
+    """Sets the per-world episode step counter on `clock` and syncs `data.time`."""
+    assert self._clock is not None
+    self._clock.set_episode_step(steps)
+    self.data.time[:] = self._clock.episode_time
+
   @property
   def model(self) -> types.Model:
     assert self._model_torch is not None

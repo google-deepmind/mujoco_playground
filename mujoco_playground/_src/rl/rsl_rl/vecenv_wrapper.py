@@ -134,10 +134,7 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
   @torch.inference_mode()
   def episode_length_buf(self, value: torch.Tensor) -> None:  # type: ignore
     self._episode_length_buf = value
-    # Sync data.time with the new episode lengths.
-    # This converts step count to time and writes to data.time directly.
-    episode_time = value.float() * self._control_timestep
-    self.unwrapped.device_layer.sim.data.time[:] = episode_time
+    self.unwrapped.device_layer.sim.set_episode_step(value)
 
   def seed(self, seed: int = -1) -> int:
     """Sets the global random seed for reproducibility."""

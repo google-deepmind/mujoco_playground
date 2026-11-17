@@ -58,6 +58,13 @@ class ClockTest(absltest.TestCase):
         clk.episode_step, torch.zeros(2, dtype=torch.int64)
     )
 
+  def test_set_episode_step(self):
+    clk = clock.Clock(sim_dt=0.002, control_dt=0.02, n_substeps=10, nworld=2)
+    clk.set_episode_step(torch.tensor([5, 12]))
+    torch.testing.assert_close(clk.episode_step, torch.tensor([5, 12]))
+    torch.testing.assert_close(clk.episode_substep, torch.tensor([50, 120]))
+    torch.testing.assert_close(clk.episode_time, torch.tensor([0.1, 0.24]))
+
   def test_tick(self):
     clk = clock.Clock(
         sim_dt=0.002,

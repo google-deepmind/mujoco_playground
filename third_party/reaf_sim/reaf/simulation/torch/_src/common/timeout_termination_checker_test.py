@@ -148,7 +148,7 @@ class TimeoutTerminationCheckerTest(parameterized.TestCase):
     self.assertEqual(checker.timeout, 10.0)
     self.assertEqual(checker.required_features_keys(), {"time"})
 
-    features = {"time": torch.tensor([5.0, 10.0, 10.1, 15.0])}
+    features = {"time": torch.tensor([5.0, 9.99, 10.0, 15.0])}
     result = checker.check_termination(features)
     expected = torch.tensor([
         termination_checker.TerminationResult.DO_NOT_TERMINATE,

@@ -69,7 +69,11 @@ class Clock:
   @property
   def episode_time(self) -> torch.Tensor:
     """Current continuous episode time in seconds for each environment."""
-    return self.episode_substep * self.sim_dt
+    # Multiply in float64 before casting to float32 so step * dt matches exact
+    # float32 timeout thresholds without accumulation drift.
+    return (self.episode_substep.to(torch.float64) * self.sim_dt).to(
+        torch.float32
+    )
 
   def tick_substep(self) -> None:
     """Advances the physics substep counters by 1."""
@@ -80,6 +84,11 @@ class Clock:
     """Advances the control step counters by 1."""
     self.global_step += 1
     self.episode_step += 1
+
+  def set_episode_step(self, steps: torch.Tensor) -> None:
+    """Sets the episode step and substep counters in-place."""
+    self.episode_step.copy_(steps)
+    self.episode_substep.copy_(steps * self.n_substeps)
 
   def reset(self, env_mask: torch.Tensor | None = None) -> None:
     """Resets episode step and substep counters for specified environments.

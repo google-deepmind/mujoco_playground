@@ -87,4 +87,4 @@ class ClockDevice(device_module.Device):
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:
     """Returns the current simulation time."""
-    return {self._output_name: simulator.data.time}
+    return {self._output_name: simulator.clock.episode_time}
