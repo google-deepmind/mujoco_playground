@@ -83,9 +83,6 @@ class BatchedMujocoCameraDeviceTest(parameterized.TestCase):
       (types.Impl.WARP,),
   )
   def test_camera_entity_renders(self, impl):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("Warp camera requires CUDA.")
-
     xpu_device = _DEVICE if impl == types.Impl.WARP else "cpu"
     mj_spec = mujoco.MjSpec.from_string(_SIMPLE_XML)
     sim = simulator_module.Simulator(

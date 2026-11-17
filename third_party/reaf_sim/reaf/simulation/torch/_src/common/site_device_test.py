@@ -40,8 +40,6 @@ class SiteDeviceTest(absltest.TestCase):
 
   def test_site_measurements(self):
     """Test that site device returns correct xpos and xmat shapes."""
-    if not torch.cuda.is_available():
-      self.skipTest("Warp put_model/put_data requires CUDA.")
     spec = _make_spec_with_site()
     nworld = 2
 

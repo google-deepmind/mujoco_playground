@@ -274,9 +274,6 @@ class _Processor(
 class DeviceLayerTest(parameterized.TestCase):
 
   def test_initialization_specs_computation(self, impl, xpu_device):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
     nworld = 1 if impl == types.Impl.CPP else 2
 
@@ -411,9 +408,6 @@ class DeviceLayerTest(parameterized.TestCase):
     self.assertEqual(dl_cmd.commands_spec(), expected_commands_spec)
 
   def test_device_returns_correct_measurements(self, impl, xpu_device):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
     nworld = 1 if impl == types.Impl.CPP else 2
 
@@ -566,9 +560,6 @@ class DeviceLayerTest(parameterized.TestCase):
       self.assertEqual(actual_arr.dtype, expected_arr.dtype)
 
   def test_device_propagates_commands(self, impl, xpu_device):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
     nworld = 1 if impl == types.Impl.CPP else 2
 
@@ -723,84 +714,7 @@ class DeviceLayerTest(parameterized.TestCase):
       )
       self.assertEqual(actual_arr.dtype, expected_arr.dtype)
 
-  def test_device_graph_capture(self, impl, xpu_device):
-    if impl != types.Impl.WARP:
-      self.skipTest("Graph capture is only supported for the WARP backend.")
-    if not torch.cuda.is_available() or "cpu" in xpu_device:
-      self.skipTest("Graph capture requires CUDA.")
-
-    test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
-    dev = CounterPassthroughDevice()
-    cp = CounterPassthroughSubstepCommandsProcessor()
-    mp = CounterPassthroughSubstepMeasurementsProcessor()
-
-    sim = simulator_module.Simulator(
-        mj_spec=test_mj_spec,
-        nworld=2,
-        xpu_device=xpu_device,
-        impl=types.Impl.WARP,
-    )
-    dl = device_layer.DeviceLayer(
-        simulator=sim,
-        control_timestep=0.002,
-        substep_commands_processors=[cp],
-        devices=[dev],
-        substep_measurements_processors=[mp],
-    )
-
-    dl.sim.forward()
-
-    # Ensure CUDA graphs were captured.
-    self.assertSameElements(
-        tuple(dl.sim._graph_captures.keys()), ("forward", "step", "reset_data")
-    )
-    old_graphs = list(dl.sim._graph_captures.values())
-    dl.sim.forward()
-    self.assertSameElements(old_graphs, list(dl.sim._graph_captures.values()))
-
-  def test_mjwarp_model_tiling_invalidates_graphs(self, impl, xpu_device):
-    if impl != types.Impl.WARP:
-      self.skipTest("Graph capture is only supported for the WARP backend.")
-    if not torch.cuda.is_available() or "cpu" in xpu_device:
-      self.skipTest("Graph capture requires CUDA.")
-
-    spec = mujoco.MjSpec.from_string(_TEST_XML)
-    sim = simulator_module.Simulator(
-        mj_spec=spec,
-        nworld=2,
-        xpu_device=xpu_device,
-        impl=types.Impl.WARP,
-    )
-    dl = device_layer.DeviceLayer(
-        simulator=sim,
-        control_timestep=0.002,
-    )
-
-    # Capture graphs.
-    dl.sim.forward()
-    expected_graphs = {"forward", "step", "reset_data"}
-    self.assertEqual(set(dl.sim._graph_captures.keys()), expected_graphs)
-    original_graphs = dict(dl.sim._graph_captures)
-
-    _ = dl.sim.model.actuator_gear  # Trigger tiling of stride 0 field.
-    self.assertFalse(
-        dl.sim._graph_captures,
-        "Graph captures cache should be cleared after tiling.",
-    )
-
-    # Check that graph is recaptured and different than original graphs.
-    dl.sim.forward()
-    self.assertEqual(set(dl.sim._graph_captures.keys()), expected_graphs)
-    self.assertNotEqual(
-        dl.sim._graph_captures["forward"],
-        original_graphs["forward"],
-        "New graph capture should be different than original capture.",
-    )
-
   def test_device_step_calls_devices_and_processors(self, impl, xpu_device):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
     dev = CounterPassthroughDevice()
     cp = CounterPassthroughSubstepCommandsProcessor()
@@ -855,9 +769,6 @@ class DeviceLayerTest(parameterized.TestCase):
     )
 
   def test_raises_value_error_for_invalid_timestep(self, impl, xpu_device):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
     sim = simulator_module.Simulator(
         mj_spec=test_mj_spec,
@@ -873,9 +784,6 @@ class DeviceLayerTest(parameterized.TestCase):
       )
 
   def test_get_device_and_has_device(self, impl, xpu_device):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
     dev1 = CounterPassthroughDevice(name="dummy1")
     dev2 = CounterPassthroughDevice(name="dummy2")
@@ -902,9 +810,6 @@ class DeviceLayerTest(parameterized.TestCase):
       dl.get_device("non_existent")
 
   def test_call_graph_lifecycle_invariants(self, impl, xpu_device):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     trace: list[str] = []
 
     class TracingDevice(device_module.Device):
@@ -1074,9 +979,6 @@ class DeviceLayerTest(parameterized.TestCase):
   def test_numerical_trajectory_equivalence_and_dataflow_invariants(
       self, impl, xpu_device
   ):
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     nworld = 1 if impl == types.Impl.CPP else 2
 
     class ActuatedArmDevice(device_module.Device):
@@ -1788,6 +1690,80 @@ class DeviceLayerTest(parameterized.TestCase):
     self.assertEqual(seen_by_substep_proc, [0.0, 0.0, 1.0])
     torch.testing.assert_close(
         meas["x"], torch.full((nworld, 1), 1.0, device=xpu_device)
+    )
+
+
+@parameterized.named_parameters(("cpu", "cpu"), ("cuda", "cuda:0"))
+class DeviceLayerGraphCaptureTest(parameterized.TestCase):
+
+  def test_device_graph_capture(self, xpu_device):
+    if xpu_device.startswith("cuda") and not torch.cuda.is_available():
+      self.skipTest("CUDA not available.")
+
+    test_mj_spec = mujoco.MjSpec.from_string(_TEST_XML)
+    dev = CounterPassthroughDevice()
+    cp = CounterPassthroughSubstepCommandsProcessor()
+    mp = CounterPassthroughSubstepMeasurementsProcessor()
+
+    sim = simulator_module.Simulator(
+        mj_spec=test_mj_spec,
+        nworld=2,
+        xpu_device=xpu_device,
+        impl=types.Impl.WARP,
+    )
+    dl = device_layer.DeviceLayer(
+        simulator=sim,
+        control_timestep=0.002,
+        substep_commands_processors=[cp],
+        devices=[dev],
+        substep_measurements_processors=[mp],
+    )
+
+    dl.sim.forward()
+
+    # Ensure Warp graphs were captured.
+    self.assertSameElements(
+        tuple(dl.sim._graph_captures.keys()), ("forward", "step", "reset_data")
+    )
+    old_graphs = list(dl.sim._graph_captures.values())
+    dl.sim.forward()
+    self.assertSameElements(old_graphs, list(dl.sim._graph_captures.values()))
+
+  def test_mjwarp_model_tiling_invalidates_graphs(self, xpu_device):
+    if xpu_device.startswith("cuda") and not torch.cuda.is_available():
+      self.skipTest("CUDA not available.")
+
+    spec = mujoco.MjSpec.from_string(_TEST_XML)
+    sim = simulator_module.Simulator(
+        mj_spec=spec,
+        nworld=2,
+        xpu_device=xpu_device,
+        impl=types.Impl.WARP,
+    )
+    dl = device_layer.DeviceLayer(
+        simulator=sim,
+        control_timestep=0.002,
+    )
+
+    # Capture graphs.
+    dl.sim.forward()
+    expected_graphs = {"forward", "step", "reset_data"}
+    self.assertEqual(set(dl.sim._graph_captures.keys()), expected_graphs)
+    original_graphs = dict(dl.sim._graph_captures)
+
+    _ = dl.sim.model.actuator_gear  # Trigger tiling of stride 0 field.
+    self.assertFalse(
+        dl.sim._graph_captures,
+        "Graph captures cache should be cleared after tiling.",
+    )
+
+    # Check that graph is recaptured and different than original graphs.
+    dl.sim.forward()
+    self.assertEqual(set(dl.sim._graph_captures.keys()), expected_graphs)
+    self.assertNotEqual(
+        dl.sim._graph_captures["forward"],
+        original_graphs["forward"],
+        "New graph capture should be different than original capture.",
     )
 
 

@@ -73,6 +73,10 @@ class SimulatorTest(parameterized.TestCase):
     self.assertTrue(
         torch.allclose(sim.data.qpos, torch.zeros_like(sim.data.qpos))
     )
+    if impl == types.Impl.WARP:
+      self.assertEqual(
+          set(sim._graph_captures.keys()), {"step", "forward", "reset_data"}
+      )
 
   @parameterized.named_parameters(
       ("cpp", types.Impl.CPP, "cpu", 1),
@@ -196,19 +200,10 @@ class SimulatorTest(parameterized.TestCase):
           with mock.patch.object(simulator.mujoco, "mj_setConst") as fn:
             self.assertEqual(sim.set_const(), level)
           fn.assert_called_once_with(sim.mj_model, sim.mj_data)
-        elif sim._use_cuda_graph:
+        else:
           with mock.patch.object(simulator.wp, "capture_launch") as fn:
             self.assertEqual(sim.set_const(), level)
           fn.assert_called_once_with(sim._set_const_graph_captures[level])
-        else:
-          with mock.patch.object(simulator.mjw, "set_const") as fn:
-            self.assertEqual(sim.set_const(), level)
-          fn.assert_called_once_with(
-              sim.warp_model,
-              sim.warp_data,
-              groups=int(level),
-              restore=False,
-          )
 
   @parameterized.named_parameters(
       ("cpp", types.Impl.CPP, "cpu", 1),

@@ -10,7 +10,7 @@ Physics backends
 `reaf-sim` supports two backends via :class:`~reaf.simulation.torch.Impl`:
 
 - ``Impl.CPP``: `MuJoCo <https://github.com/google-deepmind/mujoco>`_ (CPU, ``nworld=1``) for evaluation and debugging.
-- ``Impl.WARP``: `MuJoCo Warp <https://github.com/google-deepmind/mujoco_warp>`_ (GPU) for batched simulation and RL
+- ``Impl.WARP``: `MuJoCo Warp <https://github.com/google-deepmind/mujoco_warp>`_ (CPU and GPU) for batched simulation and RL
   training.
 
 Usage
@@ -37,7 +37,7 @@ State and model access
 ----------------------
 
 ``sim.model`` and ``sim.data`` are wrapped in :class:`~reaf.simulation.torch.TorchWrapper`, providing zero-copy PyTorch
-tensor views of MuJoCo buffers (sharing memory with ``wp.array`` on GPU and NumPy arrays on CPU) with a leading
+tensor views of MuJoCo buffers (sharing memory with ``wp.array`` for ``Impl.WARP`` and NumPy arrays for ``Impl.CPP``) with a leading
 ``nworld`` dimension:
 
 .. code-block:: python
@@ -89,11 +89,11 @@ Write tracking relies on :class:`~reaf.simulation.torch.TorchTensor` ``__setitem
   Tensor methods (``.copy_()``, ``.add_()``, ``out=...``), or direct writes to ``_tensor``, ``warp_model``, or
   ``mj_model``.
 
-CUDA graphs
------------
+Graph capture
+-------------
 
-On CUDA devices (``Impl.WARP``), :class:`~reaf.simulation.torch.Simulator` captures ``step()``, ``forward()``,
-``reset()``, and ``set_const()`` as CUDA graphs via ``wp.ScopedCapture`` and replays them with ``wp.capture_launch``.
+With ``Impl.WARP``, :class:`~reaf.simulation.torch.Simulator` captures ``step()``, ``forward()``,
+``reset()``, and ``set_const()`` via ``wp.ScopedCapture`` and replays them with ``wp.capture_launch``.
 Tensor attributes on ``sim.model`` and ``sim.data`` are read-only so device pointers remain fixed across graph replays.
 
 For full signature details, see :class:`reaf.simulation.torch.Simulator` in the :doc:`API reference <../api>`.

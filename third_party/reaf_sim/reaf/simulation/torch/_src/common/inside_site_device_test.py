@@ -20,7 +20,6 @@ import mujoco_warp as mjw
 from reaf.simulation.torch._src.common import inside_site_device
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import types
-import torch
 
 
 def _make_spec_with_containment_site(
@@ -103,8 +102,6 @@ class InsideSiteDeviceTest(parameterized.TestCase):
     )
 
   def test_dark_mode(self):
-    if not torch.cuda.is_available():
-      self.skipTest("CUDA is not available")
     spec = _make_spec_with_containment_site()
     dev = inside_site_device.InsideSiteDevice(
         name="box_in_container",

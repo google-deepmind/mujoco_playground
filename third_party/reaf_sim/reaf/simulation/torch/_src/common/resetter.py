@@ -138,7 +138,7 @@ class CompositeResetter(reaf_environment.EnvironmentReset):
 
 
 class NanTerminationResetter(reaf_environment.EnvironmentReset):
-  """Terminates worlds whose simulator physics state is non-finite."""
+  """Terminates worlds whose physics state or `sensordata` is non-finite."""
 
   def __init__(self, name: str = "nan_termination"):
     self._name = name
@@ -148,7 +148,7 @@ class NanTerminationResetter(reaf_environment.EnvironmentReset):
     return self._name
 
   def check_termination(self) -> torch.Tensor | None:
-    """Checks for NaN or Inf in `qpos`, `qvel`, `qacc`, or `qacc_warmstart`."""
+    """Checks for NaN/Inf in physics state or `sensordata`."""
     if self._env is None:
       return None
     sim = self._env.device_layer.sim
@@ -158,6 +158,7 @@ class NanTerminationResetter(reaf_environment.EnvironmentReset):
     has_nan = ~torch.isfinite(
         data.qpos.sum(dim=-1)
         + (data.qvel + data.qacc + data.qacc_warmstart).sum(dim=-1)
+        + data.sensordata.sum(dim=-1)
     ).to(device=self._xpu_device)
     return torch.where(
         has_nan,

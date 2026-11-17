@@ -50,8 +50,8 @@ Environment
 - :class:`~reaf.simulation.torch.TaskLayer` (:doc:`guide <task_layer>`): Defines rewards, observations, terminations,
   and action processing.
 - :class:`~reaf.simulation.torch.DeviceLayer` (:doc:`guide <device_layer>`): Interfaces with simulation or hardware.
-- :class:`~reaf.simulation.torch.Simulator` (:doc:`guide <simulator>`): Manages MuJoCo (CPU) or MuJoCo Warp (GPU)
-  physics.
+- :class:`~reaf.simulation.torch.Simulator` (:doc:`guide <simulator>`): Manages MuJoCo (CPU) or MuJoCo Warp (CPU and
+  GPU) physics.
 - :class:`~reaf.simulation.torch.EnvironmentReset` (:doc:`guide <environment_reset>`): Resets environment, device layer,
   and simulator state.
 

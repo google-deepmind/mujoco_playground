@@ -11,7 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Literal
+
 from absl.testing import absltest
+from absl.testing import parameterized
 import dm_env
 import mujoco
 from reaf.core import termination_checker
@@ -41,14 +44,18 @@ _CARTPOLE_XML = """
 
 def _create_env(
     resetters: dict[str, config.Component] | None = None,
+    base_scene: mujoco.MjSpec | None = None,
+    impl: Literal["cpp", "warp"] = "warp",
+    xpu_device: str = "cpu",
+    nworld: int = 4,
 ) -> environment.Environment:
   cfg = config.Environment(
-      base_scene=mujoco.MjSpec.from_string(_CARTPOLE_XML),
+      base_scene=base_scene or mujoco.MjSpec.from_string(_CARTPOLE_XML),
       resetters=resetters or {},
       sim=builders_config.Sim(
-          nworld=4,
-          xpu_device="cpu",
-          impl="warp",
+          nworld=nworld,
+          xpu_device=xpu_device,
+          impl=impl,
           simulation_timestep=0.01,
           control_timestep=0.01,
       ),
@@ -332,15 +339,34 @@ class DomainRandomizationResetterTest(absltest.TestCase):
       ])
 
 
-class NanTerminationResetterTest(absltest.TestCase):
+class NanTerminationResetterTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
     wp.init()
     wp.config.kernel_cache_dir = "/tmp/kernel_cache"
 
-  def test_nan_termination_resetter_detects_nan_and_inf(self):
-    env = _create_env()
+  @parameterized.named_parameters(
+      ("cpp", "cpp", "cpu", 1),
+      ("warp_cpu", "warp", "cpu", 4),
+      ("warp_gpu", "warp", "cuda:0", 4),
+  )
+  def test_nan_termination_resetter_detects_nan_and_inf(
+      self, impl, xpu_device, nworld
+  ):
+    if xpu_device.startswith("cuda") and not torch.cuda.is_available():
+      self.skipTest("CUDA not available.")
+
+    spec = mujoco.MjSpec.from_string(_CARTPOLE_XML)
+    spec.add_sensor(
+        name="slider_pos",
+        type=mujoco.mjtSensor.mjSENS_JOINTPOS,
+        objtype=mujoco.mjtObj.mjOBJ_JOINT,
+        objname="slider",
+    )
+    env = _create_env(
+        base_scene=spec, impl=impl, xpu_device=xpu_device, nworld=nworld
+    )
     env.reset()
     data = env.device_layer.sim.data
 
@@ -353,33 +379,61 @@ class NanTerminationResetterTest(absltest.TestCase):
     torch.testing.assert_close(
         result,
         torch.full(
-            (4,),
+            (nworld,),
             termination_checker.TerminationResult.DO_NOT_TERMINATE,
             dtype=torch.int32,
+            device=xpu_device,
         ),
     )
 
-    # Inject NaN/Inf across qpos, qvel, qacc, and qacc_warmstart.
+    world_idx = 1 if nworld > 1 else 0
+    # Inject NaN/Inf across qpos, qvel, qacc, qacc_warmstart, and sensordata.
     for field_name, bad_val in (
         ("qpos", float("nan")),
         ("qvel", float("inf")),
         ("qacc", float("-inf")),
         ("qacc_warmstart", float("nan")),
+        ("sensordata", float("nan")),
+        ("sensordata", float("inf")),
     ):
       env.reset()
-      getattr(data, field_name)[1, 0] = bad_val
+      getattr(data, field_name)[world_idx, 0] = bad_val
       result = res.check_termination()
       assert result is not None
-      expected = torch.tensor(
-          [
-              termination_checker.TerminationResult.DO_NOT_TERMINATE,
-              termination_checker.TerminationResult.TERMINATE,
-              termination_checker.TerminationResult.DO_NOT_TERMINATE,
-              termination_checker.TerminationResult.DO_NOT_TERMINATE,
-          ],
+      expected = torch.full(
+          (nworld,),
+          termination_checker.TerminationResult.DO_NOT_TERMINATE,
           dtype=torch.int32,
+          device=xpu_device,
       )
+      expected[world_idx] = termination_checker.TerminationResult.TERMINATE
       torch.testing.assert_close(result, expected)
+
+  @parameterized.named_parameters(
+      ("cpp", "cpp", "cpu", 1),
+      ("warp_cpu", "warp", "cpu", 4),
+      ("warp_gpu", "warp", "cuda:0", 4),
+  )
+  def test_nan_termination_resetter_no_sensors(self, impl, xpu_device, nworld):
+    if xpu_device.startswith("cuda") and not torch.cuda.is_available():
+      self.skipTest("CUDA not available.")
+
+    env = _create_env(impl=impl, xpu_device=xpu_device, nworld=nworld)
+    env.reset()
+    self.assertEqual(env.device_layer.sim.mj_model.nsensordata, 0)
+    res = resetter.NanTerminationResetter()
+    res.set_env(env)
+    result = res.check_termination()
+    assert result is not None
+    torch.testing.assert_close(
+        result,
+        torch.full(
+            (nworld,),
+            termination_checker.TerminationResult.DO_NOT_TERMINATE,
+            dtype=torch.int32,
+            device=xpu_device,
+        ),
+    )
 
   def test_build_env_nan_termination_disabled_by_default(self):
     env = _create_env()

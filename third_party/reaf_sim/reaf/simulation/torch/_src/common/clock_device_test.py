@@ -52,9 +52,6 @@ class ClockDeviceTest(parameterized.TestCase):
 
   def test_staggered_resets(self, impl, device):
     """Verifies that reset correctly resets data.time for specific env_mask."""
-    if impl == types.Impl.WARP and not torch.cuda.is_available():
-      self.skipTest("WARP backend requires CUDA.")
-
     mj_spec = mujoco.MjSpec.from_string(_PENDULUM_XML)
     nworld = 4
     clock = clock_device.ClockDevice(

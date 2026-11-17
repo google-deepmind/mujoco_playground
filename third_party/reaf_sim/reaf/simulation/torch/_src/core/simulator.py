@@ -39,7 +39,7 @@ class Simulator(protocols.Simulator):
     - MuJoCo MjSpec and compiled MjModel.
     - Raw and Torch-wrapped Model and Data tensors.
     - Physics stepping, forward kinematics, and state resets.
-    - CUDA graph capture management for Warp backend.
+    - Graph capture management for Warp backend.
   """
 
   def __init__(
@@ -78,10 +78,6 @@ class Simulator(protocols.Simulator):
     self._impl = impl
     self._mj_spec = mj_spec
 
-    xpu_device_ = wp.get_device(self._xpu_device)
-    self._use_cuda_graph = xpu_device_.is_cuda and wp.is_mempool_enabled(
-        xpu_device_
-    )
     self._graph_captures: dict[str, wp.Graph] = {}
     self._set_const_graph_captures: dict[
         torch_wrapper.SetConstLevel, wp.Graph
@@ -95,10 +91,12 @@ class Simulator(protocols.Simulator):
     self._data_torch = None
     self._clock: Any = None
 
-    self._reset_bool = torch.zeros(
-        self._nworld, dtype=torch.bool, device=self._xpu_device
-    )
-    self._reset_wp_array: Any = wp.from_torch(self._reset_bool, dtype=wp.bool)
+    if impl == types.Impl.WARP:
+      wp.init()
+      self._reset_bool = torch.zeros(
+          self._nworld, dtype=torch.bool, device=self._xpu_device
+      )
+      self._reset_wp_array: Any = wp.from_torch(self._reset_bool, dtype=wp.bool)
 
     # Compile the MuJoCo model and data upon initialization.
     self.compile()
@@ -230,29 +228,23 @@ class Simulator(protocols.Simulator):
     elif self._impl == types.Impl.WARP:
       self._maybe_capture_graphs()
       with wp.ScopedDevice(self._xpu_device):
-        if self._use_cuda_graph:
-          wp.capture_launch(self._graph_captures["forward"])
-        else:
-          mjw.forward(self._model, self._data)
+        wp.capture_launch(self._graph_captures["forward"])
 
   def reset(self, env_mask: Optional[torch.Tensor] = None) -> None:
     """Resets simulation data for specified environments."""
     assert self._model is not None and self._data is not None
 
-    self._maybe_capture_graphs()
     if self._impl == types.Impl.CPP:
       mujoco.mj_resetData(self._model, self._data)
     else:
+      self._maybe_capture_graphs()
       if env_mask is None:
         self._reset_bool[:] = True
       else:
         self._reset_bool[:] = env_mask
       assert self._reset_bool.data_ptr() == self._reset_wp_array.ptr
       with wp.ScopedDevice(self._xpu_device):
-        if self._use_cuda_graph:
-          wp.capture_launch(self._graph_captures["reset_data"])
-        else:
-          mjw.reset_data(self._model, self._data, self._reset_wp_array)
+        wp.capture_launch(self._graph_captures["reset_data"])
 
     self._clock.reset(env_mask)
 
@@ -264,10 +256,7 @@ class Simulator(protocols.Simulator):
     elif self._impl == types.Impl.WARP:
       self._maybe_capture_graphs()
       with wp.ScopedDevice(self._xpu_device):
-        if self._use_cuda_graph:
-          wp.capture_launch(self._graph_captures["step"])
-        else:
-          mjw.step(self._model, self._data)
+        wp.capture_launch(self._graph_captures["step"])
 
     self._clock.tick_substep()
 
@@ -276,9 +265,9 @@ class Simulator(protocols.Simulator):
       self.step()
 
   def _maybe_capture_graphs(self) -> None:
-    """Captures CUDA graphs for Warp operations if supported."""
+    """Captures graphs for Warp operations."""
     assert self._model is not None and self._data is not None
-    if self._graph_captures or not self._use_cuda_graph:
+    if self._graph_captures:
       return
 
     with wp.ScopedDevice(self._xpu_device):
@@ -297,9 +286,9 @@ class Simulator(protocols.Simulator):
   def _maybe_capture_set_const_graph(
       self, level: torch_wrapper.SetConstLevel
   ) -> None:
-    """Captures a CUDA graph for `mjw.set_const` at `level` if supported."""
+    """Captures a graph for `mjw.set_const` at `level`."""
     assert self._model is not None and self._data is not None
-    if level in self._set_const_graph_captures or not self._use_cuda_graph:
+    if level in self._set_const_graph_captures:
       return
 
     with wp.ScopedDevice(self._xpu_device):
@@ -335,8 +324,5 @@ class Simulator(protocols.Simulator):
       return level
     self._maybe_capture_set_const_graph(level)
     with wp.ScopedDevice(self._xpu_device):
-      if self._use_cuda_graph:
-        wp.capture_launch(self._set_const_graph_captures[level])
-      else:
-        mjw.set_const(self._model, self._data, groups=int(level), restore=False)
+      wp.capture_launch(self._set_const_graph_captures[level])
     return level
