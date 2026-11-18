@@ -74,6 +74,7 @@ def launch(
     main_world_id: int = 0,
     gfx: str = 'web',
     http_port: int = 0,
+    private: bool = False,
     auto_reset: bool = True,
     initial_instruction: str | None = None,
     plugins: Iterable[plugin.Plugin] | None = None,
@@ -93,6 +94,7 @@ def launch(
     main_world_id: Index of the world to visualize in the viewer.
     gfx: Graphics mode for the viewer (e.g. 'classic_headless', 'web').
     http_port: Web Viewer port (0 picks first free port >= 8080).
+    private: Whether the Web Viewer accepts connections only from this machine.
     auto_reset: If True (default), the environment automatically resets when an
       episode ends. If False, the viewer pauses instead, allowing inspection of
       the final state. The user can still manually reset with backspace.
@@ -158,6 +160,7 @@ def launch(
       title='reaf-sim Environment Viewer',
       gfx=gfx,
       http_port=http_port,
+      private=private,
       open_browser=True,
       hot_reload=hot_reload,
   )
