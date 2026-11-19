@@ -20,23 +20,21 @@ import mujoco
 import torch
 
 
-def obs_joint_pos_rel(features, qpos_key: str, home_qpos_key: str, **kwargs):
+def obs_joint_pos_rel(features, qpos_key: str, home_qpos_key: str):
   """Joint positions relative to home."""
   qpos = features[qpos_key]
   home_qpos = features[home_qpos_key]
   return qpos - home_qpos
 
 
-def obs_ee_to_cube(features, ee_xpos_key: str, cube_xpos_key: str, **kwargs):
+def obs_ee_to_cube(features, ee_xpos_key: str, cube_xpos_key: str):
   """Vector from end-effector to cube."""
   ee_pos = features[ee_xpos_key]
   cube_pos = features[cube_xpos_key]
   return cube_pos - ee_pos
 
 
-def obs_cube_to_goal(
-    features, cube_xpos_key: str, target_xpos_key: str, **kwargs
-):
+def obs_cube_to_goal(features, cube_xpos_key: str, target_xpos_key: str):
   """Vector from cube to goal target."""
   cube_pos = features[cube_xpos_key]
   target_pos = features[target_xpos_key]
@@ -44,7 +42,7 @@ def obs_cube_to_goal(
 
 
 def obs_goal_position_ee_frame(
-    features, ee_xpos_key: str, ee_xmat_key: str, target_xpos_key: str, **kwargs
+    features, ee_xpos_key: str, ee_xmat_key: str, target_xpos_key: str
 ):
   """Goal position in EE frame for vision policy."""
   ee_pos = features[ee_xpos_key]
@@ -70,10 +68,8 @@ def obs_camera(
     camera_key: str,
     downsample_size: tuple[int, int] | None = None,
     pixel_noise_std: float = 0.0,
-    **kwargs,
 ):
   """Camera observation normalized to [0, 1] in CHW format, optionally downsampled."""
-  del kwargs
   rgb = features[camera_key]  # (batch, H, W, C) uint8
   rgb = rgb.permute(0, 3, 1, 2).float() / 255.0  # -> (batch, C, H, W)
   rgb = _center_crop_square(rgb)
@@ -206,10 +202,8 @@ def reward_success(
     target_xpos_key: str = "target/mocap_pos",
     distance_threshold: float = 0.08,
     lift_height_threshold: float = 0.04,
-    **kwargs,
 ) -> torch.Tensor:
   """True (1.0) if cube is lifted off table and reasonably close to mocap target."""
-  del kwargs
   cube_pos = features[cube_xpos_key]
   target_pos = features[target_xpos_key]
   dist = torch.linalg.norm(target_pos - cube_pos, dim=-1)
@@ -223,10 +217,8 @@ def reward_reaching(
     ee_xpos_key: str = "ee/xpos",
     cube_xpos_key: str = "object/xpos",
     reaching_std: float = 0.05,
-    **kwargs,
 ) -> torch.Tensor:
   """Reward for gripper approaching the cube."""
-  del kwargs
   ee_pos = features[ee_xpos_key]
   cube_pos = features[cube_xpos_key]
   reach_error = torch.sum(torch.square(ee_pos - cube_pos), dim=-1)
@@ -242,10 +234,8 @@ def reward_gripper_close(
     open_pos: float = 0.80,
     closed_pos: float = 0.15,
     reaching_std: float = 0.025,
-    **kwargs,
 ) -> torch.Tensor:
   """Reward for closing the gripper once the end-effector is at the cube."""
-  del kwargs
   ee_pos = features[ee_xpos_key]
   cube_pos = features[cube_xpos_key]
   reach_error = torch.sum(torch.square(ee_pos - cube_pos), dim=-1)
@@ -263,10 +253,8 @@ def reward_cube_lift(
     cube_xpos_key: str = "object/xpos",
     target_xpos_key: str = "target/mocap_pos",
     table_z: float = 0.025,
-    **kwargs,
 ) -> torch.Tensor:
   """Reward for lifting the cube off table towards target mocap height."""
-  del kwargs
   cube_pos = features[cube_xpos_key]
   target_pos = features[target_xpos_key]
   cube_z = cube_pos[..., 2]
@@ -280,10 +268,8 @@ def reward_cube_to_target(
     target_xpos_key: str = "target/mocap_pos",
     table_z: float = 0.025,
     std: float = 0.10,
-    **kwargs,
 ) -> torch.Tensor:
   """Reward bringing cube to target mocap position, active only when lifted."""
-  del kwargs
   cube_pos = features[cube_xpos_key]
   target_pos = features[target_xpos_key]
   cube_z = cube_pos[..., 2]

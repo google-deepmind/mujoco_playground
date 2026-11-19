@@ -776,7 +776,7 @@ def env_config(
       ),
       "joint_pos": _single_term(mdp.QPOS_KEY, (len(joints),)),
       "wrist_rgb": _single_term(
-          lambda f, **_: f[rgb_key].to(torch.float32),
+          lambda f: f[rgb_key].to(torch.float32),
           (cam_res[1], cam_res[0], 3),
       ),
   }

@@ -20,6 +20,7 @@ import tempfile
 from absl import flags
 from absl.testing import absltest
 from absl.testing import flagsaver
+from mujoco_playground._src.rl import env_registry
 from mujoco_playground.rl.rsl_rl import train
 
 
@@ -47,6 +48,25 @@ class CpuTrainTest(absltest.TestCase):
         ),
     ):
       train.main([])
+
+  def test_update_from_dotted_keys_rejects_unknown_fields_with_hint(
+      self,
+  ) -> None:
+    cfg = env_registry.get("CartpoleBalance").runner_cfg
+    with self.assertRaisesRegex(
+        KeyError, r"Unknown config field 'max_iteration'.*Did you mean:"
+    ):
+      train.update_from_dotted_keys(cfg, {"max_iteration": 5})
+
+    with self.assertRaisesRegex(
+        KeyError, r"Unknown config field 'learning_rat'.*Did you mean:"
+    ):
+      train.update_from_dotted_keys(cfg, {"algorithm.learning_rat": 1e-4})
+
+    with self.assertRaisesRegex(
+        KeyError, r"Unknown config field 'actr'.*Did you mean: 'actor'"
+    ):
+      train.update_from_dotted_keys(cfg, {"obs_groups.actr": ["policy"]})
 
 
 if __name__ == "__main__":

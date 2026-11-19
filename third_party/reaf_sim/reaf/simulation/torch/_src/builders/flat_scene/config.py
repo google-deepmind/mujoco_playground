@@ -156,12 +156,14 @@ class Reward(Term):
 
   def __init__(
       self,
-      func: Callable[..., Any],
-      *,
+      func: Callable[Concatenate[Any, _P], Any],
       weight: float = 1.0,
-      **params: Any,
+      *args: _P.args,
+      **params: _P.kwargs,
   ):
-    super().__init__(func, **params)
+    if args:
+      raise TypeError("Reward() only accepts keyword arguments for `func`.")
+    super().__init__(func, output_shape=None, **params)
     self.weight = weight
 
 
@@ -173,19 +175,21 @@ class Metric(Term):
 
   def __init__(
       self,
-      func_or_key: Callable[..., Any] | str,
-      *,
+      func_or_key: Callable[Concatenate[Any, _P], Any] | str,
       reduce: MetricReduceMode = "mean",
-      **params: Any,
+      *args: _P.args,
+      **params: _P.kwargs,
   ):
+    if args:
+      raise TypeError("Metric() only accepts keyword arguments for `func`.")
     if isinstance(func_or_key, str):
       if params:
         raise TypeError(
             f"Metric({func_or_key!r}) does not accept keyword arguments."
         )
-      super().__init__(_feature, key=func_or_key)
+      super().__init__(_feature, output_shape=None, key=func_or_key)
     else:
-      super().__init__(func_or_key, **params)
+      super().__init__(func_or_key, output_shape=None, **params)
     self.reduce = reduce
 
 

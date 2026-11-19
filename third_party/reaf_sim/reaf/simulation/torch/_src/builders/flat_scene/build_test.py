@@ -314,7 +314,7 @@ class MakeDeploymentConfigTest(absltest.TestCase):
     return config.Environment(
         base_scene=base_spec,
         task_layer=config.TaskLayer(
-            rewards={"reach": config.Reward(lambda: None)},
+            rewards={"reach": config.Reward(lambda f: None)},
             reward_provider=config.Component(object),
             metrics={"lift": config.Metric(lambda f: None, reduce="max")},
             terminations={"timeout": config.Term(lambda: None)},
@@ -383,7 +383,41 @@ class ConfigTest(absltest.TestCase):
     with self.assertRaises(TypeError):
       config.Obs("joint_pos", extra_kwarg=1)  # pyrefly: ignore[bad-argument-type]
     with self.assertRaises(TypeError):
-      config.Metric("joint_pos", extra_kwarg=1)  # pyrefly: ignore[bad-argument-type]
+      config.Metric("joint_pos", extra_kwarg=1)
+
+  def test_misspelled_term_kwargs_raise_type_error(self):
+    def scale_time(features, scale: float = 1.0) -> torch.Tensor:
+      return features["time"] * scale
+
+    default_obs = {"time": config.Obs("time").configure(output_shape=(1,))}
+    bad_reward = config.Reward(
+        scale_time, wieght=3.0  # pyrefly: ignore[unexpected-keyword]
+    )
+    bad_metric = config.Metric(
+        scale_time, reduc="last"  # pyrefly: ignore[unexpected-keyword]
+    )
+    bad_obs = config.Obs(
+        scale_time, scal=2.0  # pyrefly: ignore[unexpected-keyword]
+    ).configure(output_shape=(1,))
+
+    cases = (
+        (config.TaskLayer(rewards={"r": bad_reward}), default_obs),
+        (config.TaskLayer(metrics={"m": bad_metric}), default_obs),
+        (config.TaskLayer(), {"o": bad_obs}),
+    )
+    for task_layer, obs_terms in cases:
+      env = build.build_env(
+          config.Environment(
+              base_scene=mujoco.MjSpec(),
+              sim=builders_config.Sim(xpu_device="cpu", impl="cpp"),
+              task_layer=task_layer,
+              observation_adapter={"policy": config.ObsGroup(terms=obs_terms)},
+          )
+      )
+      with self.assertRaisesRegex(
+          TypeError, "got an unexpected keyword argument"
+      ):
+        env.step({})
 
   def test_component_configure_spec_rejects_positional_args(self):
     comp = config.Component(clock_device.ClockDevice)

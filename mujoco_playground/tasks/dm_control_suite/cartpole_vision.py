@@ -52,12 +52,12 @@ def _reward_vision(features: Mapping[str, torch.Tensor]) -> torch.Tensor:
   )
 
 
-def _termination_nan_check(device_layer, **kwargs):
+def _termination_nan_check(device_layer):
   data = device_layer.sim.data
   return torch.isnan(data.qpos).any(dim=-1) | torch.isnan(data.qvel).any(dim=-1)
 
 
-def _termination_pole_angle(device_layer, **kwargs):
+def _termination_pole_angle(device_layer):
   data = device_layer.sim.data
   pole_angle = data.qpos[:, 1]
   cart_pos = data.qpos[:, 0]
@@ -83,7 +83,7 @@ def cartpole_balance_vision_env() -> config.Environment:
           terms={
               "zeros": (
                   config.Obs(
-                      lambda d, **_: torch.zeros(
+                      lambda d: torch.zeros(
                           next(iter(d.values())).shape[0],
                           1,
                           device=next(iter(d.values())).device,

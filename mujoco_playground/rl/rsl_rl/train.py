@@ -17,7 +17,9 @@
 Supports single-GPU and multi-GPU distributed training via torchrun.
 """
 
+from collections.abc import Mapping
 import dataclasses
+import difflib
 import json
 import os
 import shutil
@@ -87,13 +89,40 @@ _TORCH_COMPILE_MODE = flags.DEFINE_string(
 )
 
 
-def update_from_dotted_keys(dc_instance, overrides_dict):
+def _check_key(obj: object, name: str, full_key: str) -> None:
+  """Validates that `name` is a known dataclass field or dict key on `obj`."""
+  if dataclasses.is_dataclass(obj):
+    available = sorted(f.name for f in dataclasses.fields(obj))
+  elif isinstance(obj, dict):
+    available = sorted(k for k in obj if isinstance(k, str))
+  else:
+    raise KeyError(f"Unknown key {name!r} in override {full_key!r}.")
+  if name not in available:
+    close = difflib.get_close_matches(name, available, n=3, cutoff=0.6)
+    hint = (
+        f" Did you mean: {', '.join(repr(m) for m in close)}?" if close else ""
+    )
+    raise KeyError(
+        f"Unknown config field {name!r} in override {full_key!r}.{hint}"
+        f" Available: {available}"
+    )
+
+
+def update_from_dotted_keys(
+    dc_instance: object, overrides_dict: Mapping[str, object]
+) -> None:
+  """Updates nested dataclass or dict fields, rejecting unknown keys."""
   for key, value in overrides_dict.items():
     *path, leaf = key.split(".")
-    obj = dc_instance
+    obj: object = dc_instance
     for part in path:
-      obj = getattr(obj, part)
-    setattr(obj, leaf, value)
+      _check_key(obj, part, key)
+      obj = obj[part] if isinstance(obj, dict) else getattr(obj, part)
+    _check_key(obj, leaf, key)
+    if isinstance(obj, dict):
+      obj[leaf] = value
+    else:
+      setattr(obj, leaf, value)
 
 
 class OnPolicyRunnerTB(rls_rl_runners.OnPolicyRunner):
