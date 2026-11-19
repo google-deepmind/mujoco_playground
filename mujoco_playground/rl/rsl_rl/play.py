@@ -14,6 +14,7 @@
 
 """Script to play RL agent with RSL-RL."""
 
+from collections.abc import Mapping
 import dataclasses
 import json
 from typing import Callable
@@ -89,7 +90,7 @@ class _RslRlPolicy(gdmr_policy.Policy[torch.Tensor]):
       nworld: int,
   ):
     self._policy = policy
-    self._action_key = next(iter(action_spec))  # pyrefly: ignore[bad-assignment]
+    self._action_spec: Mapping[str, dm_env.specs.Array] = action_spec  # pyrefly: ignore[bad-assignment]
     self._nworld = nworld
 
   def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -106,7 +107,10 @@ class _RslRlPolicy(gdmr_policy.Policy[torch.Tensor]):
             obs, batch_size=[self._nworld]  # pyrefly: ignore[bad-argument-type]
         )
     )
-    return ({self._action_key: action}, {}), prev_state
+    return (
+        vecenv_wrapper.split_actions(action, self._action_spec),
+        {},
+    ), prev_state
 
   def initial_state(self):
     if hasattr(self._policy, "reset"):

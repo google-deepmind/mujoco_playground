@@ -473,6 +473,21 @@ class VecEnvWrapperTest(absltest.TestCase):
         torch.tensor(0.03, device=self.DEVICE),
     )
 
+  def test_split_actions(self):
+    action_spec = {
+        "arm/ctrl": specs.Array(shape=(2, 2), dtype=np.float32),
+        "hand/ctrl": specs.Array(shape=(2, 2, 3), dtype=np.float32),
+    }
+    actions = torch.arange(16, dtype=torch.float32).reshape(2, 8)
+    split = vecenv_wrapper.split_actions(actions, action_spec)
+    self.assertEqual(list(split.keys()), ["arm/ctrl", "hand/ctrl"])
+    torch.testing.assert_close(split["arm/ctrl"], actions[:, :2])
+    torch.testing.assert_close(
+        split["hand/ctrl"], actions[:, 2:].reshape(2, 2, 3)
+    )
+    with self.assertRaisesRegex(ValueError, "Expected actions of width 8"):
+      vecenv_wrapper.split_actions(torch.zeros(2, 4), action_spec)
+
 
 if __name__ == "__main__":
   absltest.main()

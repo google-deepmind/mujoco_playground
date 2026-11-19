@@ -15,6 +15,7 @@
 """RSL-RL VecEnv wrapper for reaf-sim environments."""
 
 from collections.abc import Mapping
+import math
 from typing import Any
 
 import dm_env
@@ -45,8 +46,26 @@ def _derive_max_episode_length(env: reaf_env.Environment) -> int:
         checker, timeout_termination_checker.TimeoutTerminationChecker
     ):
       control_dt = env.device_layer.control_timestep
-      return int(checker.timeout / control_dt)
+      return round(checker.timeout / control_dt)
   raise ValueError("No TimeoutTerminationChecker found in the environment.")
+
+
+def split_actions(
+    actions: torch.Tensor, action_spec: Mapping[str, dm_env.specs.Array]
+) -> dict[str, torch.Tensor]:
+  """Splits flat `(nworld, num_actions)` actions into the `action_spec` dict."""
+  shapes = [spec.shape[1:] for spec in action_spec.values()]
+  widths = [math.prod(s) for s in shapes]
+  if actions.shape[-1] != sum(widths):
+    raise ValueError(
+        f"Expected actions of width {sum(widths)} for"
+        f" {dict(zip(action_spec, widths))}, got shape {tuple(actions.shape)}."
+    )
+  chunks = actions.split(widths, dim=-1)
+  return {
+      key: chunk.reshape(actions.shape[0], *shape)
+      for key, chunk, shape in zip(action_spec, chunks, shapes, strict=True)
+  }
 
 
 class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
@@ -82,10 +101,9 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
         self.num_envs, device=self.device, dtype=torch.long
     )
 
-    # TODO: how do we make action_spec NOT return a dict?
-    # RSL-RL does not want a dict for the action...
+    self._action_spec = self.unwrapped.action_spec()
     self.num_actions = sum(
-        a.shape[-1] for a in self.unwrapped.action_spec().values()  # pyrefly: ignore[missing-attribute]
+        math.prod(s.shape[1:]) for s in self._action_spec.values()  # pyrefly: ignore[missing-attribute]
     )
     self._modify_action_space()
 
@@ -178,13 +196,7 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
       raise ValueError("clip_actions is not supported.")
       # actions = torch.clamp(actions, -self.clip_actions, self.clip_actions)
 
-    # TODO: we need to make sure actions are not dictionaries,
-    # or we need a generic way to convert back to dicts for REAF, so that
-    # the action_spec is compatible with RSL-RL.
-    action_spec = self.action_spec()
-    assert isinstance(action_spec, Mapping)
-    action_key = list(action_spec.keys())[0]
-    action_dict = {action_key: actions}
+    action_dict = split_actions(actions, self._action_spec)
 
     self._timestep = self.env.step(action_dict)
     rew_dict = _dict_reward_from_timestep(self._timestep)

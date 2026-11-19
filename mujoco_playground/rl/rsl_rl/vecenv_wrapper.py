@@ -17,3 +17,4 @@
 from mujoco_playground._src.rl.rsl_rl.vecenv_wrapper import _derive_max_episode_length
 from mujoco_playground._src.rl.rsl_rl.vecenv_wrapper import _dict_reward_from_timestep
 from mujoco_playground._src.rl.rsl_rl.vecenv_wrapper import RslRlVecEnvWrapper
+from mujoco_playground._src.rl.rsl_rl.vecenv_wrapper import split_actions
