@@ -16,6 +16,8 @@
 
 import os
 import tempfile
+import threading
+import time
 from unittest import mock
 
 from absl.testing import absltest
@@ -213,6 +215,33 @@ class SparseCheckoutTest(absltest.TestCase):
                 check=True,
             ),
         ],
+    )
+
+  def test_file_lock_serializes_concurrent_callers(self) -> None:
+    tmp = epath.Path(self.enterContext(tempfile.TemporaryDirectory()))
+    lock_path = tmp / 'checkout.lock'
+    events: list[tuple[int, str]] = []
+    first_entered = threading.Event()
+
+    def hold_lock(worker_id: int, duration: float) -> None:
+      with asset_loader._file_lock(lock_path):
+        events.append((worker_id, 'enter'))
+        if worker_id == 1:
+          first_entered.set()
+        time.sleep(duration)
+        events.append((worker_id, 'exit'))
+
+    t1 = threading.Thread(target=hold_lock, args=(1, 0.1))
+    t2 = threading.Thread(target=hold_lock, args=(2, 0.01))
+    t1.start()
+    self.assertTrue(first_entered.wait(timeout=5.0))
+    t2.start()
+    t1.join(timeout=5.0)
+    t2.join(timeout=5.0)
+
+    self.assertEqual(
+        events,
+        [(1, 'enter'), (1, 'exit'), (2, 'enter'), (2, 'exit')],
     )
 
 
