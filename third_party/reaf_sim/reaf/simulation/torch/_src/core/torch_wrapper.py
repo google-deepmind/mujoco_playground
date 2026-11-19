@@ -850,8 +850,13 @@ class BoundDataAccessor:
           model_wrapper.actuator_ctrladr[self.id],
           model_wrapper.actuator_ctrlnum[self.id],
       )
+      self.act_id = _span_indices(
+          model_wrapper.actuator_actadr[self.id],
+          model_wrapper.actuator_actnum[self.id],
+      )
       self.out_id = _actuator_out_indices(model_wrapper, self.id)
       self._ctrl_index_key = _resolve_index_key(self.ctrl_id)
+      self._act_index_key = _resolve_index_key(self.act_id)
       self._out_index_key = _resolve_index_key(self.out_id)
     elif not self.prefix:
       self.mocap_id = model_wrapper.body_mocapid[self._id_index_key]
@@ -863,10 +868,10 @@ class BoundDataAccessor:
       if self.prefix == "sensor_":
         return name
       raise AttributeError("sensordata is not available for this type")
-    if name == "ctrl":
+    if name in ("ctrl", "act", "act_dot"):
       if self.prefix == "actuator_":
         return name
-      raise AttributeError("ctrl is not available for this type")
+      raise AttributeError(f"{name} is not available for this type")
     if (
         name == "qpos"
         or name == "qvel"
@@ -896,6 +901,8 @@ class BoundDataAccessor:
       return self._dof_index_key
     if name == "ctrl":
       return self._ctrl_index_key
+    if name in ("act", "act_dot"):
+      return self._act_index_key
     if self.prefix == "actuator_" and name in ("length", "velocity", "force"):
       return self._out_index_key
     if name in ("mocap_pos", "mocap_quat"):

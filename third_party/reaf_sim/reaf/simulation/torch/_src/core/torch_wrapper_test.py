@@ -1313,6 +1313,100 @@ class BindTest(parameterized.TestCase):
     torch.testing.assert_close(out_multi_size[0], expected_multi_size_w0)
     torch.testing.assert_close(out_multi_size[1], init_geom_size_w1)
 
+  @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
+  def test_actuator_act_bind(self, backend: types.Impl):
+    xml = """
+    <mujoco>
+      <worldbody>
+        <body>
+          <joint name="j0" type="hinge"/>
+          <geom name="g0" size="0.1"/>
+        </body>
+        <body>
+          <joint name="j1" type="hinge" range="-1 1"/>
+          <geom name="g1" size="0.1"/>
+        </body>
+        <body>
+          <joint name="j2" type="hinge"/>
+          <geom name="g2" size="0.1"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <motor name="m0" joint="j0"/>
+        <muscle name="mus1" joint="j1"/>
+        <general name="u2" joint="j2" dyntype="user" actdim="2"/>
+      </actuator>
+    </mujoco>
+    """
+    spec = mujoco.MjSpec.from_string(xml)
+    m = spec.compile()
+    d = mujoco.MjData(m)
+    d.act[:] = [0.25, 0.5, 0.75]
+    d.act_dot[:] = [1.5, -0.5, 2.0]
+
+    nworld = 2 if backend == types.Impl.WARP else 1
+    mw = wrap_model(backend, m, nworld=nworld)
+    dw = wrap_data(backend, m, d, nworld=nworld)
+    device = dw.act.device
+
+    bound_motor = dw.bind(mw, spec.actuators[0])
+    bound_muscle = dw.bind(mw, spec.actuators[1])
+    bound_user = dw.bind(mw, spec.actuators[2])
+    bound_all = dw.bind(mw, spec.actuators)
+
+    self.assertEqual(bound_motor.act.shape, (nworld, 0))
+    np.testing.assert_allclose(
+        bound_muscle.act.cpu().numpy(),
+        np.full((nworld,), 0.25),
+    )
+    np.testing.assert_allclose(
+        bound_user.act.cpu().numpy(),
+        np.broadcast_to([0.5, 0.75], (nworld, 2)),
+    )
+    np.testing.assert_allclose(
+        bound_all.act.cpu().numpy(),
+        np.broadcast_to([0.25, 0.5, 0.75], (nworld, 3)),
+    )
+    np.testing.assert_allclose(
+        bound_all.act_dot.cpu().numpy(),
+        np.broadcast_to([1.5, -0.5, 2.0], (nworld, 3)),
+    )
+
+    new_muscle_act = torch.full(
+        (nworld,), 0.9, dtype=dw.act.dtype, device=device
+    )
+    if backend == types.Impl.WARP and torch.cuda.is_available():
+      env_mask = torch.tensor([True, False], device=device)
+      masked_user_act = torch.tensor(
+          [[0.1, 0.2], [0.8, 0.9]], dtype=dw.act.dtype, device=device
+      )
+      torch.cuda.synchronize()
+      torch.cuda.set_sync_debug_mode("error")
+      try:
+        bound_muscle.set("act", new_muscle_act)
+        _ = bound_muscle.act
+        bound_user.set("act", masked_user_act, env_mask=env_mask)
+        _ = bound_user.act
+        _ = bound_all.act_dot
+      finally:
+        torch.cuda.set_sync_debug_mode("default")
+      np.testing.assert_allclose(
+          bound_user.act.cpu().numpy(),
+          [[0.1, 0.2], [0.5, 0.75]],
+      )
+    else:
+      bound_muscle.set("act", new_muscle_act)
+
+    np.testing.assert_allclose(
+        bound_muscle.act.cpu().numpy(),
+        np.full((nworld,), 0.9),
+    )
+
+    with self.assertRaisesRegex(
+        AttributeError, "act is not available for this type"
+    ):
+      _ = dw.bind(mw, spec.geoms).act
+
 
 def _dtype_matches(mj_dtype: torch.dtype, mjw_dtype: torch.dtype) -> bool:
   """Checks dtypes match, allowing 64-bit CPU vs 32-bit GPU."""
