@@ -79,6 +79,30 @@ class ClockTest(absltest.TestCase):
         clk.episode_step, torch.ones(2, dtype=torch.int64)
     )
 
+  def test_global_step_is_updated_in_place(self):
+    clk = clock.Clock(sim_dt=0.002, control_dt=0.02, n_substeps=10, nworld=2)
+    initial_ptr = clk.global_step.data_ptr()
+    self.assertEqual(clk.global_step.shape, ())
+    self.assertEqual(clk.global_step.dtype, torch.int64)
+    clk.tick_step()
+    self.assertEqual(clk.global_step.data_ptr(), initial_ptr)
+    self.assertEqual(clk.global_step, 1)
+
+  def test_set_global_step(self):
+    clk = clock.Clock(sim_dt=0.002, control_dt=0.02, n_substeps=10, nworld=2)
+    initial_ptr = clk.global_step.data_ptr()
+    clk.set_global_step(7)
+    self.assertEqual(clk.global_step.data_ptr(), initial_ptr)
+    self.assertEqual(clk.global_step, 7)
+    self.assertEqual(clk.global_substep, 70)
+    clk.tick_step()
+    self.assertEqual(clk.global_step, 8)
+
+  def test_set_global_step_rejects_negative(self):
+    clk = clock.Clock(sim_dt=0.002, control_dt=0.02, n_substeps=10, nworld=2)
+    with self.assertRaises(ValueError):
+      clk.set_global_step(-1)
+
   def test_full_reset(self):
     clk = clock.Clock(
         sim_dt=0.002,

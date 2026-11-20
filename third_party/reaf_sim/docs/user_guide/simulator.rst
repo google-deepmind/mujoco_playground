@@ -63,8 +63,8 @@ Simulation clock
 
 ``sim.clock`` (:class:`~reaf.simulation.torch.Clock`) is the source of truth for simulation time. It maintains integer
 counters for per-world ``episode_step`` / ``episode_substep`` (exposed in seconds as ``episode_time`` without float32
-accumulation drift) and monotonic ``global_step`` / ``global_substep`` (``global_time``), and ``sim.set_episode_step``
-syncs ``sim.data.time``.
+accumulation drift) and monotonic ``global_step`` / ``global_substep`` (``global_time``). ``sim.set_episode_step`` syncs
+``sim.data.time``, and ``sim.clock.set_global_step`` restores the global step when resuming from a checkpoint.
 
 Modifying model parameters
 --------------------------

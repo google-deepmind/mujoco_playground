@@ -98,6 +98,15 @@ per-episode reduction mode (``reduce="mean" | "last" | "max" | "sum"``):
 - **Per-episode metrics**: ``env.task_layer.get_episode_metrics(env_mask)`` returns ``dict[str, torch.Tensor]`` of 0-D
   scalar means over the masked worlds without host-device synchronization.
 
+Curriculum
+----------
+
+:class:`~reaf.simulation.torch.ClockDevice` exposes the monotonic control step as the simulation-only ``global_step``
+feature. Reward, termination, and metric terms can read ``features["global_step"]`` directly for step-based schedules
+(any :class:`~reaf.simulation.torch.FeatureProducer` consuming it should call ``.mark_privileged()`` if you want to
+deploy on a real robot, since ``global_step`` does not generally translate to the real world), and
+``env.device_layer.clock.set_global_step(step)`` restores it when resuming from a checkpoint.
+
 Terminations and discounts
 --------------------------
 

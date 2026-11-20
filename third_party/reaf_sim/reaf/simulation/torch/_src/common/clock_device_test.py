@@ -78,6 +78,10 @@ class ClockDeviceTest(parameterized.TestCase):
       measurements = layer.step({})
     expected_time = torch.full((nworld,), 0.1, device=device)
     torch.testing.assert_close(
+        measurements["global_step"],
+        torch.full((nworld,), 10, dtype=torch.int64, device=device),
+    )
+    torch.testing.assert_close(
         measurements["sim_time"].float(),
         expected_time,
         atol=1e-6,
@@ -105,6 +109,11 @@ class ClockDeviceTest(parameterized.TestCase):
     for _ in range(5):
       measurements = layer.step({})
     measurements = layer.get_measurements()
+    # The global step is never reset.
+    torch.testing.assert_close(
+        measurements["global_step"],
+        torch.full((nworld,), 15, dtype=torch.int64, device=device),
+    )
     # Envs 0,2: 0.1 + 0.05 = 0.15; Envs 1,3: 0.0 + 0.05 = 0.05
     expected_time = torch.tensor([0.15, 0.05, 0.15, 0.05], device=device)
     torch.testing.assert_close(

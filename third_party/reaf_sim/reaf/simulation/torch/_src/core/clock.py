@@ -30,7 +30,8 @@ class Clock:
     n_substeps: Number of physics substeps per control step.
     nworld: Number of parallel environments / worlds.
     xpu_device: Device on which episode counters are allocated.
-    global_step: Monotonically increasing count of completed control steps.
+    global_step: 0-D `int64` tensor counting completed control steps. Updated in
+      place so it can be read inside captured CUDA graphs (e.g. by curricula).
     global_substep: Monotonically increasing count of physics substeps since
       simulation start.
     episode_step: Tensor of shape (nworld,) containing control steps since last
@@ -46,7 +47,7 @@ class Clock:
   xpu_device: str | torch.device = "cpu"
 
   # Monotonic global counters (never reset during simulation lifetime)
-  global_step: int = 0
+  global_step: torch.Tensor = dataclasses.field(init=False)
   global_substep: int = 0
 
   # Per-environment episode counters (reset on env_mask)
@@ -54,6 +55,9 @@ class Clock:
   episode_substep: torch.Tensor = dataclasses.field(init=False)
 
   def __post_init__(self) -> None:
+    self.global_step = torch.zeros(
+        (), dtype=torch.int64, device=self.xpu_device
+    )
     self.episode_step = torch.zeros(
         self.nworld, dtype=torch.int64, device=self.xpu_device
     )
@@ -82,8 +86,15 @@ class Clock:
 
   def tick_step(self) -> None:
     """Advances the control step counters by 1."""
-    self.global_step += 1
+    self.global_step.add_(1)
     self.episode_step += 1
+
+  def set_global_step(self, step: int) -> None:
+    """Sets the global step and substep counters, e.g. to resume training."""
+    if not isinstance(step, int) or step < 0:
+      raise ValueError(f"step must be a non-negative int, got {step!r}.")
+    self.global_step.fill_(step)
+    self.global_substep = step * self.n_substeps
 
   def set_episode_step(self, steps: torch.Tensor) -> None:
     """Sets the episode step and substep counters in-place."""

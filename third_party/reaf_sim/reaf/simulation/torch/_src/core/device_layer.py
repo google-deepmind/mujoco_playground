@@ -297,7 +297,6 @@ class DeviceLayer:
       self._substep(commands, is_last_substep=i == self._n_substeps - 1)
 
     self._commit_output_buffers(self._latest_measurements, env_mask=None)
-    self._clock.tick_step()
     profile.frame_mark()
     return self._output_buffers
 
@@ -363,6 +362,8 @@ class DeviceLayer:
     """Runs one physics substep and the per-substep hooks and processing."""
     self._propagate_commands(commands)
     self.sim.step()
+    if is_last_substep:
+      self._clock.tick_step()
     self._substep_measurements(is_last_substep=is_last_substep)
 
   @profile.trace(color=profile.Section.COMMANDS)

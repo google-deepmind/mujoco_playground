@@ -276,6 +276,7 @@ class BuildTest(absltest.TestCase):
                     scaled_step, mult=torch.tensor([50.0]), reduce="mean"
                 ),
                 "last_time": config.Metric("time", reduce="last"),
+                "global_step": config.Metric("global_step", reduce="last"),
             },
         ),
         observation_adapter={
@@ -295,11 +296,13 @@ class BuildTest(absltest.TestCase):
     ep = env.task_layer.get_episode_metrics(ts.last())
     torch.testing.assert_close(ep["scaled"], torch.tensor(1.5))
     torch.testing.assert_close(ep["last_time"], torch.tensor(0.04))
+    torch.testing.assert_close(ep["global_step"], torch.tensor(2.0))
 
     # Impl.CPP wraps update_metrics so float64 features are cast to float32.
-    env.task_layer.update_metrics(
-        {"time": torch.tensor([0.1], dtype=torch.float64)}
-    )
+    env.task_layer.update_metrics({
+        "time": torch.tensor([0.1], dtype=torch.float64),
+        "global_step": torch.tensor([2], dtype=torch.int64),
+    })
     self.assertEqual(seen_dtypes[-1], torch.float32)
 
 

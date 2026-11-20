@@ -23,21 +23,25 @@ import torch
 
 
 class ClockDevice(device_module.Device):
-  """Provides the current simulation time at each step."""
+  """Provides the current simulation time and global step at each step."""
 
   def __init__(
       self,
       name: str = "",
       time_output_name: str = "time",
+      global_step_output_name: str = "global_step",
   ):
     """Initializes the ClockDevice.
 
     Args:
       name: The name of this entity.
       time_output_name: The desired name for the time measurement output.
+      global_step_output_name: The desired name for the global control step
+        measurement output (`int64`, identical across worlds).
     """
     self._name = name
     self._output_name = time_output_name
+    self._global_step_output_name = global_step_output_name
 
   def initialize(self, simulator: simulator_module.Simulator) -> None:
     """Initialize entity with compiled model. ClockDevice has no state."""
@@ -69,22 +73,32 @@ class ClockDevice(device_module.Device):
     del simulator, consumed_substep_commands
 
   def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
-    """Defines the structure of the time measurement.
+    """Defines the structure of the time and global step measurements.
 
     Returns:
-      A dictionary specifying a single scalar float32 for the time.
+      A dictionary specifying scalar `float32` episode time and `int64` global
+      control step measurements.
     """
     return {
         self._output_name: specs.Array(
             shape=(),
             dtype=np.float32,
             name=self._output_name,
-        )
+        ),
+        self._global_step_output_name: specs.Array(
+            shape=(),
+            dtype=np.int64,
+            name=self._global_step_output_name,
+        ),
     }
 
   def get_measurements(
       self,
       simulator: simulator_module.Simulator,
   ) -> Mapping[str, torch.Tensor]:
-    """Returns the current simulation time."""
-    return {self._output_name: simulator.clock.episode_time}
+    """Returns the current simulation time and global step."""
+    clock = simulator.clock
+    return {
+        self._output_name: clock.episode_time,
+        self._global_step_output_name: clock.global_step.expand(clock.nworld),
+    }
