@@ -23,7 +23,7 @@ Running Teleoperation
 
 .. code-block:: bash
 
-    # Simulation (on macOS, replace `python` with `mjpython`)
+    # Simulation
     uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --sim
 
     # Hardware

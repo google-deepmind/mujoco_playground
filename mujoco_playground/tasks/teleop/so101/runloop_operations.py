@@ -111,7 +111,6 @@ class ViewerOperation(runloop_lib.RunloopRuntimeOperations):
   def __init__(self, viewer: Any, sim: Any, termination: Any):
     self._viewer = viewer
     self._sim = sim
-    self._viewer_data = viewer.d if hasattr(viewer, "d") else None
     self._termination = termination
 
   def before_episode_reset(self) -> bool:
@@ -122,7 +121,6 @@ class ViewerOperation(runloop_lib.RunloopRuntimeOperations):
     if not self._viewer.is_running():
       self._termination.do_terminate()
       return
-    with self._viewer.lock():
-      self._viewer.d.qpos[:] = self._sim.data.qpos[0].cpu().numpy()
-      mujoco.mj_forward(self._viewer.m, self._viewer.d)
+    self._viewer.data.qpos[:] = self._sim.data.qpos[0].cpu().numpy()
+    mujoco.mj_forward(self._viewer.model, self._viewer.data)
     self._viewer.sync()

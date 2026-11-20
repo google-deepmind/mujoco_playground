@@ -27,7 +27,6 @@ the environment reset homes the follower. Teleop is then a direct pass-through
 in the shared calibrated frame.
 """
 
-import sys
 from typing import Any
 
 from absl import app
@@ -35,6 +34,10 @@ from absl import flags
 from absl import logging
 from etils import epath
 from gdm_robotics.runtime import runloop as runloop_lib
+import mujoco
+from mujoco.studio import app as studio_app
+from mujoco.studio import launch_web
+from mujoco.studio import viewer_protocol
 from mujoco_playground import real
 from mujoco_playground.robots.so101.real import constant
 from mujoco_playground.robots.so101.real import device as so101_device
@@ -122,19 +125,14 @@ def _create_logger(
 
 
 def _launch_viewer(sim: Any) -> Any:
-  """Opens a passive viewer onto the simulated follower's own state."""
-  import mujoco.viewer
-
-  if sys.platform == "darwin" and mujoco.viewer._MJPYTHON is None:  # pylint: disable=protected-access
-    # macOS requires the viewer to own the main thread.
-    raise SystemExit(
-        "On macOS the sim viewer must run under mjpython:\n\n  uv run --extra"
-        f" cpu --extra so101 mjpython -m {__package__}.teleop --sim\n"
-    )
-  mj_model = sim.mj_model
-  return mujoco.viewer.launch_passive(
-      mj_model, mujoco.MjData(mj_model), show_left_ui=False, show_right_ui=False
+  """Opens a Studio viewer onto the simulated follower's own state."""
+  handle = launch_web.launch(
+      viewer_protocol.ViewerConfig(open_browser=True),
+      plugins=[studio_app.App()],
   )
+  mj_model = sim.mj_model
+  handle.set_model(mj_model, data=mujoco.MjData(mj_model))
+  return handle
 
 
 def main(argv):

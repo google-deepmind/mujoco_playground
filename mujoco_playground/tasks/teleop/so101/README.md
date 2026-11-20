@@ -35,16 +35,6 @@ to check the leader, the pedal and the logger before anything can collide:
 uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --sim
 ```
 
-On **macOS** the viewer must run under `mjpython` (Apple requires the GUI to
-own the main thread).
-
-```bash
-# one-time fix for mjpython on mac
-ln -sf "$(uv run python -c 'import sys; print(sys.base_prefix)')"/lib/libpython3.13.dylib .venv/lib/
-# run sim teleop
-uv run --extra so101 mjpython -m mujoco_playground.tasks.teleop.so101.teleop --sim
-```
-
 ### Real
 
 For real teleop:

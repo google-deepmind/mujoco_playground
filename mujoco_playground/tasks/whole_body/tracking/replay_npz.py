@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-r"""Replay a reference trajectory (.npz) in the MuJoCo viewer.
+r"""Replay a reference trajectory (.npz) in the MuJoCo Studio viewer.
 
 This is a standard kinematic replay utility that loads joint positions and
-body poses from an NPZ file and visualizes them using the raw MuJoCo passive
-viewer.
+body poses from an NPZ file and visualizes them using the MuJoCo Studio viewer.
 """
 
 import time
@@ -25,7 +24,9 @@ from absl import app
 from absl import flags
 from etils import epath
 import mujoco
-import mujoco.viewer
+from mujoco.studio import app as studio_app
+from mujoco.studio import launch_web
+from mujoco.studio import viewer_protocol
 from mujoco_playground import asset
 from mujoco_playground.robots.g1.sim import scene as g1_scene
 import numpy as np
@@ -65,8 +66,12 @@ def main(argv):
     body_pos_w = npz_data.get("body_pos_w", None)
     body_quat_w = npz_data.get("body_quat_w", None)
 
-  print("Launching passive viewer...")
-  with mujoco.viewer.launch_passive(model, data) as viewer:
+  print("Launching Studio viewer...")
+  with launch_web.launch(
+      viewer_protocol.ViewerConfig(open_browser=True),
+      plugins=[studio_app.App()],
+  ) as viewer:
+    viewer.set_model(model, data=data)
     while viewer.is_running():
       for frame in range(joint_pos.shape[0]):
         if not viewer.is_running():
