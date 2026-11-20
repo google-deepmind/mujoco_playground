@@ -29,12 +29,9 @@ Examples:
 """
 
 import os
-import sys
 import time
 from typing import Any
 
-if sys.platform.startswith("linux") and "MUJOCO_GL" not in os.environ:
-  os.environ["MUJOCO_GL"] = "osmesa"
 os.environ.setdefault("WARP_CACHE_PATH", "/tmp/wp_kernel_cache")
 
 # pylint: disable=g-import-not-at-top
@@ -42,6 +39,9 @@ from absl import app
 from absl import flags
 from etils import epath
 import mujoco
+from mujoco.studio import app as studio_app
+from mujoco.studio import launch_web
+from mujoco.studio import viewer_protocol
 from mujoco_playground.tasks.agentic.tabletop_v0 import agent
 from mujoco_playground.tasks.agentic.tabletop_v0 import embodiment
 from mujoco_playground.tasks.agentic.tabletop_v0 import env as agentic_env
@@ -74,7 +74,7 @@ _MAX_TURNS = flags.DEFINE_integer(
 _EPISODE_LENGTH_SECS = flags.DEFINE_float(
     "episode_length_secs", 1800.0, "Maximum active episode duration in seconds."
 )
-_VIEWER = flags.DEFINE_bool("viewer", False, "Show the native MuJoCo viewer.")
+_VIEWER = flags.DEFINE_bool("viewer", False, "Show the MuJoCo Studio viewer.")
 _HTTP_PORT = flags.DEFINE_integer("http_port", 8081, "Bridge HTTP port.")
 _BRIDGE_DIR = flags.DEFINE_string(
     "bridge_dir", "", "Bridge directory for obs.json and wrist_cam.png."
@@ -96,19 +96,9 @@ _PROMPT_FILE = epath.Path(__file__).parent / "AGENT_PROMPT.md"
 
 
 class Viewer:
-  """Native passive viewer mirroring the sim state or the measured real arm."""
+  """Studio viewer mirroring the sim state or the measured real arm."""
 
   def __init__(self, env, is_real: bool, emb: embodiment.Embodiment):
-    import mujoco.viewer  # pylint: disable=g-import-not-at-top
-
-    if sys.platform == "darwin" and mujoco.viewer._MJPYTHON is None:  # pylint: disable=protected-access
-      # macOS requires the viewer to own the main thread.
-      raise SystemExit(
-          "On macOS the viewer must run under mjpython:\n\n  uv run --extra"
-          f" {emb.name} mjpython -m {__package__}.run"
-          f" {' '.join(sys.argv[1:])}\n"
-      )
-
     self._is_real = is_real
     self._env = env
     self._emb = emb
@@ -126,14 +116,16 @@ class Viewer:
     else:
       sim = env.device_layer.sim
       self._model, self._data = sim.mj_model, sim.mj_data
-    self._viewer = mujoco.viewer.launch_passive(
-        self._model, self._data, show_left_ui=False, show_right_ui=False
-    )
     lookat, distance, azimuth, elevation = emb.overview_camera
-    self._viewer.cam.lookat[:] = lookat
-    self._viewer.cam.distance = distance * 1.6
-    self._viewer.cam.azimuth = azimuth
-    self._viewer.cam.elevation = elevation
+    self._model.stat.center[:] = lookat
+    self._model.stat.extent = (distance * 1.6) / 1.5
+    self._model.vis.global_.azimuth = azimuth
+    self._model.vis.global_.elevation = elevation
+    self._viewer = launch_web.launch(
+        viewer_protocol.ViewerConfig(open_browser=True),
+        plugins=[studio_app.App()],
+    )
+    self._viewer.set_model(self._model, data=self._data)
 
   @property
   def running(self) -> bool:

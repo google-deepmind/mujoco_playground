@@ -79,14 +79,6 @@ following mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md
 
 Swap `sim` for `real` to run on hardware, or `so101` for `yam` (see [`AGENT_PROMPT.md`](mujoco_playground/tasks/agentic/tabletop_v0/AGENT_PROMPT.md)).
 
-> [!NOTE]
-> On macOS, `--viewer` requires `mjpython` in place of `python`. Before the
-> first run, link `libpython` into the virtualenv so `mjpython` can load it:
->
-> ```bash
-> ln -sf "$(uv run python -c 'import sys; print(sys.base_prefix)')"/lib/libpython3.13.dylib .venv/lib/
-> ```
-
 ### Train, visualize, and deploy an RL policy
 
 Train an `SO101PickCube` PPO policy with [RSL-RL](https://github.com/leggedrobotics/rsl_rl) and inspect it in the MuJoCo Studio web viewer:
