@@ -92,7 +92,7 @@ class ArticulatedDevice(device.Device):
     if self._joint_names is not None:
       self._joints = [mj_spec.joint(jn) for jn in self._joint_names]
     else:
-      self._joints = [j for j in mj_spec.joints if j.name]
+      self._joints = list(mj_spec.joints)
     if not self._joints:
       raise ValueError("No joints found in spec.")
 
@@ -137,8 +137,9 @@ class ArticulatedDevice(device.Device):
             shape=(qvel_size,), dtype=np.float32
         )
       elif m == "joint_range":
+        assert self._joints is not None
         result[f"{self._name}/{m}"] = specs.Array(
-            shape=(qpos_size, 2), dtype=np.float32
+            shape=(len(self._joints), 2), dtype=np.float32
         )
     return result
 
@@ -160,8 +161,11 @@ class ArticulatedDevice(device.Device):
       assert self._home_qvel is not None
       result[f"{self._name}/home_qvel"] = self._home_qvel
     if "joint_range" in self._measurements:
+      assert self._joints is not None
       bound_model = simulator.model.bind(self._joints)
-      result[f"{self._name}/joint_range"] = bound_model.range
+      result[f"{self._name}/joint_range"] = bound_model.range.reshape(
+          simulator.nworld, len(self._joints), 2
+      )
     return result
 
   def set_qpos(self, env_mask: torch.Tensor | None, qpos: torch.Tensor) -> None:

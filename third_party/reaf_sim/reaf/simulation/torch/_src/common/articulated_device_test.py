@@ -16,8 +16,8 @@
 """Tests for ArticulatedDevice."""
 
 from absl.testing import absltest
+from absl.testing import parameterized
 import mujoco
-import mujoco_warp as mjw
 import numpy as np
 from reaf.simulation.torch._src.common import articulated_device
 from reaf.simulation.torch._src.core import simulator as simulator_module
@@ -71,7 +71,7 @@ def _setup(measurements=None):
   return dev, sim, spec
 
 
-class ArticulatedDeviceTest(absltest.TestCase):
+class ArticulatedDeviceTest(parameterized.TestCase):
 
   def test_measurements_spec(self):
     dev, _, _ = _setup(measurements=["joint_pos", "joint_vel"])
@@ -122,6 +122,60 @@ class ArticulatedDeviceTest(absltest.TestCase):
     dev.set_qvel(None, new_qvel)
     np.testing.assert_allclose(
         data.qvel[:, :2].cpu().numpy(), new_qvel.cpu().numpy()
+    )
+
+  @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
+  def test_joint_range_shapes_with_unnamed_ball_joint(self, impl: types.Impl):
+    xml = """
+    <mujoco>
+      <compiler angle="radian"/>
+      <worldbody>
+        <body>
+          <joint type="ball" range="0 1.2"/>
+          <geom size="0.1"/>
+          <body pos="0 0 -0.2">
+            <joint name="elbow" type="hinge" range="-2.0 0.1"/>
+            <geom size="0.1"/>
+          </body>
+        </body>
+      </worldbody>
+    </mujoco>
+    """
+    nworld = 1 if impl == types.Impl.CPP else 2
+    xpu_device = _DEVICE if impl == types.Impl.WARP else "cpu"
+    sim = simulator_module.Simulator(
+        mj_spec=mujoco.MjSpec.from_string(xml),
+        nworld=nworld,
+        impl=impl,
+        xpu_device=xpu_device,
+    )
+    all_joints = articulated_device.ArticulatedDevice(
+        name="all", measurements=["joint_range"], xpu_device=xpu_device
+    )
+    elbow = articulated_device.ArticulatedDevice(
+        name="elbow",
+        measurements=["joint_range"],
+        xpu_device=xpu_device,
+        joint_names=["elbow"],
+    )
+    all_joints.initialize(sim)
+    elbow.initialize(sim)
+
+    self.assertEqual(
+        all_joints.substep_measurements_spec()["all/joint_range"].shape, (2, 2)
+    )
+    self.assertEqual(
+        elbow.substep_measurements_spec()["elbow/joint_range"].shape, (1, 2)
+    )
+    np.testing.assert_allclose(
+        all_joints.get_measurements(sim)["all/joint_range"].cpu().numpy(),
+        [[[0.0, 1.2], [-2.0, 0.1]]] * nworld,
+        rtol=1e-6,
+    )
+    np.testing.assert_allclose(
+        elbow.get_measurements(sim)["elbow/joint_range"].cpu().numpy(),
+        [[[-2.0, 0.1]]] * nworld,
+        rtol=1e-6,
     )
 
 
