@@ -47,8 +47,8 @@ class _ScriptedBus:
     self.frames = list(frames)
     self.reads = 0
 
-  def sync_read(self, register, motors, normalize=True):
-    assert register == "Present_Position" and not normalize
+  def sync_read(self, register, motors, normalize=True, num_retry=0):
+    assert register == "Present_Position" and not normalize and num_retry == 5
     frame = self.frames[self.reads]
     self.reads += 1
     return {name: frame[name] for name in motors}
@@ -65,8 +65,67 @@ class CaptureMiddleTest(absltest.TestCase):
       middle = get_calibration._capture_middle(bus)
 
     bus.set_half_turn_homings.assert_called_once()
-    bus.sync_read.assert_called_once_with("Present_Position", normalize=False)
+    bus.sync_read.assert_called_once_with(
+        "Present_Position", normalize=False, num_retry=5
+    )
     self.assertEqual(middle["shoulder_pan"], 2047)
+
+  @mock.patch("builtins.input", return_value="")
+  def test_capture_middle_retries_set_half_turn_homings(self, _):
+    bus = mock.Mock()
+    bus.set_half_turn_homings.side_effect = [ConnectionError("stray byte"), {}]
+    bus.sync_read.return_value = {name: 2047 for name in constant.JOINTS}
+
+    with contextlib.redirect_stdout(io.StringIO()):
+      get_calibration._capture_middle(bus)
+
+    self.assertEqual(bus.set_half_turn_homings.call_count, 2)
+
+  @mock.patch("builtins.input", return_value="")
+  def test_capture_middle_gives_up_after_five_retries(self, _):
+    bus = mock.Mock()
+    bus.set_half_turn_homings.side_effect = ConnectionError("stray byte")
+
+    with contextlib.redirect_stdout(io.StringIO()):
+      with self.assertRaises(ConnectionError):
+        get_calibration._capture_middle(bus)
+
+    self.assertEqual(bus.set_half_turn_homings.call_count, 6)
+    bus.sync_read.assert_not_called()
+
+
+class CalibrateArmTest(absltest.TestCase):
+
+  def test_retries_the_operating_mode_writes(self):
+    class Stop(Exception):
+      pass
+
+    bus = mock.Mock()
+    position = types.SimpleNamespace(value=0)
+    feetech = types.SimpleNamespace(
+        OperatingMode=types.SimpleNamespace(POSITION=position)
+    )
+    motors = types.SimpleNamespace(feetech=feetech)
+    modules = {
+        "lerobot": types.SimpleNamespace(motors=motors),
+        "lerobot.motors": motors,
+        "lerobot.motors.feetech": feetech,
+    }
+    with (
+        mock.patch.dict(sys.modules, modules),
+        mock.patch.object(get_calibration, "_make_bus", return_value=bus),
+        mock.patch.object(get_calibration, "_make_passive"),
+        mock.patch.object(get_calibration, "_capture_middle", side_effect=Stop),
+        contextlib.redirect_stdout(io.StringIO()),
+    ):
+      with self.assertRaises(Stop):
+        get_calibration._calibrate_arm("follower", "/dev/null", "serial")
+
+    self.assertLen(bus.write.call_args_list, len(constant.JOINTS))
+    for call in bus.write.call_args_list:
+      self.assertEqual(call.args[0], "Operating_Mode")
+      self.assertEqual(call.kwargs, {"num_retry": 5})
+    bus.disconnect.assert_called_once()
 
 
 class RecordRangesTest(absltest.TestCase):
