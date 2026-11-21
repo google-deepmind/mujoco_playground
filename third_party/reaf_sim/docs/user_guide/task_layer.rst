@@ -155,7 +155,9 @@ Episode endings distinguish between task failure/completion (termination) and ti
 - **Task terminations**: Evaluated by :class:`~reaf.simulation.torch.FunctionalTerminationChecker` based on criteria
   from features.
 - **Timeouts**: Handled automatically by :class:`~reaf.simulation.torch.TimeoutTerminationChecker` based on
-  ``episode_length_secs`` in the environment configuration.
+  ``episode_length_secs`` in the environment configuration. Truncation is checked against elapsed time rather than step
+  count so the same task layer works on hardware (where a wall-clock ``ClockDevice`` measures elapsed seconds); call
+  ``checker.max_steps(env.device_layer.control_timestep)`` to get the exact simulated truncation step count.
 - **Discounts**: Computed by :class:`~reaf.simulation.torch.DefaultDiscountProvider`, emitting ``gamma = 0.0`` on
   termination (task failure/success) and ``gamma = 1.0`` on truncation (timeout) or continuation.
 

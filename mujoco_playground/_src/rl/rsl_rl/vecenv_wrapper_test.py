@@ -35,6 +35,7 @@ from reaf.simulation.torch import reward_provider
 from reaf.simulation.torch import simulator as simulator_module
 from reaf.simulation.torch import task_layer as task_layer_module
 from reaf.simulation.torch import termination_checker
+from reaf.simulation.torch import TimeoutTerminationChecker
 from reaf.simulation.torch import types
 import torch
 
@@ -260,7 +261,7 @@ class VecEnvWrapperTest(absltest.TestCase):
         impl=self.IMPL,
     )
 
-    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=1000)
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
 
     # Step 3 times to trigger termination (0.06s > 0.04s).
     action = torch.zeros(nworld, 1, dtype=torch.float32, device=self.DEVICE)
@@ -283,7 +284,7 @@ class VecEnvWrapperTest(absltest.TestCase):
         impl=self.IMPL,
     )
 
-    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=1000)
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
 
     # Initially episode_length_buf should be 0.
     self.assertTrue(torch.all(wrapper.episode_length_buf == 0))
@@ -309,7 +310,7 @@ class VecEnvWrapperTest(absltest.TestCase):
         impl=self.IMPL,
     )
 
-    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=50)
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
     control_timestep = wrapper._control_timestep
 
     # Get access to data.time for verification.
@@ -340,7 +341,7 @@ class VecEnvWrapperTest(absltest.TestCase):
     env = _build_pendulum_env(
         nworld=1, xpu_device=self.DEVICE, timeouts=timeouts, impl=self.IMPL
     )
-    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=50)
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
     self.assertEqual(wrapper.global_step, 0)
 
     wrapper.step(torch.zeros(1, 1, dtype=torch.float32, device=self.DEVICE))
@@ -367,7 +368,7 @@ class VecEnvWrapperTest(absltest.TestCase):
     comp.set_env(env)
     env._environment_reset = comp  # pylint: disable=protected-access
 
-    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=100)
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
     wrapper.unwrapped.device_layer.sim.mj_model.opt.disableflags |= (
         mujoco.mjtDisableBit.mjDSBL_AUTORESET
     )
@@ -406,7 +407,7 @@ class VecEnvWrapperTest(absltest.TestCase):
         metric_provider=metric_provider,
     )
 
-    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=100)
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
     action = torch.zeros(nworld, 1, dtype=torch.float32, device=self.DEVICE)
 
     # Steps 1-2 (0.02s, 0.04s): mid-episode for both worlds, no metrics logged.
@@ -501,6 +502,47 @@ class VecEnvWrapperTest(absltest.TestCase):
     )
     with self.assertRaisesRegex(ValueError, "Expected actions of width 8"):
       vecenv_wrapper.split_actions(torch.zeros(2, 4), action_spec)
+
+  def test_max_episode_length_and_reset(self):
+    action = torch.zeros(1, 1, dtype=torch.float32, device=self.DEVICE)
+    env = _build_pendulum_env(
+        nworld=1,
+        xpu_device=self.DEVICE,
+        timeouts=torch.tensor([10.0], dtype=torch.float32, device=self.DEVICE),
+        impl=self.IMPL,
+    )
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
+    wrapper.step(action)
+    wrapper.reset()
+    self.assertEqual(wrapper.episode_length_buf.item(), 0)
+
+    env.task_layer._termination_checkers = []
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
+    with self.assertRaises(ValueError):
+      _ = wrapper.max_episode_length
+
+    env.task_layer._termination_checkers = [
+        TimeoutTerminationChecker(
+            timeout=0.03, time_feature_name="time", xpu_device=self.DEVICE
+        )
+    ]
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env)
+    self.assertEqual(wrapper.max_episode_length, 2)
+    _, _, dones, extras = wrapper.step(action)
+    self.assertEqual(dones.item(), 0)
+    self.assertFalse(extras["time_outs"].item())
+    _, _, dones, extras = wrapper.step(action)
+    self.assertEqual(dones.item(), 1)
+    self.assertTrue(extras["time_outs"].item())
+    self.assertEqual(wrapper.episode_length_buf.item(), 0)
+
+    wrapper.episode_length_buf = torch.tensor(
+        [wrapper.max_episode_length - 1], device=self.DEVICE
+    )
+    _, _, dones, extras = wrapper.step(action)
+    self.assertEqual(dones.item(), 1)
+    self.assertTrue(extras["time_outs"].item())
+    self.assertEqual(wrapper.episode_length_buf.item(), 0)
 
 
 if __name__ == "__main__":

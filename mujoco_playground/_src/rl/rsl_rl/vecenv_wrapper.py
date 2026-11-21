@@ -45,8 +45,7 @@ def _derive_max_episode_length(env: reaf_env.Environment) -> int:
     if isinstance(
         checker, timeout_termination_checker.TimeoutTerminationChecker
     ):
-      control_dt = env.device_layer.control_timestep
-      return round(checker.timeout / control_dt)
+      return checker.max_steps(env.device_layer.control_timestep)
   raise ValueError("No TimeoutTerminationChecker found in the environment.")
 
 
@@ -76,7 +75,6 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
       env: reaf_env.Environment,
       clip_actions: float | None = None,
       cfg: rsl_config.RslRlVecEnvWrappercfg | None = None,
-      max_episode_length: int | None = None,
   ):
     if clip_actions:
       raise ValueError("clip_actions is not supported.")
@@ -90,16 +88,7 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     self.device = torch.device(self.env.xpu_device)
     self._cfg = cfg or rsl_config.RslRlVecEnvWrappercfg()
 
-    # max_episode_length is required by RSL-RL.
-    # Derive max_episode_length from TimeoutTerminationChecker if present.
-    self._max_episode_length = max_episode_length or _derive_max_episode_length(
-        self.env
-    )
     self._control_timestep = self.env.device_layer.control_timestep
-    # Track episode length per env for RSL-RL's init_at_random_ep_len
-    self._episode_length_buf = torch.zeros(
-        self.num_envs, device=self.device, dtype=torch.long
-    )
 
     self._action_spec = self.unwrapped.action_spec()
     self.num_actions = sum(
@@ -142,17 +131,22 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
   @property
   def max_episode_length(self) -> int:  # pyrefly: ignore[bad-override]
     """Maximum episode length in steps, required by RSL-RL."""
-    return self._max_episode_length
+    return _derive_max_episode_length(self.env)
 
   @property
   def episode_length_buf(self) -> torch.Tensor:
-    return self._episode_length_buf
+    sim = self.unwrapped.device_layer.sim
+    if sim is None:
+      raise RuntimeError("episode_length_buf requires a simulated environment.")
+    return sim.clock.episode_step
 
   @episode_length_buf.setter
   @torch.inference_mode()
   def episode_length_buf(self, value: torch.Tensor) -> None:  # type: ignore
-    self._episode_length_buf = value
-    self.unwrapped.device_layer.sim.set_episode_step(value)
+    sim = self.unwrapped.device_layer.sim
+    if sim is None:
+      raise RuntimeError("episode_length_buf requires a simulated environment.")
+    sim.set_episode_step(value)
 
   @property
   def global_step(self) -> int:
@@ -211,9 +205,6 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     rew_dict = _dict_reward_from_timestep(self._timestep)
     rew = rew_dict["reward"]
 
-    # Increment episode length buffer for this step.
-    self._episode_length_buf += 1
-
     is_last = self._timestep.step_type == dm_env.StepType.LAST
     terminated = is_last & (self._timestep.discount == 0)
     truncated = is_last & (self._timestep.discount > 0)
@@ -245,8 +236,6 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
             done_mask
         ].mean()
         self._episode_sums[k][done_mask] = 0.0
-      # Reset episode length for done envs.
-      self._episode_length_buf[done_mask] = 0
       self._timestep = self.env.reset_with_options(
           options=self.env.default_reset_options(),
           env_mask=done_mask,

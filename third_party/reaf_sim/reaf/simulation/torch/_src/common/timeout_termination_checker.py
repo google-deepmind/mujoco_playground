@@ -15,7 +15,9 @@
 """Truncates when the episode time reaches the specified timeout."""
 
 from collections.abc import Mapping
+import math
 
+import numpy as np
 from reaf.simulation.torch._src.core import termination_checker
 import torch
 
@@ -27,7 +29,7 @@ class TimeoutTerminationChecker(termination_checker.TerminationChecker):
       self,
       timeout: float,
       time_feature_name: str,
-      xpu_device: str = 'cuda:0',
+      xpu_device: str = "cuda:0",
   ):
     self._timeout_secs = float(timeout)
     self._timeout = torch.tensor(
@@ -36,12 +38,36 @@ class TimeoutTerminationChecker(termination_checker.TerminationChecker):
     self._time_feature_name = time_feature_name
 
   def name(self) -> str:
-    return 'timeout_termination'
+    return "timeout_termination"
 
   @property
   def timeout(self) -> float:
     """Returns the episode timeout in seconds."""
     return self._timeout_secs
+
+  def max_steps(self, control_timestep: float) -> int:
+    """Returns the first control step at which `check_termination` truncates.
+
+    Pass `env.device_layer.control_timestep` so the result matches the simulated
+    float32 timestep.
+    """
+    if not math.isfinite(control_timestep) or control_timestep <= 0:
+      raise ValueError(
+          f"control_timestep must be finite and > 0, got {control_timestep}."
+      )
+    with np.errstate(over="ignore"):
+      timeout_f32 = np.float32(self._timeout_secs)
+    if not np.isfinite(timeout_f32) or timeout_f32 <= 0:
+      raise ValueError(
+          "timeout must be finite in float32 and > 0, got"
+          f" {self._timeout_secs}."
+      )
+    # Mirror the float32 `time >= timeout` comparison so the result matches the
+    # truncation step even when `timeout` is not a multiple of `control_timestep`.
+    steps = max(1, math.ceil(self._timeout_secs / control_timestep) - 1)
+    while np.float32(steps * control_timestep) < timeout_f32:
+      steps += 1
+    return steps
 
   def check_termination(
       self, required_features: Mapping[str, torch.Tensor]

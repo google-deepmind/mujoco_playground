@@ -14,6 +14,7 @@
 
 from collections.abc import Mapping
 import itertools
+import math
 from typing import TypeAlias
 from unittest import mock
 
@@ -157,6 +158,22 @@ class TimeoutTerminationCheckerTest(parameterized.TestCase):
         termination_checker.TerminationResult.TRUNCATE,
     ])
     torch.testing.assert_close(result, expected)
+
+  def test_max_steps(self):
+    def max_steps(timeout, control_timestep):
+      return timeout_termination_checker.TimeoutTerminationChecker(
+          timeout=timeout, time_feature_name="time", xpu_device="cpu"
+      ).max_steps(control_timestep)
+
+    self.assertEqual(max_steps(10.0, 0.02), 500)
+    self.assertEqual(max_steps(0.03, 0.02), 2)
+
+    self.assertEqual(math.ceil(8.05 / 0.001), 8051)
+    self.assertGreaterEqual(np.float32(8050 * 0.001), np.float32(8.05))
+    self.assertEqual(max_steps(8.05, 0.001), 8050)
+    for bad_timeout in (0.0, -1.0, 1e39):
+      with self.assertRaises(ValueError):
+        max_steps(bad_timeout, 0.02)
 
 
 if __name__ == "__main__":
