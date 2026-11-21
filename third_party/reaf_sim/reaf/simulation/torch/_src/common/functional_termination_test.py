@@ -16,6 +16,7 @@
 
 from absl.testing import absltest
 from reaf.simulation.torch._src.builders.flat_scene.config import Term
+from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.common import functional_termination
 from reaf.simulation.torch._src.core import termination_checker
 import torch
@@ -59,6 +60,32 @@ class FunctionalTerminationCheckerTest(absltest.TestCase):
     self.assertEqual(check([True, False], [True, False]), [T, N])  # T > R
     # Both worlds
     self.assertEqual(check([True, True], [True, True]), [T, T])
+
+  def test_curriculum_param(self):
+    checker = functional_termination.FunctionalTerminationChecker(
+        name="test",
+        terms=[
+            Term(
+                lambda m, limit: torch.where(
+                    (m["err"] > limit).any(dim=-1), T, N
+                ),
+                limit=1.0,
+            ).curriculum(limit=curriculum.Stages([(10, 0.5)])),
+        ],
+        required_keys=["err", "global_step"],
+    )
+    checker.initialize(nworld=3, device=torch.device("cpu"))
+    err = torch.tensor([[0.1, 0.3], [0.2, 0.7], [0.4, 0.4]])
+
+    before = checker.check_termination(
+        {"err": err, "global_step": torch.zeros(3, dtype=torch.int64)}
+    )
+    self.assertEqual(before.tolist(), [N, N, N])
+
+    after = checker.check_termination(
+        {"err": err, "global_step": torch.full((3,), 10, dtype=torch.int64)}
+    )
+    self.assertEqual(after.tolist(), [N, T, N])
 
 
 if __name__ == "__main__":

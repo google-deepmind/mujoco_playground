@@ -21,6 +21,7 @@ from reaf.core import termination_checker
 from reaf.simulation.torch._src.builders import config as builders_config
 from reaf.simulation.torch._src.builders.flat_scene import build
 from reaf.simulation.torch._src.builders.flat_scene import config
+from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.common import functional_reset
 from reaf.simulation.torch._src.common import model_randomization
 from reaf.simulation.torch._src.common import noise
@@ -279,6 +280,85 @@ class DomainRandomizationResetterTest(absltest.TestCase):
       torch.testing.assert_close(
           self.model.body_mass[:, cart_body_id], expected_reset
       )
+
+  def test_curriculum_param(self):
+    cart_body_id = self.mj_model.body("cart").id
+    base_mass = self.model.body_mass[:, cart_body_id].clone()
+
+    def scale_mass(model, spec, xpu_device, env_mask, factor):
+      del spec, xpu_device
+      model.body_mass[:, cart_body_id] = torch.where(
+          env_mask, base_mass * factor, model.body_mass[:, cart_body_id]
+      )
+
+    term = config.Term(
+        func=scale_mass,
+        factor=1.0,
+        trigger="reset",
+    ).curriculum(factor=curriculum.Stages([(10, 2.5)]))
+    res = resetter.DomainRandomizationResetter([term])
+    res.set_env(self.env)
+
+    all_mask = torch.ones(4, dtype=torch.bool, device=self.xpu_device)
+    res.on_reset(config=None, env_mask=all_mask)
+    torch.testing.assert_close(self.model.body_mass[:, cart_body_id], base_mass)
+
+    self.sim_device.clock.set_global_step(10)
+    res.on_reset(config=None, env_mask=all_mask)
+    torch.testing.assert_close(
+        self.model.body_mass[:, cart_body_id], base_mass * 2.5
+    )
+
+  def test_curriculum_rejects_trigger(self):
+    term = config.Term(
+        func=model_randomization.randomize_field,
+        field="geom_friction",
+        pattern="cart",
+        noise=noise.Noise(dist=noise.Uniform(low=0.1, high=0.9), op="replace"),
+        trigger="reset",
+    ).curriculum(trigger=curriculum.Stages([(10, 1.0)]))
+    with self.assertRaisesRegex(ValueError, "trigger"):
+      resetter.DomainRandomizationResetter([term])
+
+  def test_curriculum_rejects_startup_and_custom_key(self):
+    startup_term = config.Term(
+        func=lambda *args, **kwargs: None,
+        factor=1.0,
+    ).curriculum(factor=curriculum.Stages([(10, 2.0)]))
+    with self.assertRaisesRegex(ValueError, "startup"):
+      resetter.DomainRandomizationResetter([startup_term])
+
+    custom_key_term = config.Term(
+        func=lambda *args, **kwargs: None,
+        factor=1.0,
+        trigger="reset",
+    ).curriculum(factor=curriculum.Stages([(10, 2.0)], key="phase"))
+    with self.assertRaisesRegex(ValueError, "global_step"):
+      resetter.DomainRandomizationResetter([custom_key_term])
+    with self.assertRaisesRegex(ValueError, "global_step"):
+      resetter.TerminationResetter([custom_key_term])
+
+  def test_termination_resetter_curriculum_param(self):
+    self.sim_device.sim.data.qpos[:, 0] = torch.tensor(
+        [0.2, 0.8, 0.2, 0.8], device=self.xpu_device
+    )
+    term = config.Term(
+        func=lambda dl, limit: dl.sim.data.qpos[:, 0] > limit,
+        limit=1.0,
+    ).curriculum(limit=curriculum.Stages([(10, 0.5)]))
+    res = resetter.TerminationResetter([term])
+    res.set_env(self.env)
+
+    t = termination_checker.TerminationResult.TERMINATE
+    n = termination_checker.TerminationResult.DO_NOT_TERMINATE
+    before = res.check_termination()
+    assert before is not None
+    self.assertEqual(before.tolist(), [n, n, n, n])
+
+    self.sim_device.clock.set_global_step(10)
+    after = res.check_termination()
+    assert after is not None
+    self.assertEqual(after.tolist(), [n, t, n, t])
 
   def test_functional_reset_in_composite_and_strips_type_param(self):
     startup_called = []

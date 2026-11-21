@@ -26,21 +26,21 @@ class CurriculumTest(absltest.TestCase):
 
     torch.testing.assert_close(
         curriculum.evaluate(
-            sched, {"global_step": torch.tensor([0, 9])}, default=-0.01
+            sched, {"global_step": torch.tensor([0, 0])}, default=-0.01
         ),
-        torch.tensor([-0.01, -0.01]),
+        torch.tensor(-0.01),
     )
     torch.testing.assert_close(
         curriculum.evaluate(
-            sched, {"global_step": torch.tensor([10, 19])}, default=-0.01
+            sched, {"global_step": torch.tensor([10, 10])}, default=-0.01
         ),
-        torch.tensor([-0.02, -0.02]),
+        torch.tensor(-0.02),
     )
     torch.testing.assert_close(
         curriculum.evaluate(
-            sched, {"global_step": torch.tensor([20, 100])}, default=-0.01
+            sched, {"global_step": torch.tensor([20, 20])}, default=-0.01
         ),
-        torch.tensor([-0.04, -0.04]),
+        torch.tensor(-0.04),
     )
 
   def test_stages_supports_custom_per_world_feature_key(self):
@@ -52,17 +52,15 @@ class CurriculumTest(absltest.TestCase):
     )
 
   def test_stages_squeezes_trailing_unit_dim_and_rejects_higher_rank(self):
-    sched = curriculum.Stages([(10, 2.0)])
+    sched = curriculum.Stages([(10, 2.0)], key="phase")
     torch.testing.assert_close(
         curriculum.evaluate(
-            sched, {"global_step": torch.tensor([[0], [10]])}, default=1.0
+            sched, {"phase": torch.tensor([[0], [10]])}, default=1.0
         ),
         torch.tensor([1.0, 2.0]),
     )
     with self.assertRaisesRegex(ValueError, "Curriculum trigger"):
-      curriculum.evaluate(
-          sched, {"global_step": torch.zeros(2, 3)}, default=1.0
-      )
+      curriculum.evaluate(sched, {"phase": torch.zeros(2, 3)}, default=1.0)
 
   def test_resolve_params_rejects_non_numeric_base(self):
     sched = curriculum.Stages([(10, 2.0)])

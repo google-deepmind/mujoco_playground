@@ -19,6 +19,8 @@ import dataclasses
 
 import torch
 
+GLOBAL_STEP_KEY = "global_step"
+
 
 @dataclasses.dataclass
 class Clock:

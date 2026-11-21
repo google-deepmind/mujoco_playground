@@ -18,6 +18,7 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 from collections.abc import Set
 
+from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.core import termination_checker
 from reaf.simulation.torch._src.core.types import Term
 import torch
@@ -68,10 +69,17 @@ class FunctionalTerminationChecker(termination_checker.TerminationChecker):
   ) -> torch.Tensor:
     """Run all check functions and combine results."""
     assert self._result_buffer is not None
-    results = torch.stack(
-        [term.func(features, **term.params) for term in self._terms]
+    results = []
+    for term in self._terms:
+      params = (
+          curriculum.resolve_params(term.params, term.curricula, features)
+          if term.curricula
+          else term.params
+      )
+      results.append(term.func(features, **params))
+    torch.amax(
+        torch.stack(results).to(torch.int32), dim=0, out=self._result_buffer
     )
-    torch.amax(results.to(torch.int32), dim=0, out=self._result_buffer)
     return self._result_buffer
 
   def reset(self, env_mask: torch.Tensor | None = None) -> None:

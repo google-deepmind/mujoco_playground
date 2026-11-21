@@ -101,29 +101,41 @@ per-episode reduction mode (``reduce="mean" | "last" | "max" | "sum"``):
 Curriculum
 ----------
 
-`reaf-sim` keeps curricula declarative and stateless rather than introducing a separate cross-manager
-``CurriculumManager``. :class:`~reaf.simulation.torch.ClockDevice` exposes the monotonic control step as the
+`reaf-sim` keeps curricula declarative and stateless. :class:`~reaf.simulation.torch.ClockDevice` exposes the monotonic control step as the
 simulation-only ``global_step`` feature (any :class:`~reaf.simulation.torch.FeatureProducer` consuming it should call
 ``.mark_privileged()`` if you want to deploy on a real robot, since ``global_step`` does not generally translate to the
-real world), and :mod:`reaf.simulation.torch.curriculum` provides serializable schedule dataclasses (such as
+real world). :mod:`reaf.simulation.torch.curriculum` provides serializable schedule dataclasses (such as
 :class:`~reaf.simulation.torch.curriculum.Stages`) evaluated on device via ``curriculum.evaluate(...)``.
 
-On :class:`~reaf.simulation.torch.flat_scene.Reward`, call ``.curriculum(**schedules)`` to attach schedules to
-``weight`` or any keyword parameter (the base value acts as the initial default before the first threshold):
+On :class:`~reaf.simulation.torch.flat_scene.Term` and :class:`~reaf.simulation.torch.flat_scene.Reward`, call
+``.curriculum(**schedules)`` to attach schedules to any keyword parameter (and ``weight`` on ``Reward``; the base value
+acts as the initial default before the first threshold). Schedules are resolved for rewards, terminations, and domain
+randomization resetters:
 
 .. code-block:: python
 
     from reaf.simulation.torch import curriculum
     from reaf.simulation.torch import flat_scene
 
-    rewards = {
-        "action_rate": flat_scene.Reward(action_rate_l2, weight=-0.01).curriculum(
-            weight=curriculum.Stages([(24_000, -0.02), (48_000, -0.04)]),
-        ),
-        "tracking": flat_scene.Reward(tracking_reward, weight=1.0, std=0.5).curriculum(
-            std=curriculum.Stages([(24_000, 0.25)]),
-        ),
-    }
+    # Reward
+    flat_scene.Reward(tracking_reward, weight=1.0, std=0.5).curriculum(
+        weight=curriculum.Stages([(24_000, 2.0)]),
+        std=curriculum.Stages([(24_000, 0.25)]),
+    )
+
+    # Termination
+    flat_scene.Term(bad_object_pos, threshold=0.5).curriculum(
+        threshold=curriculum.Stages([(24_000, 0.25)]),
+    )
+
+    # Domain randomization resetter param (requires trigger="reset")
+    flat_scene.Term(randomize_mass, scale=0.05, trigger="reset").curriculum(
+        scale=curriculum.Stages([(24_000, 0.2)]),
+    )
+
+Resetters (:class:`~reaf.simulation.torch.DomainRandomizationResetter` with ``trigger="reset"`` and
+:class:`~reaf.simulation.torch.TerminationResetter`) only support schedules keyed on ``global_step``, since they run
+outside the task layer.
 
 To resume training from a checkpoint, restore the step via ``env.device_layer.clock.set_global_step(step)``.
 

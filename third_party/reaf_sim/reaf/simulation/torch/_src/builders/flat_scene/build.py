@@ -41,6 +41,24 @@ import tree
 
 _TIME_NAME = "time"
 
+_CURRICULA_SUPPORTED_COMPONENTS = (
+    functional_reward.FunctionalRewardProvider,
+    functional_termination.FunctionalTerminationChecker,
+    resetter_module.DomainRandomizationResetter,
+    resetter_module.TerminationResetter,
+)
+
+
+def _has_curricula(value: object) -> bool:
+  """Returns whether `value` contains any `Term` with curriculum schedules."""
+  if isinstance(value, config.Term):
+    return bool(value.curricula)
+  if isinstance(value, Mapping):
+    return any(_has_curricula(v) for v in value.values())
+  if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+    return any(_has_curricula(v) for v in value)
+  return False
+
 
 def _instantiate_component(
     component_type: Any,
@@ -48,6 +66,12 @@ def _instantiate_component(
     **injected_kwargs: Any,
 ) -> Any:
   """Instantiates `component_type`, injecting framework kwargs only if accepted."""
+  if _has_curricula(runtime_params) and not (
+      isinstance(component_type, type)
+      and issubclass(component_type, _CURRICULA_SUPPORTED_COMPONENTS)
+  ):
+    name = getattr(component_type, "__name__", repr(component_type))
+    raise ValueError(f"{name} does not support curriculum schedules.")
   params = dict(runtime_params)
   sig = inspect.signature(component_type)  # pyrefly: ignore[bad-argument-type]
   accepts_var_keyword = any(
@@ -270,7 +294,11 @@ def build_task_layer(
   termination_terms = list(env_config.task_layer.terminations.values())
   for term in env_config.task_layer.rewards.values():
     term.params = _move_tensors_to_device(term.params, xpu_device)
-  for term in env_config.task_layer.metrics.values():
+  for name, term in env_config.task_layer.metrics.items():
+    if term.curricula:
+      raise ValueError(
+          f"Metric {name!r} does not support curriculum schedules."
+      )
     term.params = _move_tensors_to_device(term.params, xpu_device)
   for term in termination_terms:
     term.params = _move_tensors_to_device(term.params, xpu_device)
@@ -419,6 +447,13 @@ def build_env(
 
   # Observations, can be shared between real and sim.
   # TODO(btaba): consider moving observations into the task layer instead.
+  for group_name, term_group in env_config.observation_adapter.items():
+    for name, term in term_group.terms.items():
+      if term.curricula:
+        raise ValueError(
+            f"Observation '{group_name}/{name}' does not support curriculum"
+            " schedules."
+        )
   observation_provider = functional_observation.FunctionalObservationAdapter(
       observations=env_config.observation_adapter,
       xpu_device=xpu_device,
@@ -433,7 +468,9 @@ def build_env(
   # Resetter, sim-specific.
   resetters = []
   for component in env_config.resetters.values():
-    child = component.component_type(**component.runtime_params)
+    child = _instantiate_component(
+        component.component_type, component.runtime_params
+    )
     resetters.append(child)
   if env_config.nan_termination:
     resetters.append(resetter_module.NanTerminationResetter())

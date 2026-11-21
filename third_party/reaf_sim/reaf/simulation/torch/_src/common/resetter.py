@@ -17,30 +17,54 @@
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import Sequence
-from typing import Any
 from typing import Union
 
 from gdm_robotics.interfaces import environment as gdmr_env
 import mujoco
 from reaf.core import termination_checker
+from reaf.simulation.torch._src.common import curriculum
+from reaf.simulation.torch._src.core import clock
 from reaf.simulation.torch._src.core import environment as reaf_environment
 from reaf.simulation.torch._src.core import torch_wrapper
 from reaf.simulation.torch._src.core import types
 import torch
+
+_DRTermEntry = tuple[
+    Callable[..., None],
+    dict[str, object],
+    Mapping[str, curriculum.Stages],
+]
+
+
+def _validate_resetter_curricula(
+    curricula: Mapping[str, curriculum.Stages],
+) -> None:
+  for param, schedule in curricula.items():
+    if schedule.key != clock.GLOBAL_STEP_KEY:
+      raise ValueError(
+          f"Resetter curricula only support key={clock.GLOBAL_STEP_KEY!r}, "
+          f"got {schedule.key!r} for {param!r}."
+      )
 
 
 def _apply_randomization_terms(
     model: torch_wrapper.TorchWrapper,
     spec: mujoco.MjSpec,
     xpu_device: Union[torch.device, str],
-    terms: Sequence[tuple[Callable[..., Any], dict[str, Any]]],
+    terms: Sequence[_DRTermEntry],
+    features: Mapping[str, torch.Tensor],
     env_mask: torch.Tensor | None = None,
 ) -> None:
-  for func, params in terms:
+  for func, params, curricula in terms:
+    resolved = (
+        curriculum.resolve_params(params, curricula, features)
+        if curricula
+        else params
+    )
     if env_mask is not None:
-      func(model, spec, xpu_device, env_mask=env_mask, **params)
+      func(model, spec, xpu_device, env_mask=env_mask, **resolved)
     else:
-      func(model, spec, xpu_device, **params)
+      func(model, spec, xpu_device, **resolved)
 
 
 class DomainRandomizationResetter(reaf_environment.EnvironmentReset):
@@ -52,16 +76,28 @@ class DomainRandomizationResetter(reaf_environment.EnvironmentReset):
     else:
       terms_list = list(terms)
 
-    self._startup_terms = []
-    self._reset_terms = []
+    self._startup_terms: list[_DRTermEntry] = []
+    self._reset_terms: list[_DRTermEntry] = []
 
     for term in terms_list:
       params = dict(term.params) if term.params else {}
       trigger = params.pop("trigger", "startup")
+      if "trigger" in term.curricula:
+        raise ValueError(
+            "Cannot attach a curriculum schedule to 'trigger' on a domain"
+            " randomization term."
+        )
+      if trigger == "startup" and term.curricula:
+        raise ValueError(
+            "Cannot attach curriculum schedules to trigger='startup' terms; "
+            "use trigger='reset'."
+        )
+      _validate_resetter_curricula(term.curricula)
+      entry = (term.func, params, term.curricula)
       if trigger == "startup":
-        self._startup_terms.append((term.func, params))
+        self._startup_terms.append(entry)
       elif trigger == "reset":
-        self._reset_terms.append((term.func, params))
+        self._reset_terms.append(entry)
       else:
         raise ValueError(f"Invalid domain randomization trigger: '{trigger}'")
 
@@ -75,6 +111,7 @@ class DomainRandomizationResetter(reaf_environment.EnvironmentReset):
         sim_device.sim.mj_spec,
         self._env.xpu_device,
         self._startup_terms,
+        features={clock.GLOBAL_STEP_KEY: sim_device.clock.global_step},
     )
 
   def on_reset(
@@ -90,6 +127,7 @@ class DomainRandomizationResetter(reaf_environment.EnvironmentReset):
         sim_device.sim.mj_spec,
         self._env.xpu_device,
         self._reset_terms,
+        features={clock.GLOBAL_STEP_KEY: sim_device.clock.global_step},
         env_mask=env_mask,
     )
 
@@ -172,6 +210,8 @@ class TerminationResetter(reaf_environment.EnvironmentReset):
 
   def __init__(self, terms: Sequence[types.Term]):
     self._terms = list(terms)
+    for term in self._terms:
+      _validate_resetter_curricula(term.curricula)
 
   def on_reset(
       self,
@@ -189,8 +229,14 @@ class TerminationResetter(reaf_environment.EnvironmentReset):
     terminate = torch.zeros(
         self._nworld, dtype=torch.bool, device=self._xpu_device
     )
+    features = {clock.GLOBAL_STEP_KEY: device_layer.clock.global_step}
     for term in self._terms:
-      result = term.func(device_layer, **term.params)
+      params = (
+          curriculum.resolve_params(term.params, term.curricula, features)
+          if term.curricula
+          else term.params
+      )
+      result = term.func(device_layer, **params)
       terminate = terminate | result
 
     return torch.where(

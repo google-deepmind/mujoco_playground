@@ -17,6 +17,7 @@ from collections.abc import Mapping
 
 from dm_env import specs
 import numpy as np
+from reaf.simulation.torch._src.core import clock as clock_module
 from reaf.simulation.torch._src.core import device as device_module
 from reaf.simulation.torch._src.core import simulator as simulator_module
 import torch
@@ -29,7 +30,7 @@ class ClockDevice(device_module.Device):
       self,
       name: str = "",
       time_output_name: str = "time",
-      global_step_output_name: str = "global_step",
+      global_step_output_name: str = clock_module.GLOBAL_STEP_KEY,
   ):
     """Initializes the ClockDevice.
 

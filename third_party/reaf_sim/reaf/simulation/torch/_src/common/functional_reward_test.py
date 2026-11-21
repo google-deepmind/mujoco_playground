@@ -151,19 +151,28 @@ class FunctionalRewardProviderTest(absltest.TestCase):
 
     base = {"x": torch.tensor([1.0, 2.0]), "y": torch.tensor([1.0, 1.0])}
     # Before threshold: uses default weight (-0.5) and scale (1.0).
-    r0 = provider.compute_reward({**base, "global_step": torch.tensor([0, 9])})
+    r0 = provider.compute_reward({**base, "global_step": torch.tensor([0, 0])})
     torch.testing.assert_close(r0["reward"], torch.tensor([0.75, 1.75]))
     torch.testing.assert_close(
         r0["terms"]["weighted/ramped"], torch.tensor([-0.25, -0.25])
     )
 
-    # World 0: weight=-1.0, scale=1.0; World 1: weight=-2.0, scale=3.0.
+    # Stage 1: weight=-1.0, scale=1.0.
     r1 = provider.compute_reward(
-        {**base, "global_step": torch.tensor([10, 20])}
+        {**base, "global_step": torch.tensor([10, 10])}
     )
-    torch.testing.assert_close(r1["reward"], torch.tensor([0.5, -1.0]))
+    torch.testing.assert_close(r1["reward"], torch.tensor([0.5, 1.5]))
     torch.testing.assert_close(
-        r1["terms"]["weighted/ramped"], torch.tensor([-0.5, -3.0])
+        r1["terms"]["weighted/ramped"], torch.tensor([-0.5, -0.5])
+    )
+
+    # Stage 2: weight=-2.0, scale=3.0.
+    r2 = provider.compute_reward(
+        {**base, "global_step": torch.tensor([20, 20])}
+    )
+    torch.testing.assert_close(r2["reward"], torch.tensor([-2.0, -1.0]))
+    torch.testing.assert_close(
+        r2["terms"]["weighted/ramped"], torch.tensor([-3.0, -3.0])
     )
 
   def test_curriculum_rejects_unknown_key(self):

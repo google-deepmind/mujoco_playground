@@ -19,6 +19,7 @@ from collections.abc import Mapping
 from collections.abc import Sequence
 import dataclasses
 
+from reaf.simulation.torch._src.core import clock
 import torch
 
 
@@ -31,7 +32,7 @@ class Stages:
   """
 
   stages: Sequence[tuple[int | float, float]]
-  key: str = "global_step"
+  key: str = clock.GLOBAL_STEP_KEY
 
   def __post_init__(self) -> None:
     thresholds = [t for t, _ in self.stages]
@@ -55,6 +56,10 @@ def eval_stages(
         f"Curriculum trigger {schedule.key!r} must have shape (), (nworld,), "
         f"or (nworld, 1), got {tuple(trigger.shape)}."
     )
+  # Collapse to 0-D so it broadcasts cleanly; global_step is identical across
+  # worlds.
+  if schedule.key == clock.GLOBAL_STEP_KEY and trigger.ndim == 1:
+    trigger = trigger[0]
   value = torch.full_like(trigger, default, dtype=dtype)
   for threshold, target in schedule.stages:
     value = torch.where(trigger >= threshold, target, value)

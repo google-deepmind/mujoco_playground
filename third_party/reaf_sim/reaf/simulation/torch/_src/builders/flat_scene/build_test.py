@@ -20,6 +20,7 @@ from reaf.simulation.torch._src.builders import config as builders_config
 from reaf.simulation.torch._src.builders.flat_scene import build
 from reaf.simulation.torch._src.builders.flat_scene import config
 from reaf.simulation.torch._src.common import clock_device
+from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.core import environment
 import torch
 
@@ -431,6 +432,54 @@ class ConfigTest(absltest.TestCase):
     comp = config.Component(clock_device.ClockDevice)
     with self.assertRaises(ValueError):
       comp.attach(mujoco.MjSpec, prefix="")
+
+  def test_rejects_curricula_on_unsupported_components_and_metrics(self):
+    sched = curriculum.Stages([(10, 0.5)])
+    term = config.Term(lambda f, k: f["time"] * k, k=1.0).curriculum(k=sched)
+
+    class _UnsupportedComponent:
+
+      def __init__(self, terms):
+        self.terms = terms
+
+    with self.assertRaisesRegex(ValueError, "does not support curriculum"):
+      build.build_env(
+          config.Environment(
+              base_scene=mujoco.MjSpec(),
+              sim=builders_config.Sim(xpu_device="cpu", impl="cpp"),
+              resetters={
+                  "custom": config.Component(
+                      _UnsupportedComponent, terms=[term]
+                  ),
+              },
+          )
+      )
+
+    metric = config.Metric(lambda f, k: f["time"] * k, k=1.0).curriculum(
+        k=sched
+    )
+    with self.assertRaisesRegex(ValueError, "does not support curriculum"):
+      build.build_task_layer(
+          config.Environment(
+              base_scene=mujoco.MjSpec(),
+              sim=builders_config.Sim(xpu_device="cpu", impl="cpp"),
+              task_layer=config.TaskLayer(metrics={"m": metric}),
+          )
+      )
+
+    obs = (
+        config.Obs(lambda f, k: f["time"] * k, k=1.0)
+        .configure(output_shape=(1,))
+        .curriculum(k=sched)
+    )
+    with self.assertRaisesRegex(ValueError, "does not support curriculum"):
+      build.build_env(
+          config.Environment(
+              base_scene=mujoco.MjSpec(),
+              sim=builders_config.Sim(xpu_device="cpu", impl="cpp"),
+              observation_adapter={"policy": config.ObsGroup(terms={"o": obs})},
+          )
+      )
 
 
 if __name__ == "__main__":
