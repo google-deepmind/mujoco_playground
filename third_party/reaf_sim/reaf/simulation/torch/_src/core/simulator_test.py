@@ -30,7 +30,7 @@ _TEST_XML = """
     <body name="body1" pos="0 0 1">
       <joint name="joint1" type="slide" axis="0 0 1"/>
       <geom name="geom1" type="sphere" size="0.1"/>
-      <camera name="cam1"/>
+      <camera name="cam1" mode="track"/>
     </body>
   </worldbody>
 </mujoco>
@@ -239,6 +239,39 @@ class SimulatorTest(parameterized.TestCase):
     sim.set_const()
 
     torch.testing.assert_close(get_state(), expected_state)
+
+  @parameterized.named_parameters(
+      ("cpp", types.Impl.CPP, "cpu", 1),
+      ("warp_cpu", types.Impl.WARP, "cpu", 2),
+      ("warp_gpu", types.Impl.WARP, "cuda:0", 2),
+  )
+  def test_set_const_level_override(self, impl, xpu_device, nworld):
+    if not torch.cuda.is_available() and xpu_device.startswith("cuda"):
+      self.skipTest("CUDA not available")
+    spec = mujoco.MjSpec.from_string(_TEST_XML)
+    sim = simulator.Simulator(
+        mj_spec=spec,
+        nworld=nworld,
+        xpu_device=xpu_device,
+        impl=impl,
+        set_const_level_override={
+            "body_mass": torch_wrapper.SetConstLevel.FIXED
+        },
+    )
+    invweight0_before = sim.model.body_invweight0.clone()
+    sim.model.body_mass[:, 1] = 5.0
+    self.assertEqual(sim.set_const(), torch_wrapper.SetConstLevel.FIXED)
+    if impl == types.Impl.WARP:
+      torch.testing.assert_close(
+          sim.model.body_subtreemass[:, 1].clone(),
+          torch.full((nworld,), 5.0, device=xpu_device),
+      )
+      torch.testing.assert_close(
+          sim.model.body_invweight0.clone(), invweight0_before
+      )
+    sim.compile()
+    sim.model.body_mass[:, 1] = 6.0
+    self.assertEqual(sim.set_const(), torch_wrapper.SetConstLevel.FIXED)
 
 
 if __name__ == "__main__":

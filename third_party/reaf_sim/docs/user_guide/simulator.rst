@@ -75,7 +75,11 @@ When model fields (e.g., ``body_mass``, ``geom_size``, ``geom_friction``) are mo
 - Lazily clones initial field values on first write so ``sim.model.restore_defaults(env_mask)`` can restore baseline
   values on reset without compounding changes across episodes.
 - Tracks the minimal required :class:`~reaf.simulation.torch.SetConstLevel` (``NONE``, ``FIXED``, ``KIN0``, ``INERT0``,
-  ``FULL``) flushed by ``sim.set_const()`` to recompute derived constants.
+  ``FULL``) flushed by ``sim.set_const()`` to recompute derived constants. Per-field levels can be overridden via
+  ``set_const_level_override`` on :class:`~reaf.simulation.torch.flat_scene.Sim` /
+  :class:`~reaf.simulation.torch.Simulator` (e.g. ``{"body_mass": SetConstLevel.FIXED}``). Downgrading a level skips
+  recomputing derived constants for the omitted stages on Warp (e.g. ``body_invweight0``/``dof_invweight0`` remain
+  stale); on ``Impl.CPP``, any non-``NONE`` level runs full ``mj_setConst``.
 
 .. code-block:: python
 

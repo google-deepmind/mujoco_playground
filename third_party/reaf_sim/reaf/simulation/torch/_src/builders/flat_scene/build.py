@@ -270,6 +270,7 @@ def build_device_layer(
       njmax=env_config.sim.njmax,
       nccdmax=env_config.sim.nccdmax,
       nvmax=env_config.sim.nvmax,
+      set_const_level_override=env_config.sim.set_const_level_override or None,
   )
 
   # Create DeviceLayer

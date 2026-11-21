@@ -19,6 +19,7 @@ the wrapper tracks the writes and marks the required `SetConstLevel` on
 these pending constants via `Simulator.set_const()` before a forward call.
 """
 
+from collections.abc import Mapping
 import contextlib
 import dataclasses
 import enum
@@ -42,20 +43,7 @@ from reaf.simulation.torch._src.core import mujoco_types
 import torch
 import warp as wp
 
-
-class SetConstLevel(enum.IntFlag):
-  """Determines which mj_setConst levels must run after modifying the model.
-
-  Levels are defined as bitmask flags to support independent compilation stages.
-  """
-
-  NONE = mjw.SetConstGroup.NONE  # No constants need updating.
-  FIXED = mjw.SetConstGroup.FIXED  # Configuration-independent constants.
-  KIN0 = mjw.SetConstGroup.KIN0  # Kinematic constants at qpos0.
-  INERT0 = mjw.SetConstGroup.INERT0  # Inertial constants at qpos0.
-  FULL = mjw.SetConstGroup.ALL  # All constants.
-
-
+SetConstLevel = mujoco_types.SetConstLevel
 T = TypeVar("T")
 
 
@@ -120,39 +108,87 @@ SET_CONST_OUTPUT_FIELDS: frozenset[str] = (
 SET_CONST_INPUT_LEVELS: dict[str, SetConstLevel] = _set_const_input_levels()
 
 
-def _has_geom_tendon_wrap(obj: object) -> bool:
-  """Returns True if the model has sphere or cylinder tendon wrap objects."""
+# TODO(reaf-sim): Consider moving model-aware set_const input levels into the
+# core MuJoCo engine.
+def _maybe_build_set_const_levels(
+    obj: object,
+    set_const_level_override: Mapping[str, SetConstLevel] | None = None,
+) -> dict[str, SetConstLevel]:
+  """Returns per-field SetConstLevel masks tailored to the model."""
+  # Levels are computed once at wrap time and assume wrap_type, cam_mode,
+  # light_mode, and opt.enableflags are not modified afterwards.
+  if not isinstance(obj, (mjw.Model, mujoco.MjModel)):
+    if set_const_level_override:
+      raise ValueError(
+          "set_const_level_override is only supported for Model objects."
+      )
+    return {}
+
+  def has(arr: wp.array | np.ndarray, *vals: int) -> bool:
+    if arr.size == 0:
+      return False
+    host = arr.numpy() if isinstance(arr, wp.array) else arr
+    return bool(np.isin(host, vals).any())
+
   if isinstance(obj, mjw.Model):
-    return obj.wrap_geom_adr.size > 0
-  if isinstance(obj, mujoco.MjModel):
-    return bool(
-        np.isin(
-            obj.wrap_type,
-            (
-                int(mujoco.mjtWrap.mjWRAP_SPHERE),
-                int(mujoco.mjtWrap.mjWRAP_CYLINDER),
-            ),
-        ).any()
+    has_geom_wrap = obj.wrap_geom_adr.size > 0
+  else:
+    has_geom_wrap = has(
+        obj.wrap_type,
+        int(mujoco.mjtWrap.mjWRAP_SPHERE),
+        int(mujoco.mjtWrap.mjWRAP_CYLINDER),
     )
-  return True
-
-
-def _get_set_const_level(field: str, obj: object) -> SetConstLevel:
-  """Returns the SetConstLevel required after modifying a model field."""
-  level = SET_CONST_INPUT_LEVELS.get(field, SetConstLevel.NONE)
-  if field == "geom_size" and not _has_geom_tendon_wrap(obj):
-    level &= ~(SetConstLevel.KIN0 | SetConstLevel.INERT0)
-  return level
+  tracking = (
+      int(mujoco.mjtCamLight.mjCAMLIGHT_TRACK),
+      int(mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM),
+  )
+  geom_wrap = (
+      SetConstLevel.KIN0 | SetConstLevel.INERT0
+      if has_geom_wrap
+      else SetConstLevel.NONE
+  )
+  # KIN0 recomputes dof_length from geom_rbound for sleep velocity scaling.
+  geom_sleep = (
+      SetConstLevel.KIN0
+      if obj.opt.enableflags & int(mujoco.mjtEnableBit.mjENBL_SLEEP)
+      else SetConstLevel.NONE
+  )
+  cam = (
+      SetConstLevel.KIN0 if has(obj.cam_mode, *tracking) else SetConstLevel.NONE
+  )
+  light = (
+      SetConstLevel.KIN0
+      if has(obj.light_mode, *tracking)
+      else SetConstLevel.NONE
+  )
+  levels = SET_CONST_INPUT_LEVELS | {
+      "geom_size": SetConstLevel.FIXED | geom_wrap | geom_sleep,
+      "cam_pos": cam,
+      "cam_quat": cam,
+      "light_pos": light,
+      "light_dir": light,
+  }
+  if set_const_level_override:
+    fields = _union_mj_fields()["Model"]
+    for k, v in set_const_level_override.items():
+      if (
+          k not in fields
+          or not isinstance(v, SetConstLevel)
+          or v not in SetConstLevel.FULL
+      ):
+        raise ValueError(f"Invalid set_const_level_override entry: {k!r}={v!r}")
+    levels |= set_const_level_override
+  return levels
 
 
 def _create_set_const_callback(
-    wrapper: "TorchWrapper[Any]", field_name: str
+    wrapper: "TorchWrapper[T]", field_name: str
 ) -> Callable[[], None] | None:
   """Returns an on_write callback that tracks defaults and set_const for model fields."""
   # pylint: disable=protected-access
   if wrapper._obj_type not in (MjObjType.MJW_MODEL, MjObjType.MJ_MODEL):
     return None
-  level = _get_set_const_level(field_name, wrapper._obj)
+  level = wrapper._set_const_levels.get(field_name, SetConstLevel.NONE)
 
   def _record():
     # Clone the field once before its first write so restore_defaults() can
@@ -498,7 +534,12 @@ class JointType(enum.IntEnum):
 class TorchWrapper(Generic[T], NoSetAttr):
   """Wraps objects that contain Warp/Numpy arrays and exposes them as tensors."""
 
-  def __init__(self, obj: T, nworld: int | None = None) -> None:
+  def __init__(
+      self,
+      obj: T,
+      nworld: int | None = None,
+      set_const_level_override: Mapping[str, SetConstLevel] | None = None,
+  ) -> None:
     if isinstance(obj, mjw.Data):
       nworld = obj.nworld
     if isinstance(obj, mjw.Model) and nworld is None:
@@ -514,6 +555,8 @@ class TorchWrapper(Generic[T], NoSetAttr):
     object.__setattr__(self, "_nworld", nworld or 1)
     object.__setattr__(self, "_bound_cache", {})
     object.__setattr__(self, "_defaults", {})
+    levels = _maybe_build_set_const_levels(obj, set_const_level_override)
+    object.__setattr__(self, "_set_const_levels", levels)
     object.__setattr__(self, "_pending_set_const", SetConstLevel.NONE)
 
     if isinstance(obj, mjw.Model):
@@ -641,7 +684,7 @@ class TorchWrapper(Generic[T], NoSetAttr):
           torch.where(mask, saved, target, out=target)
         else:
           target.copy_(saved)
-      level = _get_set_const_level(field, self._obj)
+      level = self._set_const_levels.get(field, SetConstLevel.NONE)
       if level != SetConstLevel.NONE:
         object.__setattr__(
             self, "_pending_set_const", self._pending_set_const | level

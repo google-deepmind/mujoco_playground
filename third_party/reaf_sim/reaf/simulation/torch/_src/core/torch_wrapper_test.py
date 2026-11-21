@@ -1675,6 +1675,101 @@ class TorchWrapperSetConstFieldsTest(absltest.TestCase):
       )
 
 
+_NO_WRAP_OR_TRACK_XML = """
+<mujoco>
+  <worldbody>
+    <camera pos="1 0 1" mode="targetbody" target="b"/>
+    <light pos="1 0 1" mode="targetbodycom" target="b"/>
+    <body name="b" pos="0 0 1">
+      <joint name="j" axis="0 0 1"/>
+      <geom name="g" size="0.2"/>
+      <camera mode="fixed"/>
+      <light mode="fixed"/>
+    </body>
+  </worldbody>
+</mujoco>
+"""
+
+_WRAP_AND_TRACK_XML = """
+<mujoco>
+  <worldbody>
+    <site name="s0" pos="-1 0 1"/>
+    <site name="s1" pos="1 0 1"/>
+    <body name="b" pos="0 0 1">
+      <joint name="j" axis="0 0 1"/>
+      <geom name="g" pos="0.1 0.05 0" size="0.2"/>
+      <camera mode="trackcom"/>
+      <light mode="track"/>
+    </body>
+  </worldbody>
+  <tendon>
+    <spatial stiffness="10" frictionloss="1">
+      <site site="s0"/>
+      <geom geom="g"/>
+      <site site="s1"/>
+    </spatial>
+  </tendon>
+</mujoco>
+"""
+
+
+_SKIPPED_CAMLIGHT0_FIELDS = frozenset({
+    "cam_pos0",
+    "cam_poscom0",
+    "cam_mat0",
+    "light_pos0",
+    "light_poscom0",
+    "light_dir0",
+})
+
+
+def _run_set_const_stage(
+    xml: str, groups: torch_wrapper.SetConstLevel
+) -> tuple[torch_wrapper.SetConstLevel, set[str], mjw.Model, mjw.Data]:
+  m = mujoco.MjModel.from_xml_string(xml)
+  d = mujoco.MjData(m)
+  d.qpos[0] = 0.3
+  mw = wrap_model(types.Impl.WARP, m, nworld=2)
+  dw = wrap_data(types.Impl.WARP, m, d, nworld=2)
+  mjw.set_const(
+      mw.obj,
+      dw.obj,
+      groups=int(torch_wrapper.SetConstLevel.FULL),
+      restore=False,
+  )
+  mjw.forward(mw.obj, dw.obj)
+
+  outputs = (
+      ("geom_rbound", mw.geom_rbound),
+      ("tendon_length0", mw.tendon_length0),
+      ("tendon_invweight0", mw.tendon_invweight0),
+      ("cam_xpos", dw.cam_xpos),
+      ("cam_xmat", dw.cam_xmat),
+      ("light_xpos", dw.light_xpos),
+      ("light_xdir", dw.light_xdir),
+  )
+  before = {name: val.clone() for name, val in outputs}
+
+  mw.geom_size[:] = 0.25
+  mw.cam_pos[:] = 0.15
+  mw.cam_quat[:, :, 0], mw.cam_quat[:, :, 2] = 0.8, 0.6
+  mw.light_pos[:] = 0.2
+  mw.light_dir[:, :, 0], mw.light_dir[:, :, 2] = 0.6, -0.8
+  flushed = mw.flush_set_const()
+
+  if groups != torch_wrapper.SetConstLevel.NONE:
+    mjw.set_const(mw.obj, dw.obj, groups=int(groups), restore=False)
+  mjw.forward(mw.obj, dw.obj)
+
+  after = {name: val.clone() for name, val in outputs}
+  changed = {
+      name
+      for name, val in after.items()
+      if not torch.allclose(before[name], val)
+  }
+  return flushed, changed, mw.obj, dw.obj
+
+
 class TorchWrapperSetConstTrackingTest(parameterized.TestCase):
   """Tests that model writes through the wrapper request set_const levels."""
 
@@ -1791,13 +1886,154 @@ class TorchWrapperSetConstTrackingTest(parameterized.TestCase):
     self.assertEqual(
         model.pending_set_const, torch_wrapper.SetConstLevel.INERT0
     )
-    model.cam_pos[:] = 0.2
+    model.eq_data[:] = 0.2
     self.assertEqual(
         model.pending_set_const,
         torch_wrapper.SetConstLevel.KIN0 | torch_wrapper.SetConstLevel.INERT0,
     )
     model.body_mass[:, 1] = 2.0
     self.assertEqual(model.pending_set_const, torch_wrapper.SetConstLevel.FULL)
+
+  @parameterized.parameters(types.Impl.WARP, types.Impl.CPP)
+  def test_cam_and_light_levels_depend_on_tracking(self, backend):
+    # If MuJoCo adds a new mjtCamLight mode, check whether mj_camlight reads
+    # cam_*0/light_*0 for it and update _maybe_build_set_const_levels in
+    # torch_wrapper.py (and this set) accordingly.
+    self.assertEqual(
+        set(mujoco.mjtCamLight.__members__.values()),
+        {
+            mujoco.mjtCamLight.mjCAMLIGHT_FIXED,
+            mujoco.mjtCamLight.mjCAMLIGHT_TRACK,
+            mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM,
+            mujoco.mjtCamLight.mjCAMLIGHT_TARGETBODY,
+            mujoco.mjtCamLight.mjCAMLIGHT_TARGETBODYCOM,
+        },
+    )
+    nworld = 2 if backend == types.Impl.WARP else 1
+    lvl = torch_wrapper.SetConstLevel
+
+    untracked = wrap_model(
+        backend, mujoco.MjModel.from_xml_string(_NO_WRAP_OR_TRACK_XML), nworld
+    )
+    untracked.cam_pos[:] = 0.15
+    untracked.cam_quat[:] = 0.5
+    untracked.light_pos[:] = 0.2
+    untracked.light_dir[:] = -0.5
+    self.assertEqual(untracked.flush_set_const(), lvl.NONE)
+
+    tracked = wrap_model(
+        backend, mujoco.MjModel.from_xml_string(_WRAP_AND_TRACK_XML), nworld
+    )
+    tracked.cam_pos[:] = 0.15
+    self.assertEqual(tracked.flush_set_const(), lvl.KIN0)
+    tracked.cam_quat[:] = 0.5
+    self.assertEqual(tracked.flush_set_const(), lvl.KIN0)
+    tracked.light_pos[:] = 0.2
+    self.assertEqual(tracked.flush_set_const(), lvl.KIN0)
+    tracked.light_dir[:] = -0.5
+    self.assertEqual(tracked.flush_set_const(), lvl.KIN0)
+
+  def test_skip_unused_set_const_stages(self):
+    lvl = torch_wrapper.SetConstLevel
+    cam_light = {"cam_xpos", "cam_xmat", "light_xpos", "light_xdir"}
+
+    flushed, changed, _, _ = _run_set_const_stage(
+        _NO_WRAP_OR_TRACK_XML, lvl.NONE
+    )
+    self.assertEqual(flushed, lvl.FIXED)
+    self.assertEqual(changed, cam_light)
+
+    _, changed_fixed, m_fixed, d_fixed = _run_set_const_stage(
+        _NO_WRAP_OR_TRACK_XML, lvl.FIXED
+    )
+    _, changed_full, m_full, d_full = _run_set_const_stage(
+        _NO_WRAP_OR_TRACK_XML, lvl.FULL
+    )
+    self.assertEqual(changed_fixed, cam_light | {"geom_rbound"})
+    self.assertEqual(changed_full, changed_fixed)
+    # Catch any other Model set_const output or forward() Data field that
+    # diverges if MuJoCo/mjwarp adds a new KIN0/INERT0 dependency or starts
+    # reading the skipped cam_*0/light_*0 fields in non-tracking modes.
+    for name in sorted(
+        torch_wrapper.SET_CONST_OUTPUT_FIELDS - _SKIPPED_CAMLIGHT0_FIELDS
+    ):
+      np.testing.assert_allclose(
+          getattr(m_fixed, name).numpy(),
+          getattr(m_full, name).numpy(),
+          err_msg=f"Model.{name}",
+      )
+    for name, full_arr in vars(d_full).items():
+      if isinstance(full_arr, wp.array) and not name.startswith("_"):
+        np.testing.assert_allclose(
+            getattr(d_fixed, name).numpy(),
+            full_arr.numpy(),
+            err_msg=f"Data.{name}",
+        )
+
+  def test_required_set_const_stages(self):
+    lvl = torch_wrapper.SetConstLevel
+    cam_light = {"cam_xpos", "cam_xmat", "light_xpos", "light_xdir"}
+
+    flushed, changed, _, _ = _run_set_const_stage(_WRAP_AND_TRACK_XML, lvl.NONE)
+    self.assertEqual(flushed, lvl.FULL)
+    self.assertEqual(changed, set())
+
+    _, changed, _, _ = _run_set_const_stage(_WRAP_AND_TRACK_XML, lvl.FIXED)
+    self.assertEqual(changed, {"geom_rbound"})
+
+    _, changed, _, _ = _run_set_const_stage(_WRAP_AND_TRACK_XML, lvl.KIN0)
+    self.assertEqual(changed, cam_light | {"tendon_length0"})
+
+    _, changed, _, _ = _run_set_const_stage(_WRAP_AND_TRACK_XML, lvl.INERT0)
+    self.assertEqual(changed, {"tendon_invweight0"})
+
+  @parameterized.parameters(types.Impl.WARP, types.Impl.CPP)
+  def test_set_const_level_override(self, backend):
+    lvl = torch_wrapper.SetConstLevel
+    self.assertEqual(
+        (lvl.NONE, lvl.FIXED, lvl.KIN0, lvl.INERT0, lvl.FULL),
+        (
+            mjw.SetConstGroup.NONE,
+            mjw.SetConstGroup.FIXED,
+            mjw.SetConstGroup.KIN0,
+            mjw.SetConstGroup.INERT0,
+            mjw.SetConstGroup.ALL,
+        ),
+    )
+    is_warp = backend == types.Impl.WARP
+    obj = mjw.put_model(self.m) if is_warp else self.m
+    nworld = 4 if is_warp else 1
+    mw = torch_wrapper.TorchWrapper(
+        obj,
+        nworld=nworld,
+        set_const_level_override={
+            "body_mass": lvl.FIXED,
+            "geom_friction": lvl.FIXED,
+        },
+    )
+    mw.body_mass[:, 1] = 2.0
+    self.assertEqual(mw.flush_set_const(), lvl.FIXED)
+    mw.geom_friction[:, 0, 0] = 0.3
+    self.assertEqual(mw.flush_set_const(), lvl.FIXED)
+    mw.restore_defaults(
+        torch.ones(
+            nworld, dtype=torch.bool, device=_DEVICE if is_warp else "cpu"
+        )
+    )
+    self.assertEqual(mw.flush_set_const(), lvl.FIXED)
+    with self.assertRaises(ValueError):
+      torch_wrapper.TorchWrapper(
+          obj, nworld=nworld, set_const_level_override={"bad": lvl.NONE}
+      )
+    data_obj = (
+        mjw.put_data(self.m, self.d, nworld=nworld) if is_warp else self.d
+    )
+    with self.assertRaises(ValueError):
+      torch_wrapper.TorchWrapper(
+          data_obj,
+          nworld=nworld,
+          set_const_level_override={"body_mass": lvl.NONE},
+      )
 
   def test_flush_returns_and_clears(self):
     model = self._model()

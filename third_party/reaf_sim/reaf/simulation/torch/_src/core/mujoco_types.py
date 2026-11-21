@@ -15,10 +15,25 @@
 
 from collections.abc import Mapping
 from collections.abc import Sequence
+import enum
 import re
 
 import mujoco
 import numpy as np
+
+
+class SetConstLevel(enum.IntFlag):
+  """Determines which mj_setConst levels must run after modifying the model.
+
+  Levels are defined as bitmask flags to support independent compilation stages.
+  """
+
+  NONE = 0  # No constants need updating.
+  FIXED = 1 << 0  # Configuration-independent constants.
+  KIN0 = 1 << 1  # Kinematic constants at qpos0.
+  INERT0 = 1 << 2  # Inertial constants at qpos0.
+  FULL = FIXED | KIN0 | INERT0  # All constants.
+
 
 SPEC_TYPE_INFO: dict[type, tuple[mujoco.mjtObj, str, str]] = {
     mujoco.MjsBody: (mujoco.mjtObj.mjOBJ_BODY, "body_", "body"),

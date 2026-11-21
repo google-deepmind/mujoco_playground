@@ -22,6 +22,7 @@ from reaf.simulation.torch._src.builders.flat_scene import config
 from reaf.simulation.torch._src.common import clock_device
 from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.core import environment
+from reaf.simulation.torch._src.core import mujoco_types
 import torch
 
 
@@ -83,6 +84,27 @@ class BuildTest(absltest.TestCase):
     )
     with self.assertRaises(ValueError):
       build.build_env(env_config)
+
+  def test_build_env_applies_set_const_level_override(self):
+    base_spec = mujoco.MjSpec()
+    body = base_spec.worldbody.add_body(name="box_body", pos=[0, 0, 1])
+    body.add_geom(type=mujoco.mjtGeom.mjGEOM_BOX, size=[0.1, 0.1, 0.1])
+    env_config = config.Environment(
+        base_scene=base_spec,
+        sim=builders_config.Sim(
+            xpu_device="cpu",
+            impl="cpp",
+            set_const_level_override={
+                "body_mass": mujoco_types.SetConstLevel.NONE
+            },
+        ),
+    )
+    env = build.build_env(env_config)
+    env.device_layer.sim.model.body_mass[:, 1] = 2.0
+    self.assertEqual(
+        env.device_layer.sim.model.pending_set_const,
+        mujoco_types.SetConstLevel.NONE,
+    )
 
   def test_build_env_applies_sim_solver_options(self):
     base_spec = mujoco.MjSpec()

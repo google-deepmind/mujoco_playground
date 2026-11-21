@@ -14,13 +14,14 @@
 
 """Shared configuration for REAF environment builders."""
 
-from dataclasses import dataclass
+import dataclasses
 from typing import Literal
 
 import mujoco
+from reaf.simulation.torch._src.core import mujoco_types
 
 
-@dataclass
+@dataclasses.dataclass
 class Sim:
   """Simulation parameters."""
 
@@ -43,6 +44,9 @@ class Sim:
   njmax: int | None = None
   nccdmax: int | None = None
   nvmax: int | None = None
+  set_const_level_override: dict[str, mujoco_types.SetConstLevel] = (
+      dataclasses.field(default_factory=dict)
+  )
 
 
 def apply_sim_config(spec: mujoco.MjSpec, sim: Sim) -> mujoco.MjSpec:

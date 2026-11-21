@@ -18,6 +18,7 @@ Encapsulates MuJoCo / MuJoCo-Warp simulation state and stepping.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 from typing import Optional
 from typing import Union
@@ -53,6 +54,9 @@ class Simulator(protocols.Simulator):
       njmax: Optional[int] = None,
       nccdmax: Optional[int] = None,
       nvmax: Optional[int] = None,
+      set_const_level_override: (
+          Mapping[str, torch_wrapper.SetConstLevel] | None
+      ) = None,
   ):
     impl = types.Impl(impl)
 
@@ -74,6 +78,11 @@ class Simulator(protocols.Simulator):
     self._njmax = njmax
     self._nccdmax = nccdmax
     self._nvmax = nvmax
+    self._set_const_level_override = (
+        dict(set_const_level_override)
+        if set_const_level_override is not None
+        else None
+    )
     self._xpu_device = xpu_device
     self._impl = impl
     self._mj_spec = mj_spec
@@ -131,7 +140,9 @@ class Simulator(protocols.Simulator):
     self._graph_captures.clear()
     self._set_const_graph_captures.clear()
     self._model_torch = torch_wrapper.TorchWrapper(
-        self._model, nworld=self._nworld
+        self._model,
+        nworld=self._nworld,
+        set_const_level_override=self._set_const_level_override,
     )
     self._model_torch.register_graph_capture_callback(
         self._graph_captures.clear
