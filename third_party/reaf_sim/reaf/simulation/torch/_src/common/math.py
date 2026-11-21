@@ -174,7 +174,7 @@ def quat_error_magnitude2(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   """Compute the angular distance (in radians) between two quaternions.
 
   Equal to the norm of the box-minus (axis-angle) difference for unit
-  quaternions, computed directly as 2 * atan2(||xyz||, |w|) of the relative
+  quaternions, computed directly as `2 * atan2(||xyz||, |w|)` of the relative
   rotation. Exact (returns 0.0 for identical orientations) and numerically
   stable for small errors, unlike acos-of-dot-product formulations.
 

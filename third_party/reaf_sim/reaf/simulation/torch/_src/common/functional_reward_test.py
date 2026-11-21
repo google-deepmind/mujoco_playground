@@ -18,6 +18,7 @@ from absl.testing import absltest
 import numpy as np
 from reaf.simulation.torch._src.builders.flat_scene.config import Reward
 from reaf.simulation.torch._src.builders.flat_scene.config import Term
+from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.common import functional_reward
 import torch
 
@@ -127,6 +128,49 @@ class FunctionalRewardProviderTest(absltest.TestCase):
     torch.testing.assert_close(
         result["reward"], torch.tensor([1.5, 2.0, 0.0, 2.5])
     )
+
+  def test_staged_curriculum_replaces_weight_and_params(self):
+    provider = functional_reward.FunctionalRewardProvider(
+        name="test",
+        terms={
+            "static": Reward(lambda m: m["x"], weight=2.0),
+            "ramped": (
+                Reward(
+                    lambda m, scale: m["y"] * scale,
+                    weight=-0.5,
+                    scale=1.0,
+                ).curriculum(
+                    weight=curriculum.Stages([(10, -1.0), (20, -2.0)]),
+                    scale=curriculum.Stages([(20, 3.0)]),
+                )
+            ),
+        },
+        required_keys=["x", "y", "global_step"],
+    )
+    provider.initialize(device=torch.device("cpu"), dtype=torch.float32, dt=0.5)
+
+    base = {"x": torch.tensor([1.0, 2.0]), "y": torch.tensor([1.0, 1.0])}
+    # Before threshold: uses default weight (-0.5) and scale (1.0).
+    r0 = provider.compute_reward({**base, "global_step": torch.tensor([0, 9])})
+    torch.testing.assert_close(r0["reward"], torch.tensor([0.75, 1.75]))
+    torch.testing.assert_close(
+        r0["terms"]["weighted/ramped"], torch.tensor([-0.25, -0.25])
+    )
+
+    # World 0: weight=-1.0, scale=1.0; World 1: weight=-2.0, scale=3.0.
+    r1 = provider.compute_reward(
+        {**base, "global_step": torch.tensor([10, 20])}
+    )
+    torch.testing.assert_close(r1["reward"], torch.tensor([0.5, -1.0]))
+    torch.testing.assert_close(
+        r1["terms"]["weighted/ramped"], torch.tensor([-0.5, -3.0])
+    )
+
+  def test_curriculum_rejects_unknown_key(self):
+    with self.assertRaisesRegex(ValueError, "Unknown curriculum parameter"):
+      Reward(lambda m: m["x"], weight=1.0).curriculum(
+          bogus=curriculum.Stages([(10, 2.0)])
+      )
 
   def test_passthrough_returns_scalar_tensor(self):
     provider = functional_reward.PassthroughRewardProvider(

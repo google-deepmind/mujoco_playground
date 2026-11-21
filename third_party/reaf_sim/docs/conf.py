@@ -153,6 +153,15 @@ def _skip_member(app, what, name, obj, skip, options):
     elif cur_mod == "reaf.simulation.torch.viewer":
       if not mod.startswith("reaf.simulation.torch.viewer._src"):
         return True
+    elif cur_mod == "reaf.simulation.torch.curriculum":
+      if not mod.startswith("reaf.simulation.torch._src.common.curriculum"):
+        return True
+    elif cur_mod == "reaf.simulation.torch.noise":
+      if not mod.startswith("reaf.simulation.torch._src.common.noise"):
+        return True
+    elif cur_mod == "reaf.simulation.torch.math":
+      if not mod.startswith("reaf.simulation.torch._src.common.math"):
+        return True
   return skip
 
 

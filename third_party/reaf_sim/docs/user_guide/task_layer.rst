@@ -101,11 +101,39 @@ per-episode reduction mode (``reduce="mean" | "last" | "max" | "sum"``):
 Curriculum
 ----------
 
-:class:`~reaf.simulation.torch.ClockDevice` exposes the monotonic control step as the simulation-only ``global_step``
-feature. Reward, termination, and metric terms can read ``features["global_step"]`` directly for step-based schedules
-(any :class:`~reaf.simulation.torch.FeatureProducer` consuming it should call ``.mark_privileged()`` if you want to
-deploy on a real robot, since ``global_step`` does not generally translate to the real world), and
-``env.device_layer.clock.set_global_step(step)`` restores it when resuming from a checkpoint.
+`reaf-sim` keeps curricula declarative and stateless rather than introducing a separate cross-manager
+``CurriculumManager``. :class:`~reaf.simulation.torch.ClockDevice` exposes the monotonic control step as the
+simulation-only ``global_step`` feature (any :class:`~reaf.simulation.torch.FeatureProducer` consuming it should call
+``.mark_privileged()`` if you want to deploy on a real robot, since ``global_step`` does not generally translate to the
+real world), and :mod:`reaf.simulation.torch.curriculum` provides serializable schedule dataclasses (such as
+:class:`~reaf.simulation.torch.curriculum.Stages`) evaluated on device via ``curriculum.evaluate(...)``.
+
+On :class:`~reaf.simulation.torch.flat_scene.Reward`, call ``.curriculum(**schedules)`` to attach schedules to
+``weight`` or any keyword parameter (the base value acts as the initial default before the first threshold):
+
+.. code-block:: python
+
+    from reaf.simulation.torch import curriculum
+    from reaf.simulation.torch import flat_scene
+
+    rewards = {
+        "action_rate": flat_scene.Reward(action_rate_l2, weight=-0.01).curriculum(
+            weight=curriculum.Stages([(24_000, -0.02), (48_000, -0.04)]),
+        ),
+        "tracking": flat_scene.Reward(tracking_reward, weight=1.0, std=0.5).curriculum(
+            std=curriculum.Stages([(24_000, 0.25)]),
+        ),
+    }
+
+To resume training from a checkpoint, restore the step via ``env.device_layer.clock.set_global_step(step)``.
+
+- **When to use** ``curriculum``: stateless schedules driven by ``global_step`` (e.g. staged reward weight ramps) or by
+  any per-world feature emitted by another producer (pass ``key="my_producer/metric"`` to ``Stages``).
+- **When not to use** ``curriculum``: stateful per-world performance-based curricula that accumulate history across
+  episodes (e.g. widening goal angles after consecutive successes, or promoting/demoting terrain levels). Implement
+  those in a custom :class:`~reaf.simulation.torch.FeatureProducer` or
+  :class:`~reaf.simulation.torch.EnvironmentReset`; they can still emit a feature that ``curriculum.Stages(..., key=...)``
+  consumes.
 
 Terminations and discounts
 --------------------------

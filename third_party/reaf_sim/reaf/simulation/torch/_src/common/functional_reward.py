@@ -19,6 +19,7 @@ from collections.abc import Set
 from typing import TypedDict
 
 from dm_env import specs
+from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.core import reward_provider
 from reaf.simulation.torch._src.core import types
 from reaf.simulation.torch._src.core.types import RewardTerm
@@ -59,6 +60,8 @@ class FunctionalRewardProvider(reward_provider.RewardProvider):
     self._term_names = list(terms.keys())
     self._required_keys = frozenset(required_keys)
     self._weights: torch.Tensor | None = None
+    self._weight_curricula: list[tuple[int, float, curriculum.Stages]] = []
+    self._param_curricula: dict[str, dict[str, curriculum.Stages]] = {}
     self._dtype: torch.dtype | None = None
     self._dt: float | None = None
 
@@ -68,6 +71,16 @@ class FunctionalRewardProvider(reward_provider.RewardProvider):
     """Initialize weight tensor on device. Call before compute_reward."""
     weights = [self._terms[n].weight for n in self._term_names]
     self._weights = torch.tensor(weights, device=device, dtype=dtype)
+    self._weight_curricula = [
+        (i, self._terms[n].weight, self._terms[n].curricula["weight"])
+        for i, n in enumerate(self._term_names)
+        if "weight" in self._terms[n].curricula
+    ]
+    self._param_curricula = {
+        n: {k: v for k, v in self._terms[n].curricula.items() if k != "weight"}
+        for n in self._term_names
+        if any(k != "weight" for k in self._terms[n].curricula)
+    }
     self._dtype = dtype
     self._dt = dt
 
@@ -94,20 +107,37 @@ class FunctionalRewardProvider(reward_provider.RewardProvider):
       required_features: Mapping[str, torch.Tensor],
   ) -> RewardDict:
     """Compute weighted sum of reward terms, scaled by dt at the end."""
-    if self._weights is None or self._dt is None:
+    if self._weights is None or self._dt is None or self._dtype is None:
       raise RuntimeError("Must call initialize() before compute_reward().")
-    components = [
-        self._terms[n].func(required_features, **self._terms[n].params)
-        for n in self._term_names
-    ]
+    components = []
+    for n in self._term_names:
+      term = self._terms[n]
+      params = term.params
+      if n in self._param_curricula:
+        params = curriculum.resolve_params(
+            params,
+            self._param_curricula[n],
+            required_features,
+            dtype=self._dtype,
+        )
+      components.append(term.func(required_features, **params))
     stacked = torch.stack(components, dim=0)  # (nterms, nworld)
     # Sanitize NaNs, and consider them as failures (set to 0).
     stacked = torch.nan_to_num(stacked, nan=0.0, posinf=0.0, neginf=0.0)
 
     terms = dict(zip(self._term_names, stacked))
-    for name, comp, w in zip(self._term_names, stacked, self._weights):
+    if not self._weight_curricula:
+      weights = self._weights
+      reward = (weights @ stacked) * self._dt
+    else:
+      weights = self._weights[:, None].expand_as(stacked).clone()
+      for i, default, schedule in self._weight_curricula:
+        weights[i] = curriculum.evaluate(
+            schedule, required_features, default, dtype=self._dtype
+        )
+      reward = (weights * stacked).sum(dim=0) * self._dt
+    for name, comp, w in zip(self._term_names, stacked, weights):
       terms["weighted/" + name] = comp * w * self._dt
-    reward = (self._weights @ stacked) * self._dt
     return {"reward": reward, "terms": terms}
 
   def reset(self, env_mask: torch.Tensor | None = None) -> None:

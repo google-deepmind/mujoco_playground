@@ -52,6 +52,7 @@ class Term:
   func: Callable[..., Any]
   params: dict[str, Any] = field(default_factory=dict)
   output_shape: tuple[int, ...] | None = None
+  curricula: dict[str, Any] = field(default_factory=dict)
 
   def __init__(
       self,
@@ -63,6 +64,22 @@ class Term:
     self.func = func
     self.params = dict(params)
     self.output_shape = output_shape
+    self.curricula = {}
+
+  def _curriculum_keys(self) -> set[str]:
+    return set(self.params)
+
+  def curriculum(self, **schedules: Any) -> Self:
+    """Attaches curriculum schedules to term parameters (or `weight` on Reward)."""
+    valid_keys = self._curriculum_keys()
+    unknown = schedules.keys() - valid_keys
+    if unknown:
+      raise ValueError(
+          f"Unknown curriculum parameter(s) {sorted(unknown)}; "
+          f"expected a subset of {sorted(valid_keys)}."
+      )
+    self.curricula.update(schedules)
+    return self
 
 
 @dataclass
@@ -165,6 +182,9 @@ class Reward(Term):
       raise TypeError("Reward() only accepts keyword arguments for `func`.")
     super().__init__(func, output_shape=None, **params)
     self.weight = weight
+
+  def _curriculum_keys(self) -> set[str]:
+    return set(self.params) | {"weight"}
 
 
 @dataclass

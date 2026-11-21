@@ -38,6 +38,7 @@ class Term(Protocol):
   func: Callable[..., Any]
   params: dict[str, Any]
   output_shape: tuple[int, ...] | None
+  curricula: dict[str, Any]
 
 
 class RewardTerm(Protocol):
@@ -46,6 +47,7 @@ class RewardTerm(Protocol):
   func: Callable[..., Any]
   params: dict[str, Any]
   weight: float
+  curricula: dict[str, Any]
 
 
 MetricReduceMode = Literal["last", "max", "mean", "sum"]

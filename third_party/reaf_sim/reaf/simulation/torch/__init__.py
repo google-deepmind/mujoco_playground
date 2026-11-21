@@ -22,6 +22,7 @@ from reaf.simulation.torch._src.common import batched_camera_device
 from reaf.simulation.torch._src.common import camera_device
 from reaf.simulation.torch._src.common import clock_device
 from reaf.simulation.torch._src.common import contact_sensor_device
+from reaf.simulation.torch._src.common import curriculum
 from reaf.simulation.torch._src.common import default_discount_provider
 from reaf.simulation.torch._src.common import delay_buffer
 from reaf.simulation.torch._src.common import free_device
