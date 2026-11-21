@@ -128,11 +128,12 @@ def update_from_dotted_keys(
 class OnPolicyRunnerTB(rls_rl_runners.OnPolicyRunner):
   """OnPolicyRunner with custom logger and mixed precision update support."""
 
-  def __init__(self, *args, **kwargs):
+  def __init__(self, env: vecenv_wrapper.RslRlVecEnvWrapper, *args, **kwargs):
     self.remote_log_dir = kwargs.pop("remote_log_dir", None)
     self.use_bfloat16 = kwargs.pop("use_bfloat16", True)
     self.writer = None
-    super().__init__(*args, **kwargs)
+    super().__init__(env, *args, **kwargs)
+    self._vec_env = env
 
     if (
         self.use_bfloat16
@@ -206,6 +207,8 @@ class OnPolicyRunnerTB(rls_rl_runners.OnPolicyRunner):
         self.logger.init_logging_writer = lambda *args, **kwargs: None
 
   def save(self, path, infos=None):
+    env_state = {"global_step": self._vec_env.global_step}
+    infos = {**(infos or {}), "env_state": env_state}
     super().save(path, infos)
     if self.remote_log_dir and self.logger.log_dir:
       rel = os.path.relpath(path, self.logger.log_dir)
@@ -213,6 +216,18 @@ class OnPolicyRunnerTB(rls_rl_runners.OnPolicyRunner):
       remote_dest.parent.mkdir(parents=True, exist_ok=True)
       epath.Path(path).copy(remote_dest, overwrite=True)
       logging.info("Copied checkpoint to remote logdir: %s", remote_dest)
+
+  def load(self, path, load_cfg=None, strict=True, map_location=None):
+    infos = super().load(path, load_cfg, strict, map_location)
+    if load_cfg is None or load_cfg.get("iteration"):
+      env_state = (infos or {}).get("env_state") or {}
+      # Older checkpoints lack `env_state["global_step"]`; the runner takes
+      # `num_steps_per_env` env steps per learning iteration.
+      self._vec_env.global_step = env_state.get(
+          "global_step",
+          self.current_learning_iteration * self.cfg["num_steps_per_env"],
+      )
+    return infos
 
 
 def main(argv, device: str | int | None = None):

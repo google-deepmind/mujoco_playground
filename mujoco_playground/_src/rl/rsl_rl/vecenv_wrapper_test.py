@@ -335,6 +335,20 @@ class VecEnvWrapperTest(absltest.TestCase):
         rtol=1e-6,
     )
 
+  def test_global_step_round_trips_through_the_clock(self):
+    timeouts = torch.full((1,), 1.0, dtype=torch.float32, device=self.DEVICE)
+    env = _build_pendulum_env(
+        nworld=1, xpu_device=self.DEVICE, timeouts=timeouts, impl=self.IMPL
+    )
+    wrapper = vecenv_wrapper.RslRlVecEnvWrapper(env, max_episode_length=50)
+    self.assertEqual(wrapper.global_step, 0)
+
+    wrapper.step(torch.zeros(1, 1, dtype=torch.float32, device=self.DEVICE))
+    self.assertEqual(wrapper.global_step, 1)
+
+    wrapper.global_step = 500
+    self.assertEqual(env.device_layer.clock.global_step, 500)
+
   def test_nan_termination_resetter_terminates_nan_envs(self):
     """Verify NanTerminationResetter terminates NaN envs."""
     nworld = 1

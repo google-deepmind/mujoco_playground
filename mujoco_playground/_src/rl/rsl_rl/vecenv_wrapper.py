@@ -154,6 +154,15 @@ class RslRlVecEnvWrapper(rsl_rl_env.VecEnv):
     self._episode_length_buf = value
     self.unwrapped.device_layer.sim.set_episode_step(value)
 
+  @property
+  def global_step(self) -> int:
+    """Number of control steps taken, used by curricula and checkpoints."""
+    return int(self.unwrapped.device_layer.clock.global_step)
+
+  @global_step.setter
+  def global_step(self, value: int) -> None:
+    self.unwrapped.device_layer.clock.set_global_step(value)
+
   def seed(self, seed: int = -1) -> int:
     """Sets the global random seed for reproducibility."""
     if seed >= 0:
