@@ -44,7 +44,7 @@ class _FakeBus:
     self.positions = {n: constant.TICKS_CENTER for n in constant.JOINTS}
     self.written = None
 
-  def sync_read(self, register, normalize=True):
+  def sync_read(self, register, normalize=True, num_retry=0):
     assert register == "Present_Position" and not normalize
     return dict(self.positions)
 

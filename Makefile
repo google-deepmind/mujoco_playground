@@ -40,6 +40,11 @@ test:
 	$(MUJOCO_GL_ENV) uv run --extra rl --group dev pytest mujoco_playground/ $(_IGNORE_RL) -n $(N_WORKERS) --dist worksteal -v
 	$(MUJOCO_GL_ENV) uv run --extra rl --group dev pytest $(_RL_TESTS) -n $(N_WORKERS) --dist worksteal -v
 
+# executorch pins one exact torch version, so it is added for its tests only.
+.PHONY: test-executorch
+test-executorch:
+	$(MUJOCO_GL_ENV) REQUIRE_EXECUTORCH=1 uv run --extra rl --group dev --with executorch==1.6.0 python -m pytest mujoco_playground/tasks/manipulation/pick_cube/so101/deploy/run_test.py -v
+
 # Optional dependencies must not be imported at module scope.
 NO_EXTRAS_ENV := .venv-no-extras
 .PHONY: check-imports

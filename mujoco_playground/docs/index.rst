@@ -18,7 +18,7 @@ Clone the repository and sync dependencies with `uv <https://docs.astral.sh/uv/>
 
     make sync-cu12  # For CUDA 12 on Linux
 
-    make sync-cpu  # Or for CPU only, (i.e. on macOS)
+    make sync-cpu  # Or for CPU only, (i.e. on macOS 14 or newer with Apple Silicon)
 
     make test  # Run tests
 

@@ -30,7 +30,7 @@ Clone the repository, sync development dependencies with `uv <https://docs.astra
 
     make sync-cu12  # For CUDA 12 on Linux
 
-    make sync-cpu  # Or for CPU only, (i.e. on macOS)
+    make sync-cpu  # Or for CPU only, (i.e. on macOS 14 or newer with Apple Silicon)
 
     uv run pre-commit install
 
@@ -44,6 +44,7 @@ and optional imports via ``make check-imports``, and type-checks with ``pyrefly`
 
     uv run pre-commit run --all-files  # Format, check imports, and type-check (or `make format` / `make typecheck`)
     make test                          # Run pytest in parallel
+    make test-executorch               # Run the deploy tests that need executorch
     make docs                          # Build HTML docs (or `make serve-docs` to preview locally)
 
 To iterate quickly on a single test file on Linux:
