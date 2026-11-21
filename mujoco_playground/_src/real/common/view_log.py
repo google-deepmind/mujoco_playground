@@ -14,8 +14,8 @@
 
 """Views a logged mcap episode (from logger.py) in rerun.
 
-uv run --extra real python -m mujoco_playground.real.view_log
-uv run --extra real python -m mujoco_playground.real.view_log --file=<episode.mcap>
+uv run --extra real playground view_log
+uv run --extra real playground view_log --file=<episode.mcap>
 """
 
 import collections

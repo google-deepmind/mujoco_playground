@@ -29,7 +29,7 @@ For real hardware deployment, ensure the SO101 follower arm and wrist camera are
 Train the vision-based pick-cube policy in simulation using RSL-RL:
 
 ```bash
-uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
+uv run --extra rl playground train rsl_rl \
     --env=SO101PickCubeVision \
     --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
     # --overrides='{"nworld": 64}'  # For CPU
@@ -38,7 +38,7 @@ uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
 Checkpoints (`model_*.pt`) are written to `--logdir`. You can preview the trained policy in the batched training environment with:
 
 ```bash
-uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
+uv run --extra rl playground play rsl_rl \
     --env=SO101PickCubeVision \
     --resume_path=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
@@ -50,8 +50,7 @@ uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
 Test the deployment pipeline, observation adapter, and interactive viewer in single-world simulation before running on hardware. Pass either a specific `model_*.pt` file or a run directory (which automatically loads the latest checkpoint) to `--checkpoint`:
 
 ```bash
-uv run --extra so101 --extra rl python -m \
-    mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+uv run --extra so101 --extra rl playground deploy so101_pick_cube \
     --mode=sim \
     --impl=cpp \
     --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision
@@ -64,8 +63,7 @@ uv run --extra so101 --extra rl python -m \
 Deploy the trained checkpoint onto the physical SO101 follower arm and wrist camera:
 
 ```bash
-uv run --extra so101 --extra rl python -m \
-    mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+uv run --extra so101 --extra rl playground deploy so101_pick_cube \
     --mode=real \
     --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision
 ```
@@ -87,9 +85,9 @@ Replay the latest logged episode in [Rerun](https://rerun.io):
 
 ```bash
 # View most recent episode across .local/
-uv run --extra real python -m mujoco_playground.real.view_log
+uv run --extra real playground view_log
 
 # View a specific MCAP file
-uv run --extra real python -m mujoco_playground.real.view_log \
+uv run --extra real playground view_log \
     --file=.local/so101_sim2real_deploy_logs/YYYY/MM/DD/episode_*.mcap
 ```

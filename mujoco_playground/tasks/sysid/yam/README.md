@@ -53,7 +53,7 @@ uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.collect
 Fit the joint parameters on `ep01` and `ep02` and evaluate on `ep03`:
 
 ```bash
-uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.run
+uv run --extra yam playground sysid yam
 ```
 
 `run` performs the following steps:
@@ -85,7 +85,7 @@ passing the printed `--freeze_params` flag (or `--freeze_joints` for an entire
 actuator):
 
 ```bash
-uv run --extra yam python -m mujoco_playground.tasks.sysid.yam.run \
+uv run --extra yam playground sysid yam \
   --freeze_params=joint2_armature,joint3_armature,joint4_armature,joint4_frictionloss,joint4_kp
 ```
 

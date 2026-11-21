@@ -32,7 +32,7 @@ Start in simulation. The real follower is not involved, so it is the safe way
 to check the leader, the pedal and the logger before anything can collide:
 
 ```bash
-uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --sim
+uv run --extra so101 playground teleop so101 --sim
 ```
 
 ### Real
@@ -40,7 +40,7 @@ uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --sim
 For real teleop:
 
 ```bash
-uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop
+uv run --extra so101 playground teleop so101
 ```
 
 Episodes are gated by a three-button foot pedal — or its keyboard stand-in
@@ -59,7 +59,7 @@ disengages.
 If using a passive (torqueless) leader arm, pass `--noreset_leader`:
 
 ```bash
-uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --noreset_leader
+uv run --extra so101 playground teleop so101 --noreset_leader
 ```
 
 Without `--noreset_leader`, the script attempts to torque-drive the leader arm
@@ -79,8 +79,8 @@ wrist-camera frame (jpeg), the commanded action, the raw (unclipped) leader
 pose, and a wall-clock timestamp. Inspect one in [rerun](https://rerun.io):
 
 ```bash
-uv run --extra real python -m mujoco_playground.real.view_log            # latest episode
-uv run --extra real python -m mujoco_playground.real.view_log --file=... # specific file
+uv run --extra real playground view_log            # latest episode
+uv run --extra real playground view_log --file=... # specific file
 ```
 
 

@@ -33,18 +33,18 @@ full list of registered environments:
 Training and Evaluation
 -----------------------
 
-Train a PPO policy across batched GPU worlds with ``mujoco_playground.rl.rsl_rl.train`` and evaluate checkpoints in the
-interactive viewer with ``mujoco_playground.rl.rsl_rl.play`` (while your policy trains, you can proceed to
+Train a PPO policy across batched GPU worlds with ``playground train rsl_rl`` and evaluate checkpoints in the
+interactive viewer with ``playground play rsl_rl`` (while your policy trains, you can proceed to
 :doc:`Robots <robots>` to connect and calibrate your hardware):
 
 .. code-block:: bash
 
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl playground train rsl_rl \
       --env=SO101PickCube \
       --logdir=/tmp/rslrl_logs/so101_pick_cube
       # --overrides='{"nworld": 64}'  # For CPU
 
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
+    uv run --extra rl playground play rsl_rl \
       --env=SO101PickCube \
       --resume_path=/tmp/rslrl_logs/so101_pick_cube
 
@@ -54,7 +54,7 @@ Pass JSON dicts to ``--overrides`` (runner settings) or ``--env_overrides`` (env
 .. code-block:: bash
 
     # Customize runner settings
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl playground train rsl_rl \
       --env=SO101PickCube \
       --overrides='{"max_iterations": 2000, "nworld": 2048}'
 
@@ -95,13 +95,13 @@ viewer, and train a tracking policy:
       --trajectory_path=/path/to/output.npz
 
     # 2. Train tracking policy
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl playground train rsl_rl \
       --env=G1WholeBodyTracking \
       --env_overrides='{"trajectory_path": "/path/to/output.npz"}' \
       --logdir=/tmp/g1_tracking
 
     # 3. Play checkpoint with reference ghost enabled
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
+    uv run --extra rl playground play rsl_rl \
       --env=G1WholeBodyTracking \
       --env_overrides='{"trajectory_path": "/path/to/output.npz", "play": true, "enable_ghost": true}' \
       --resume_path=/tmp/g1_tracking \

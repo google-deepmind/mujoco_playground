@@ -15,8 +15,8 @@
 """Views a logged episode (MCAP) in rerun.
 
 Usage:
-  uv run --extra real python -m mujoco_playground.real.view_log
-  uv run --extra real python -m mujoco_playground.real.view_log --file=<episode.mcap>
+  uv run --extra real playground view_log
+  uv run --extra real playground view_log --file=<episode.mcap>
 """
 
 from absl import app

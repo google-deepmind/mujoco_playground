@@ -14,8 +14,8 @@
 
 """Teleoperates the SO101 follower (real or simulated) from the leader arm.
 
-  uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop         # real
-  uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop --sim   # sim
+  uv run --extra so101 playground teleop so101         # real
+  uv run --extra so101 playground teleop so101 --sim   # sim
 
 The environment drives the follower arm and reads off of the joint positions
 and camera. The leader arm is a `Policy` driving the environment through the

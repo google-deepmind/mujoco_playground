@@ -80,6 +80,9 @@ yam = [
     "playground[i2rt]",
 ]
 
+[project.scripts]
+playground = "mujoco_playground.__main__:main"
+
 [project.urls]
 Documentation = "https://reaf-sim.readthedocs.io/en/latest/playground/index.html"
 Repository = "https://github.com/google-deepmind/mujoco_playground"

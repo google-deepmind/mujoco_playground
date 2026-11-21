@@ -14,13 +14,11 @@
 """Runs a trained SO101 pick-cube policy, in simulation or on the real arm.
 
   On hardware:
-    uv run --extra so101 --extra rl python -m \
-        mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+    uv run --extra so101 --extra rl playground deploy so101_pick_cube \
         --mode=real --checkpoint=/path/to/model_*.pt
 
   In simulation:
-    uv run --extra so101 --extra rl python -m \
-        mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+    uv run --extra so101 --extra rl playground deploy so101_pick_cube \
         --mode=sim --impl=cpp --checkpoint=/path/to/model_*.pt
 """
 

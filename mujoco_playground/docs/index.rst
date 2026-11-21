@@ -27,11 +27,11 @@ play back the checkpoint in the interactive viewer:
 
 .. code-block:: bash
 
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl playground train rsl_rl \
       --env=SO101PickCube \
       --logdir=/tmp/rslrl_logs/so101_pick_cube
 
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
+    uv run --extra rl playground play rsl_rl \
       --env=SO101PickCube \
       --resume_path=/tmp/rslrl_logs/so101_pick_cube
 

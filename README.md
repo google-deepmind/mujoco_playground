@@ -217,6 +217,13 @@ Verify your installation by running the test suite:
 make test
 ```
 
+Run CLI commands (`train`, `play`, `deploy`, `teleop`, `sysid`, `view_log`) from your local checkout with `uv run`:
+
+```bash
+uv run playground --help
+uv run --extra rl playground train rsl_rl --env=SO101PickCube
+```
+
 > [!NOTE]
 > Hardware SDKs are optional extras so simulation-only stays lightweight. Passing `--extra so101` or `--extra yam` to `uv run` installs the hardware drivers on demand.
 

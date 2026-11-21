@@ -16,7 +16,7 @@ tracking error in MuJoCo physics.
 Collect a teleoperation episode on the real robot that articulates all joints:
 
 ```bash
-uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop \
+uv run --extra so101 playground teleop so101 \
   --instruction="sysid_excitation" \
   --num_episodes=1
 ```
@@ -32,7 +32,7 @@ uv run --extra so101 python -m mujoco_playground.tasks.teleop.so101.teleop \
 Run the sys-id optimization on the collected teleoperation logs (defaults to reading `.local/so101_teleop_logs`):
 
 ```bash
-uv run --extra so101 python -m mujoco_playground.tasks.sysid.so101.run
+uv run --extra so101 playground sysid so101
 ```
 
 The script will:

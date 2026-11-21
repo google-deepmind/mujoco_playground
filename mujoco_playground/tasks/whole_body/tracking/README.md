@@ -47,7 +47,7 @@ datasets (like LAFAN1) to the target robot model.
     Using `uv run` manages your virtual environment and dependencies for you:
 
     ```bash
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.train \
+    uv run --extra rl playground train rsl_rl \
       --env=G1WholeBodyTracking \
       --env_overrides='{"trajectory_path": "/path/to/output.npz"}' \
       --logdir=/tmp/g1_tracking/
@@ -66,7 +66,7 @@ datasets (like LAFAN1) to the target robot model.
     simulation viewer:
 
     ```bash
-    uv run --extra rl python -m mujoco_playground.rl.rsl_rl.play \
+    uv run --extra rl playground play rsl_rl \
       --env=G1WholeBodyTracking \
       --env_overrides='{"trajectory_path": "/path/to/output.npz", "play": true, "enable_ghost": true}' \
       --resume_path=/tmp/g1_tracking/ \

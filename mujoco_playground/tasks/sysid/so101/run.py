@@ -14,7 +14,7 @@
 """Runs system identification on SO101 teleop demonstrations (MCAP).
 
 Usage:
-  uv run --extra so101 python -m mujoco_playground.tasks.sysid.so101.run --mcap_files=path/to/*.mcap
+  uv run --extra so101 playground sysid so101 --mcap_files=path/to/*.mcap
 """
 
 from absl import app
