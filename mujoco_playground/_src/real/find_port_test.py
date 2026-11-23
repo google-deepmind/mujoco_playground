@@ -110,6 +110,14 @@ class PortConfigTest(absltest.TestCase):
 
     self.assertEqual(loaded, {"follower": "AAA", "leader": "BBB"})
 
+  def test_write_preserves_other_roles(self):
+    find_port.write_port_config("so101", {"follower": "AAA", "leader": "BBB"})
+    find_port.write_port_config("so101", {"follower": "CCC"})
+
+    loaded = find_port.load_port_config("so101", ["follower", "leader"], _SCAN)
+
+    self.assertEqual(loaded, {"follower": "CCC", "leader": "BBB"})
+
   def test_missing_config_names_the_scan_command(self):
     with self.assertRaisesRegex(find_port.PortResolutionError, "scan_ports"):
       find_port.load_port_config("so101", ["follower"], _SCAN)

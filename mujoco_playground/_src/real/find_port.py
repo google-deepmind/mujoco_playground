@@ -108,9 +108,11 @@ def config_path(robot: str) -> pathlib.Path:
 
 
 def write_port_config(robot: str, roles: Mapping[str, str]) -> pathlib.Path:
-  """Writes a robot's port config and returns the path written."""
+  """Writes a robot's port config, preserving any existing roles."""
   path = config_path(robot)
-  path.write_text(json.dumps(dict(roles), indent=2, sort_keys=True) + "\n")
+  merged = json.loads(path.read_text()) if path.is_file() else {}
+  merged.update(roles)
+  path.write_text(json.dumps(merged, indent=2, sort_keys=True) + "\n")
   return path
 
 

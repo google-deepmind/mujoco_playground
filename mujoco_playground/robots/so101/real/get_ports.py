@@ -17,7 +17,8 @@
 Serial numbers are per-device, so the map itself is generated per machine into a
 gitignored config. Generate the config with:
 
-  uv run --extra so101 python -m mujoco_playground.robots.so101.real.ports --identify
+  uv run --extra so101 python -m mujoco_playground.robots.so101.real.get_ports
+  --identify --roles=follower
 """
 
 import pathlib
@@ -46,6 +47,11 @@ if __name__ == "__main__":
   from absl import flags
   from mujoco_playground._src.real import find_hardware
 
+  _ROLES = flags.DEFINE_list(
+      "roles",
+      list(constant.ROLES),
+      "Which arms to identify or check (subset of follower, leader).",
+  )
   _IDENTIFY = flags.DEFINE_bool(
       "identify",
       False,
@@ -60,9 +66,14 @@ if __name__ == "__main__":
 
   def main(argv):
     del argv  # Unused.
+    for role in _ROLES.value:
+      if role not in constant.ROLES:
+        raise app.UsageError(
+            f"Unknown role '{role}'; expected one of {sorted(constant.ROLES)}."
+        )
     find_hardware.run_ports(
         constant.ROBOT,
-        constant.ROLES,
+        _ROLES.value,
         identify=_IDENTIFY.value,
         settle_seconds=_SETTLE_SECONDS.value,
     )

@@ -116,18 +116,22 @@ def list_cameras() -> list[CameraId]:
   """
   import cv2  # pyrefly: ignore[missing-import]
 
-  candidates: list[CameraId]
-  if platform.system() == "Linux":
-    candidates = sorted(str(p) for p in pathlib.Path("/dev").glob("video*"))
-  else:
-    candidates = list(range(_MAX_OPENCV_INDEX))
+  is_linux = platform.system() == "Linux"
+  candidates: list[CameraId] = (
+      sorted(str(p) for p in pathlib.Path("/dev").glob("video*"))
+      if is_linux
+      else list(range(_MAX_OPENCV_INDEX))
+  )
 
   found = []
   for candidate in candidates:
     capture = cv2.VideoCapture(candidate)
-    if capture.isOpened():
-      found.append(candidate)
+    opened = capture.isOpened()
     capture.release()
+    if opened:
+      found.append(candidate)
+    elif not is_linux:
+      break
   return found
 
 
