@@ -1,8 +1,13 @@
 Changelog
 =========
 
-Upcoming Version (not yet released)
------------------------------------
+Version 1.1.0 (November 23, 2026)
+---------------------------------
+
+.. admonition:: Breaking changes
+   :class: attention
+
+   - Removed deprecated DACL/TLL compatibility shims.
 
 .. admonition:: Breaking changes
    :class: attention
@@ -15,6 +20,9 @@ Upcoming Version (not yet released)
 
 - Added ``backend="optix"`` option to :class:`~reaf.simulation.torch.CameraDevice` for NVIDIA RTX GPU accelerated
   ray-traced rendering via ``warp-optix``.
+- Added declarative ``curriculum`` support on :class:`~reaf.simulation.torch.flat_scene.Term` with ``global_step``
+  tracking.
+- Added Python 3.14 and PyTorch 2.15 support.
 
 Version 1.0.1 (November 8, 2026)
 --------------------------------

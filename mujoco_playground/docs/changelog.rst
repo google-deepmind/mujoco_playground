@@ -5,8 +5,8 @@ MuJoCo Playground follows `MuJoCo's semantic versioning
 <https://github.com/google-deepmind/mujoco/blob/main/VERSIONING.md>`_
 (`SUPERMAJOR.MAJOR.MINOR_OR_PATCH`).
 
-Upcoming Version (not yet released)
------------------------------------
+Version 1.1.0 (November 23, 2026)
+---------------------------------
 
 .. admonition:: Breaking changes
    :class: attention
@@ -14,6 +14,10 @@ Upcoming Version (not yet released)
    - Replaced ``safari-sdk`` with plain JSON-encoded ``mcap`` in ``real`` episodic logging; legacy
      ``tf.train.Example`` MCAP logs are no longer readable.
    - Replaced ``lerobot[feetech]`` with ``rustypot`` for SO-101 serial control.
+
+- Added ``playground`` CLI entrypoint.
+- Added Python 3.14 and PyTorch 2.15 support (`#386 <https://github.com/google-deepmind/mujoco_playground/issues/386>`__, `#393 <https://github.com/google-deepmind/mujoco_playground/issues/393>`__).
+- Migrated SO-101 teleop and ``tabletop_v0`` viewers to MuJoCo Studio.
 
 Version 1.0.1 (November 8, 2026)
 --------------------------------
