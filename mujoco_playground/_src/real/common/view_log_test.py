@@ -29,19 +29,6 @@ def setUpModule():
   os.environ.setdefault("MUJOCO_GL", "osmesa")
 
 
-class _Feature:
-  """Stands in for the one thing a `tf.Example` feature is asked here."""
-
-  def __init__(self, kind: str, value: tuple[bytes, ...] = ()):
-    self._kind = kind
-    if kind == "bytes_list":
-      self.bytes_list = mock.NonCallableMagicMock()
-      self.bytes_list.value = value
-
-  def WhichOneof(self, _) -> str:  # pylint: disable=invalid-name
-    return self._kind
-
-
 class LatestEpisodeTest(absltest.TestCase):
 
   def setUp(self):
@@ -78,32 +65,22 @@ class ViewTypeTest(absltest.TestCase):
 
   def test_three_dimensional_features_are_images(self):
     # A jpeg wrist frame and a policy's normalized stack, respectively.
-    self.assertEqual(
-        view_log.view_type(_Feature("bytes_list"), (16, 16, 3)), "image"
-    )
-    self.assertEqual(
-        view_log.view_type(_Feature("float_list"), (9, 16, 16)), "image"
-    )
+    self.assertEqual(view_log.view_type(b"", (16, 16, 3)), "image")
+    self.assertEqual(view_log.view_type([0.0], (9, 16, 16)), "image")
 
   def test_compressed_jpeg_bytes_are_images_even_with_empty_shape(self):
     self.assertEqual(
-        view_log.view_type(
-            _Feature("bytes_list", (b"\xff\xd8\xff\xe0\x00\x10JFIF",)), ()
-        ),
+        view_log.view_type(b"\xff\xd8\xff\xe0\x00\x10JFIF", ()),
         "image",
     )
 
-  def test_shapeless_bytes_are_documents(self):
-    self.assertEqual(
-        view_log.view_type(
-            _Feature("bytes_list", (b"pick up the blue cube",)), ()
-        ),
-        "text",
-    )
+  def test_shapeless_bytes_and_strings_are_documents(self):
+    self.assertEqual(view_log.view_type(b"pick up the blue cube", ()), "text")
+    self.assertEqual(view_log.view_type("pick up the blue cube", ()), "text")
 
   def test_everything_else_is_plotted(self):
-    self.assertEqual(view_log.view_type(_Feature("float_list"), (21,)), "plot")
-    self.assertEqual(view_log.view_type(_Feature("int64_list"), ()), "plot")
+    self.assertEqual(view_log.view_type([0.0] * 21, (21,)), "plot")
+    self.assertEqual(view_log.view_type(42, ()), "plot")
 
 
 class NewestFrameTest(absltest.TestCase):

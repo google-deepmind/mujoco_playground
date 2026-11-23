@@ -5,6 +5,15 @@ MuJoCo Playground follows `MuJoCo's semantic versioning
 <https://github.com/google-deepmind/mujoco/blob/main/VERSIONING.md>`_
 (`SUPERMAJOR.MAJOR.MINOR_OR_PATCH`).
 
+Upcoming Version (not yet released)
+-----------------------------------
+
+.. admonition:: Breaking changes
+   :class: attention
+
+   - Replaced ``safari-sdk`` with plain JSON-encoded ``mcap`` in ``real`` episodic logging; legacy
+     ``tf.train.Example`` MCAP logs are no longer readable.
+
 Version 1.0.1 (November 8, 2026)
 --------------------------------
 

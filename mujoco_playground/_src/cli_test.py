@@ -14,6 +14,7 @@
 
 """Tests for the `playground` CLI dispatcher."""
 
+import os
 import sys
 from unittest import mock
 
@@ -69,27 +70,49 @@ class CliTest(absltest.TestCase):
     )
 
   def test_banner_only_on_tty_command_not_help(self) -> None:
-    with mock.patch.object(sys.stderr, "isatty", return_value=True):
-      with mock.patch.object(
-          sys, "argv", ["playground", "train", "rsl_rl", "--env=SO101PickCube"]
-      ):
-        with mock.patch.object(cli.runpy, "run_module"):
-          with mock.patch("builtins.print") as mock_print:
-            cli.main()
-      mock_print.assert_called_once_with(cli._format_banner(), file=sys.stderr)
-      self.assertIn("\033[38;2;", mock_print.call_args.args[0])
-
-      for argv in (
-          ["playground", "--help"],
-          ["playground", "sysid", "--help"],
-          ["playground", "train", "rsl_rl", "--help"],
-      ):
-        with mock.patch.object(sys, "argv", argv):
+    with mock.patch.dict(os.environ, {"COLORTERM": "truecolor"}, clear=True):
+      with mock.patch.object(sys.stderr, "isatty", return_value=True):
+        with mock.patch.object(
+            sys,
+            "argv",
+            ["playground", "train", "rsl_rl", "--env=SO101PickCube"],
+        ):
           with mock.patch.object(cli.runpy, "run_module"):
             with mock.patch("builtins.print") as mock_print:
               cli.main()
-        for call in mock_print.call_args_list:
-          self.assertNotIn("\033[38;2;", call.args[0])
+        mock_print.assert_called_once_with(
+            cli._format_banner(), file=sys.stderr
+        )
+        self.assertIn("\033[38;2;", mock_print.call_args.args[0])
+
+        for argv in (
+            ["playground", "--help"],
+            ["playground", "sysid", "--help"],
+            ["playground", "train", "rsl_rl", "--help"],
+        ):
+          with mock.patch.object(sys, "argv", argv):
+            with mock.patch.object(cli.runpy, "run_module"):
+              with mock.patch("builtins.print") as mock_print:
+                cli.main()
+          for call in mock_print.call_args_list:
+            self.assertNotIn("\033[38;2;", call.args[0])
+
+  def test_banner_color_modes(self) -> None:
+    with mock.patch.dict(os.environ, {"TERM": "xterm-256color"}, clear=True):
+      banner = cli._format_banner()
+      self.assertIn("\033[38;5;", banner)
+      self.assertNotIn("\033[38;2;", banner)
+
+    with mock.patch.dict(os.environ, {"WT_SESSION": "1"}, clear=True):
+      self.assertIn("\033[38;2;", cli._format_banner())
+
+    for env in (
+        {"COLORTERM": "truecolor", "NO_COLOR": "1"},
+        {"TERM": "dumb"},
+        {},
+    ):
+      with mock.patch.dict(os.environ, env, clear=True):
+        self.assertEqual(cli._format_banner(), cli._BANNER)
 
   def test_unknown_command_and_target_exit(self) -> None:
     with mock.patch.object(sys, "argv", ["playground", "bogus"]):

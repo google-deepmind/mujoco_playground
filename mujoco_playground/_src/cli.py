@@ -73,9 +73,29 @@ _BANNER_STOPS = (
 _HELP_FLAGS = frozenset({"-h", "--help", "--helpshort", "--helpfull"})
 
 
+def _color_mode() -> str:
+  """Returns 'truecolor', '256', or 'none' for the current terminal."""
+  if os.environ.get("NO_COLOR") or os.environ.get("TERM") == "dumb":
+    return "none"
+  colorterm = os.environ.get("COLORTERM", "").lower()
+  if colorterm in ("truecolor", "24bit") or os.environ.get("WT_SESSION"):
+    return "truecolor"
+  if "256color" in os.environ.get("TERM", ""):
+    return "256"
+  return "none"
+
+
+def _rgb_to_ansi256(r: int, g: int, b: int) -> int:
+  """Maps an RGB triple to the nearest xterm 256-color 6x6x6 cube index."""
+  return (
+      16 + 36 * round(r / 255 * 5) + 6 * round(g / 255 * 5) + round(b / 255 * 5)
+  )
+
+
 def _format_banner() -> str:
-  """Returns `_BANNER` with a truecolor logo gradient unless `NO_COLOR` is set."""
-  if os.environ.get("NO_COLOR"):
+  """Returns `_BANNER` colored for the terminal's supported color depth."""
+  mode = _color_mode()
+  if mode == "none":
     return _BANNER
   lines = _BANNER.splitlines()
   width = max(len(line) for line in lines) or 1
@@ -97,7 +117,10 @@ def _format_banner() -> str:
       r = round(c0[0] + (c1[0] - c0[0]) * frac)
       g = round(c0[1] + (c1[1] - c0[1]) * frac)
       b = round(c0[2] + (c1[2] - c0[2]) * frac)
-      parts.append(f"\033[38;2;{r};{g};{b}m{ch}")
+      if mode == "truecolor":
+        parts.append(f"\033[38;2;{r};{g};{b}m{ch}")
+      else:
+        parts.append(f"\033[38;5;{_rgb_to_ansi256(r, g, b)}m{ch}")
     colored.append("".join(parts) + "\033[0m")
   return "\n".join(colored)
 

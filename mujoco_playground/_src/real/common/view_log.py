@@ -72,27 +72,18 @@ def latest_episode() -> epath.Path:
 
 def session_info(path: epath.Path) -> tuple[str, Mapping[str, Sequence[int]]]:
   """Returns the task/agent name and the shape of every feature in the episode."""
-  # Viewer-only dependencies.
   try:
-    from safari_sdk.logging.python import constants  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
-    from safari_sdk.logging.python import mcap_parser_utils  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
-
-    session = mcap_parser_utils.read_session_proto_data(
-        str(path), constants.SESSION_TOPIC_NAME
-    )[0]
-    specs = session.policy_environment_metadata.feature_specs
-    shapes = {}
-    for prefix, group in (
-        ("observation", specs.observation),
-        ("action", specs.action),
-        ("extra/policy_extra", specs.policy_extra_output),
+    session = log_reader.read_session(path)
+    specs = session.get("feature_specs", {})
+    shapes: dict[str, tuple[int, ...]] = {}
+    for prefix, group_name in (
+        ("observation", "observation"),
+        ("action", "action"),
+        ("extra/policy_extra", "policy_extra"),
     ):
-      for key, spec in group.items():
-        shapes[key] = tuple(spec.shape)
-        shapes[f"{prefix}/{key}"] = tuple(spec.shape)
-        if key.startswith(f"{prefix}/"):
-          shapes[key.removeprefix(f"{prefix}/")] = tuple(spec.shape)
-    app_id = getattr(session, "task_id", None) or "episode_log"
+      for key, meta in specs.get(group_name, {}).items():
+        shapes[f"{prefix}/{key}"] = tuple(meta["shape"])
+    app_id = session.get("task_id") or "episode_log"
     return app_id, shapes
   except Exception:  # pylint: disable=broad-except
     return "episode_log", {}
@@ -102,11 +93,11 @@ def view_type(feature: Any, shape: Sequence[int]) -> str:
   """How a feature asks to be shown, from its shape and its contents."""
   if len(shape) == _IMAGE_NDIM:
     return "image"
-  if feature.WhichOneof("kind") == "bytes_list":
-    if feature.bytes_list.value and any(
-        feature.bytes_list.value[0].startswith(m) for m in _IMAGE_MAGIC
-    ):
+  if isinstance(feature, (bytes, bytearray)):
+    if any(feature.startswith(m) for m in _IMAGE_MAGIC):
       return "image"
+    return "text"
+  if isinstance(feature, str):
     return "text"
   return "plot"
 
@@ -136,30 +127,28 @@ def log_feature(
   import rerun as rr  # pyrefly: ignore[missing-import]  # pylint: disable=g-import-not-at-top
 
   if view_type_str == "image":
-    if feature.WhichOneof("kind") == "bytes_list":
-      (raw,) = feature.bytes_list.value
+    if isinstance(feature, (bytes, bytearray)):
+      raw = bytes(feature)
       media_type = next(
           (t for m, t in _IMAGE_MAGIC.items() if raw.startswith(m)),
           "image/jpeg",
       )
       rr.log(entity, rr.EncodedImage(contents=raw, media_type=media_type))
     else:
-      kind = feature.WhichOneof("kind")
-      values = getattr(feature, kind).value
-      rr.log(entity, rr.Image(newest_frame(values, shape)))
+      rr.log(entity, rr.Image(newest_frame(feature, shape)))
   elif view_type_str == "text":
-    (raw,) = feature.bytes_list.value
-    try:
-      rr.log(entity, rr.TextDocument(raw.decode("utf-8")))
-    except UnicodeDecodeError:
-      rr.log(entity, rr.TextDocument(str(raw)))
+    text = (
+        bytes(feature).decode("utf-8", errors="replace")
+        if isinstance(feature, (bytes, bytearray))
+        else str(feature)
+    )
+    rr.log(entity, rr.TextDocument(text))
   else:
-    kind = feature.WhichOneof("kind")
-    values = getattr(feature, kind).value
-    if len(values) == 1:
-      rr.log(entity, rr.Scalars(float(values[0])))
+    arr = np.asarray(feature).ravel()
+    if arr.size == 1:
+      rr.log(entity, rr.Scalars(float(arr[0])))
     else:
-      for i, value in enumerate(values):
+      for i, value in enumerate(arr):
         rr.log(f"{entity}/{i}", rr.Scalars(float(value)))
 
 
@@ -200,25 +189,20 @@ def view(path: epath.Path) -> Mapping[str, str]:
   print(f"Loading {path}")
   _, shapes = session_info(path)
 
-  # Find timestamp key if present.
+  # Collect wall-clock timestamps from `/timestep` in a single pass.
   timestamp_key = None
-  for topic, features in log_reader.iter_features(path):
-    if topic == log_reader.TIMESTEP_TOPIC:
-      for key in features:
-        if "timestamp" in key.lower():
-          timestamp_key = key
-          break
-      break
-
-  stamps = []
-  if timestamp_key:
-    for topic, features in log_reader.iter_features(path):
-      if topic == log_reader.TIMESTEP_TOPIC and timestamp_key in features:
-        feat = features[timestamp_key]
-        if feat.int64_list.value:
-          stamps.append(feat.int64_list.value[0])
-        elif feat.float_list.value:
-          stamps.append(int(feat.float_list.value[0]))
+  stamps: list[int] = []
+  for _, features in log_reader.iter_features(
+      path, topics=[log_reader.TIMESTEP_TOPIC]
+  ):
+    if timestamp_key is None:
+      timestamp_key = next(
+          (k for k in features if "timestamp" in k.lower()), None
+      )
+      if timestamp_key is None:
+        break
+    if timestamp_key in features:
+      stamps.append(int(features[timestamp_key]))
 
   views: dict[str, str] = {}
   steps = collections.Counter()

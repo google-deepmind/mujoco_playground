@@ -13,7 +13,6 @@
 # limitations under the License.
 """MCAP trajectory dataset loader for SO101 system identification."""
 
-import collections
 import dataclasses
 import glob
 import os
@@ -63,34 +62,28 @@ def load_trajectory(path: epath.Path) -> Trajectory:
   follower_cmd_ts_key = f"observation/{constant.FOLLOWER_COMMAND_TIMESTAMP}"
   leader_ts_key = f"extra/policy_extra/{constant.LEADER_TIMESTAMP}"
 
-  steps = collections.Counter()
-  timestamps_ns: dict[int, int] = {}
-  leader_ts_ns: dict[int, int] = {}
-  follower_ts_ns: dict[int, int] = {}
-  measured: dict[int, dict[str, float]] = collections.defaultdict(dict)
-  commanded: dict[int, dict[str, float]] = collections.defaultdict(dict)
+  timestamps_ns: list[int] = []
+  leader_ts_ns: list[int] = []
+  follower_ts_ns: list[int] = []
+  measured: list[list[float]] = []
+  commanded: list[list[float]] = []
 
   for topic, features in log_reader.iter_features(path):
-    step = steps[topic]
-    steps[topic] += 1
+    if topic == log_reader.TIMESTEP_TOPIC:
+      timestamps_ns.append(int(features[timestamp_key]))
+      follower_ts_ns.append(int(features[follower_cmd_ts_key]))
+      measured.append([
+          float(features[f"observation/{constant.JOINT_POSITION_KEYS[j]}"])
+          for j in constant.JOINTS
+      ])
+    elif topic == log_reader.ACTION_TOPIC:
+      commanded.append([
+          float(features[f"action/{constant.GOAL_POSITION_KEYS[j]}"])
+          for j in constant.JOINTS
+      ])
+    elif topic == log_reader.POLICY_EXTRA_TOPIC:
+      leader_ts_ns.append(int(features[leader_ts_key]))
 
-    if topic == "/timestep":
-      timestamps_ns[step] = features[timestamp_key].int64_list.value[0]
-      follower_ts_ns[step] = features[follower_cmd_ts_key].int64_list.value[0]
-
-      for joint in constant.JOINTS:
-        key = f"observation/{constant.JOINT_POSITION_KEYS[joint]}"
-        measured[step][joint] = features[key].float_list.value[0]
-
-    elif topic == "/action":
-      for joint in constant.JOINTS:
-        key = f"action/{constant.GOAL_POSITION_KEYS[joint]}"
-        commanded[step][joint] = features[key].float_list.value[0]
-
-    elif topic == "/policy_extra":
-      leader_ts_ns[step] = features[leader_ts_key].int64_list.value[0]
-
-  n_joints = len(constant.JOINTS)
   if not (len(timestamps_ns) == len(commanded) == len(leader_ts_ns)):
     raise ValueError(
         f"Mismatched message counts in {path}: {len(timestamps_ns)} timesteps,"
@@ -105,39 +98,20 @@ def load_trajectory(path: epath.Path) -> Trajectory:
   n_steps = len(commanded) - 1
 
   t0_ns = timestamps_ns[0]
-  timestamps = np.array(
-      [(timestamps_ns[s] - t0_ns) * 1e-9 for s in range(n_steps)],
-      dtype=np.float64,
-  )
+  timestamps = (np.array(timestamps_ns[:n_steps]) - t0_ns) * 1e-9
   dt = float(np.mean(np.diff(timestamps)))
+  ctrl_timestamps = (np.array(follower_ts_ns[1 : n_steps + 1]) - t0_ns) * 1e-9
+  leader_ts = np.array(leader_ts_ns[:n_steps], dtype=np.int64)
+  follower_ts = np.array(follower_ts_ns[1 : n_steps + 1], dtype=np.int64)
 
-  ctrl_timestamps = np.array(
-      [(follower_ts_ns[s + 1] - t0_ns) * 1e-9 for s in range(n_steps)],
-      dtype=np.float64,
-  )
-
-  leader_ts = np.array(
-      [leader_ts_ns[s] for s in range(n_steps)],
-      dtype=np.int64,
-  )
-  follower_ts = np.array(
-      [follower_ts_ns[s + 1] for s in range(n_steps)],
-      dtype=np.int64,
-  )
-
-  qpos = np.zeros((n_steps, n_joints), dtype=np.float64)
-  ctrl = np.zeros((n_steps, n_joints), dtype=np.float64)
-  for i in range(n_steps):
-    for j, joint in enumerate(constant.JOINTS):
-      q_val = measured[i][joint]
-      c_val = commanded[i][joint]
-
-      if joint == constant.GRIPPER_JOINT:
-        q_val = constant.gripper_pct_to_rad(q_val, grip_low, grip_high)
-        c_val = constant.gripper_pct_to_rad(c_val, grip_low, grip_high)
-
-      qpos[i, j] = q_val
-      ctrl[i, j] = c_val
+  qpos = np.array(measured[:n_steps], dtype=np.float64)
+  ctrl = np.array(commanded[:n_steps], dtype=np.float64)
+  grip_idx = constant.JOINTS.index(constant.GRIPPER_JOINT)
+  for arr in (qpos, ctrl):
+    arr[:, grip_idx] = [
+        constant.gripper_pct_to_rad(float(v), grip_low, grip_high)
+        for v in arr[:, grip_idx]
+    ]
 
   qvel = np.asarray(np.gradient(qpos, timestamps, axis=0), dtype=np.float64)
 
@@ -159,12 +133,16 @@ def find_mcap_files(
 ) -> list[epath.Path]:
   """Finds all matching MCAP log files sorted by modification time."""
   path_str = str(directory_or_pattern)
-  if os.path.isdir(path_str):
-    matched = glob.glob(os.path.join(path_str, "**/*.mcap"), recursive=True)
-    files = [epath.Path(p) for p in matched]
-  else:
-    matched = glob.glob(path_str, recursive=True)
-    files = [epath.Path(p) for p in matched if p.endswith(".mcap")]
+  pattern = (
+      os.path.join(path_str, "**/*.mcap")
+      if os.path.isdir(path_str)
+      else path_str
+  )
+  files = [
+      epath.Path(p)
+      for p in glob.glob(pattern, recursive=True)
+      if p.endswith(".mcap")
+  ]
   return sorted(files, key=lambda p: p.stat().mtime)
 
 
