@@ -1,6 +1,9 @@
 Changelog
 =========
 
+Upcoming Version (not yet released)
+-----------------------------------
+
 Version 1.1.0 (November 23, 2026)
 ---------------------------------
 

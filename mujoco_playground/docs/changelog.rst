@@ -5,6 +5,9 @@ MuJoCo Playground follows `MuJoCo's semantic versioning
 <https://github.com/google-deepmind/mujoco/blob/main/VERSIONING.md>`_
 (`SUPERMAJOR.MAJOR.MINOR_OR_PATCH`).
 
+Upcoming Version (not yet released)
+-----------------------------------
+
 Version 1.1.0 (November 23, 2026)
 ---------------------------------
 

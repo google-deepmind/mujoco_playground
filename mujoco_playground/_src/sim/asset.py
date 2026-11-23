@@ -238,7 +238,7 @@ register_source('runfile', RunfileAsset)
 # Git repos, with local runfile fallback if available.
 
 # Pinned to a commit SHA during PyPI release cuts and reset to 'HEAD' after.
-DEFAULT_MENAGERIE_COMMIT = '370c43965323c0944b433b202aac5058b5f907a9'
+DEFAULT_MENAGERIE_COMMIT = 'HEAD'
 
 
 class GitLoader:
