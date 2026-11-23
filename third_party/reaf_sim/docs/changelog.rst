@@ -4,6 +4,15 @@ Changelog
 Upcoming Version (not yet released)
 -----------------------------------
 
+.. admonition:: Breaking changes
+   :class: attention
+
+   - :class:`~reaf.simulation.torch.TorchWrapper` ``bind()`` and ``bind_pattern()`` now preserve the element dimension
+     for single-element sequences (e.g., ``(nworld, 1, ...)`` instead of ``(nworld, ...)``).
+
+     **Migration:** Pass a single ``MjStruct`` (``bind(spec)``) to omit the element dimension, or account for the
+     element axis (dim 1) when binding sequences or patterns.
+
 - Added ``backend="optix"`` option to :class:`~reaf.simulation.torch.CameraDevice` for NVIDIA RTX GPU accelerated
   ray-traced rendering via ``warp-optix``.
 

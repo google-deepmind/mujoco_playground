@@ -716,7 +716,12 @@ class TorchWrapper(Generic[T], NoSetAttr):
     ...
 
   def bind(self, *args) -> Union["BoundDataAccessor", "BoundModelAccessor"]:
-    """Binds a Data or Model object."""
+    """Binds a Data or Model object to one or more ``MjStruct`` elements.
+
+    Passing a single ``MjStruct`` omits the element axis (``(nworld, ...)``),
+    whereas passing a sequence always preserves it as dim 1
+    (``(nworld, n_elements, ...)``, including ``(nworld, 1, ...)``).
+    """
     if isinstance(self._obj, (mjw.Data, mujoco.MjData)):
       # Usage: data.bind(model, specs)
       if len(args) != 2:
@@ -732,17 +737,25 @@ class TorchWrapper(Generic[T], NoSetAttr):
             "bind on a Data object requires a model wrapper as the first"
             f" argument, got {model}."
         )
-      specs = (specs,) if not isinstance(specs, (list, tuple)) else tuple(specs)
-      if not specs:
+      is_single = isinstance(specs, mujoco.MjStruct)
+      specs_tuple = (specs,) if is_single else tuple(specs)
+      if not specs_tuple:
         raise ValueError("specs must not be empty.")
 
       # TODO: is this cache key sufficient for all possible specs?
       # TODO: add model signature to the key
-      key = ("data", type(specs[0]), tuple(s.id for s in specs))
+      key = (
+          "data",
+          is_single,
+          type(specs_tuple[0]),
+          tuple(s.id for s in specs_tuple),
+      )
       if key in self._bound_cache:
         return self._bound_cache[key]
 
-      self._bound_cache[key] = BoundDataAccessor(self, model, specs)
+      self._bound_cache[key] = BoundDataAccessor(
+          self, model, specs if is_single else specs_tuple
+      )
       return self._bound_cache[key]
 
     if isinstance(self._obj, (mjw.Model, mujoco.MjModel)):
@@ -753,17 +766,25 @@ class TorchWrapper(Generic[T], NoSetAttr):
             f" {len(args)} were given."
         )
       (specs,) = args
-      specs = (specs,) if not isinstance(specs, (list, tuple)) else tuple(specs)
-      if not specs:
+      is_single = isinstance(specs, mujoco.MjStruct)
+      specs_tuple = (specs,) if is_single else tuple(specs)
+      if not specs_tuple:
         raise ValueError("specs must not be empty.")
 
       # TODO: is this cache key sufficient for all possible specs?
       # TODO: add model signature to the key
-      key = ("model", type(specs[0]), tuple(s.id for s in specs))
+      key = (
+          "model",
+          is_single,
+          type(specs_tuple[0]),
+          tuple(s.id for s in specs_tuple),
+      )
       if key in self._bound_cache:
         return self._bound_cache[key]
 
-      self._bound_cache[key] = BoundModelAccessor(self, specs)
+      self._bound_cache[key] = BoundModelAccessor(
+          self, specs if is_single else specs_tuple
+      )
       return self._bound_cache[key]
 
     raise TypeError(f"bind() is not supported for wrapped object '{self._obj}'")
@@ -775,6 +796,9 @@ class TorchWrapper(Generic[T], NoSetAttr):
       pattern: str | tuple[str, ...],
   ) -> "BoundModelAccessor":
     """Binds model fields by name pattern.
+
+    Always preserves the element axis as dim 1 (``(nworld, n_elements, ...)``),
+    including ``(nworld, 1, ...)`` when a single element matches.
 
     Args:
       spec: MjSpec used for name resolution.
@@ -831,8 +855,9 @@ class BoundDataAccessor:
     self.data = data_wrapper
     self.model = model_wrapper
     self.prefix = ""
+    is_single = isinstance(specs, mujoco.MjStruct)
     self.specs: tuple[mujoco.MjStruct, ...] = (
-        (specs,) if isinstance(specs, mujoco.MjStruct) else tuple(specs)
+        (specs,) if is_single else tuple(specs)
     )
 
     ids = []
@@ -867,7 +892,7 @@ class BoundDataAccessor:
         raise ValueError("invalid spec type")
       ids.append(spec.id)
 
-    if len(ids) == 1:
+    if is_single:
       ids = ids[0]
 
     self.device = data_wrapper.qpos.device
@@ -994,8 +1019,9 @@ class BoundModelAccessor:
   ):
     self.model = model_wrapper
     self.prefix = ""
+    is_single = isinstance(specs, mujoco.MjStruct)
     self.specs: tuple[mujoco.MjStruct, ...] = (
-        (specs,) if isinstance(specs, mujoco.MjStruct) else tuple(specs)
+        (specs,) if is_single else tuple(specs)
     )
 
     ids = []
@@ -1050,7 +1076,7 @@ class BoundModelAccessor:
         raise ValueError("invalid spec type")
       ids.append(spec.id)
 
-    if len(ids) == 1:
+    if is_single:
       ids = ids[0]
 
     self.device = model_wrapper.geom_pos.device

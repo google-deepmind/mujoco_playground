@@ -47,7 +47,9 @@ tensor views of MuJoCo buffers (sharing memory with ``wp.array`` for ``Impl.WARP
     sim.data.qvel[env_mask] = 0.0
 
 Named ``MjSpec`` elements (bodies, joints, geoms, actuators, sensors, sites) can be accessed via ``bind`` or
-``bind_pattern``:
+``bind_pattern``. Passing a single ``MjStruct`` omits the element axis (``(nworld, ...)``), whereas passing a sequence
+or calling ``bind_pattern`` always preserves it as dim 1 (``(nworld, n_elements, ...)``, including ``(nworld, 1, ...)``
+for single-element matches):
 
 .. code-block:: python
 
@@ -57,6 +59,9 @@ Named ``MjSpec`` elements (bodies, joints, geoms, actuators, sensors, sites) can
 
     geom_model = sim.model.bind(spec.geom("pole_1"))
     geom_model.geom_size  # (nworld, 3)
+
+    geoms = sim.model.bind([spec.geom("pole_1")])
+    geoms.geom_size  # (nworld, 1, 3)
 
 Simulation clock
 ----------------

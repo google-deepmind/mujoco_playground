@@ -369,6 +369,36 @@ class RuntimeTest(parameterized.TestCase):
     for key, spec in specs_dict.items():
       self.assertEqual(tuple(m[key].shape[-len(spec.shape) :]), spec.shape)
 
+  @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
+  def test_joint_range_single_joint_and_zero_sync(self, impl: types.Impl):
+    nworld = 1 if impl == types.Impl.CPP else 2
+    dev, sim = self._make_sim_with_actuator(
+        MINIMAL_XML,
+        impl,
+        ["robot/j1"],
+        measurements=["joint_range"],
+        nworld=nworld,
+    )
+    sim.forward()
+    recaptures = []
+    if impl == types.Impl.WARP:
+      sim.model.register_graph_capture_callback(lambda: recaptures.append(1))
+    if impl == types.Impl.WARP and torch.cuda.is_available():
+      prev_mode = torch.cuda.get_sync_debug_mode()
+      self.addCleanup(torch.cuda.set_sync_debug_mode, prev_mode)
+      torch.cuda.set_sync_debug_mode("error")
+      m = dev.get_measurements(sim)
+      torch.cuda.set_sync_debug_mode(prev_mode)
+    else:
+      m = dev.get_measurements(sim)
+    self.assertEmpty(recaptures)
+    self.assertEqual(m["dc/joint_range"].shape, (nworld, 1, 2))
+    np.testing.assert_allclose(
+        m["dc/joint_range"].cpu().numpy(),
+        [[np.deg2rad([-3.14, 3.14])]] * nworld,
+        rtol=1e-6,
+    )
+
 
 if __name__ == "__main__":
   absltest.main()

@@ -767,7 +767,9 @@ class BindTest(parameterized.TestCase):
     )
     np.testing.assert_array_equal(dw.bind(mw, s.joints[1]).id.cpu().numpy(), 1)
     np.testing.assert_array_equal(
-        dw.bind(mw, s.joints[1:2]).id.cpu().numpy(), 1
+        dw.bind(mw, s.joints[1:2]).id.cpu().numpy(),
+        np.array([1], dtype=np.int32),
+        strict=True,
     )
     qposnum = [4, 1, 1]  # one ball joint (4) and two slide joints (1)
     dofnum = [3, 1, 1]  # one ball joint (3) and two slide joints (1)
@@ -1042,6 +1044,40 @@ class BindTest(parameterized.TestCase):
       mw.bind(s.bodies)
 
   @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
+  def test_bind_single_element_sequence_preserves_shape(
+      self, backend: types.Impl
+  ):
+    s = mujoco.MjSpec.from_string(self.XML)
+    m = s.compile()
+    d = mujoco.MjData(m)
+    nworld = 1 if backend == types.Impl.CPP else 2
+    mw = wrap_model(backend, m, nworld=nworld)
+    dw = wrap_data(backend, m, d, nworld=nworld)
+
+    slide_joint = s.joint("joint2")
+    body = s.body("body1")
+
+    self.assertIsNot(dw.bind(mw, slide_joint), dw.bind(mw, [slide_joint]))
+    self.assertIsNot(mw.bind(slide_joint), mw.bind([slide_joint]))
+    self.assertEqual(dw.bind(mw, [slide_joint]).qpos.shape, (nworld, 1))
+    self.assertEqual(dw.bind(mw, [slide_joint]).qvel.shape, (nworld, 1))
+    self.assertEqual(mw.bind(slide_joint).range.shape, (nworld, 2))
+    self.assertEqual(mw.bind([slide_joint]).range.shape, (nworld, 1, 2))
+    self.assertEqual(mw.bind([body]).pos.shape, (nworld, 1, 3))
+
+    # Verify .set() accepts (nworld, 1, ...) values on 1-element sequence binds.
+    qpos_val = torch.full(
+        (nworld, 1), 3.0, dtype=dw.qpos.dtype, device=dw.qpos.device
+    )
+    dw.bind(mw, [slide_joint]).set("qpos", qpos_val)
+    torch.testing.assert_close(dw.bind(mw, [slide_joint]).qpos, qpos_val)
+    pos_val = torch.full(
+        (nworld, 1, 3), 2.0, dtype=mw.body_pos.dtype, device=mw.body_pos.device
+    )
+    mw.bind([body]).set("pos", pos_val)
+    torch.testing.assert_close(mw.bind([body]).pos, pos_val)
+
+  @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
   def test_batched(self, backend: types.Impl):
     if backend != types.Impl.WARP:
       self.skipTest("Batching only supported for mujoco_warp backend.")
@@ -1105,7 +1141,7 @@ class BindTest(parameterized.TestCase):
     bound_single = mw.bind_pattern(s, mujoco.mjtObj.mjOBJ_GEOM, "geom1")
     self.assertIsNot(bound, bound_single)
     np.testing.assert_array_equal(
-        bound_single.pos.cpu().numpy()[0], m.geom_pos[0]
+        bound_single.pos.cpu().numpy()[0], m.geom_pos[0:1]
     )
 
   def test_mimo_actuators_bind(self):

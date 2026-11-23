@@ -71,6 +71,8 @@ class ActuatorDevice(device.Device):
     self._out_ids: torch.Tensor | None = None
     self._tendon_ids: torch.Tensor | None = None
     self._joints: list[Any] = []
+    self._bound_model = None
+    self._empty_joint_range: torch.Tensor | None = None
 
   @property
   @override
@@ -155,6 +157,16 @@ class ActuatorDevice(device.Device):
     self._tendon_ids = torch.tensor(
         tendon_ids, dtype=torch.long, device=self._xpu_device
     )
+    self._bound_model = None
+    self._empty_joint_range = None
+    if "joint_range" in self._measurements and self._joints:
+      self._bound_model = simulator.model.bind(self._joints)
+      # Trigger lazy tiling of jnt_range before CUDA graph capture.
+      _ = self._bound_model.range
+    elif "joint_range" in self._measurements:
+      self._empty_joint_range = torch.empty(
+          (simulator.nworld, 0, 2), dtype=torch.float32, device=self._xpu_device
+      )
 
   @override
   def reset(
@@ -239,8 +251,10 @@ class ActuatorDevice(device.Device):
       elif m == "tendon_velocity":
         return data.ten_velocity[:, self._tendon_ids]
       elif m == "joint_range":
-        bound_model = simulator.model.bind(self._joints)
-        return bound_model.range
+        if self._bound_model is None:
+          assert self._empty_joint_range is not None
+          return self._empty_joint_range
+        return self._bound_model.range
       elif m == "ctrl":
         return data.ctrl[:, self._ctrl_ids]
       elif m == "home_ctrl":

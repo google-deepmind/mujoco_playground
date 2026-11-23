@@ -24,10 +24,6 @@ from reaf.simulation.torch._src.core import simulator as simulator_module
 import torch
 
 
-def _get_dim(tensor: torch.Tensor) -> int:
-  return tensor.shape[1] if tensor.ndim > 1 else 1
-
-
 class ArticulatedDevice(device.Device):
   """Manages the kinematic state of a robot subtree."""
 
@@ -46,6 +42,7 @@ class ArticulatedDevice(device.Device):
     self._xpu_device = xpu_device
     self._measurements = measurements or []
     self._bound_joints = None
+    self._bound_model = None
     self._joints = None
     self._joint_names = joint_names
 
@@ -97,9 +94,13 @@ class ArticulatedDevice(device.Device):
       raise ValueError("No joints found in spec.")
 
     self._bound_joints = simulator.data.bind(simulator.model, self._joints)
+    if "joint_range" in self._measurements:
+      self._bound_model = simulator.model.bind(self._joints)
+      # Trigger lazy tiling of jnt_range before CUDA graph capture.
+      _ = self._bound_model.range
 
-    nq = _get_dim(self._bound_joints.qpos)
-    nv = _get_dim(self._bound_joints.qvel)
+    nq = self._bound_joints.qpos.shape[1]
+    nv = self._bound_joints.qvel.shape[1]
     if self._home_qpos is None:
       self._home_qpos = torch.zeros(nq, device=self._xpu_device)
     if self._home_qvel is None:
@@ -117,8 +118,8 @@ class ArticulatedDevice(device.Device):
   def substep_measurements_spec(self) -> Mapping[str, specs.Array]:
     result = {}
     assert self._bound_joints is not None
-    qpos_size = _get_dim(self._bound_joints.qpos)
-    qvel_size = _get_dim(self._bound_joints.qvel)
+    qpos_size = self._bound_joints.qpos.shape[1]
+    qvel_size = self._bound_joints.qvel.shape[1]
     for m in self._measurements:
       if m == "joint_pos":
         result[f"{self._name}/{m}"] = specs.Array(
@@ -161,11 +162,8 @@ class ArticulatedDevice(device.Device):
       assert self._home_qvel is not None
       result[f"{self._name}/home_qvel"] = self._home_qvel
     if "joint_range" in self._measurements:
-      assert self._joints is not None
-      bound_model = simulator.model.bind(self._joints)
-      result[f"{self._name}/joint_range"] = bound_model.range.reshape(
-          simulator.nworld, len(self._joints), 2
-      )
+      assert self._bound_model is not None
+      result[f"{self._name}/joint_range"] = self._bound_model.range
     return result
 
   def set_qpos(self, env_mask: torch.Tensor | None, qpos: torch.Tensor) -> None:

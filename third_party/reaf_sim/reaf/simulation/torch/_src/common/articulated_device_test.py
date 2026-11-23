@@ -20,6 +20,7 @@ from absl.testing import parameterized
 import mujoco
 import numpy as np
 from reaf.simulation.torch._src.common import articulated_device
+from reaf.simulation.torch._src.core import device_layer
 from reaf.simulation.torch._src.core import simulator as simulator_module
 from reaf.simulation.torch._src.core import types
 import torch
@@ -66,6 +67,7 @@ def _setup(measurements=None):
       mj_spec=spec,
       nworld=_NWORLD,
       impl=types.Impl.WARP,
+      xpu_device=_DEVICE,
   )
   dev.initialize(sim)
   return dev, sim, spec
@@ -95,7 +97,18 @@ class ArticulatedDeviceTest(parameterized.TestCase):
 
   def test_joint_range(self):
     dev, sim, _ = _setup(measurements=["joint_range"])
-    m = dev.get_measurements(sim)
+    sim.forward()
+    recaptures = []
+    sim.model.register_graph_capture_callback(lambda: recaptures.append(1))
+    if torch.cuda.is_available():
+      prev_mode = torch.cuda.get_sync_debug_mode()
+      self.addCleanup(torch.cuda.set_sync_debug_mode, prev_mode)
+      torch.cuda.set_sync_debug_mode("error")
+      m = dev.get_measurements(sim)
+      torch.cuda.set_sync_debug_mode(prev_mode)
+    else:
+      m = dev.get_measurements(sim)
+    self.assertEmpty(recaptures)
     np.testing.assert_allclose(
         m["robot_state/joint_range"].cpu().numpy()[0],
         [[-1.57, 1.57], [-3.14, 3.14]],
@@ -177,6 +190,47 @@ class ArticulatedDeviceTest(parameterized.TestCase):
         [[[-2.0, 0.1]]] * nworld,
         rtol=1e-6,
     )
+
+  @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
+  def test_single_joint_pos_vel_and_partial_reset(self, impl: types.Impl):
+    nworld = 1 if impl == types.Impl.CPP else _NWORLD
+    xpu_device = _DEVICE if impl == types.Impl.WARP else "cpu"
+    sim = simulator_module.Simulator(
+        mj_spec=mujoco.MjSpec.from_string(_DUMMY_XML),
+        nworld=nworld,
+        impl=impl,
+        xpu_device=xpu_device,
+    )
+    dev = articulated_device.ArticulatedDevice(
+        name="robot_state",
+        measurements=["joint_pos", "joint_vel"],
+        xpu_device=xpu_device,
+        joint_names=["robot/joint1"],
+    )
+    dl = device_layer.DeviceLayer(
+        simulator=sim,
+        devices=[dev],
+        control_timestep=float(sim.mj_model.opt.timestep),
+    )
+
+    sim.data.qpos[:, 0] = torch.arange(1.0, 1.0 + nworld, device=xpu_device)
+    sim.data.qvel[:, 0] = torch.arange(4.0, 4.0 + nworld, device=xpu_device)
+    m = dev.get_measurements(sim)
+    self.assertEqual(m["robot_state/joint_pos"].shape, (nworld, 1))
+    self.assertEqual(m["robot_state/joint_vel"].shape, (nworld, 1))
+
+    if nworld > 1:
+      dl.begin_stepping()
+      sim.data.qpos[:, 0] = 9.0
+      sim.data.qvel[:, 0] = 8.0
+      mask = torch.tensor([True, False], device=xpu_device)
+      out = dl.begin_stepping(env_mask=mask)
+      np.testing.assert_allclose(
+          out["robot_state/joint_pos"].cpu().numpy(), [[9.0], [2.0]]
+      )
+      np.testing.assert_allclose(
+          out["robot_state/joint_vel"].cpu().numpy(), [[8.0], [5.0]]
+      )
 
 
 if __name__ == "__main__":

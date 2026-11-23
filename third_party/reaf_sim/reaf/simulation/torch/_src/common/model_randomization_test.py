@@ -325,7 +325,7 @@ class RandomizeFieldTest(absltest.TestCase):
     geom_id = self.mj_model.geom("box1_geom").id
     torch.testing.assert_close(
         self.model.geom_rbound[:, geom_id],
-        torch.full_like(current[..., 0], 0.3),
+        torch.full_like(current[:, 0, 0], 0.3),
     )
 
   def test_randomize_with_env_mask(self):
