@@ -13,6 +13,7 @@ Upcoming Version (not yet released)
 
    - Replaced ``safari-sdk`` with plain JSON-encoded ``mcap`` in ``real`` episodic logging; legacy
      ``tf.train.Example`` MCAP logs are no longer readable.
+   - Replaced ``lerobot[feetech]`` with ``rustypot`` for SO-101 serial control.
 
 Version 1.0.1 (November 8, 2026)
 --------------------------------

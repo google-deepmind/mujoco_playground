@@ -55,7 +55,7 @@ identify = [
 # if it introduces genuinely new hardware.
 feetech = [
     "playground[real]",
-    "lerobot[feetech]>=0.6.0,<0.7",
+    "rustypot>=1.14.0",
 ]
 # I2RT's SDK for its DM-motor arms on a SocketCAN / gs_usb bus (the YAM family).
 # Pin python-can and gs-usb so _MacGsUsbBus in robots/yam/real/gs_usb_darwin.py

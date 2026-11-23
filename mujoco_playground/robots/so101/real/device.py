@@ -27,6 +27,7 @@ from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
 import mujoco
 from mujoco_playground import real
+from mujoco_playground.robots.so101.real import bus as bus_mod
 from mujoco_playground.robots.so101.real import constant
 from mujoco_playground.robots.so101.real import get_calibration
 from mujoco_playground.robots.so101.real import get_cameras
@@ -39,7 +40,7 @@ from reaf.core import device as reaf_device
 from reaf.core import device_layer as dl_module
 from typing_extensions import override
 
-# Stand-ins for the lerobot classes. lerobot is an optional dep.
+# Connected SO101 arm bus (duck-typed so tests can pass a fake).
 SO101Follower: TypeAlias = Any
 SO101Leader: TypeAlias = Any
 FeetechMotorsBus: TypeAlias = Any
@@ -323,18 +324,15 @@ def write_goals(
   )
 
 
-def connect_leader() -> tuple[SO101Leader, Calibration]:
+def connect_leader() -> tuple[bus_mod.FeetechBus, Calibration]:
   """Returns a connected, torque-free leader and its calibration."""
-  from lerobot.teleoperators import so_leader  # pyrefly: ignore[missing-import]
-
-  robot = so_leader.SO101Leader(
-      so_leader.SO101LeaderConfig(
-          port=get_ports.resolve(constant.LEADER),
-          id=f"{constant.ROBOT}_leader",
-      )
-  )
-  robot.connect(calibrate=False)
-  robot.bus.disable_torque()
+  robot = bus_mod.FeetechBus(get_ports.resolve(constant.LEADER))
+  robot.connect()
+  try:
+    robot.configure_leader()
+  except Exception:
+    robot.disconnect(disable_torque=False)
+    raise
   return robot, _load_calibration(constant.LEADER)
 
 
@@ -343,17 +341,15 @@ def _load_calibration(role: str) -> Calibration:
   return get_calibration.load(role, get_ports.serial_number(role))
 
 
-def connect_follower() -> tuple[SO101Follower, Calibration]:
+def connect_follower() -> tuple[bus_mod.FeetechBus, Calibration]:
   """Returns a connected follower and its calibration; the bus is used raw."""
-  from lerobot.robots import so_follower  # pyrefly: ignore[missing-import]
-
-  robot = so_follower.SO101Follower(
-      so_follower.SO101FollowerConfig(
-          port=get_ports.resolve(constant.FOLLOWER),
-          id=f"{constant.ROBOT}_follower",
-      )
-  )
-  robot.connect(calibrate=False)
+  robot = bus_mod.FeetechBus(get_ports.resolve(constant.FOLLOWER))
+  robot.connect()
+  try:
+    robot.configure_follower()
+  except Exception:
+    robot.disconnect(disable_torque=False)
+    raise
   return robot, _load_calibration(constant.FOLLOWER)
 
 

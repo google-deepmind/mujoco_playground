@@ -17,9 +17,7 @@
 import contextlib
 import io
 import pathlib
-import sys
 import tempfile
-import types
 from unittest import mock
 
 from absl.testing import absltest
@@ -72,21 +70,18 @@ class CaptureMiddleTest(absltest.TestCase):
 class RecordRangesTest(absltest.TestCase):
 
   def _record(self, motors, frames):
-    """Runs _record_ranges over the frames with lerobot's console stubbed."""
+    """Runs _record_ranges over the frames with terminal helpers stubbed."""
     bus = _ScriptedBus(frames)
-    utils = types.SimpleNamespace(
-        enter_pressed=lambda: bus.reads >= len(bus.frames),
-        move_cursor_up=lambda lines: None,
-    )
-    lerobot_utils = types.SimpleNamespace(utils=utils)
-    modules = {
-        "lerobot": types.SimpleNamespace(utils=lerobot_utils),
-        "lerobot.utils": lerobot_utils,
-        "lerobot.utils.utils": utils,
-    }
-    with mock.patch.dict(sys.modules, modules):
-      with contextlib.redirect_stdout(io.StringIO()):
-        return get_calibration._record_ranges(bus, list(motors))
+    with (
+        mock.patch.object(
+            get_calibration,
+            "_enter_pressed",
+            side_effect=lambda: bus.reads >= len(bus.frames),
+        ),
+        mock.patch.object(get_calibration, "_move_cursor_up"),
+        contextlib.redirect_stdout(io.StringIO()),
+    ):
+      return get_calibration._record_ranges(bus, list(motors))
 
   def test_records_min_and_max_during_sweep(self):
     range_mins, range_maxes = self._record(

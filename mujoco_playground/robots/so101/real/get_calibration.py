@@ -37,6 +37,8 @@ Rerun the calibration only when the mechanics change.
 
 import json
 import pathlib
+import select
+import sys
 from typing import Any
 from typing import Mapping
 from typing import Sequence
@@ -45,6 +47,7 @@ from absl import app
 from absl import flags
 from absl import logging
 from mujoco_playground import paths
+from mujoco_playground.robots.so101.real import bus as bus_mod
 from mujoco_playground.robots.so101.real import constant
 from mujoco_playground.robots.so101.real import get_ports
 
@@ -172,28 +175,27 @@ _ROLES = flags.DEFINE_list(
 )
 
 
-def _make_bus(port: str):
-  """Builds a FeetechMotorsBus with the SO101 motor table."""
-  from lerobot import motors as motors_mod  # pyrefly: ignore[missing-import]
-  from lerobot.motors import feetech  # pyrefly: ignore[missing-import]
+def _make_bus(port: str) -> bus_mod.FeetechBus:
+  """Builds a FeetechBus with the SO101 motor table."""
+  return bus_mod.FeetechBus(port)
 
-  norm = {
-      name: (
-          motors_mod.MotorNormMode.RANGE_0_100
-          if name == "gripper"
-          else motors_mod.MotorNormMode.DEGREES
-      )
-      for name in constant.JOINTS
-  }
-  return feetech.FeetechMotorsBus(
-      port=port,
-      motors={
-          name: motors_mod.Motor(
-              constant.MOTOR_IDS[name], constant.MOTOR_MODEL, norm[name]
-          )
-          for name in constant.JOINTS
-      },
-  )
+
+def _enter_pressed() -> bool:
+  """Returns True if ENTER has been pressed without blocking."""
+  if sys.platform == "win32":
+    import msvcrt  # pytype: disable=import-error
+
+    return msvcrt.kbhit() and msvcrt.getwch() in ("\r", "\n")
+  if select.select([sys.stdin], [], [], 0)[0]:
+    sys.stdin.readline()
+    return True
+  return False
+
+
+def _move_cursor_up(lines: int) -> None:
+  """Moves the terminal cursor up by `lines` lines."""
+  sys.stdout.write(f"\033[{lines}A")
+  sys.stdout.flush()
 
 
 def _make_passive(bus, role: str) -> None:
@@ -223,8 +225,6 @@ def _record_ranges(
     bus, motor_names: Sequence[str]
 ) -> tuple[dict[str, int], dict[str, int]]:
   """Interactively records each motor's range of motion until ENTER."""
-  from lerobot.utils import utils as lerobot_utils  # pyrefly: ignore[missing-import]
-
   positions = bus.sync_read("Present_Position", motor_names, normalize=False)
   mins = {name: int(positions[name]) for name in motor_names}
   maxes = {name: int(positions[name]) for name in motor_names}
@@ -237,10 +237,10 @@ def _record_ranges(
       mins[name] = min(pos, mins[name])
       maxes[name] = max(pos, maxes[name])
       print(f"{name:<15} | {mins[name]:>6} | {pos:>6} | {maxes[name]:>6}")
-    if lerobot_utils.enter_pressed():
+    if _enter_pressed():
       break
     # Move the cursor up to overwrite the previous table.
-    lerobot_utils.move_cursor_up(len(motor_names) + 3)
+    _move_cursor_up(len(motor_names) + 3)
 
   unmoved = sorted(n for n in motor_names if mins[n] == maxes[n])
   if unmoved:
@@ -252,14 +252,12 @@ def _record_ranges(
 
 def _calibrate_arm(role: str, port: str, serial_number: str) -> None:
   """Runs the interactive calibration for one arm and saves the result."""
-  from lerobot.motors import feetech  # pyrefly: ignore[missing-import]
-
   bus = _make_bus(port)
   bus.connect()
   try:
     _make_passive(bus, role)
     for name in constant.JOINTS:
-      bus.write("Operating_Mode", name, feetech.OperatingMode.POSITION.value)
+      bus.write("Operating_Mode", name, bus_mod.OPERATING_MODE_POSITION)
 
     print(f"Support the {role} by hand — it may fall under gravity.")
     print(

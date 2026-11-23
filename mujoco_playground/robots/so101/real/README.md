@@ -7,7 +7,7 @@ for downstream tasks.
 
 Hardware SDKs are optional extras in `mujoco_playground`, so a simulation-only checkout
 never pulls them in. Passing `--extra so101` to `uv run` installs the `feetech` driver
-stack (`lerobot[feetech]`) automatically on first use.
+stack (`rustypot`) automatically on first use.
 
 ## 2. Identify your hardware
 
@@ -140,7 +140,30 @@ shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_roll, gripper
 ## Troubleshooting
 
 **Motors are missing from the bus, or a joint is seized.** The usual cause is
-**Swapped power supplies**: the leader and
+**swapped power supplies**: the leader and
 follower use different-voltage bricks with identical barrel plugs. An
 underpowered arm browns out. Swap the power between the leader and the follower
 to see if it fixes the issue.
+
+If you get `ConnectionError: Motors not responding on ...` even though power
+and cables look right, try scanning the bus across standard Feetech baud rates
+to flush the serial port and see which IDs respond (replace `'leader'` with
+`'follower'` if needed):
+
+```bash
+uv run --extra so101 python -c "
+import rustypot
+from mujoco_playground.robots.so101.real import constant, get_ports
+port, defn = get_ports.resolve('leader'), rustypot.Sts3215PyController.definition()
+ids = list(constant.MOTOR_IDS.values())
+for baud in (115200, 250000, 500000, 1_000_000):
+  b = rustypot.Bus(port, baud, 0.1, {i: defn for i in ids})
+  found = b.scan(defn, ids)
+  b.close()
+  if found:
+    print(f'baud={baud}: {found}')
+"
+```
+
+All 6 IDs (`[1, 2, 3, 4, 5, 6]`) should appear at `baud=1000000`; once the scan
+sees them, re-run `get_calibration`.
