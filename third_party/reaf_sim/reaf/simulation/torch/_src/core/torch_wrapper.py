@@ -313,7 +313,11 @@ class TorchTensor(NoSetAttr):
 
   def _get_torch_stream(self) -> Optional[torch.cuda.Stream]:
     """Creates a torch stream from warp device stream."""
-    if isinstance(self._array, np.ndarray) or self._array.device.is_cpu:
+    if (
+        isinstance(self._array, np.ndarray)
+        or self._array.device is None
+        or self._array.device.is_cpu
+    ):
       return None
     stream = wp.get_stream(self._array.device)
     return torch.cuda.ExternalStream(
@@ -339,7 +343,11 @@ class TorchTensor(NoSetAttr):
       # Convert dtype to match the destination only when wrapping numpy arrays.
       value = value.to(self._tensor.dtype)
 
-    if isinstance(self._array, np.ndarray) or self._array.device.is_cpu:
+    if (
+        isinstance(self._array, np.ndarray)
+        or self._array.device is None
+        or self._array.device.is_cpu
+    ):
       self._maybe_call_on_write()
       self._tensor[idx] = value
       return

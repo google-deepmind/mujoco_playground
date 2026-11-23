@@ -14,16 +14,16 @@ install-cpu:
 
 .PHONY: format
 format:
-	uv run --group dev pyink .
-	uv run --group dev isort .
+	uv run --no-sync pyink .
+	uv run --no-sync isort .
 
 .venv/typings/mujoco:
-	uv run --group dev pybind11-stubgen mujoco -o .venv/typings --ignore-all-errors
-	uv run --group dev python -c 'import pathlib, re; mj = pathlib.Path(".venv/typings/mujoco"); (mj / "_specs.pyi").write_text("from typing import Any\ndef __getattr__(name: str) -> Any: ...\n"); [p.write_text("from typing import Any\n" + re.sub(r"@staticmethod\s+def bind\((?:data: MjData|model: MjModel),", "def bind(self,", re.sub(r"numpy\.(?:typing\.NDArray|ndarray)\[[^\]]+\]", "Any", p.read_text()))) for p in mj.glob("*.pyi") if p.name != "_specs.pyi"]'
+	uv run --no-sync pybind11-stubgen mujoco -o .venv/typings --ignore-all-errors
+	uv run --no-sync python -c 'import pathlib, re; mj = pathlib.Path(".venv/typings/mujoco"); (mj / "_specs.pyi").write_text("from typing import Any\ndef __getattr__(name: str) -> Any: ...\n"); [p.write_text("from typing import Any\n" + re.sub(r"@staticmethod\s+def bind\((?:data: MjData|model: MjModel),", "def bind(self,", re.sub(r"numpy\.(?:typing\.NDArray|ndarray)\[[^\]]+\]", "Any", p.read_text()))) for p in mj.glob("*.pyi") if p.name != "_specs.pyi"]'
 
 .PHONY: typecheck
 typecheck: .venv/typings/mujoco
-	uv run --group dev pyrefly check
+	uv run --no-sync pyrefly check
 
 # Headless rendering needs osmesa, which exists only on Linux; on macOS the
 # default backend works and the variable would be rejected.
@@ -35,7 +35,7 @@ N_WORKERS ?= auto
 
 .PHONY: test
 test:
-	$(MUJOCO_GL_ENV) uv run --group dev pytest reaf/simulation/ docs/ -n $(N_WORKERS) --dist worksteal -v
+	$(MUJOCO_GL_ENV) uv run --no-sync pytest reaf/simulation/ docs/ -n $(N_WORKERS) --dist worksteal -v
 
 DOCS_PORT ?= 8888
 

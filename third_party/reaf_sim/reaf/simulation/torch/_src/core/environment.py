@@ -189,14 +189,14 @@ class Environment(core_environment.Environment):
   ad-hoc goal state poking.
   """
 
-  _task_layer: task_layer_module.TaskLayer
-  _device_layer: protocols.TorchDeviceLayer
+  _task_layer: task_layer_module.TaskLayer  # pyrefly: ignore[bad-override]
+  _device_layer: protocols.TorchDeviceLayer  # pyrefly: ignore[bad-override]
   _observation_space_adapter: (
       observation_space_adapter_module.ObservationSpaceAdapter
   )
-  _environment_reset: EnvironmentReset
-  _end_of_episode_handler: EndOfEpisodeHandler
-  _should_finalize_episode: torch.Tensor
+  _environment_reset: EnvironmentReset  # pyrefly: ignore[bad-override]
+  _end_of_episode_handler: EndOfEpisodeHandler  # pyrefly: ignore[bad-override]
+  _should_finalize_episode: torch.Tensor  # pyrefly: ignore[bad-override]
   _last_timestep: dm_env.TimeStep
 
   def __init__(
