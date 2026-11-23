@@ -1,8 +1,8 @@
 reaf-sim
 ========
 
-`reaf-sim` is a simulation environment framework written in `PyTorch <https://pytorch.org/>`_ and built on `MuJoCo
-<https://github.com/google-deepmind/mujoco>`_ and `MuJoCo Warp <https://github.com/google-deepmind/mujoco_warp>`_ with
+`reaf-sim` is a `PyTorch <https://pytorch.org/>`_ simulation framework built by the MuJoCo team on top of `MuJoCo
+<https://github.com/google-deepmind/mujoco>`_ and `MuJoCo Warp <https://github.com/google-deepmind/mujoco_warp>`_, and using the
 `Robotics Environment Authoring Framework (REAF) <https://github.com/google-deepmind/reaf>`_.
 
 `reaf-sim` enables creation of environments in simulation that can be zero-shot deployed onto hardware and vice versa.
@@ -12,7 +12,15 @@ workflows, and sim2real deployment.
 Quickstart
 ----------
 
-Clone `reaf-sim` from GitHub and install with `uv <https://docs.astral.sh/uv/>`_:
+Try it in your browser with the `Quickstart Colab
+<https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/notebooks/quickstart.ipynb>`_, or
+install from PyPI with `uv <https://docs.astral.sh/uv/>`_:
+
+.. code-block:: bash
+
+    uv pip install "reaf-sim>=1.0"
+
+Or clone `reaf-sim` from GitHub for development:
 
 .. code-block:: bash
 
@@ -38,14 +46,21 @@ and capture visual rollouts:
 
     import mujoco
     from reaf.simulation.torch import ActuatorDevice, CameraDevice, flat_scene
+    from reaf.simulation.torch.examples.cartpole import CARTPOLE_XML
     import torch
 
-    spec = mujoco.MjSpec.from_file("cartpole.xml")
+    spec = mujoco.MjSpec.from_string(CARTPOLE_XML)
 
     # configure the environment
     config = flat_scene.Environment(
         base_scene=spec,
-        sim=flat_scene.Sim(nworld=16, xpu_device="cuda:0", impl="warp"),
+        sim=flat_scene.Sim(
+            nworld=16,
+            xpu_device="cuda:0",
+            impl="warp",
+            simulation_timestep=0.01,
+            control_timestep=0.05,
+        ),
         device_layer=flat_scene.DeviceLayer(
             devices={
                 "slider": flat_scene.Component(
@@ -60,7 +75,15 @@ and capture visual rollouts:
                 ),
             }
         ),
-        observation_adapter=None,
+        observation_adapter={
+            "camera/fixed_rgb": flat_scene.ObsGroup(
+                terms={
+                    "rgb": flat_scene.Obs("camera/fixed_rgb").configure(
+                        output_shape=(120, 160, 3), dtype="uint8"
+                    ),
+                }
+            ),
+        },
     )
 
     # build the environment

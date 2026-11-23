@@ -3,18 +3,13 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/google-deepmind/mujoco_playground/ci.yml?branch=main)](https://github.com/google-deepmind/mujoco_playground/actions)
 [![PyPI version](https://img.shields.io/pypi/v/playground)](https://pypi.org/project/playground/)
 [![Documentation Status](https://img.shields.io/readthedocs/reaf-sim/latest)](https://reaf-sim.readthedocs.io/en/latest/playground/index.html)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/notebooks/quickstart.ipynb)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 ![Banner for playground](https://www.gstatic.com/reaf-sim/banner/0/banner.png)
 
-MuJoCo Playground is a suite of robot environments, reinforcement learning tasks, and hardware workflows written in [PyTorch](https://pytorch.org/) and built on [`reaf-sim`](https://github.com/google-deepmind/reaf-sim), [MuJoCo](https://github.com/google-deepmind/mujoco), and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp).
+MuJoCo Playground is a suite of robot environments, reinforcement learning tasks, and hardware workflows built by the MuJoCo team on top of [`reaf-sim`](https://github.com/google-deepmind/reaf-sim), [MuJoCo](https://github.com/google-deepmind/mujoco), and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp).
 
-Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either in simulation or paired with a hardware counterpart, enabling end-to-end workflows across simulation and hardware:
-
-- **[Large-batch RL training on GPU](mujoco_playground/rl/rsl_rl)**: with state and vision observations across control, manipulation, and humanoid whole-body tracking.
-- **[Sim & real teleoperation](mujoco_playground/tasks/teleop/so101)**: with leader-follower control and episodic MCAP logging.
-- **[System identification](mujoco_playground/tasks/sysid)**: fitting simulated joint dynamics to logged hardware trajectories via `mujoco.sysid`.
-- **[Zero-shot sim-to-real policy deployment](mujoco_playground/tasks/manipulation/pick_cube/so101/deploy)**: running the same task layer and policy in simulation (`--mode=sim`) and on hardware (`--mode=real`).
-- **[Agentic manipulation](mujoco_playground/tasks/agentic/tabletop_v0)**: for vision-language model (VLM) examples across simulation and hardware (`SO-101`, `i2rt YAM`).
+Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either in simulation or paired with a hardware counterpart, enabling end-to-end workflows across sim and real.
 
 <table>
   <tr>
@@ -66,7 +61,7 @@ uv pip install --default-index https://pypi.org/simple "playground>=1.0"
 
 ## Getting Started
 
-To get started, try controlling a sim/real robot with your coding agent, or train an RL policy in sim and deploy it to hardware.
+Try the interactive [Quickstart Colab](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/notebooks/quickstart.ipynb) (no local install required), control a sim/real robot with your coding agent, or train an RL policy in sim and deploy it to hardware.
 
 ### Control a robot with your coding agent
 

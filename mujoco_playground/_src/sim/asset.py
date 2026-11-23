@@ -237,6 +237,9 @@ register_source('runfile', RunfileAsset)
 
 # Git repos, with local runfile fallback if available.
 
+# Pinned to a commit SHA during PyPI release cuts and reset to 'HEAD' after.
+DEFAULT_MENAGERIE_COMMIT = 'HEAD'
+
 
 class GitLoader:
   """Base class for loading assets from Git repositories."""
@@ -250,7 +253,12 @@ class GitLoader:
   def __call__(self, uri: str) -> Asset:
     _, full_path = _parse_source(uri)
     repo, path, params = _parse_github_uri(full_path)
-    commit = params.get('commit', 'HEAD')
+    default_commit = (
+        DEFAULT_MENAGERIE_COMMIT
+        if repo == 'google-deepmind/mujoco_menagerie'
+        else 'HEAD'
+    )
+    commit = params.get('commit', default_commit)
 
     local_path = paths.resolve_local_path(uri)
     if local_path is not None:

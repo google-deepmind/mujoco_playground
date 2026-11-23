@@ -3,16 +3,28 @@
 [![CI](https://github.com/google-deepmind/reaf-sim/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/google-deepmind/reaf-sim/actions/workflows/ci.yml?query=branch%3Amain)
 [![PyPI version](https://img.shields.io/pypi/v/reaf-sim)](https://pypi.org/project/reaf-sim/)
 [![Documentation Status](https://img.shields.io/readthedocs/reaf-sim/latest)](https://reaf-sim.readthedocs.io/en/latest/?badge=latest)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/notebooks/quickstart.ipynb)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-`reaf-sim` is a simulation environment framework written in [PyTorch](https://pytorch.org/) and built on [MuJoCo](https://github.com/google-deepmind/mujoco) and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) with the [Robotics Environment Authoring Framework (REAF)](https://github.com/google-deepmind/reaf).
+`reaf-sim` is a [PyTorch](https://pytorch.org/) simulation framework built by the MuJoCo team on top of [MuJoCo](https://github.com/google-deepmind/mujoco) and [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp), and using the [Robotics Environment Authoring Framework (REAF)](https://github.com/google-deepmind/reaf).
 
 `reaf-sim` is designed explicitly for sim-to-real robotics workflows. To achieve this, we decouple hardware and sensor I/O from task logic. The hardware layer is called the [`DeviceLayer`](https://reaf-sim.readthedocs.io/en/latest/user_guide/device_layer.html), which wraps sim in an interface that is consistent with physical hardware. The task logic is implemented in the [`TaskLayer`](https://reaf-sim.readthedocs.io/en/latest/user_guide/task_layer.html), which handles MDP processing of actions, observations, terminations, and rewards. Critically, the `TaskLayer` has no access to privileged simulation state, which makes sim workflows portable to real hardware.
 
 > [!NOTE]
-> For a full suite of sim and real robotic examples, check out [MuJoCo Playground](https://github.com/google-deepmind/mujoco_playground), which showcases `reaf-sim` across a variety of tasks!
+> For a full suite of sim and real robotic examples, check out [MuJoCo Playground](https://github.com/google-deepmind/mujoco_playground), which showcases `reaf-sim` across a variety of tasks, or try the interactive [Quickstart Colab](https://colab.research.google.com/github/google-deepmind/mujoco_playground/blob/main/notebooks/quickstart.ipynb)!
 
 This project adheres to the [GDM Robotics Environment interface](https://github.com/google-deepmind/gdm_robotics/blob/main/src/gdm_robotics/interfaces/environment.py).
+
+## Installation
+
+Install [`reaf-sim`](https://pypi.org/project/reaf-sim/) from PyPI (Python 3.12+):
+
+```bash
+uv pip install "reaf-sim>=1.0"
+```
+
+> [!NOTE]
+> On Linux with CUDA 12 drivers, install with `--index https://download.pytorch.org/whl/cu129 -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 "warp-lang==1.18.0+cu12" "reaf-sim>=1.0"`.
 
 ## Cartpole Example
 
@@ -21,14 +33,21 @@ For a quick preview into `reaf-sim`, let's create an environment controlling a c
 ```python
 import mujoco
 from reaf.simulation.torch import ActuatorDevice, CameraDevice, flat_scene
+from reaf.simulation.torch.examples.cartpole import CARTPOLE_XML
 import torch
 
-spec = mujoco.MjSpec.from_file("cartpole.xml")
+spec = mujoco.MjSpec.from_string(CARTPOLE_XML)
 
 # configure the environment
 config = flat_scene.Environment(
     base_scene=spec,
-    sim=flat_scene.Sim(nworld=16, xpu_device="cuda:0", impl="warp"),
+    sim=flat_scene.Sim(
+        nworld=16,
+        xpu_device="cuda:0",
+        impl="warp",
+        simulation_timestep=0.01,
+        control_timestep=0.05,
+    ),
     device_layer=flat_scene.DeviceLayer(
         devices={
             "slider": flat_scene.Component(
@@ -43,6 +62,15 @@ config = flat_scene.Environment(
             ),
         }
     ),
+    observation_adapter={
+        "camera/fixed_rgb": flat_scene.ObsGroup(
+            terms={
+                "rgb": flat_scene.Obs("camera/fixed_rgb").configure(
+                    output_shape=(120, 160, 3), dtype="uint8"
+                ),
+            }
+        ),
+    },
 )
 
 # build the environment
