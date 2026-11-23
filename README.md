@@ -54,7 +54,7 @@ Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either 
 
 ## Installation
 
-First [install `uv`](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet. Install [`playground`](https://pypi.org/project/playground/) (Python 3.12–3.13) from PyPI with `uv pip` (or skip installation and run directly with `uvx` in [Getting Started](#getting-started)):
+First [install `uv`](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet. Install [`playground`](https://pypi.org/project/playground/) (Python 3.12–3.14) from PyPI with `uv pip` (or skip installation and run directly with `uvx` in [Getting Started](#getting-started)):
 
 ```bash
 uv venv --python 3.13 && source .venv/bin/activate

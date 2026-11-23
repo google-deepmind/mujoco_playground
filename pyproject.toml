@@ -2,7 +2,7 @@
 name = "playground"
 version = "1.0.1"
 description = "Playground of robotics real and sim tasks."
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.15"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -13,6 +13,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
 ]
 
@@ -22,7 +24,7 @@ dependencies = [
     "mujoco_warp>=4.0.0",
     "gdm_robotics",
     "absl-py",
-    "torch>=2.7.0,<2.14",
+    "torch>=2.7.0,<2.16",
     "mujoco[sysid]>=4.0.0",
     "warp-lang>=1.18.0,<1.18.1",
 ]
@@ -94,7 +96,7 @@ cu12 = [
     "torch>=2.7.0,<2.14; sys_platform == 'linux'",
 ]
 cpu = [
-    "torch>=2.7.0,<2.14; sys_platform == 'linux'",
+    "torch>=2.7.0,<2.16; sys_platform == 'linux'",
 ]
 dev = [
     "pytest",
@@ -120,10 +122,12 @@ packages = ["mujoco_playground"]
 conflicts = [
   [{group = "cu12"}, {group = "cpu"}],
 ]
-# i2rt pins ruckig==0.15.3 (sdist-only, broken under scikit-build-core >= 0.10);
-# override to ruckig>=0.15.3 so pre-built wheels (0.19.4+) are used everywhere.
+# i2rt pins ruckig==0.15.3 (sdist-only, broken under scikit-build-core >= 0.10)
+# and numpy==2.2.6 (no Python 3.14 wheels; conflicts with dm-tree>=0.1.10);
+# override both so pre-built wheels are used across Python 3.12–3.14.
 override-dependencies = [
   "ruckig>=0.15.3",
+  "numpy>=2.2.6",
 ]
 
 [[tool.uv.index]]
