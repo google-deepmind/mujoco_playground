@@ -50,7 +50,7 @@ Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either 
 </table>
 
 > [!NOTE]
-> Looking for the original RSS 2025 JAX/MJX environments? They remain available under [`rss2025`](rss2025).
+> Looking for the original RSS 2025 JAX/MJX/Brax environments? JAX/MJX envs remain available under [`rss2025`](rss2025), but are no longer uploaded to PyPI after `playground==0.2.0`.
 
 ## Installation
 

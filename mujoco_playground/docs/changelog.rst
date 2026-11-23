@@ -29,7 +29,9 @@ Version 1.0.1 (November 8, 2026)
 Version 1.0.0 (November 6, 2026)
 --------------------------------
 
-Rebuilt on `reaf-sim` (`reaf.simulation.torch`) and MuJoCo Warp with declarative
-`flat_scene` environments, paired `sim/` and `real/` robot packages (SO-101,
-YAM, Trossen WXAI, Unitree G1), RSL-RL training, teleop, `mujoco.sysid`, and
-sim-to-real deployment.
+Rebuilt on `reaf-sim` (`reaf.simulation.torch`) and MuJoCo Warp (CUDA for GPU
+training; CPU is also supported) with declarative `flat_scene` environments,
+paired `sim/` and `real/` robot packages (SO-101, YAM, Trossen WXAI, Unitree
+G1), RSL-RL training, teleop, `mujoco.sysid`, and sim-to-real deployment. The
+original RSS 2025 JAX/MJX/Brax environments ended at `0.2.0` on PyPI and remain
+available under `rss2025/`.

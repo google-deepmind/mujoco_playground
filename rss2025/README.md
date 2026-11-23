@@ -26,6 +26,9 @@ You can install MuJoCo Playground directly from PyPI:
 pip install playground==0.2.0
 ```
 
+> [!NOTE]
+> With `jax>=0.12`, ensure `mujoco>=3.7.0` and `mujoco-mjx>=3.7.0` are installed (earlier `mujoco-mjx` releases used the removed `a_min`/`a_max` arguments to `jnp.clip`).
+
 > [!IMPORTANT]
 > We recommend users to install [from source](#from-source) to get the latest features and bug fixes from MuJoCo.
 
