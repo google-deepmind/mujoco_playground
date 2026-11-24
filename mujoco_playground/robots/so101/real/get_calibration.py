@@ -59,6 +59,27 @@ CALIBRATE_COMMAND = (
     f" {__package__}.{pathlib.Path(__file__).stem}"
 )
 
+MIDDLE_POSE_DIAGRAM = r"""
+       ╭─────┬────────────────────┬──────╮ ◉╲═════╗   ← moveable claw
+       │     │      forearm       │  ▤▤  │╤══╲════╝   ← fixed claw
+       ╰┬───┬┴────────────────────┴──────┴┴═══════╝
+        │   │
+        │   │
+        │   │
+        │   │   upper arm
+        │   │
+        │   │
+        │   │
+   ╭────┴───┴────╮
+   │   base ◉    │
+   ╰──┬───────┬──╯
+  ╭───┴───────┴───╮
+  │▓▓▓ C-clamp ▓▓▓│
+  ╰───────────────╯
+ ═══════════════════════════════════════════════════
+                table edge
+"""
+
 
 class CalibrationError(RuntimeError):
   """Raised when an arm's calibration is missing or malformed."""
@@ -261,13 +282,14 @@ def _calibrate_arm(role: str, port: str, serial_number: str) -> None:
 
     print(f"Support the {role} by hand — it may fall under gravity.")
     print(
-        f"Hold the {role} in the MIDDLE pose (see assets/middle_pose.png next"
-        " to this module): pan centered, upper arm vertical, elbow bent 90"
-        " degrees so the forearm is level, wrist straight, grippers should be"
-        " vertical and the camera is on the left side. This pose defines the"
-        " reference for the leader, the follower, and the sim, so pose it as"
-        " consistently as you can."
+        f"Hold the {role} in the MIDDLE (neutral) pose (see"
+        " assets/middle_pose.png next to this module): pan centered, upper arm"
+        " vertical, elbow bent 90 degrees so the forearm is level, wrist"
+        " straight, grippers should be vertical and the camera is on the left"
+        " side. This pose defines the reference for the leader, the follower,"
+        " and the sim, so pose it as consistently as you can."
     )
+    print(MIDDLE_POSE_DIAGRAM)
     middle = _capture_middle(bus)
 
     sweep = [j for j in constant.JOINTS if j != "wrist_roll"]
