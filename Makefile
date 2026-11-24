@@ -44,7 +44,7 @@ test:
 NO_EXTRAS_ENV := .venv-no-extras
 .PHONY: check-imports
 check-imports:
-	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv sync --group cpu --no-default-groups --upgrade-package mujoco --upgrade-package mujoco-warp
+	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv sync --frozen --group cpu --no-default-groups
 	UV_PROJECT_ENVIRONMENT=$(NO_EXTRAS_ENV) uv run --no-sync python -m mujoco_playground.import_check
 
 DOCS_PORT ?= 8888
