@@ -14,6 +14,8 @@
 
 """Tests that all registered environments can be loaded."""
 
+import types
+from typing import Any
 import unittest
 from unittest import mock
 
@@ -21,7 +23,9 @@ from absl.testing import absltest
 from absl.testing import parameterized
 import dm_env
 from mujoco_playground._src.rl import env_registry
+from reaf.simulation import torch as reaf_sim
 from reaf.simulation.torch import environment as reaf_env
+from reaf.simulation.torch import flat_scene
 import torch
 import warp as wp
 
@@ -189,6 +193,87 @@ class EnvRegistryTest(parameterized.TestCase):
       self._check_state_pointer_invariance(env, actions, mask)
     with self.subTest("cuda_graph_replay"):
       self._check_cuda_graph_replay(env, actions)
+
+
+class EnvRegistryImplTest(absltest.TestCase):
+  """Tests that backend selection is forwarded to the config function."""
+
+  def test_forwards_impl_to_config_fn_that_accepts_it(self) -> None:
+    cfg = types.SimpleNamespace(
+        sim=types.SimpleNamespace(nworld=0, xpu_device="", impl=None)
+    )
+    received: dict[str, Any] = {}
+
+    def cfg_fn(impl: str = "warp") -> Any:
+      received["impl"] = impl
+      return cfg
+
+    built = object()
+    with mock.patch.dict(env_registry._REGISTRY, clear=False):
+      env_registry.register("_ForwardImpl", None, env_cfg_fn=cfg_fn)
+      with mock.patch.object(flat_scene, "build_env", return_value=built):
+        result = env_registry.get("_ForwardImpl").env_builder(
+            nworld=2, device="cpu", impl="cpp"
+        )
+
+    self.assertIs(result, built)
+    self.assertEqual(received["impl"], "cpp")
+    self.assertEqual(cfg.sim.impl, "cpp")
+    self.assertEqual(cfg.sim.nworld, 2)
+    self.assertEqual(cfg.sim.xpu_device, "cpu")
+
+  def test_impl_is_not_forwarded_to_config_fn_without_it(self) -> None:
+    cfg = types.SimpleNamespace(
+        sim=types.SimpleNamespace(nworld=0, xpu_device="", impl=None)
+    )
+
+    def cfg_fn() -> Any:
+      return cfg
+
+    built = object()
+    with mock.patch.dict(env_registry._REGISTRY, clear=False):
+      env_registry.register("_NoImpl", None, env_cfg_fn=cfg_fn)
+      with mock.patch.object(flat_scene, "build_env", return_value=built):
+        result = env_registry.get("_NoImpl").env_builder(
+            nworld=1, device="cpu", impl="cpp"
+        )
+
+    self.assertIs(result, built)
+    self.assertEqual(cfg.sim.impl, "cpp")
+
+
+class VisionEnvCppTest(parameterized.TestCase):
+  """Tests that vision environments build the native camera on `cpp`."""
+
+  @parameterized.named_parameters(
+      ("so101", "SO101PickCubeVision", "camera", (1, 3, 16, 16)),
+      ("trossen", "TrossenPickCubeVision", "camera", (1, 3, 32, 32)),
+      ("cartpole", "CartpoleBalanceVision", "policy", (1, 3, 64, 64)),
+  )
+  def test_vision_env_cpp_uses_mujoco_camera(
+      self,
+      env_id: str,
+      observation_group: str,
+      observation_shape: tuple[int, ...],
+  ) -> None:
+    env = env_registry.get(env_id).env_builder(
+        nworld=1, device="cpu", impl="cpp"
+    )
+    self.addCleanup(env.close)
+
+    camera = env.device_layer.get_device("camera")
+    self.assertIsInstance(camera, reaf_sim.MujocoCameraDevice)
+    observation_spec: Any = env.observation_spec()
+    assert isinstance(observation_spec, dict)
+    self.assertEqual(
+        observation_spec[observation_group].shape, observation_shape
+    )
+
+    timestep = env.reset()
+    self.assertEqual(
+        timestep.observation[observation_group].shape,
+        torch.Size(observation_shape),
+    )
 
 
 class NoCudaTest(absltest.TestCase):

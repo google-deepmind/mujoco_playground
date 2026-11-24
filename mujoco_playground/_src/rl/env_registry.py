@@ -15,6 +15,7 @@
 """Environment and config registries for RL."""
 
 import dataclasses
+import inspect
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -57,6 +58,8 @@ def register(
   if env_id in _REGISTRY:
     raise ValueError(f"Environment '{env_id}' already registered.")
 
+  accepts_impl = "impl" in inspect.signature(env_cfg_fn).parameters
+
   def build(
       nworld: int = 1,
       device: str | int | None = None,
@@ -66,11 +69,15 @@ def register(
     from reaf.simulation.torch import flat_scene as build_env
 
     device_str = xpu.resolve_device(device)
-    impl = kwargs.pop("impl", None)
+    impl = kwargs.pop("impl", None) or "warp"
+    # Config functions that select backend-specific devices, such as the
+    # vision cameras, must receive `impl` before the config is built.
+    if accepts_impl:
+      kwargs["impl"] = impl
     env_cfg = env_cfg_fn(**kwargs)
     env_cfg.sim.nworld = nworld
     env_cfg.sim.xpu_device = device_str
-    env_cfg.sim.impl = impl or "warp"
+    env_cfg.sim.impl = impl
     return build_env.build_env(env_cfg)
 
   _REGISTRY[env_id] = RegistryEntry(

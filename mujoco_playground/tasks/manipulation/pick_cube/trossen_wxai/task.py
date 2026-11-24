@@ -14,6 +14,8 @@
 
 """Trossen WXAI robot configuration for pick task."""
 
+from typing import Literal
+
 from mujoco_playground.robots.trossen_wxai.sim import constant as trossen_constant
 from mujoco_playground.robots.trossen_wxai.sim import scene as trossen_scene
 from mujoco_playground.tasks.manipulation.pick_cube import mdp
@@ -257,22 +259,36 @@ def right_arm_pick_cube_env() -> config.Environment:
   return cfg
 
 
-def right_arm_pick_cube_pixels_env() -> config.Environment:
+def right_arm_pick_cube_pixels_env(
+    impl: Literal["cpp", "warp"] = "warp",
+) -> config.Environment:
   """Pick cube env with camera observations."""
   cfg = right_arm_pick_cube_env()
+  cfg.sim.impl = impl
 
-  cfg.device_layer.devices["camera"] = config.Component(
-      device.CameraDevice,
-      cam_name=["right/wrist_cam"],
-      cam_resolution=[(32, 32)],
-      render_rate_hz=1.0 / cfg.sim.control_timestep,
-      render_rgb=True,
-      render_depth=False,
-      enabled_geom_groups=(0, 2, 3),
-      use_precomputed_rays=False,
-      use_shadows=False,
-      use_textures=False,
-  )
+  if impl == "cpp":
+    cfg.device_layer.devices["camera"] = config.Component(
+        device.MujocoCameraDevice,
+        camera_name="right/wrist_cam",
+        width=32,
+        height=32,
+        render_rate_hz=1.0 / cfg.sim.control_timestep,
+        image_output_name_prefix="right/wrist_cam",
+        rgb_output_name_suffix="_rgb",
+    )
+  else:
+    cfg.device_layer.devices["camera"] = config.Component(
+        device.CameraDevice,
+        cam_name=["right/wrist_cam"],
+        cam_resolution=[(32, 32)],
+        render_rate_hz=1.0 / cfg.sim.control_timestep,
+        render_rgb=True,
+        render_depth=False,
+        enabled_geom_groups=(0, 2, 3),
+        use_precomputed_rays=False,
+        use_shadows=False,
+        use_textures=False,
+    )
 
   base_obs = cfg.observation_adapter["policy"].terms
   policy_obs = {
