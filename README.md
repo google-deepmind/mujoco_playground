@@ -52,12 +52,12 @@ Robots exist in [`mujoco_playground/robots/`](mujoco_playground/robots), either 
 First [install `uv`](https://docs.astral.sh/uv/getting-started/installation/) if you don't have it yet. Install [`playground`](https://pypi.org/project/playground/) (Python 3.12–3.14) from PyPI with `uv pip` (or skip installation and run directly with `uvx` in [Getting Started](#getting-started)):
 
 ```bash
-uv venv --python 3.13 && source .venv/bin/activate
-uv pip install --default-index https://pypi.org/simple "playground>=1.0"
+uv venv --python 3.14 && source .venv/bin/activate
+uv pip install --default-index https://pypi.org/simple "playground>=1.1"
 ```
 
 > [!NOTE]
-> On Linux with CUDA 12 drivers, install with `--index https://download.pytorch.org/whl/cu129 -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 "warp-lang==1.18.0+cu12" "playground[rl]>=1.0"`.
+> On Linux with CUDA 12 drivers, install with `--index https://download.pytorch.org/whl/cu129 -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 "warp-lang==1.18.0+cu12" "playground[rl]>=1.1"`.
 
 ## Getting Started
 
@@ -84,15 +84,15 @@ Train an `SO101PickCube` PPO policy with [RSL-RL](https://github.com/leggedrobot
 
 ```bash
 # Train SO101PickCube on CPU
-uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
-  python -m mujoco_playground.rl.rsl_rl.train \
+uvx --default-index https://pypi.org/simple --python 3.14 "playground[rl]>=1.1" \
+  train rsl_rl \
   --env=SO101PickCube \
   --logdir=/tmp/rslrl_logs/so101_pick_cube \
   --overrides='{"nworld": 64}'
 
 # Play trained policy in MuJoCo Studio web viewer
-uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
-  python -m mujoco_playground.rl.rsl_rl.play \
+uvx --default-index https://pypi.org/simple --python 3.14 "playground[rl]>=1.1" \
+  play rsl_rl \
   --env=SO101PickCube \
   --resume_path=/tmp/rslrl_logs/so101_pick_cube
 ```
@@ -105,22 +105,20 @@ uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]
 
 ```bash
 # Train SO101PickCube (CUDA 12 driver)
-uvx --default-index https://pypi.org/simple --python 3.13 \
+uvx --default-index https://pypi.org/simple --python 3.14 \
   --index https://download.pytorch.org/whl/cu129 \
   -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 \
   --with "warp-lang==1.18.0+cu12" \
-  --from "playground[rl]>=1.0" \
-  python -m mujoco_playground.rl.rsl_rl.train \
+  "playground[rl]>=1.1" train rsl_rl \
   --env=SO101PickCube \
   --logdir=/tmp/rslrl_logs/so101_pick_cube
 
 # Play trained policy in MuJoCo Studio web viewer
-uvx --default-index https://pypi.org/simple --python 3.13 \
+uvx --default-index https://pypi.org/simple --python 3.14 \
   --index https://download.pytorch.org/whl/cu129 \
   -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 \
   --with "warp-lang==1.18.0+cu12" \
-  --from "playground[rl]>=1.0" \
-  python -m mujoco_playground.rl.rsl_rl.play \
+  "playground[rl]>=1.1" play rsl_rl \
   --env=SO101PickCube \
   --resume_path=/tmp/rslrl_logs/so101_pick_cube
 ```
@@ -133,14 +131,14 @@ uvx --default-index https://pypi.org/simple --python 3.13 \
 
 ```bash
 # Train SO101PickCube (8,192 parallel envs on GPU)
-uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
-  python -m mujoco_playground.rl.rsl_rl.train \
+uvx --default-index https://pypi.org/simple --python 3.14 "playground[rl]>=1.1" \
+  train rsl_rl \
   --env=SO101PickCube \
   --logdir=/tmp/rslrl_logs/so101_pick_cube
 
 # Play trained policy in MuJoCo Studio web viewer
-uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
-  python -m mujoco_playground.rl.rsl_rl.play \
+uvx --default-index https://pypi.org/simple --python 3.14 "playground[rl]>=1.1" \
+  play rsl_rl \
   --env=SO101PickCube \
   --resume_path=/tmp/rslrl_logs/so101_pick_cube
 ```
@@ -157,14 +155,14 @@ Optionally [set up the SO-101 hardware](mujoco_playground/robots/so101/real), tr
 
 ```bash
 # Train SO-101 Pick-Cube vision policy (add CUDA 12 flags above on CUDA 12)
-uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[rl]>=1.0" \
-  python -m mujoco_playground.rl.rsl_rl.train \
+uvx --default-index https://pypi.org/simple --python 3.14 "playground[rl]>=1.1" \
+  train rsl_rl \
   --env=SO101PickCubeVision \
   --logdir=/tmp/rslrl_logs/so101_pick_cube_vision
 
 # Deploy the trained policy on the physical SO-101 follower arm
-uvx --default-index https://pypi.org/simple --python 3.13 --from "playground[so101,rl]>=1.0" \
-  python -m mujoco_playground.tasks.manipulation.pick_cube.so101.deploy.run \
+uvx --default-index https://pypi.org/simple --python 3.14 "playground[so101,rl]>=1.1" \
+  deploy so101_pick_cube \
   --mode=real \
   --checkpoint=/tmp/rslrl_logs/so101_pick_cube_vision
 ```

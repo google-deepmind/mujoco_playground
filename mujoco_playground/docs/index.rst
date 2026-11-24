@@ -7,33 +7,38 @@ MuJoCo Playground is a suite of robot environments, reinforcement learning tasks
 Quickstart
 ----------
 
-Clone the repository and sync dependencies with `uv <https://docs.astral.sh/uv/>`_:
+Run directly from PyPI with `uvx <https://docs.astral.sh/uv/>`_ (no clone required) to train a PPO policy and play back
+the checkpoint in MuJoCo Studio:
+
+.. code-block:: bash
+
+    uvx --default-index https://pypi.org/simple --python 3.14 "playground[rl]>=1.1" train rsl_rl \
+      --env=SO101PickCube \
+      --logdir=/tmp/rslrl_logs/so101_pick_cube
+      # --overrides='{"nworld": 64}'  # For CPU
+
+    uvx --default-index https://pypi.org/simple --python 3.14 "playground[rl]>=1.1" play rsl_rl \
+      --env=SO101PickCube \
+      --resume_path=/tmp/rslrl_logs/so101_pick_cube
+
+.. note::
+
+    On Linux with CUDA 12 drivers, add
+    ``--index https://download.pytorch.org/whl/cu129 -f https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 --with "warp-lang==1.18.0+cu12"``
+    before ``"playground[rl]>=1.1"``.
+
+For local development from ``HEAD`` (or robots requiring git extras like YAM), clone the repository and sync:
 
 .. code-block:: bash
 
     git clone https://github.com/google-deepmind/mujoco_playground.git && cd mujoco_playground
 
-    # Then install with one of:
-    make sync  # For GPU, good for RL training
-
-    make sync-cu12  # For CUDA 12 on Linux
-
-    make sync-cpu  # Or for CPU only, (i.e. on macOS)
+    # Install with one of:
+    make sync  # GPU (CUDA 13)
+    make sync-cu12  # GPU (CUDA 12 on Linux)
+    make sync-cpu  # CPU only (e.g. macOS)
 
     make test  # Run tests
-
-Train a PPO policy on GPU using the environment's pre-configured observations, rewards, and domain randomization, then
-play back the checkpoint in the interactive viewer:
-
-.. code-block:: bash
-
-    uv run --extra rl playground train rsl_rl \
-      --env=SO101PickCube \
-      --logdir=/tmp/rslrl_logs/so101_pick_cube
-
-    uv run --extra rl playground play rsl_rl \
-      --env=SO101PickCube \
-      --resume_path=/tmp/rslrl_logs/so101_pick_cube
 
 Highlights
 ----------
