@@ -6,7 +6,7 @@ sync:
 sync-cu12:
 	rm -rf $${UV_PROJECT_ENVIRONMENT:-.venv}/lib/python*/site-packages/nvidia*
 	uv sync --group cu12 --extra rl --group dev --upgrade-package mujoco --upgrade-package mujoco-warp
-	uv pip install --find-links https://github.com/NVIDIA/warp/releases/expanded_assets/v1.18.0 "warp-lang==1.18.0+cu12"
+	uv pip install --find-links https://github.com/NVIDIA/warp/releases/expanded_assets/v1.19.0 "warp-lang==1.19.0+cu12"
 
 .PHONY: sync-cpu
 sync-cpu:

@@ -3,16 +3,16 @@ revision = 5
 requires-python = ">=3.12, <3.15"
 resolution-markers = [
     "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
-    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
-    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
     "python_full_version < '3.13' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
-    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
-    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 conflicts = [[
@@ -557,12 +557,12 @@ version = "0.23"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
-    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
-    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/39/a4/5180d9afc57e8fca05601dd652bdff19604c218814037fe90ffc7625a50a/docutils-0.23.tar.gz", hash = "sha256:746f5060322511280a1e50eb76846ed6bf2342984b2ac04dc42caa1a8d78799e", size = 2303823, upload-time = "2026-05-27T17:41:06.934Z" }
@@ -2001,8 +2001,7 @@ dependencies = [
     { name = "numpy" },
     { name = "reaf" },
     { name = "torch", version = "2.13.0+cu129", source = { registry = "https://download.pytorch.org/whl/cu129" }, marker = "extra == 'group-8-reaf-sim-cu12'" },
-    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "torch", version = "2.15.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "torch", version = "2.15.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "warp-lang" },
     { name = "warp-optix", marker = "(python_full_version < '3.13' and platform_machine == 'AMD64' and sys_platform == 'linux') or (python_full_version < '3.13' and platform_machine == 'x86_64' and sys_platform == 'linux') or (python_full_version < '3.13' and platform_machine == 'AMD64' and sys_platform == 'win32') or (python_full_version < '3.13' and platform_machine == 'x86_64' and sys_platform == 'win32')" },
@@ -2010,8 +2009,7 @@ dependencies = [
 
 [package.dev-dependencies]
 cpu = [
-    { name = "torch", version = "2.15.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'" },
-    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'linux' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "torch", version = "2.15.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
 ]
 cu12 = [
     { name = "torch", version = "2.13.0+cu129", source = { registry = "https://download.pytorch.org/whl/cu129" }, marker = "sys_platform == 'linux'" },
@@ -2042,7 +2040,7 @@ requires-dist = [
     { name = "numpy" },
     { name = "reaf", specifier = ">=1.1.2" },
     { name = "torch", specifier = ">=2.7.0,<2.16" },
-    { name = "warp-lang", specifier = ">=1.18.0,<1.18.1", index = "https://pypi.nvidia.com/" },
+    { name = "warp-lang", specifier = ">=1.19.0,<1.19.1", index = "https://pypi.nvidia.com/" },
     { name = "warp-optix", marker = "(python_full_version == '3.12.*' and platform_machine == 'AMD64' and sys_platform == 'linux') or (python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'linux') or (python_full_version == '3.12.*' and platform_machine == 'AMD64' and sys_platform == 'win32') or (python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'win32')", specifier = ">=0.3.0" },
 ]
 
@@ -2195,12 +2193,12 @@ version = "9.2.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
-    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
-    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
     "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 dependencies = [
@@ -2359,52 +2357,30 @@ wheels = [
 [[package]]
 name = "torch"
 version = "2.15.0"
-source = { registry = "https://download.pytorch.org/whl/cpu" }
-resolution-markers = [
-    "python_full_version >= '3.14' and sys_platform == 'darwin'",
-    "python_full_version == '3.13.*' and sys_platform == 'darwin'",
-    "python_full_version < '3.13' and sys_platform == 'darwin'",
-]
-dependencies = [
-    { name = "filelock", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "fsspec", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "jinja2", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "networkx", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "setuptools", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sympy", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "typing-extensions", marker = "(sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-]
-wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.15.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:593e5fd0c204284890d1c3dff643be34e549e1d24523e13402510f960d4da438", upload-time = "2026-10-28T13:17:02Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.15.0-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:fbefd73b521d3c75c5a1d7c77056b2c6339b81468d14d4e33c55f525418a5855", upload-time = "2026-10-28T13:17:07Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.15.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:0d2b2d9674fa0b9b3f50e83231aa6545a0b19e437a52f0af939a224faaa45515", upload-time = "2026-10-28T13:17:13Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.15.0-cp314-cp314t-macosx_14_0_arm64.whl", hash = "sha256:628f54cb55a2363a5f14471a80c1b6efb63724449d2611ad2772fb5d4c42d19d", upload-time = "2026-10-28T13:17:20Z" },
-]
-
-[[package]]
-name = "torch"
-version = "2.15.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.14'",
-    "python_full_version == '3.13.*'",
-    "python_full_version < '3.13'",
+    "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version >= '3.14' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version == '3.13.*' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and sys_platform == 'darwin' and extra == 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
+    "python_full_version < '3.13' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12'",
 ]
 dependencies = [
     { name = "cuda-bindings", version = "13.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "cuda-toolkit", version = "13.2.2", source = { registry = "https://pypi.org/simple" }, extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "filelock", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "fsspec", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "jinja2", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "networkx", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "filelock", marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "fsspec", marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "jinja2", marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "networkx", marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-cudnn-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-cusparselt-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-nccl-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "setuptools", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "sympy", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "setuptools", marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "sympy", marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
     { name = "triton", version = "3.9.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
-    { name = "typing-extensions", marker = "(extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
+    { name = "typing-extensions", marker = "(sys_platform == 'darwin' and extra != 'group-8-reaf-sim-cu12') or (extra != 'group-8-reaf-sim-cpu' and extra != 'group-8-reaf-sim-cu12') or (extra == 'group-8-reaf-sim-cpu' and extra == 'group-8-reaf-sim-cu12')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/17/24/7b9b755e8c4dd2395c6a94bab6a4ed8aded1735ff2538bc63cbba8abeddd/torch-2.15.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:593e5fd0c204284890d1c3dff643be34e549e1d24523e13402510f960d4da438", size = 138558517, upload-time = "2026-10-28T15:16:35.918Z" },
@@ -2545,16 +2521,17 @@ wheels = [
 
 [[package]]
 name = "warp-lang"
-version = "1.18.0"
+version = "1.19.0"
 source = { registry = "https://pypi.nvidia.com/" }
 dependencies = [
     { name = "numpy" },
 ]
 wheels = [
-    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.18.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:3d0a12f411555c08015f84060187a0466800d2c837eb8800977b9604be438c21" },
-    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.18.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:090962bfae7dd22ade0d8e0258f41635e0e58980f15bcc9e7a7d312819dfe440" },
-    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.18.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:d76ab8c7d4f4897405fa0a744d38812fc44cfc8162c40e658dc9ca7790b6a645" },
-    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.18.0-py3-none-win_amd64.whl", hash = "sha256:1769e55746739f2e244a2b412123003c462ec3d977dfb5f420f924a8553d30aa" },
+    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.19.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:310e7dcd9b4afa1ea45bf2304d793efc88f7317182e996b2077b069a0e34d3a0" },
+    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.19.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:c797f5f4aa9925f676e20dd28e5416fee794499f3f3c0a5b66f2d4dfc2de9e32" },
+    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.19.0-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:bc1511b8d5d987a69c2b18edbad721a8949b9f3622a91e3f9187a208fa9e3fab" },
+    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.19.0-py3-none-win_amd64.whl", hash = "sha256:bb4865dde4c2ae916d3d2a4e20ed1cd406e1d0a76ae722c3c574a9d43385c4d9" },
+    { url = "https://pypi.nvidia.com/warp-lang/warp_lang-1.19.0-py3-none-win_arm64.whl", hash = "sha256:4f422ccdb3f5509e6386c0f178071d0da43e872e7af40dba594f03507af10182" },
 ]
 
 [[package]]

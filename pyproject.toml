@@ -26,7 +26,7 @@ dependencies = [
     "absl-py",
     "torch>=2.7.0,<2.16",
     "mujoco[sysid]>=4.0.0",
-    "warp-lang>=1.18.0,<1.18.1",
+    "warp-lang>=1.19.0,<1.19.1",
 ]
 
 [project.optional-dependencies]
