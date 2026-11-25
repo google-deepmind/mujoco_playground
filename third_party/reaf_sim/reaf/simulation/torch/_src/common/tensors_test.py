@@ -80,6 +80,43 @@ class TensorsTest(absltest.TestCase):
     self.assertTrue(torch.all(target[0, :2] == 0.0))
     self.assertTrue(torch.all(target[1, :] == 0.0))
 
+  def test_masked_where(self):
+    val = torch.ones((2, 3))
+    other = torch.zeros((2, 3), requires_grad=True)
+    self.assertIs(tensors.masked_where(None, val, other), val)
+    torch.testing.assert_close(
+        tensors.masked_where(None, 2.5, other), torch.full((2, 3), 2.5)
+    )
+
+    env_mask = torch.tensor([True, False])
+    torch.testing.assert_close(
+        tensors.masked_where(env_mask, 2.5, other),
+        torch.tensor([[2.5, 2.5, 2.5], [0.0, 0.0, 0.0]]),
+    )
+    out = tensors.masked_where(env_mask, val, other)
+    torch.testing.assert_close(
+        out, torch.tensor([[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
+    )
+    out.sum().backward()
+    torch.testing.assert_close(
+        other.grad, torch.tensor([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+    )
+
+  def test_masked_where_mapping(self):
+    env_mask = torch.tensor([True, False])
+    val = {"x": torch.ones((2, 2)), "unbatched": torch.tensor([1.0, 2.0, 3.0])}
+    other = {
+        "x": torch.zeros((2, 2)),
+        "unbatched": torch.tensor([4.0, 5.0, 6.0]),
+    }
+    self.assertEqual(
+        tensors.masked_where(env_mask, val, {})["x"].tolist(),
+        [[1.0, 1.0], [1.0, 1.0]],
+    )
+    out = tensors.masked_where(env_mask, val, other)
+    torch.testing.assert_close(out["x"], torch.tensor([[1.0, 1.0], [0.0, 0.0]]))
+    torch.testing.assert_close(out["unbatched"], val["unbatched"])
+
 
 if __name__ == "__main__":
   absltest.main()

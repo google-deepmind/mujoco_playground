@@ -403,3 +403,4 @@ class Environment:
 
   episode_length_secs: float | None = 20.0
   nan_termination: bool = False
+  enable_grad: bool = False

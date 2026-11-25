@@ -483,6 +483,7 @@ def build_env(
       observation_space_adapter=observation_provider,
       action_space_adapter=env_config.action_space_adapter,
       environment_reset=resetter,
+      enable_grad=env_config.enable_grad,
   )
 
   return env

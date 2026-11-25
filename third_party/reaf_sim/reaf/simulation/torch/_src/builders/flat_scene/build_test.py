@@ -328,6 +328,25 @@ class BuildTest(absltest.TestCase):
     })
     self.assertEqual(seen_dtypes[-1], torch.float32)
 
+  def test_build_env_enable_grad(self):
+    sim_cfg = builders_config.Sim(
+        nworld=1,
+        xpu_device="cpu",
+        impl="cpp",
+        simulation_timestep=0.01,
+        control_timestep=0.02,
+    )
+    env_default = build.build_env(
+        config.Environment(base_scene=mujoco.MjSpec(), sim=sim_cfg)
+    )
+    self.assertFalse(env_default._enable_grad)
+    env_grad = build.build_env(
+        config.Environment(
+            base_scene=mujoco.MjSpec(), sim=sim_cfg, enable_grad=True
+        )
+    )
+    self.assertTrue(env_grad._enable_grad)
+
 
 class MakeDeploymentConfigTest(absltest.TestCase):
 

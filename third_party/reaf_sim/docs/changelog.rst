@@ -4,6 +4,11 @@ Changelog
 Upcoming Version (not yet released)
 -----------------------------------
 
+- Added ``enable_grad`` option to :class:`~reaf.simulation.torch.Environment` and
+  :class:`~reaf.simulation.torch.flat_scene.Environment` to preserve PyTorch autograd through
+  :class:`~reaf.simulation.torch.TaskLayer` and custom differentiable :class:`~reaf.simulation.torch.DeviceLayer`
+  implementations (e.g., learned world models).
+
 Version 1.1.0 (November 23, 2026)
 ---------------------------------
 

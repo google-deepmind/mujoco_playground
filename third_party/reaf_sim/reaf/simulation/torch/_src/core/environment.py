@@ -31,6 +31,7 @@ from reaf.core import environment as core_environment
 from reaf.core import logger as reaf_logger
 from reaf.core import pass_through_action_space_adapter
 from reaf.core import termination_checker
+from reaf.simulation.torch._src.common import tensors
 from reaf.simulation.torch._src.core import observation_space_adapter as observation_space_adapter_module
 from reaf.simulation.torch._src.core import profile
 from reaf.simulation.torch._src.core import protocols
@@ -215,6 +216,7 @@ class Environment(core_environment.Environment):
       environment_closer: core_environment.EnvironmentCloser | None = None,
       action_spec_enforcement_option: core_environment.ActionSpecEnforcementOption = core_environment.ActionSpecEnforcementOption.RAISE_ERROR,
       auto_reset_mode: AutoResetMode = AutoResetMode.SYNC,
+      enable_grad: bool = False,
   ):
     self._device_layer = device_layer
     self._xpu_device = self._device_layer.xpu_device
@@ -227,6 +229,7 @@ class Environment(core_environment.Environment):
     self._environment_closer = environment_closer
     self._action_spec_enforcement_option = action_spec_enforcement_option
     self._auto_reset_mode = auto_reset_mode
+    self._enable_grad = enable_grad
 
     # Before assigning the adapters, validate the specs on the task layer
     # and the device layer.
@@ -366,24 +369,21 @@ class Environment(core_environment.Environment):
         observation=observation,
     )
 
-  @torch.no_grad()
   def reset_with_options(
       self,
       *,
       options: gdmr_env.ResetOptions,
       env_mask: torch.Tensor | None = None,
-      # TODO(btaba): Remove is_last_timestep; it is redundant with env_mask.
-      is_last_timestep: torch.Tensor | None = None,
   ) -> dm_env.TimeStep:
     """Starts a new sequence and returns the first `TimeStep`."""
-    if env_mask is None:
-      env_mask = (
-          is_last_timestep
-          if is_last_timestep is not None
-          else self._all_env_mask
-      )
-    self._reset(options, env_mask)
-    self._task_layer.record(self._latest_measurements, self._latest_features)
+    use_grad = (
+        self._enable_grad and torch.is_grad_enabled() and env_mask is not None
+    )
+    env_mask = self._all_env_mask if env_mask is None else env_mask
+    with torch.set_grad_enabled(use_grad):
+      self._reset(options, env_mask)
+    with torch.no_grad():
+      self._task_layer.record(self._latest_measurements, self._latest_features)
     return self._last_timestep
 
   def _reset(
@@ -419,22 +419,13 @@ class Environment(core_environment.Environment):
     self._observation_space_adapter.on_begin_stepping(features, env_mask)
     observations = self._compute_observations_from_features(features)
 
+    # Only consumed by `record()` under `torch.no_grad()`, so no `masked_where`.
     self._latest_features = features
     self._latest_measurements = measurements
 
-    # Update the observations for reset environments.
-    observations_w_reset = self._last_timestep.observation
-    if isinstance(observations_w_reset, dict):
-      for k in observations:
-        mask = env_mask.view(-1, *([1] * (observations[k].ndim - 1)))
-        observations_w_reset[k][:] = torch.where(
-            mask, observations[k], observations_w_reset[k]
-        )
-    else:
-      mask = env_mask.view(-1, *([1] * (observations.ndim - 1)))
-      observations_w_reset[:] = torch.where(
-          mask, observations, observations_w_reset
-      )
+    observations_w_reset = tensors.masked_where(
+        env_mask, observations, self._last_timestep.observation
+    )
 
     # Update step_type, reward, and discount for reset environments.
     self._last_timestep = self._restart(
@@ -445,12 +436,17 @@ class Environment(core_environment.Environment):
     # Make sure any early reset after this one triggers `_finalize_episode`.
     self._should_finalize_episode |= env_mask
 
-  @torch.no_grad()
   @profile.trace(color=profile.Section.ENVIRONMENT)
   def step(
       self, action: gdmr_types.ActionType  # pyrefly: ignore[invalid-type-var]
   ) -> dm_env.TimeStep:
     """Updates the environment according to action and returns a `TimeStep`."""
+    with torch.set_grad_enabled(self._enable_grad and torch.is_grad_enabled()):
+      return self._step(action)
+
+  def _step(
+      self, action: gdmr_types.ActionType  # pyrefly: ignore[invalid-type-var]
+  ) -> dm_env.TimeStep:
     is_last_timestep: Any = None
     if self._auto_reset_mode is not AutoResetMode.DISABLED:
       # To abide by the `dm_env.Environment` contract (`FIRST -> MID -> ... ->
@@ -478,18 +474,20 @@ class Environment(core_environment.Environment):
 
     # Compute the elements of the timestep.
     reward = self._task_layer.compute_reward(features)
-    self._task_layer.update_metrics(features)
+    with torch.no_grad():
+      self._task_layer.update_metrics(features)
 
-    # Combine termination from task layer (features-based) and resetter (sim-state).
-    tl_termination = self._task_layer.check_for_termination(features)
-    resetter_termination = self._environment_reset.check_termination()
-    if resetter_termination is not None:
-      termination_state: Any = termination_checker.TerminationResult.combine(
-          tl_termination,  # pyrefly: ignore[bad-argument-type]
-          resetter_termination,  # pyrefly: ignore[bad-argument-type]
-      )
-    else:
-      termination_state = tl_termination
+      # Combine termination from task layer (features-based) and resetter
+      # (sim-state).
+      tl_termination = self._task_layer.check_for_termination(features)
+      resetter_termination = self._environment_reset.check_termination()
+      if resetter_termination is not None:
+        termination_state: Any = termination_checker.TerminationResult.combine(
+            tl_termination,  # pyrefly: ignore[bad-argument-type]
+            resetter_termination,  # pyrefly: ignore[bad-argument-type]
+        )
+      else:
+        termination_state = tl_termination
 
     discount = self._task_layer.compute_discount(features, termination_state)
     observations = self._compute_observations_from_features(features)
@@ -526,7 +524,8 @@ class Environment(core_environment.Environment):
 
     # Record once per returned timestep. After an auto-reset, the latest
     # features hold the reset (FIRST) features of the reset worlds.
-    self._task_layer.record(self._latest_measurements, self._latest_features)
+    with torch.no_grad():
+      self._task_layer.record(self._latest_measurements, self._latest_features)
 
     return self._last_timestep
 

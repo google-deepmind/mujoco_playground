@@ -25,6 +25,7 @@ from dm_env import specs
 from gdm_robotics.interfaces import types as gdmr_types
 import mujoco
 import numpy as np
+from reaf.core import commands_processor as core_commands_processor
 from reaf.core import features_observer
 from reaf.core import features_producer as core_features_producer
 from reaf.core import logger as logger_module
@@ -1462,6 +1463,179 @@ class EnvironmentSetConstTest(parameterized.TestCase):
     set_const.assert_not_called()
     # One forward at startup and one after reset.
     self.assertLen(forward_calls, 2)
+
+
+class _LinearDeviceLayer:
+  sim, nworld, xpu_device = None, 2, "cpu"
+
+  def __init__(self):
+    self.x = torch.ones((2, 1))
+    self.t = torch.zeros(2)
+    self.home_qpos = torch.zeros(3)
+
+  def forward(self) -> None:
+    pass
+
+  def end_stepping(self, env_mask: torch.Tensor | None = None) -> None:
+    del env_mask
+
+  def commands_spec(self) -> dict[str, gdmr_types.UnboundedArraySpec]:
+    return {"u": gdmr_types.UnboundedArraySpec((2, 1), np.float32)}
+
+  def measurements_spec(self) -> dict[str, specs.Array]:
+    return {
+        "x": specs.Array((2, 1), np.float32),
+        "time": specs.Array((2,), np.float32),
+        "home_qpos": specs.Array((3,), np.float32),
+    }
+
+  def reset(self, env_mask: torch.Tensor) -> None:
+    self.x = torch.where(env_mask[:, None], 1.0, self.x)
+    self.t = torch.where(env_mask, 0.0, self.t)
+
+  def begin_stepping(
+      self, env_mask: torch.Tensor | None = None
+  ) -> dict[str, torch.Tensor]:
+    del env_mask
+    return {"x": self.x.detach(), "time": self.t, "home_qpos": self.home_qpos}
+
+  def step(
+      self, commands: Mapping[str, torch.Tensor]
+  ) -> dict[str, torch.Tensor]:
+    self.x = 0.5 * self.x + 2.0 * commands["u"]
+    self.t = self.t + 0.02
+    return {"x": self.x, "time": self.t, "home_qpos": self.home_qpos}
+
+
+class _ScaleCommandsProcessor(core_commands_processor.CommandsProcessor):
+
+  @property
+  def name(self) -> str:
+    return "scale_cmd"
+
+  def process_commands(  # pyrefly: ignore[bad-override]
+      self, consumed_commands: Mapping[str, torch.Tensor]
+  ) -> dict[str, torch.Tensor]:
+    return {"u": 3.0 * consumed_commands["u"]}
+
+  def consumed_commands_spec(  # pyrefly: ignore[bad-override]
+      self,
+  ) -> dict[str, gdmr_types.UnboundedArraySpec]:
+    return {"u": gdmr_types.UnboundedArraySpec((2, 1), np.float32)}
+
+  def produced_commands_keys(self) -> set[str]:
+    return {"u"}
+
+  def reset(self, env_mask: torch.Tensor | None = None) -> None:
+    del env_mask
+
+
+class _ScaleFeatureProducer(feature_producer_module.FeatureProducer):
+
+  @property
+  def name(self) -> str:
+    return "scale_feat"
+
+  def produce_features(
+      self, features: Mapping[str, torch.Tensor]
+  ) -> dict[str, torch.Tensor]:
+    return {"scaled_x": 4.0 * features["x"]}
+
+  def produced_features_spec(self) -> dict[str, specs.Array]:
+    return {"scaled_x": specs.Array((2, 1), np.float32)}
+
+  def required_features_keys(self) -> set[str]:
+    return {"x"}
+
+  def reset(self, env_mask: torch.Tensor | None = None) -> None:
+    del env_mask
+
+
+class _ScaledXRewardProvider(reward_provider.RewardProvider):
+
+  def name(self) -> str:
+    return "scaled_x_reward"
+
+  def compute_reward(
+      self, features: Mapping[str, torch.Tensor]
+  ) -> torch.Tensor:
+    return features["scaled_x"].squeeze(-1)
+
+  def reward_spec(self) -> specs.Array:
+    return specs.Array((), np.float32)
+
+  def required_features_keys(self) -> set[str]:
+    return {"scaled_x"}
+
+  def reset(self, env_mask: torch.Tensor | None = None) -> None:
+    del env_mask
+
+
+class EnvironmentEnableGradTest(parameterized.TestCase):
+
+  @parameterized.parameters(
+      (environment.AutoResetMode.SYNC, 0.0),
+      (environment.AutoResetMode.NO_SYNC, 0.0),
+      (environment.AutoResetMode.DISABLED, 72.0),
+  )
+  def test_enable_grad_and_partial_reset(self, mode, expected_u1_grad_world0):
+    metrics = StepSumMetricProvider(nworld=2, xpu_device="cpu")
+    logger = RecordingLogger(keys=("x",))
+    task_layer = task_layer_module.TaskLayer(
+        commands_processors=[_ScaleCommandsProcessor()],
+        features_producers=[_ScaleFeatureProducer()],
+        reward_provider=_ScaledXRewardProvider(),
+        termination_checkers=[
+            StaggeredTerminationChecker(torch.tensor([0.01, 10.0]), "time")
+        ],
+        metric_provider=metrics,
+        loggers=[logger],
+        xpu_device="cpu",
+        nworld=2,
+    )
+    env = environment.Environment(
+        device_layer=_LinearDeviceLayer(),  # pyrefly: ignore[bad-argument-type]
+        task_layer=task_layer,
+        environment_reset=PendulumReset(),
+        auto_reset_mode=mode,
+    )
+    env.reset()
+    u_off = torch.ones((2, 1), requires_grad=True)
+    ts_off = env.step({"u": u_off})
+    self.assertFalse(ts_off.observation["scaled_x"].requires_grad)
+    self.assertFalse(ts_off.reward.requires_grad)
+
+    env._enable_grad = True
+    with torch.no_grad():
+      ts_ng = env.step({"u": u_off})
+      self.assertFalse(ts_ng.observation["scaled_x"].requires_grad)
+      self.assertFalse(ts_ng.reward.requires_grad)
+    env.reset()
+    u0 = torch.ones((2, 1), requires_grad=True)
+    u1 = torch.tensor([[5.0], [2.0]], requires_grad=True)
+    u2 = torch.ones((2, 1), requires_grad=True)
+    ts1 = env.step({"u": u0})
+    if mode == environment.AutoResetMode.DISABLED:
+      mask = torch.eq(ts1.step_type, int(dm_env.StepType.LAST))
+      env.reset_with_options(options=env.default_reset_options(), env_mask=mask)
+    ts2 = env.step({"u": u1})
+    ts3 = env.step({"u": u2})
+    loss = (ts2.observation["scaled_x"] + ts3.observation["scaled_x"]).sum() + (
+        ts2.reward + ts3.reward
+    ).sum()
+    loss.backward()
+
+    # cmd = 3*u, x_{k+1} = 0.5*x_k + 6*u_k, scaled_x = 4*x, reward = scaled_x.
+    # Each step contributes (4 + 4) = 8 * x_k to loss. Under SYNC/NO_SYNC,
+    # world 0 auto-resets at the end of ts2 so u1[0] has 0 grad; under DISABLED,
+    # world 0 resets before ts2 so u1[0] drives ts2 and ts3 (grad = 72.0).
+    torch.testing.assert_close(u0.grad, torch.tensor([[0.0], [36.0]]))
+    torch.testing.assert_close(
+        u1.grad, torch.tensor([[expected_u1_grad_world0], [72.0]])
+    )
+    torch.testing.assert_close(u2.grad, torch.tensor([[48.0], [48.0]]))
+    self.assertFalse(metrics._sums.requires_grad)
+    self.assertFalse(logger.records[-1]["x"].requires_grad)
 
 
 if __name__ == "__main__":

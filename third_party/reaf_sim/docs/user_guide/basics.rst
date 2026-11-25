@@ -120,3 +120,17 @@ language.
     )
 
     env = flat_scene.build_env(config)
+
+Differentiability
+-----------------
+
+By default, :meth:`~reaf.simulation.torch.Environment.step` and resets run under ``torch.no_grad()``. Passing
+``enable_grad=True`` to :class:`~reaf.simulation.torch.Environment` (or
+:class:`~reaf.simulation.torch.flat_scene.Environment`) preserves PyTorch autograd graphs across ``step()`` and partial
+resets:
+
+- **Differentiable:** :class:`~reaf.simulation.torch.TaskLayer` components (command processors, feature producers,
+  rewards, discounts, observation adapters) and custom differentiable :class:`~reaf.simulation.torch.DeviceLayer`
+  implementations (e.g., learned world models).
+- **Not supported:** Differentiating through :class:`~reaf.simulation.torch.Simulator` is not currently supported.
+  Full resets (``env_mask=None``), metrics, termination checks, and loggers also remain under ``torch.no_grad()``.
