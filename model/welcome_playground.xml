@@ -1,5 +1,5 @@
 <mujoco model="welcome_playground">
-  <option timestep="0.0025" integrator="discrete" solver="Newton" tolerance="1e-6" iterations="200">
+  <option timestep="0.005" integrator="discrete" solver="Newton" tolerance="1e-6" iterations="200">
     <flag sleep="enable" />
   </option>
   <default>
@@ -420,44 +420,44 @@
       </body>
     </frame>
     <flexcomp name="pg_p" type="mesh" mesh="pg_mesh_p" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_p" rgba="0.96 0.22 0.30 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_l" type="mesh" mesh="pg_mesh_l" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_l" rgba="0.99 0.52 0.12 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_a" type="mesh" mesh="pg_mesh_a" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_a" rgba="0.99 0.84 0.14 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_y" type="mesh" mesh="pg_mesh_y" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_y" rgba="0.36 0.86 0.22 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_g" type="mesh" mesh="pg_mesh_g" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_g" rgba="0.10 0.82 0.68 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_r" type="mesh" mesh="pg_mesh_r" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_r" rgba="0.14 0.68 0.98 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_o" type="mesh" mesh="pg_mesh_o" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_o" rgba="0.28 0.40 0.98 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_u" type="mesh" mesh="pg_mesh_u" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_u" rgba="0.62 0.28 0.96 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_n" type="mesh" mesh="pg_mesh_n" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_n" rgba="0.96 0.32 0.72 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
     <flexcomp name="pg_d" type="mesh" mesh="pg_mesh_d" dim="2" dof="trilinear" cellcount="1 1 1" pos="0 0 -3.0" euler="90 0 0" radius="0.004" mass="0.45" material="mat_pg_d" rgba="0.98 0.42 0.36 1.00" flatskin="true">
-      <elasticity young="2200" poisson="0.35" damping="0.013" elastic2d="none" />
-      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.008 1" solimp="0.95 0.99 0.002" />
+      <elasticity young="7000" poisson="0.35" damping="0.015" elastic2d="none" />
+      <contact selfcollide="none" priority="110" condim="3" friction="0.35 0.01 0.001" solref="0.01 1" solimp="0.95 0.99 0.002" />
     </flexcomp>
   </worldbody>
   <custom>
