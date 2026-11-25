@@ -502,6 +502,7 @@ class MathTest(absltest.TestCase):
     pg_math.quat_error_magnitude2(
         q_near_pi, q_id2, eps=1e-6
     ).square().sum().backward()
+    assert q_near_pi.grad is not None
     self.assertLess(q_near_pi.grad[:, 0].abs().max().item(), 0.2)
 
     # Runtime dtypes (float32, float16, bfloat16) and mixed-dtype promotion.
@@ -518,6 +519,8 @@ class MathTest(absltest.TestCase):
       self.assertEqual(err_t.dtype, torch.promote_types(dt1, dt2))
       torch.testing.assert_close(err_t.double(), expected, atol=atol, rtol=0.0)
       err_t.square().sum().backward()
+      assert q1_t.grad is not None
+      assert q2_t.grad is not None
       self.assertTrue(torch.isfinite(q1_t.grad).all().item())
       self.assertTrue(torch.isfinite(q2_t.grad).all().item())
 
