@@ -8,6 +8,10 @@ MuJoCo Playground follows `MuJoCo's semantic versioning
 Upcoming Version (not yet released)
 -----------------------------------
 
+- Fixed ``impl="cpp"`` builds for vision environments: ``env_registry`` now forwards ``impl`` to environment
+  config functions that accept it, and the Cartpole and Trossen vision tasks use the native MuJoCo camera on
+  ``cpp``.
+
 Version 1.1.0 (November 23, 2026)
 ---------------------------------
 

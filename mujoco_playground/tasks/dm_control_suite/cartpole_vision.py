@@ -14,6 +14,7 @@
 
 """Cartpole vision task configuration."""
 
+from typing import Literal
 from typing import Mapping
 
 from mujoco_playground.tasks.dm_control_suite import cartpole
@@ -64,7 +65,9 @@ def _termination_pole_angle(device_layer):
   return (torch.abs(pole_angle) > torch.pi / 2) | (torch.abs(cart_pos) > 3.0)
 
 
-def cartpole_balance_vision_env() -> config.Environment:
+def cartpole_balance_vision_env(
+    impl: Literal["cpp", "warp"] = "warp",
+) -> config.Environment:
   """Cartpole vision environment configuration."""
   cfg = cartpole.cartpole_balance_env()
 
@@ -98,16 +101,28 @@ def cartpole_balance_vision_env() -> config.Environment:
       "dense": config.Reward(_reward_vision, weight=1.0 / 0.02),
   }
   cfg.sim.control_timestep = 0.02
+  cfg.sim.impl = impl
   cfg.episode_length_secs = 5.0
 
-  cfg.device_layer.devices["camera"] = config.Component(
-      device.CameraDevice,
-      cam_name="fixed",
-      cam_resolution=(64, 64),
-      render_rate_hz=1.0 / cfg.sim.control_timestep,
-      render_rgb=True,
-      render_depth=False,
-  )
+  if impl == "cpp":
+    cfg.device_layer.devices["camera"] = config.Component(
+        device.MujocoCameraDevice,
+        camera_name="fixed",
+        width=64,
+        height=64,
+        render_rate_hz=1.0 / cfg.sim.control_timestep,
+        image_output_name_prefix="fixed",
+        rgb_output_name_suffix="_rgb",
+    )
+  else:
+    cfg.device_layer.devices["camera"] = config.Component(
+        device.CameraDevice,
+        cam_name="fixed",
+        cam_resolution=(64, 64),
+        render_rate_hz=1.0 / cfg.sim.control_timestep,
+        render_rgb=True,
+        render_depth=False,
+    )
 
   cfg.resetters["termination"] = config.Component(
       resetter.TerminationResetter,
