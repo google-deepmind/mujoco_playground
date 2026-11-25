@@ -75,6 +75,16 @@ All environments implement a standard ``dm_env.Environment`` interface and confo
     action_spec = env.action_spec()
     timestep_spec = env.timestep_spec()
 
+Stepping semantics
+^^^^^^^^^^^^^^^^^^
+
+``env.step(action)`` follows the `MuJoCo stepping convention
+<https://mujoco.readthedocs.io/en/stable/computation/index.html#consistency-in-mjdata>`_: each substep runs forward
+dynamics and then integrates state. After ``env.step()``, integrated state (``qpos``, ``qvel``, ``act``, ``time``) is
+one physics substep ahead of derived quantities (e.g., ``xpos``, ``sensordata``, forces, camera renders) and the
+measurements read from them. After ``env.reset()``, ``sim.forward()`` runs before reading measurements, so ``FIRST``
+observations match the reset state.
+
 Batching Conventions
 --------------------
 

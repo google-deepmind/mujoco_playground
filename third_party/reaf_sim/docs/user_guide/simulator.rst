@@ -33,6 +33,13 @@ an :class:`~reaf.simulation.torch.Environment`:
     sim.step_n(5)    # Advance 5 physics substeps
     sim.forward()    # Recompute kinematics and dynamics without advancing time
 
+.. note::
+
+   ``sim.step()`` follows the `MuJoCo stepping convention
+   <https://mujoco.readthedocs.io/en/stable/computation/index.html#consistency-in-mjdata>`_: it runs forward dynamics
+   and then integrates state (``qpos``, ``qvel``, ``act``, ``time``), leaving derived quantities in ``sim.data`` (e.g.,
+   ``xpos``, ``sensordata``, forces) one substep behind. Call ``sim.forward()`` to recompute them at the current state.
+
 State and model access
 ----------------------
 
