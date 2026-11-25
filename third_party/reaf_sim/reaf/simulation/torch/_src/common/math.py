@@ -170,7 +170,9 @@ def quat_error_magnitude(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   return 2.0 * torch.acos(dot_abs)
 
 
-def quat_error_magnitude2(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
+def quat_error_magnitude2(
+    q1: torch.Tensor, q2: torch.Tensor, eps: float = 0.0
+) -> torch.Tensor:
   """Compute the angular distance (in radians) between two quaternions.
 
   Equal to the norm of the box-minus (axis-angle) difference for unit
@@ -181,14 +183,51 @@ def quat_error_magnitude2(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
   Args:
     q1: (..., 4) quaternion [w, x, y, z].
     q2: (..., 4) quaternion [w, x, y, z].
+    eps: Optional non-negative smoothing floor (`sqrt(x^2 + eps)`) for
+      C^1-smooth gradients at `theta = 0` and antipodal `theta = pi`. Defaults
+      to `0.0`.
 
   Returns:
     (...,) angular distance in radians.
+
+  Raises:
+    ValueError: If `eps` is negative or NaN.
   """
+  if not (eps >= 0.0):
+    raise ValueError(f'eps must be non-negative, got {eps}.')
+  if eps > 0.0:
+    # Promote low-precision dtypes to float32 so small eps values (e.g. 1e-12)
+    # do not underflow to zero before sqrt.
+    out_dtype = torch.promote_types(q1.dtype, q2.dtype)
+    comp_dtype = (
+        out_dtype
+        if out_dtype in (torch.float32, torch.float64)
+        else torch.float32
+    )
+    quat_diff = quat_mul(q1.to(comp_dtype), quat_conjugate(q2.to(comp_dtype)))
+    xyz_norm = torch.sqrt((quat_diff[..., 1:] ** 2).sum(dim=-1) + eps)
+    w_abs = torch.sqrt(quat_diff[..., 0] ** 2 + eps)
+    return (torch.atan2(xyz_norm, w_abs) * 2.0).to(dtype=out_dtype)
   quat_diff = quat_mul(q1, quat_conjugate(q2))
   return 2.0 * torch.atan2(
       torch.linalg.norm(quat_diff[..., 1:], dim=-1),
       torch.abs(quat_diff[..., 0]),
+  )
+
+
+def yaw_from_quat(quat: torch.Tensor) -> torch.Tensor:
+  """Extract the scale-invariant world-Z heading yaw (in radians) from a quat.
+
+  Args:
+    quat: (..., 4) quaternion [w, x, y, z].
+
+  Returns:
+    (...,) heading yaw angle in radians in `[-pi, pi]`.
+  """
+  qw, qx, qy, qz = quat.unbind(dim=-1)
+  return torch.atan2(
+      2.0 * (qw * qz + qx * qy),
+      qw * qw + qx * qx - qy * qy - qz * qz,
   )
 
 
@@ -204,11 +243,7 @@ def yaw_quat(quat: torch.Tensor) -> torch.Tensor:
   Returns:
     (..., 4) unit quaternion containing only the yaw rotation.
   """
-  qw = quat[..., 0]
-  qx = quat[..., 1]
-  qy = quat[..., 2]
-  qz = quat[..., 3]
-  yaw = torch.atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz))
+  yaw = yaw_from_quat(quat)
   quat_yaw = torch.zeros_like(quat)
   quat_yaw[..., 3] = torch.sin(yaw / 2)
   quat_yaw[..., 0] = torch.cos(yaw / 2)

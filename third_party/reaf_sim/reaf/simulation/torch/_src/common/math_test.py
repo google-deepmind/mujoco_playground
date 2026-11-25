@@ -436,6 +436,154 @@ class MathTest(absltest.TestCase):
     self.assertTrue(torch.isfinite(q1.grad).all().item())
     self.assertTrue(torch.isfinite(q2.grad).all().item())
 
+  def test_quat_error_magnitude2_smooth_eps(self):
+    """Smooth eps gives C^1 gradients at 0/pi, non-identity q2, and low dtypes."""
+    q_non_id = torch.tensor([0.5, 0.5, 0.5, 0.5], dtype=torch.float64)
+    q_90x = torch.tensor(
+        [math.sqrt(0.5), math.sqrt(0.5), 0.0, 0.0], dtype=torch.float64
+    )
+    q_180x = torch.tensor([0.0, 1.0, 0.0, 0.0], dtype=torch.float64)
+    q1 = torch.stack(
+        [
+            torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64),  # theta=0
+            torch.tensor([-1.0, 0.0, 0.0, 0.0], dtype=torch.float64),  # -q
+            pg_math.quat_mul(q_90x, q_non_id),  # pi/2 with non-identity q2
+            pg_math.quat_mul(q_180x, q_non_id),  # pi with non-identity q2
+        ],
+    )
+    q2 = torch.stack(
+        [
+            torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64),
+            torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=torch.float64),
+            q_non_id,
+            q_non_id,
+        ],
+    )
+    err = pg_math.quat_error_magnitude2(q1, q2, eps=1e-12)
+    expected = pg_math.quat_error_magnitude2(q1, q2)
+    torch.testing.assert_close(err, expected, atol=1e-5, rtol=1e-5)
+
+    # Gradcheck (step 1e-6 << sqrt(1e-4)) verifies C^1 smoothness and exact
+    # gradients across theta=0, intermediate angles, and antipodal theta=pi.
+    q1_gc = q1.clone().requires_grad_(True)
+    q2_gc = q2.clone().requires_grad_(True)
+    self.assertTrue(
+        torch.autograd.gradcheck(
+            lambda a, b: pg_math.quat_error_magnitude2(a, b, 1e-4),
+            (q1_gc, q2_gc),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+    )
+    self.assertTrue(
+        torch.autograd.gradcheck(
+            lambda a, b: pg_math.quat_error_magnitude2(a, b, 1e-4).square(),
+            (q1_gc, q2_gc),
+            eps=1e-6,
+            atol=1e-4,
+            rtol=1e-3,
+        )
+    )
+
+    # Continuity across antipodal theta=pi (w = +delta vs -delta).
+    delta = 1e-5
+    q_near_pi = torch.tensor(
+        [
+            [delta, math.sqrt(1.0 - delta * delta), 0.0, 0.0],
+            [-delta, math.sqrt(1.0 - delta * delta), 0.0, 0.0],
+        ],
+        dtype=torch.float64,
+        requires_grad=True,
+    )
+    q_id2 = torch.tensor(
+        [[1.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0]], dtype=torch.float64
+    )
+    pg_math.quat_error_magnitude2(
+        q_near_pi, q_id2, eps=1e-6
+    ).square().sum().backward()
+    self.assertLess(q_near_pi.grad[:, 0].abs().max().item(), 0.2)
+
+    # Runtime dtypes (float32, float16, bfloat16) and mixed-dtype promotion.
+    dtype_pairs = (
+        (torch.float32, torch.float32, 1e-4),
+        (torch.float16, torch.float16, 2e-2),
+        (torch.bfloat16, torch.bfloat16, 5e-2),
+        (torch.float16, torch.float32, 1e-2),
+    )
+    for dt1, dt2, atol in dtype_pairs:
+      q1_t = q1.to(dt1).requires_grad_(True)
+      q2_t = q2.to(dt2).requires_grad_(True)
+      err_t = pg_math.quat_error_magnitude2(q1_t, q2_t, eps=1e-12)
+      self.assertEqual(err_t.dtype, torch.promote_types(dt1, dt2))
+      torch.testing.assert_close(err_t.double(), expected, atol=atol, rtol=0.0)
+      err_t.square().sum().backward()
+      self.assertTrue(torch.isfinite(q1_t.grad).all().item())
+      self.assertTrue(torch.isfinite(q2_t.grad).all().item())
+
+    for bad_eps in (-1e-6, float('nan')):
+      with self.assertRaisesRegex(ValueError, 'eps must be non-negative'):
+        pg_math.quat_error_magnitude2(q1, q2, eps=bad_eps)
+
+  def test_yaw_from_quat(self):
+    """yaw_from_quat matches rotation matrix heading, handles edges & scaling."""
+    # Independent check on random unit quaternions against quat_to_matrix.
+    torch.manual_seed(0)
+    q_rand = torch.randn(32, 4, dtype=torch.float64)
+    q_rand = q_rand / torch.linalg.norm(q_rand, dim=-1, keepdim=True)
+    rot = pg_math.quat_to_matrix(q_rand)
+    expected_rand = torch.atan2(rot[..., 1, 0], rot[..., 0, 0])
+    torch.testing.assert_close(
+        pg_math.yaw_from_quat(q_rand), expected_rand, atol=1e-12, rtol=0
+    )
+
+    # Known Euler triples including boundary yaws (0, +/-pi) and large roll.
+    roll = torch.tensor(
+        [0.3, -0.4, 0.0, math.pi, -math.pi], dtype=torch.float64
+    )
+    pitch = torch.tensor([-0.2, 0.5, 0.0, 0.2, -0.3], dtype=torch.float64)
+    yaw = torch.tensor([1.1, -2.2, 0.0, math.pi, -math.pi], dtype=torch.float64)
+    q = pg_math.quat_from_euler_xyz(roll, pitch, yaw)
+    got_yaw = pg_math.yaw_from_quat(q)
+    # Compare via (cos, sin) so +pi and -pi are treated identically.
+    torch.testing.assert_close(
+        torch.cos(got_yaw), torch.cos(yaw), atol=1e-6, rtol=0
+    )
+    torch.testing.assert_close(
+        torch.sin(got_yaw), torch.sin(yaw), atol=1e-6, rtol=0
+    )
+
+    # Scale invariance (positive, negative, and fractional scales).
+    for scale in (3.5, -1.0, 0.25):
+      torch.testing.assert_close(
+          pg_math.yaw_from_quat(q * scale), got_yaw, atol=1e-6, rtol=0
+      )
+      torch.testing.assert_close(
+          pg_math.yaw_quat(q * scale), pg_math.yaw_quat(q), atol=1e-6, rtol=0
+      )
+
+    # 1-D single quaternion and 3-D batched inputs.
+    torch.testing.assert_close(
+        pg_math.yaw_from_quat(q[0]), got_yaw[0], atol=1e-6, rtol=0
+    )
+    torch.testing.assert_close(
+        pg_math.yaw_from_quat(q.unsqueeze(0)),
+        got_yaw.unsqueeze(0),
+        atol=1e-6,
+        rtol=0,
+    )
+
+    # Degenerate inputs: gimbal lock (pitch = +/-pi/2) and zero quaternion.
+    q_gimbal = pg_math.quat_from_euler_xyz(
+        torch.tensor([0.0, 0.3], dtype=torch.float64),
+        torch.tensor([math.pi / 2, -math.pi / 2], dtype=torch.float64),
+        torch.tensor([0.7, -1.2], dtype=torch.float64),
+    )
+    q_degen = torch.cat(
+        [q_gimbal, torch.zeros(1, 4, dtype=torch.float64)], dim=0
+    )
+    self.assertTrue(torch.isfinite(pg_math.yaw_from_quat(q_degen)).all().item())
+
   def test_quat_from_euler_xyz_scipy(self):
     """quat_from_euler_xyz matches scipy extrinsic 'xyz' Euler angles."""
     roll, pitch, yaw = torch.randn(3, 10, dtype=torch.float64)
@@ -677,6 +825,11 @@ _CASES: dict[
         pg_math.quat_error_magnitude2,
         (_rand_quat(_N), _rand_quat(_N)),
     ),
+    'quat_error_magnitude2_smooth_eps': lambda: (
+        lambda q1, q2: pg_math.quat_error_magnitude2(q1, q2, eps=1e-12),
+        (_rand_quat(_N), _rand_quat(_N)),
+    ),
+    'yaw_from_quat': lambda: (pg_math.yaw_from_quat, (_rand_quat(_N),)),
     'yaw_quat': lambda: (pg_math.yaw_quat, (_rand_quat(_N),)),
     'subtract_frame_transforms': lambda: (
         pg_math.subtract_frame_transforms,
