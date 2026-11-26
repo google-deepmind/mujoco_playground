@@ -39,6 +39,7 @@ import mujoco
 from mujoco.introspect import structs as mj_structs
 import mujoco_warp as mjw
 import numpy as np
+from reaf.simulation.torch._src.common import math as reaf_math
 from reaf.simulation.torch._src.core import mujoco_types
 import torch
 import warp as wp
@@ -499,6 +500,49 @@ class ScalarTensor(TorchTensor):
     # fmt: on
 
 
+# Rotation matrices derived from unit quaternions on MuJoCo Warp Data.
+_DERIVED_WARP_DATA_QUATS: dict[str, str] = {
+    "xmat": "xquat",
+    "ximat": "xiquat",
+    "geom_xmat": "geom_xquat",
+    "site_xmat": "site_xquat",
+}
+
+
+class DerivedQuatMatrixTensor(TorchTensor):
+  """Derives 3x3 rotation matrices on read from a wrapped quaternion tensor."""
+
+  def __init__(self, quat_tensor: TorchTensor) -> None:
+    object.__setattr__(self, "_quat_tensor", quat_tensor)
+
+  @property
+  def _tensor(self) -> torch.Tensor:
+    return reaf_math.quat_to_matrix(self._quat_tensor._tensor)  # pylint: disable=protected-access
+
+  @property
+  def shape(self) -> torch.Size:
+    return torch.Size((*self._quat_tensor._tensor.shape[:-1], 3, 3))  # pylint: disable=protected-access
+
+  @property
+  def dtype(self) -> torch.dtype:
+    return self._quat_tensor._tensor.dtype  # pylint: disable=protected-access
+
+  @property
+  def ndim(self) -> int:
+    return self._quat_tensor._tensor.ndim + 1  # pylint: disable=protected-access
+
+  @property
+  def device(self) -> torch.device:
+    return self._quat_tensor._tensor.device  # pylint: disable=protected-access
+
+  def __setitem__(self, idx: object, value: object) -> NoReturn:
+    del idx, value
+    raise AttributeError(
+        "Derived rotation matrix fields on MuJoCo Warp Data are read-only;"
+        " modify the corresponding quaternion field instead."
+    )
+
+
 class MjObjType(enum.Enum):
   """Enum for different types of Mujoco objects."""
 
@@ -587,6 +631,16 @@ class TorchWrapper(Generic[T], NoSetAttr):
       return self._tensor_cache[name]
 
     _check_mjfield_support(self._obj_type, name)
+    if (
+        self._obj_type == MjObjType.MJW_DATA
+        and name in _DERIVED_WARP_DATA_QUATS
+    ):
+      derived_val = DerivedQuatMatrixTensor(
+          self.__getattr__(_DERIVED_WARP_DATA_QUATS[name])
+      )
+      self._tensor_cache[name] = derived_val
+      return derived_val
+
     val = getattr(self._obj, name)
 
     if (
@@ -1261,16 +1315,23 @@ def _union_mj_fields() -> dict[str, dict[str, MjField]]:
       if mj_field.name in ("contact", "efc", "stat"):  # pyrefly: ignore[missing-attribute]
         continue
       name = mj_field.name
-      if name not in mjw_annotations:
+      mjw_name = (
+          _DERIVED_WARP_DATA_QUATS[name]
+          if obj_name == "Data" and name in _DERIVED_WARP_DATA_QUATS
+          else name
+      )
+      if mjw_name not in mjw_annotations:
         continue
 
       # get the MJWarp shape.
       shape = (None,)
-      if hasattr(mjw_annotations[name], "shape"):
-        shape = mjw_annotations[name].shape
-        dtype = getattr(mjw_annotations[name], "dtype", None)
+      if hasattr(mjw_annotations[mjw_name], "shape"):
+        shape = mjw_annotations[mjw_name].shape
+        dtype = getattr(mjw_annotations[mjw_name], "dtype", None)
         if dtype is not None and hasattr(dtype, "_shape_"):
           shape = shape + dtype._shape_  # pylint: disable=protected-access
+      if mjw_name != name:
+        shape = shape[:-1] + (3, 3)
 
       is_batch = shape[0] in ("*", "nworld")
 

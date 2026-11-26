@@ -1566,6 +1566,59 @@ class TorchWrapperXPU(absltest.TestCase):
           name, union["Option"], f"Essential field 'Option.{name}' missing"
       )
 
+  def test_derived_warp_rotation_matrices_match_mujoco(self):
+    """Verifies derived Warp Data rotation matrices match MjData and update live."""
+    xml = """
+    <mujoco>
+      <worldbody>
+        <body name="link" pos="0 0 1" euler="0.2 0.3 0.4">
+          <joint type="free"/>
+          <inertial pos="0.01 0.02 0.03" quat="0.9 0.2 0.3 0.27" mass="1" diaginertia="1 2 3"/>
+          <geom name="g" type="box" size="0.1 0.1 0.1" quat="0.8 0.5 0.2 0.27"/>
+          <site name="s" pos="0 0 0.1" quat="0.7 0.5 0.4 0.3"/>
+        </body>
+      </worldbody>
+    </mujoco>
+    """
+    m = mujoco.MjModel.from_xml_string(xml)
+    d = mujoco.MjData(m)
+    mujoco.mj_forward(m, d)
+    mw = mjw.put_model(m)
+    with wp.ScopedDevice(_DEVICE):
+      dw = mjw.put_data(m, d)
+      mjw.forward(mw, dw)
+    d_torch = torch_wrapper.TorchWrapper(d)
+    dw_torch = torch_wrapper.TorchWrapper(dw, nworld=1)
+
+    for actual, expected in (
+        (dw_torch.xmat, d_torch.xmat),
+        (dw_torch.ximat, d_torch.ximat),
+        (dw_torch.geom_xmat, d_torch.geom_xmat),
+        (dw_torch.site_xmat, d_torch.site_xmat),
+    ):
+      self.assertEqual(actual.shape, expected.shape)
+      self.assertEqual(actual.ndim, expected.ndim)
+      self.assertEqual(actual.dtype, torch.float32)
+      self.assertEqual(actual.device, dw_torch.xquat.device)
+      torch.testing.assert_close(
+          actual.cpu(), expected.to(torch.float32), atol=1e-5, rtol=1e-5
+      )
+    with self.assertRaises(AttributeError):
+      dw_torch.xmat[...] = torch.eye(3, device=_DEVICE)
+
+    # Mutate free-joint orientation and confirm derived xmat reflects new step.
+    d.qpos[3:7] = [0.5, 0.5, 0.5, 0.5]
+    mujoco.mj_forward(m, d)
+    dw_torch.qpos[:, 3:7] = torch.tensor([[0.5, 0.5, 0.5, 0.5]], device=_DEVICE)
+    with wp.ScopedDevice(_DEVICE):
+      mjw.forward(mw, dw)
+    torch.testing.assert_close(
+        dw_torch.xmat.cpu(),
+        d_torch.xmat.to(torch.float32),
+        atol=1e-5,
+        rtol=1e-5,
+    )
+
 
 class TorchWrapperSetConstFieldsTest(absltest.TestCase):
   """Tests that global SET_CONST* fields in torch_wrapper.py are correct.
