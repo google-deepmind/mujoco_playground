@@ -49,6 +49,7 @@ XML = """
   </worldbody>
   <actuator>
     <general name="test_actuator" joint="joint1" biastype="affine" gainprm="10" biasprm="0 -10 0.1"/>
+    <pid name="test_pid" joint="joint2" kp="20" kv="2" ki="3"/>
   </actuator>
 </mujoco>
 """
@@ -455,6 +456,97 @@ class RandomizeFieldTest(absltest.TestCase):
             original_biasprm[:, actuator_id, 2],
             new_biasprm[:, actuator_id, 2],
         )
+    )
+
+  def test_randomize_pid_actuator_gains(self):
+    """Test randomizing kp, kd, and ki on a <pid> actuator."""
+    pid_id = self.mj_model.actuator("test_pid").id
+    orig_gain = self.model.actuator_gainprm[:, pid_id, 0].clone()
+    orig_bias = self.model.actuator_biasprm[:, pid_id, 1:3].clone()
+
+    # Randomize kp and kd only: ki (gainprm[0]) remains unchanged.
+    model_randomization.randomize_actuator_gains(
+        self.model,  # pyrefly: ignore[bad-argument-type]
+        self.spec,
+        self.device,
+        pattern="test_pid",
+        kp_noise=noise.Noise(dist=noise.Uniform(low=1.5, high=1.5), op="scale"),
+        kd_noise=noise.Noise(dist=noise.Uniform(low=2.0, high=2.0), op="scale"),
+    )
+    torch.testing.assert_close(
+        self.model.actuator_biasprm[:, pid_id, 1], orig_bias[:, 0] * 1.5
+    )
+    torch.testing.assert_close(
+        self.model.actuator_biasprm[:, pid_id, 2], orig_bias[:, 1] * 2.0
+    )
+    torch.testing.assert_close(
+        self.model.actuator_gainprm[:, pid_id, 0], orig_gain
+    )
+
+    # Randomize ki (gainprm[0]), and reject ki_noise on non-PID actuators.
+    model_randomization.randomize_actuator_gains(
+        self.model,  # pyrefly: ignore[bad-argument-type]
+        self.spec,
+        self.device,
+        pattern="test_pid",
+        ki_noise=noise.Noise(dist=noise.Uniform(low=0.5, high=0.5), op="scale"),
+    )
+    torch.testing.assert_close(
+        self.model.actuator_gainprm[:, pid_id, 0], orig_gain * 0.5
+    )
+    with self.assertRaisesRegex(
+        ValueError, "ki_noise is only supported for PID actuators"
+    ):
+      model_randomization.randomize_actuator_gains(
+          self.model,  # pyrefly: ignore[bad-argument-type]
+          self.spec,
+          self.device,
+          pattern="test_actuator",
+          ki_noise=noise.Noise(
+              dist=noise.Uniform(low=0.5, high=1.5), op="scale"
+          ),
+      )
+
+  def test_randomize_mixed_actuator_gains_sync_free(self):
+    """Test mixed PID/non-PID gain randomization and CUDA sync-free execution."""
+    act_id = self.mj_model.actuator("test_actuator").id
+    pid_id = self.mj_model.actuator("test_pid").id
+    orig_act_kp = self.model.actuator_gainprm[:, act_id, 0].clone()
+    orig_pid_kp = -self.model.actuator_biasprm[:, pid_id, 1].clone()
+    orig_pid_ki = self.model.actuator_gainprm[:, pid_id, 0].clone()
+
+    # Warm up bind_pattern cache before enabling CUDA sync checks.
+    self.model.bind_pattern(self.spec, mujoco.mjtObj.mjOBJ_ACTUATOR, "test_.*")
+
+    prev_mode = None
+    if self.device.type == "cuda":
+      prev_mode = torch.cuda.get_sync_debug_mode()
+      self.addCleanup(torch.cuda.set_sync_debug_mode, prev_mode)
+      torch.cuda.set_sync_debug_mode("error")
+
+    # Mixed pattern updates kp on both while leaving PID ki unchanged.
+    model_randomization.randomize_actuator_gains(
+        self.model,  # pyrefly: ignore[bad-argument-type]
+        self.spec,
+        self.device,
+        pattern="test_.*",
+        kp_noise=noise.Noise(dist=noise.Uniform(low=2.0, high=2.0), op="scale"),
+    )
+
+    if prev_mode is not None:
+      torch.cuda.set_sync_debug_mode(prev_mode)
+
+    torch.testing.assert_close(
+        self.model.actuator_gainprm[:, act_id, 0], orig_act_kp * 2.0
+    )
+    torch.testing.assert_close(
+        self.model.actuator_biasprm[:, act_id, 1], -orig_act_kp * 2.0
+    )
+    torch.testing.assert_close(
+        self.model.actuator_biasprm[:, pid_id, 1], -orig_pid_kp * 2.0
+    )
+    torch.testing.assert_close(
+        self.model.actuator_gainprm[:, pid_id, 0], orig_pid_ki
     )
 
 

@@ -73,6 +73,15 @@ class ActuatorDevice(device.Device):
     self._joints: list[Any] = []
     self._bound_model = None
     self._empty_joint_range: torch.Tensor | None = None
+    self._act_setpoint_ids: torch.Tensor | None = None
+    self._act_setpoint_local_ctrl_ids: torch.Tensor | None = None
+    self._act_setpoint_ctrl_ids: torch.Tensor | None = None
+    self._act_setpoint_act_obj_ids: torch.Tensor | None = None
+    self._act_setpoint_ctrllimited: torch.Tensor | None = None
+    self._act_setpoint_actlimited: torch.Tensor | None = None
+    self._has_setpoint_ctrllimited: bool = False
+    self._has_setpoint_actlimited: bool = False
+    self._act_zero_ids: torch.Tensor | None = None
 
   @property
   @override
@@ -96,6 +105,7 @@ class ActuatorDevice(device.Device):
   @override
   def initialize(self, simulator: simulator_module.Simulator) -> None:
     """Resolve joint, actuator, and tendon indices."""
+    self._model = simulator.model
     self._data = simulator.data
     mj_model = simulator.mj_model
     mj_spec = simulator.mj_spec
@@ -105,19 +115,69 @@ class ActuatorDevice(device.Device):
     ctrl_ids = []
     out_ids = []
     tendon_ids = []
+    act_setpoint_ids = []
+    act_setpoint_local_ctrl_ids = []
+    act_setpoint_ctrl_ids = []
+    act_setpoint_act_obj_ids = []
+    act_setpoint_ctrllimited = []
+    act_setpoint_actlimited = []
+    act_zero_ids = []
     self._joints = []
+    clamp_ctrl_enabled = not bool(
+        int(mj_model.opt.disableflags)
+        & int(mujoco.mjtDisableBit.mjDSBL_CLAMPCTRL)
+    )
 
     for target_name in self._target_names:
       act = mj_model.actuator(target_name)
+      local_ctrl_start = len(ctrl_ids)
       # Map actuator control and output spans (e.g. multi-input <dcmotor>).
       ctrl_adr = int(mj_model.actuator_ctrladr[act.id])
-      ctrl_ids.extend(
-          range(ctrl_adr, ctrl_adr + int(mj_model.actuator_ctrlnum[act.id]))
-      )
+      ctrl_num = int(mj_model.actuator_ctrlnum[act.id])
+      ctrl_ids.extend(range(ctrl_adr, ctrl_adr + ctrl_num))
       out_adr = int(mj_model.actuator_outadr[act.id])
       out_ids.extend(
           range(out_adr, out_adr + int(mj_model.actuator_outnum[act.id]))
       )
+
+      # Precompute activation slots to set (setpoint) or zero in set_ctrl.
+      act_adr = int(mj_model.actuator_actadr[act.id])
+      act_num = int(mj_model.actuator_actnum[act.id])
+      if act_adr >= 0 and act_num > 0:
+        dyntype = mujoco.mjtDyn(mj_model.actuator_dyntype[act.id])
+        setpoint_slot = -1
+        if ctrl_num > 0:
+          if dyntype in (
+              mujoco.mjtDyn.mjDYN_FILTER,
+              mujoco.mjtDyn.mjDYN_FILTEREXACT,
+          ):
+            setpoint_slot = act_adr + act_num - 1
+          elif (
+              dyntype == mujoco.mjtDyn.mjDYN_PID
+              and mj_model.actuator_dynprm[act.id, 1] > 0.0
+          ):
+            setpoint_slot = act_adr
+          elif (
+              dyntype == mujoco.mjtDyn.mjDYN_DCMOTOR
+              and mj_model.actuator_dynprm[act.id, 7] > 0.0
+          ):
+            setpoint_slot = act_adr
+        for slot in range(act_adr, act_adr + act_num):
+          if slot == setpoint_slot:
+            act_setpoint_ids.append(slot)
+            act_setpoint_local_ctrl_ids.append(local_ctrl_start)
+            act_setpoint_ctrl_ids.append(ctrl_adr)
+            act_setpoint_act_obj_ids.append(act.id)
+            act_setpoint_ctrllimited.append(
+                clamp_ctrl_enabled
+                and bool(mj_model.actuator_ctrllimited[ctrl_adr])
+            )
+            act_setpoint_actlimited.append(
+                dyntype != mujoco.mjtDyn.mjDYN_DCMOTOR
+                and bool(mj_model.actuator_actlimited[act.id])
+            )
+          else:
+            act_zero_ids.append(slot)
 
       trntype = mujoco.mjtTrn(mj_model.actuator_trntype[act.id])
       if trntype in (
@@ -167,6 +227,46 @@ class ActuatorDevice(device.Device):
       self._empty_joint_range = torch.empty(
           (simulator.nworld, 0, 2), dtype=torch.float32, device=self._xpu_device
       )
+    self._act_setpoint_ids = None
+    self._act_setpoint_local_ctrl_ids = None
+    self._act_setpoint_ctrl_ids = None
+    self._act_setpoint_act_obj_ids = None
+    self._act_setpoint_ctrllimited = None
+    self._act_setpoint_actlimited = None
+    self._has_setpoint_ctrllimited = False
+    self._has_setpoint_actlimited = False
+    if act_setpoint_ids:
+      self._act_setpoint_ids = torch.tensor(
+          act_setpoint_ids, dtype=torch.long, device=self._xpu_device
+      )
+      self._act_setpoint_local_ctrl_ids = torch.tensor(
+          act_setpoint_local_ctrl_ids, dtype=torch.long, device=self._xpu_device
+      )
+      self._act_setpoint_ctrl_ids = torch.tensor(
+          act_setpoint_ctrl_ids, dtype=torch.long, device=self._xpu_device
+      )
+      self._act_setpoint_act_obj_ids = torch.tensor(
+          act_setpoint_act_obj_ids, dtype=torch.long, device=self._xpu_device
+      )
+      self._has_setpoint_ctrllimited = any(act_setpoint_ctrllimited)
+      if self._has_setpoint_ctrllimited:
+        self._act_setpoint_ctrllimited = torch.tensor(
+            act_setpoint_ctrllimited, dtype=torch.bool, device=self._xpu_device
+        )
+        # Trigger lazy tiling before CUDA graph capture.
+        _ = simulator.model.actuator_ctrlrange
+      self._has_setpoint_actlimited = any(act_setpoint_actlimited)
+      if self._has_setpoint_actlimited:
+        self._act_setpoint_actlimited = torch.tensor(
+            act_setpoint_actlimited, dtype=torch.bool, device=self._xpu_device
+        )
+        # Trigger lazy tiling before CUDA graph capture.
+        _ = simulator.model.actuator_actrange
+    self._act_zero_ids = (
+        torch.tensor(act_zero_ids, dtype=torch.long, device=self._xpu_device)
+        if act_zero_ids
+        else None
+    )
 
   @override
   def reset(
@@ -266,7 +366,7 @@ class ActuatorDevice(device.Device):
   # Puppet API - resetter calls these.
 
   def set_ctrl(self, env_mask: torch.Tensor | None, ctrl: torch.Tensor) -> None:
-    """Set actuator control for specified environments."""
+    """Set actuator control and reset stateful activations for environments."""
     if env_mask is None:
       self._data.ctrl[:, self._ctrl_ids] = ctrl
     else:
@@ -274,3 +374,42 @@ class ActuatorDevice(device.Device):
       self._data.ctrl[:, self._ctrl_ids] = torch.where(
           env_mask.unsqueeze(1), ctrl, curr
       )
+
+    if self._act_setpoint_ids is not None:
+      setpoint_ctrl = ctrl[..., self._act_setpoint_local_ctrl_ids].to(
+          dtype=self._data.act.dtype
+      )
+      if self._has_setpoint_ctrllimited:
+        ctrlrange = self._model.actuator_ctrlrange[
+            :, self._act_setpoint_ctrl_ids
+        ]
+        clamped = torch.clamp(
+            setpoint_ctrl, ctrlrange[..., 0], ctrlrange[..., 1]
+        )
+        setpoint_ctrl = torch.where(
+            self._act_setpoint_ctrllimited, clamped, setpoint_ctrl
+        )
+      if self._has_setpoint_actlimited:
+        actrange = self._model.actuator_actrange[
+            :, self._act_setpoint_act_obj_ids
+        ]
+        clamped = torch.clamp(setpoint_ctrl, actrange[..., 0], actrange[..., 1])
+        setpoint_ctrl = torch.where(
+            self._act_setpoint_actlimited, clamped, setpoint_ctrl
+        )
+      if env_mask is None:
+        self._data.act[:, self._act_setpoint_ids] = setpoint_ctrl
+      else:
+        curr_act = self._data.act[:, self._act_setpoint_ids]
+        self._data.act[:, self._act_setpoint_ids] = torch.where(
+            env_mask.unsqueeze(1), setpoint_ctrl, curr_act
+        )
+
+    if self._act_zero_ids is not None:
+      if env_mask is None:
+        self._data.act[:, self._act_zero_ids] = 0.0
+      else:
+        curr_zero = self._data.act[:, self._act_zero_ids]
+        self._data.act[:, self._act_zero_ids] = torch.where(
+            env_mask.unsqueeze(1), 0.0, curr_zero
+        )

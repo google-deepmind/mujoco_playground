@@ -1443,6 +1443,58 @@ class BindTest(parameterized.TestCase):
     ):
       _ = dw.bind(mw, spec.geoms).act
 
+  @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
+  def test_pid_actuators_bind(self, backend: types.Impl):
+    """Multi-input <pid> actuators bind across both CPP and WARP backends."""
+    xml = """
+    <mujoco>
+      <worldbody>
+        <body>
+          <joint name="j0" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+        <body>
+          <joint name="j1" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <motor name="a0" joint="j0" ctrlrange="-1 1"/>
+        <pid name="a1" joint="j1" kp="10" kv="2" ki="1" input="pos vel ff"
+             ctrlrange="-2 2" velrange="-5 5" ffrange="-10 10"/>
+      </actuator>
+    </mujoco>
+    """
+    spec = mujoco.MjSpec.from_string(xml)
+    m = spec.compile()
+    d = mujoco.MjData(m)
+    d.ctrl[:] = [1.0, 2.0, 3.0, 4.0]
+    d.qpos[:] = [0.1, -0.2]
+    d.qvel[:] = [0.4, -0.5]
+    mujoco.mj_forward(m, d)
+
+    mw = wrap_model(backend, m, nworld=1)
+    dw = wrap_data(backend, m, d, nworld=1)
+    bound_d = dw.bind(mw, spec.actuators[1])
+    bound_m = mw.bind(spec.actuators[1])
+
+    np.testing.assert_allclose(bound_d.ctrl.cpu().numpy()[0], d.ctrl[1:4])
+    np.testing.assert_allclose(
+        bound_d.force.cpu().numpy()[0], d.actuator_force[1], rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        bound_m.ctrlrange.cpu().numpy()[0], m.actuator_ctrlrange[1:4]
+    )
+    bound_d.set(
+        "ctrl",
+        torch.tensor(
+            [[11.0, 22.0, 33.0]], dtype=dw.ctrl.dtype, device=dw.ctrl.device
+        ),
+    )
+    np.testing.assert_allclose(
+        dw.ctrl[0, 1:4].cpu().numpy(), [11.0, 22.0, 33.0]
+    )
+
 
 def _dtype_matches(mj_dtype: torch.dtype, mjw_dtype: torch.dtype) -> bool:
   """Checks dtypes match, allowing 64-bit CPU vs 32-bit GPU."""

@@ -195,20 +195,10 @@ class RuntimeTest(parameterized.TestCase):
         rtol=1e-5,
     )
 
-  @parameterized.product(
-      impl=[types.Impl.CPP, types.Impl.WARP],
-      case=[
-          # Zero-input passive mode (ctrlnum=0).
-          ('input="none" damping="0.1"', []),
-          # Single-input voltage mode (ctrlnum=1).
-          ("", [12.0]),
-          # Multi-input position + velocity mode (ctrlnum=2).
-          ('controller="10 0 5 0 0 0" input="pos vel"', [1.0, 0.2]),
-      ],
-  )
-  def test_dcmotor(self, impl: types.Impl, case: tuple[str, list[float]]):
-    """ActuatorDevice maps ctrl inputs and force outputs across dcmotor spans."""
-    attrs, ctrl_vals = case
+  def _check_actuator_span(
+      self, impl: types.Impl, actuator_xml: str, ctrl_vals: list[float]
+  ) -> None:
+    """Verifies ctrl input and force output mapping across an actuator span."""
     num_ctrl = len(ctrl_vals)
     nworld = 1 if impl == types.Impl.CPP else 2
     xml = f"""
@@ -225,8 +215,7 @@ class RuntimeTest(parameterized.TestCase):
       </worldbody>
       <actuator>
         <motor name="j0" joint="j0"/>
-        <dcmotor name="j1" joint="j1" motorconst="0.05" resistance="2.0"
-                 {attrs}/>
+        {actuator_xml}
       </actuator>
     </mujoco>
     """
@@ -273,9 +262,11 @@ class RuntimeTest(parameterized.TestCase):
     self.assertTrue(m["dc/actuator_force"].ne(0.0).all())
     self.assertTrue((sim.data.ctrl[:, 0] == 0.0).all())
 
-    # Verify set_ctrl updates the mapped ctrl span with and without env_mask.
+    # Verify set_ctrl updates the mapped ctrl span and resets stateful act.
     dev.set_ctrl(None, dev.home_ctrl)
     self.assertTrue((sim.data.ctrl[:, 1 : 1 + num_ctrl] == 0.0).all())
+    if sim.mj_model.na > 0:
+      self.assertTrue((sim.data.act == 0.0).all())
     if nworld > 1 and num_ctrl > 0:
       mask = torch.tensor([True, False], device=xpu_device)
       dev.set_ctrl(mask, ctrl)
@@ -283,6 +274,55 @@ class RuntimeTest(parameterized.TestCase):
           sim.data.ctrl[0, 1 : 1 + num_ctrl].cpu().numpy(), ctrl_vals
       )
       self.assertTrue((sim.data.ctrl[1, 1 : 1 + num_ctrl] == 0.0).all())
+      if (
+          sim.mj_model.na > 0
+          and sim.mj_model.actuator_dyntype[1] == mujoco.mjtDyn.mjDYN_PID
+          and sim.mj_model.actuator_dynprm[1, 1] > 0.0
+      ):
+        np.testing.assert_allclose(
+            sim.data.act[0, 0].cpu().numpy(), ctrl_vals[0]
+        )
+        self.assertTrue((sim.data.act[0, 1:] == 0.0).all())
+        self.assertTrue((sim.data.act[1] == 0.0).all())
+
+  @parameterized.product(
+      impl=[types.Impl.CPP, types.Impl.WARP],
+      case=[
+          # Zero-input passive mode (ctrlnum=0).
+          ('input="none" damping="0.1"', []),
+          # Single-input voltage mode (ctrlnum=1).
+          ("", [12.0]),
+          # Multi-input position + velocity mode (ctrlnum=2).
+          ('controller="10 0 5 0 0 0" input="pos vel"', [1.0, 0.2]),
+      ],
+  )
+  def test_dcmotor(self, impl: types.Impl, case: tuple[str, list[float]]):
+    """ActuatorDevice maps ctrl inputs and force outputs across dcmotor spans."""
+    attrs, ctrl_vals = case
+    self._check_actuator_span(
+        impl,
+        '<dcmotor name="j1" joint="j1" motorconst="0.05" resistance="2.0"'
+        f" {attrs}/>",
+        ctrl_vals,
+    )
+
+  @parameterized.product(
+      impl=[types.Impl.CPP, types.Impl.WARP],
+      case=[
+          ('input="pos" kp="10"', [0.5]),
+          ('kp="10" kv="2"', [0.5, 0.2]),
+          (
+              'input="pos vel ff" kp="10" kv="2" ki="1" imax="0.5" slewmax="5"',
+              [0.5, 0.2, 1.5],
+          ),
+      ],
+  )
+  def test_pid(self, impl: types.Impl, case: tuple[str, list[float]]):
+    """ActuatorDevice maps ctrl inputs and force outputs across pid spans."""
+    attrs, ctrl_vals = case
+    self._check_actuator_span(
+        impl, f'<pid name="j1" joint="j1" {attrs}/>', ctrl_vals
+    )
 
   def test_dcmotor_multi_output_offset(self):
     """ActuatorDevice after a 3-output <orientation> actuator maps out_adr."""
@@ -398,6 +438,86 @@ class RuntimeTest(parameterized.TestCase):
         [[np.deg2rad([-3.14, 3.14])]] * nworld,
         rtol=1e-6,
     )
+
+  @parameterized.parameters(types.Impl.CPP, types.Impl.WARP)
+  def test_set_ctrl_resets_stateful_act(self, impl: types.Impl):
+    """set_ctrl sets clamped slew/filter setpoints and zeros internal act."""
+    nworld = 1 if impl == types.Impl.CPP else 2
+    xml = """
+    <mujoco>
+      <worldbody>
+        <body>
+          <joint name="j0" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+        <body>
+          <joint name="j1" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+        <body>
+          <joint name="j2" type="hinge"/>
+          <geom size="0.1"/>
+        </body>
+      </worldbody>
+      <actuator>
+        <pid name="pid" joint="j0" input="pos vel" kp="10" kv="2" ki="3"
+             slewmax="5" posrange="-0.4 0.4"/>
+        <dcmotor name="dc" joint="j1" motorconst="0.5" resistance="1.0"
+                 inductance="0.01" controller="10 0 2 5" input="pos"
+                 ctrlrange="-0.6 0.6"/>
+        <general name="filt" joint="j2" dyntype="filterexact" dynprm="0.05"
+                 ctrllimited="true" ctrlrange="-1.0 1.0"
+                 actlimited="true" actrange="-0.3 0.3"/>
+      </actuator>
+    </mujoco>
+    """
+    dev, sim = self._make_sim_with_actuator(
+        xml, impl, ["pid", "dc", "filt"], nworld=nworld
+    )
+    xpu_device = sim.data.ctrl.device
+
+    # Pre-fill act with stale non-zero values before calling set_ctrl.
+    sim.data.act[:] = 9.0
+    # Control vector: [pid_pos=0.8, pid_vel=0.1, dc_pos=-0.9, filt=0.7].
+    target = torch.tensor(
+        [0.8, 0.1, -0.9, 0.7], dtype=torch.float32, device=xpu_device
+    )
+    mask = torch.tensor([True, False], device=xpu_device)
+    target_masked = torch.tensor(
+        [[-0.2, 0.0, 0.25, -0.5], [0.0, 0.0, 0.0, 0.0]],
+        dtype=torch.float32,
+        device=xpu_device,
+    )
+    # Expected act: [pid_slew=0.4, pid_int=0, dc_slew=-0.6, dc_curr=0, filt=0.3]
+    expected = np.array([0.4, 0.0, -0.6, 0.0, 0.3], dtype=np.float32)
+
+    prev_mode = None
+    if xpu_device.type == "cuda":
+      prev_mode = torch.cuda.get_sync_debug_mode()
+      self.addCleanup(torch.cuda.set_sync_debug_mode, prev_mode)
+      torch.cuda.set_sync_debug_mode("error")
+
+    dev.set_ctrl(None, target)
+
+    if nworld > 1:
+      sim.data.act[0] = 5.0
+      dev.set_ctrl(mask, target_masked)
+
+    if prev_mode is not None:
+      torch.cuda.set_sync_debug_mode(prev_mode)
+
+    if nworld == 1:
+      np.testing.assert_allclose(
+          sim.data.act[0].cpu().numpy(), expected, atol=1e-6
+      )
+    else:
+      expected_masked = np.array([-0.2, 0.0, 0.25, 0.0, -0.3], dtype=np.float32)
+      np.testing.assert_allclose(
+          sim.data.act[0].cpu().numpy(), expected_masked, atol=1e-6
+      )
+      np.testing.assert_allclose(
+          sim.data.act[1].cpu().numpy(), expected, atol=1e-6
+      )
 
 
 if __name__ == "__main__":

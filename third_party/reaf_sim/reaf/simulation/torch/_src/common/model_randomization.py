@@ -121,16 +121,23 @@ def randomize_actuator_gains(
     pattern: str | tuple[str, ...],
     kp_noise: noise_module.Noise | None = None,
     kd_noise: noise_module.Noise | None = None,
+    ki_noise: noise_module.Noise | None = None,
     env_mask: torch.Tensor | None = None,
 ) -> None:
-  """Randomize kp/kd for affine-biastype actuators, maintaining biasprm[1]=-kp."""
+  """Randomize kp/kd/ki for affine-biastype actuators, maintaining biasprm[1]=-kp."""
   names = mujoco_types.resolve_names(
       spec, mujoco.mjtObj.mjOBJ_ACTUATOR, pattern
   )
-  biastypes = [spec.actuator(name).biastype for name in names]
-  if any(b != mujoco.mjtBias.mjBIAS_AFFINE for b in biastypes):
+  actuators = [spec.actuator(name) for name in names]
+  if any(a.biastype != mujoco.mjtBias.mjBIAS_AFFINE for a in actuators):
     raise ValueError(
         "randomize_actuator_gains only supports affine biastype actuators."
+    )
+  if ki_noise is not None and any(
+      a.gaintype != mujoco.mjtGain.mjGAIN_PID for a in actuators
+  ):
+    raise ValueError(
+        "randomize_actuator_gains ki_noise is only supported for PID actuators."
     )
 
   bound = model.bind_pattern(spec, mujoco.mjtObj.mjOBJ_ACTUATOR, pattern)
@@ -139,21 +146,37 @@ def randomize_actuator_gains(
 
   new_gainprm, new_biasprm = None, None
   if kp_noise is not None:
-    current_kp = gainprm[..., 0]
-    kp_modifier = noise_module.build_modifier(kp_noise, device)
-    new_kp = kp_modifier(current_kp)
-    new_gainprm = gainprm.clone()
-    new_gainprm[..., 0] = new_kp
+    pid_flags = [a.gaintype == mujoco.mjtGain.mjGAIN_PID for a in actuators]
+    if all(pid_flags):
+      is_pid = None
+      current_kp = -biasprm[..., 1]
+    elif not any(pid_flags):
+      is_pid = None
+      current_kp = gainprm[..., 0]
+    else:
+      # Mixed PID/non-PID pattern: read gaintype on-device to stay sync-free.
+      is_pid = bound.gaintype == int(mujoco.mjtGain.mjGAIN_PID)
+      current_kp = torch.where(is_pid, -biasprm[..., 1], gainprm[..., 0])
+    new_kp = noise_module.build_modifier(kp_noise, device)(current_kp)
     new_biasprm = biasprm.clone()
     new_biasprm[..., 1] = -new_kp
+    if not all(pid_flags):
+      new_gainprm = gainprm.clone()
+      new_gainprm[..., 0] = (
+          new_kp
+          if is_pid is None
+          else torch.where(is_pid, gainprm[..., 0], new_kp)
+      )
 
   if kd_noise is not None:
-    current_kd = -biasprm[..., 2]
-    kd_modifier = noise_module.build_modifier(kd_noise, device)
-    new_kd = kd_modifier(current_kd)
-
+    new_kd = noise_module.build_modifier(kd_noise, device)(-biasprm[..., 2])
     new_biasprm = biasprm.clone() if new_biasprm is None else new_biasprm
     new_biasprm[..., 2] = -new_kd
+
+  if ki_noise is not None:
+    new_ki = noise_module.build_modifier(ki_noise, device)(gainprm[..., 0])
+    new_gainprm = gainprm.clone() if new_gainprm is None else new_gainprm
+    new_gainprm[..., 0] = new_ki
 
   if new_gainprm is not None:
     bound.set("gainprm", new_gainprm, env_mask=env_mask)
