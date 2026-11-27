@@ -38,6 +38,17 @@ class TestSuite(parameterized.TestCase):
     self.assertEqual(obs_shape, env.observation_size)
     self.assertFalse(jp.isnan(state.data.qpos).any())
 
+  def test_g1_joint_deviation_hip_weights(self) -> None:
+    env = locomotion.load("G1JoystickFlatTerrain")
+    self.assertEqual(env._hip_indices.shape, (4,))
+    error = jp.array([0.1, 0.2, 0.3, 0.4])
+    qpos = env._default_pose.at[env._hip_indices].add(error)
+    cost = env._cost_joint_deviation_hip(qpos, jp.array([0.5, 0.0, 0.0]))
+    self.assertAlmostEqual(float(cost), 1.0, places=5)
+    # Roll deviation (indices 0 and 2) is not penalized for lateral commands.
+    cost = env._cost_joint_deviation_hip(qpos, jp.array([0.5, 0.5, 0.0]))
+    self.assertAlmostEqual(float(cost), 0.6, places=5)
+
 
 if __name__ == "__main__":
   absltest.main()

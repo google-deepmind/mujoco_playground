@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+- Fix `joint_deviation_hip` cost in `G1JoystickFlatTerrain` /
+  `G1JoystickRoughTerrain`: the hip indices had shape (4, 1), so the cost
+  broadcast to 4x its intended value and the hip roll mask for lateral commands
+  had no effect.
+
 ## [0.2.0] - 2026-03-16
 
 - Added vision-based PPO training configs for `CartpoleBalance` and

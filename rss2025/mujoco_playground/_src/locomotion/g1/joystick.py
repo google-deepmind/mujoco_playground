@@ -173,7 +173,9 @@ class Joystick(g1_base.G1Env):
         hip_indices.append(
             self._mj_model.joint(f"{side}_{joint_name}_joint").qposadr - 7
         )
-    self._hip_indices = jp.array(hip_indices)
+    # qposadr is a length-1 array, so flatten to shape (4,) to match the
+    # per-joint weights in _cost_joint_deviation_hip.
+    self._hip_indices = jp.array(hip_indices).flatten()
 
     knee_indices = []
     knee_joint_names = ["knee"]
