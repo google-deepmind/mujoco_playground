@@ -79,8 +79,6 @@ class ActuatorDevice(device.Device):
     self._act_setpoint_act_obj_ids: torch.Tensor | None = None
     self._act_setpoint_ctrllimited: torch.Tensor | None = None
     self._act_setpoint_actlimited: torch.Tensor | None = None
-    self._has_setpoint_ctrllimited: bool = False
-    self._has_setpoint_actlimited: bool = False
     self._act_zero_ids: torch.Tensor | None = None
 
   @property
@@ -233,8 +231,6 @@ class ActuatorDevice(device.Device):
     self._act_setpoint_act_obj_ids = None
     self._act_setpoint_ctrllimited = None
     self._act_setpoint_actlimited = None
-    self._has_setpoint_ctrllimited = False
-    self._has_setpoint_actlimited = False
     if act_setpoint_ids:
       self._act_setpoint_ids = torch.tensor(
           act_setpoint_ids, dtype=torch.long, device=self._xpu_device
@@ -248,15 +244,13 @@ class ActuatorDevice(device.Device):
       self._act_setpoint_act_obj_ids = torch.tensor(
           act_setpoint_act_obj_ids, dtype=torch.long, device=self._xpu_device
       )
-      self._has_setpoint_ctrllimited = any(act_setpoint_ctrllimited)
-      if self._has_setpoint_ctrllimited:
+      if any(act_setpoint_ctrllimited):
         self._act_setpoint_ctrllimited = torch.tensor(
             act_setpoint_ctrllimited, dtype=torch.bool, device=self._xpu_device
         )
         # Trigger lazy tiling before CUDA graph capture.
         _ = simulator.model.actuator_ctrlrange
-      self._has_setpoint_actlimited = any(act_setpoint_actlimited)
-      if self._has_setpoint_actlimited:
+      if any(act_setpoint_actlimited):
         self._act_setpoint_actlimited = torch.tensor(
             act_setpoint_actlimited, dtype=torch.bool, device=self._xpu_device
         )
@@ -379,7 +373,7 @@ class ActuatorDevice(device.Device):
       setpoint_ctrl = ctrl[..., self._act_setpoint_local_ctrl_ids].to(
           dtype=self._data.act.dtype
       )
-      if self._has_setpoint_ctrllimited:
+      if self._act_setpoint_ctrllimited is not None:
         ctrlrange = self._model.actuator_ctrlrange[
             :, self._act_setpoint_ctrl_ids
         ]
@@ -389,7 +383,7 @@ class ActuatorDevice(device.Device):
         setpoint_ctrl = torch.where(
             self._act_setpoint_ctrllimited, clamped, setpoint_ctrl
         )
-      if self._has_setpoint_actlimited:
+      if self._act_setpoint_actlimited is not None:
         actrange = self._model.actuator_actrange[
             :, self._act_setpoint_act_obj_ids
         ]
