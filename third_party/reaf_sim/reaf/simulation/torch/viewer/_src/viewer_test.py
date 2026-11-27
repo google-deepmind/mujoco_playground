@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import dataclasses
 from unittest import mock
 
 from absl.testing import absltest
@@ -24,6 +25,53 @@ from reaf.simulation.torch import types
 from reaf.simulation.torch.viewer._src import sim_backend
 from reaf.simulation.torch.viewer._src import viewer
 import torch
+
+
+@dataclasses.dataclass
+class _LegacyViewerConfig:
+  title: str = ''
+  gfx: str = ''
+  http_port: int = 0
+  open_browser: bool = False
+  hot_reload: str = ''
+
+
+@dataclasses.dataclass
+class _PrivateViewerConfig(_LegacyViewerConfig):
+  private: bool = False
+
+
+class ViewerConfigTest(absltest.TestCase):
+
+  def test_public_viewer_supports_legacy_studio(self):
+    with mock.patch.object(
+        viewer.viewer_protocol, 'ViewerConfig', _LegacyViewerConfig
+    ):
+      config = viewer._make_viewer_config('web', 8081, False, 'plugins')
+    self.assertEqual(
+        config,
+        _LegacyViewerConfig(
+            title='reaf-sim Environment Viewer',
+            gfx='web',
+            http_port=8081,
+            open_browser=True,
+            hot_reload='plugins',
+        ),
+    )
+
+  def test_private_viewer_requires_privacy_support(self):
+    with mock.patch.object(
+        viewer.viewer_protocol, 'ViewerConfig', _LegacyViewerConfig
+    ):
+      with self.assertRaisesRegex(ValueError, r'ViewerConfig\.private'):
+        viewer._make_viewer_config('web', 0, True, '')
+
+  def test_current_viewer_preserves_requested_privacy(self):
+    with mock.patch.object(
+        viewer.viewer_protocol, 'ViewerConfig', _PrivateViewerConfig
+    ):
+      self.assertFalse(viewer._make_viewer_config('web', 0, False, '').private)
+      self.assertTrue(viewer._make_viewer_config('web', 0, True, '').private)
 
 
 class ViewerTest(absltest.TestCase):

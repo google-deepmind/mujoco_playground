@@ -64,6 +64,30 @@ class _ZeroActionPolicy(gdmr_policy.Policy[gdmr_types.PolicyDataType]):
     del timestep_spec
 
 
+
+def _make_viewer_config(
+    gfx: str, http_port: int, private: bool, hot_reload: str
+) -> viewer_protocol.ViewerConfig:
+  """Creates a config compatible with Studio releases predating private."""
+  config = viewer_protocol.ViewerConfig(
+      title='reaf-sim Environment Viewer',
+      gfx=gfx,
+      http_port=http_port,
+      open_browser=True,
+      hot_reload=hot_reload,
+  )
+  # Older Studio releases have no private field. Ordinary playback does not
+  # require it, but an explicit privacy request must never be silently ignored.
+  if private:
+    if not hasattr(config, 'private'):
+      raise ValueError(
+          'Private viewing requires a MuJoCo Studio version that supports '
+          'ViewerConfig.private.'
+      )
+    config.private = True
+  return config
+
+
 def launch(
     environment: gdmr_env.Environment,
     policy: gdmr_policy.Policy[gdmr_types.PolicyDataType] | None = None,
@@ -156,14 +180,7 @@ def launch(
     except ImportError:
       pass
 
-  config = viewer_protocol.ViewerConfig(
-      title='reaf-sim Environment Viewer',
-      gfx=gfx,
-      http_port=http_port,
-      private=private,
-      open_browser=True,
-      hot_reload=hot_reload,
-  )
+  config = _make_viewer_config(gfx, http_port, private, hot_reload)
 
   # Launch the viewer using the studio launch API. Errors from sim plugins,
   # the policy, or the viewer thread propagate to the caller.
