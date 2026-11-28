@@ -8,6 +8,14 @@ MuJoCo Playground follows `MuJoCo's semantic versioning
 Upcoming Version (not yet released)
 -----------------------------------
 
+- The SO-101 deploy script now also parks the arm and releases torque after an error once the arm is set up, such
+  as a checkpoint that fails to load or a logger that fails to close.
+- The SO-101 pick-cube deploy script runs a policy exported to ExecuTorch with RSL-RL's
+  ``export_policy_to_executorch()``: pass the ``.pte`` file to ``--checkpoint``.
+- The SO-101 pick-cube deploy script also runs a policy exported with RSL-RL's TensorRT backend, when
+  ``torch_tensorrt[executorch]`` is installed. It now loads a ``.pte`` program before it connects to the arm, so a
+  program that cannot load fails first.
+
 Version 1.1.0 (November 23, 2026)
 ---------------------------------
 
