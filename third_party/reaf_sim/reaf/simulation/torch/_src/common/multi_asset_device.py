@@ -78,7 +78,6 @@ _GEOM_FIELDS = (
     "geom_friction",
     "geom_solref",
     "geom_solimp",
-    "geom_solmix",
     "geom_margin",
     "geom_gap",
     "geom_surfacevel",

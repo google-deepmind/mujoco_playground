@@ -81,7 +81,7 @@ _ESSENTIAL_MODEL_FIELDS = {
     "dof_frictionloss", "dof_armature", "dof_damping", "dof_dampingpoly",
     "dof_invweight0", "geom_type", "geom_contype", "geom_conaffinity",
     "geom_condim", "geom_bodyid", "geom_dataid", "geom_group", "geom_matid",
-    "geom_priority", "geom_solmix", "geom_solref", "geom_solimp",
+    "geom_priority", "geom_solref", "geom_solimp",
     "geom_size", "geom_aabb", "geom_rbound", "geom_pos", "geom_quat",
     "geom_friction", "geom_margin", "geom_gap", "geom_fluid", "geom_rgba",
     "site_type", "site_bodyid", "site_size", "site_pos", "site_quat",
